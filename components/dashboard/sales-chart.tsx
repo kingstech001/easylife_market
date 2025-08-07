@@ -1,63 +1,68 @@
-"use client"
+"use client";
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { useState, useEffect } from "react";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const data = [
-  {
-    date: "Jan",
-    sales: 400,
-  },
-  {
-    date: "Feb",
-    sales: 300,
-  },
-  {
-    date: "Mar",
-    sales: 200,
-  },
-  {
-    date: "Apr",
-    sales: 278,
-  },
-  {
-    date: "May",
-    sales: 189,
-  },
-  {
-    date: "Jun",
-    sales: 239,
-  },
-  {
-    date: "Jul",
-    sales: 349,
-  },
-  {
-    date: "Aug",
-    sales: 430,
-  },
-  {
-    date: "Sep",
-    sales: 290,
-  },
-  {
-    date: "Oct",
-    sales: 349,
-  },
-  {
-    date: "Nov",
-    sales: 420,
-  },
-  {
-    date: "Dec",
-    sales: 500,
-  },
-]
+interface SalesData {
+  date: string;
+  sales: number;
+}
 
 export function SalesChart() {
+  const [data, setData] = useState<SalesData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSales = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const res = await fetch("/api/seller/analytics/sales", {
+          cache: "no-store",
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json.message || "Failed to fetch sales data");
+        }
+
+        setData(Array.isArray(json.data) ? json.data : []);
+      } catch (err: any) {
+        console.error("Error fetching sales data:", err);
+        setError(err.message || "An unexpected error occurred.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSales();
+  }, []);
+
+  if (isLoading) {
+    return <p className="text-muted-foreground">Loading sales data...</p>;
+  }
+
+  if (error) {
+    return <p className="text-destructive">Error: {error}</p>;
+  }
+
+  if (data.length === 0) {
+    return <p className="text-muted-foreground">No sales data available yet.</p>;
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data}>
-        <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+        <XAxis
+          dataKey="date"
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+        />
         <YAxis
           stroke="#888888"
           fontSize={12}
@@ -69,5 +74,5 @@ export function SalesChart() {
         <Bar dataKey="sales" fill="#4f46e5" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
-  )
+  );
 }

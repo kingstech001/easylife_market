@@ -8,8 +8,10 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   return (
     <div className="flex gap-6 md:gap-10 items-center">
       <Link href="/" className="flex items-center space-x-2">
-        <ShoppingBag className="h-6 w-6" />
-        <span className="inline-block font-bold">EasyLife</span>
+        <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center">
+          <ShoppingBag className="h-6 w-6 text-primary-foreground font-bold text-sm" />
+        </div>
+        <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">EasyLife</span>
       </Link>
       <nav className={cn("md:flex items-center space-x-4 lg:space-x-6 hidden", className)} {...props}>
         <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">

@@ -3,12 +3,18 @@
 import Image from "next/image"
 import { mockStores } from "@/lib/mock-data"
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder"
+import { useEffect, useState } from "react"
 
 interface TopStoresProps {
   limit?: number
 }
 
 export function TopStores({ limit = 5 }: TopStoresProps) {
+  const [visits, setVisits] = useState<number | null>(null)
+
+  useEffect(() => {
+    setVisits(Math.floor(Math.random() * 1000));
+  }, [])
   // In a real app, we would fetch this data from the API
   const stores = mockStores.slice(0, limit)
 
@@ -33,7 +39,7 @@ export function TopStores({ limit = 5 }: TopStoresProps) {
           </div>
           <div className="font-medium">
             {/* This would be real data in a production app */}
-            {Math.floor(Math.random() * 1000)} visits
+            {visits !== null ? `${visits} visits` : "Loading..."}
           </div>
         </div>
       ))}

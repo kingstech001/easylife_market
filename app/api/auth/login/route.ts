@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { connectToDB } from '@/lib/db';
-import User from '@/models/User';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { NextResponse } from "next/server";
+import { connectToDB } from "@/lib/db";
+import User from "@/models/User";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
   try {
@@ -12,39 +12,54 @@ export async function POST(req: Request) {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
+    // ✅ Include fullName in JWT payload
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName, // Add fullName to payload
+      },
       process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" }
     );
 
+    // ✅ Send fullName in response
     const response = NextResponse.json({
-      message: 'Login successful',
+      message: "Login successful",
       user: {
         id: user._id,
         email: user.email,
         role: user.role,
+        fullName: user.fullName, // Add fullName to client
       },
     });
 
-    response.cookies.set('token', token, {
+    // ✅ Set token as cookie
+    response.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV !== "development",
       maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+      path: "/",
     });
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ message: 'Something went wrong' }, { status: 500 });
+    console.error("Login error:", error);
+    return NextResponse.json(
+      { message: "Something went wrong" },
+      { status: 500 }
+    );
   }
 }
