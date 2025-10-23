@@ -8,6 +8,8 @@ export interface IStore extends Document {
   logo_url?: string
   banner_url?: string
   sellerId: mongoose.Types.ObjectId
+  isApproved: boolean
+  categories?: string[]
   isPublished: boolean
   createdAt: Date
   updatedAt: Date
@@ -22,6 +24,8 @@ const StoreSchema: Schema = new Schema(
     banner_url: { type: String },
     sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     isPublished: { type: Boolean, default: false },
+    isApproved: { type: Boolean, default: false },
+    categories: [{ type: String }],
   },
   {
     timestamps: true,

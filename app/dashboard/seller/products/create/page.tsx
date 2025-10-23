@@ -19,6 +19,8 @@ import {
   Check,
   Info,
   Trash2,
+  Save,
+  RotateCcw,
 } from "lucide-react"
 import { Form, FormItem, FormLabel, FormDescription, FormMessage, FormField, FormControl } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -29,6 +31,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { useFormPersistence } from "@/hooks/use-form-persistence"
 
 const productFormSchema = z.object({
   name: z.string().min(3, {
@@ -90,6 +93,13 @@ export default function CreateProductPage() {
     },
   })
 
+  const { clearStorage } = useFormPersistence({
+    form,
+    storageKey: "create-product-form",
+    excludeFields: ["storeId"], // Don't persist storeId as it's fetched from API
+    debounceMs: 300,
+  })
+
   // Fetch storeId on component mount
   useEffect(() => {
     const fetchStoreId = async () => {
@@ -135,6 +145,14 @@ export default function CreateProductPage() {
     }
     fetchStoreId()
   }, [form]) // Depend on form to ensure it's ready when setting value
+
+  useEffect(() => {
+    const images = form.watch("images")
+    if (images && images.length > 0) {
+      const urls = images.map((img) => img.url).filter(Boolean)
+      setImagePreviews(urls)
+    }
+  }, [form])
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return
@@ -265,6 +283,20 @@ export default function CreateProductPage() {
         throw new Error(errorMessage)
       }
 
+      clearStorage()
+      form.reset({
+        name: "",
+        description: "",
+        price: 0,
+        compareAtPrice: undefined,
+        category: "",
+        inventoryQuantity: 0,
+        images: [],
+        storeId: storeId, // Keep the storeId as it's needed for the form
+      })
+      setImagePreviews([]) // Clear image previews
+      setActiveTab("details") // Reset to first tab
+
       toast.success("Product created successfully!", {
         description: "Your product has been added to your store.",
       })
@@ -277,6 +309,25 @@ export default function CreateProductPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleClearForm = () => {
+    form.reset({
+      name: "",
+      description: "",
+      price: 0,
+      compareAtPrice: undefined,
+      category: "",
+      inventoryQuantity: 0,
+      images: [],
+      storeId: storeId || "", // Keep the storeId as it's needed for the form
+    })
+    setImagePreviews([])
+    setActiveTab("details") // Reset to first tab
+    clearStorage()
+    toast.info("Form cleared", {
+      description: "All saved data has been removed.",
+    })
   }
 
   // Render loading/error states for store information
@@ -323,7 +374,20 @@ export default function CreateProductPage() {
               <p className="text-sm sm:text-base text-muted-foreground mt-1">
                 Add a new product to your store inventory
               </p>
+              <div className="flex items-center gap-2 mt-2">
+                <Save className="h-3 w-3 text-green-600" />
+                <span className="text-xs text-muted-foreground">Your progress is automatically saved</span>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearForm}
+              className="flex items-center gap-2 bg-transparent"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span className="hidden sm:inline">Clear Form</span>
+            </Button>
           </div>
         </motion.div>
         {/* Form */}
@@ -419,7 +483,7 @@ export default function CreateProductPage() {
                               <FormControl>
                                 <div className="relative">
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                                    $
+                                    ₦
                                   </span>
                                   <Input
                                     className="pl-7 sm:pl-8 bg-background text-sm sm:text-base"

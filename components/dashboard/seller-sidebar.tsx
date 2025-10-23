@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, Store, ShoppingBag, BarChart3, CreditCard, Settings, HelpCircle, LogOut, ChevronDown, User2 } from 'lucide-react'
+import { LayoutDashboard, Store, ShoppingBag, BarChart3, CreditCard, Settings, HelpCircle, LogOut, Package, ChevronDown, User2 } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -37,14 +36,9 @@ const sidebarNavItems = [
     icon: ShoppingBag,
   },
   {
-    title: "Analytics",
-    href: "/dashboard/seller/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Billing",
-    href: "/dashboard/seller/billing",
-    icon: CreditCard,
+    title: "Orders",
+    href: "/dashboard/seller/orders",
+    icon: Package,
   },
 ]
 
@@ -125,26 +119,10 @@ export function SellerSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <User2 className="h-5 w-5" />
-                  <span>Username</span> {/* Replace with actual username */}
-                  <ChevronDown className="ml-auto h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div onClick={handleLogout} className="flex items-center justify-between w-full px-2 py-1">
+              <span className="text-sm font-medium text-sidebar-foreground/70">Sign out</span>
+              <LogOut className="mr-2 h-4 w-4 hover:text-red-700" />
+            </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <div className="flex items-center justify-between w-full px-2 py-1">
@@ -154,7 +132,6 @@ export function SellerSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail /> {/* Add SidebarRail for resizing on desktop */}
     </Sidebar>
   )
 }

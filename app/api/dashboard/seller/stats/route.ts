@@ -1,67 +1,111 @@
-import { type NextRequest, NextResponse } from "next/server"
-import Product from "@/models/Product"
-import Order from "@/models/Order" // Import the Order model
-import Store from "@/models/Store"
-import getUserFromCookies from "@/lib/getUserFromCookies"
-import { connectToDB } from "@/lib/db"
-import mongoose from "mongoose"
+import { type NextRequest, NextResponse } from "next/server";
+import Product from "@/models/Product";
+import Order from "@/models/Order";
+import Store from "@/models/Store";
+import getUserFromCookies from "@/lib/getUserFromCookies";
+import { connectToDB } from "@/lib/db";
+import mongoose from "mongoose";
 
 export async function GET(request: Request) {
-  await connectToDB()
-  console.log("DB connected for GET dashboard stats.")
+  await connectToDB();
 
   try {
-    const user = await getUserFromCookies(request as NextRequest)
+    const user = await getUserFromCookies(request as NextRequest);
     if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const userStore = await Store.findOne({ sellerId: new mongoose.Types.ObjectId(user.id) })
+    const userStore = await Store.findOne({
+      sellerId: new mongoose.Types.ObjectId(user.id),
+    });
     if (!userStore) {
-      return NextResponse.json({ success: false, message: "Forbidden: Store not found for this user" }, { status: 403 })
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Store not found for this user" },
+        { status: 403 }
+      );
     }
 
-    const storeId = userStore._id
+    const storeId = userStore._id;
 
     // Fetch total products
-    const productsCount = await Product.countDocuments({ storeId })
+    const productsCount = await Product.countDocuments({ storeId });
 
-    // Aggregate for total sales, orders count, and unique customers
+    // Aggregate sales, orders, and unique customers
     const salesAggregation = await Order.aggregate([
-      { $match: { storeId: new mongoose.Types.ObjectId(storeId), status: "completed" } }, // Only count completed orders for sales
+      { $match: { storeId: new mongoose.Types.ObjectId(storeId) } }, // match all orders for this store
       {
-        $group: {
-          _id: null,
-          totalSales: { $sum: "$totalPrice" },
-          ordersCount: { $sum: 1 },
-          uniqueCustomers: { $addToSet: "$userId" }, // Collect unique user IDs
+        $facet: {
+          // 1️⃣ Total Sales (only completed)
+          sales: [
+            { $match: { status: "delivered" } },
+            { $group: { _id: null, totalSales: { $sum: "$totalPrice" } } },
+          ],
+
+          // 2️⃣ Orders Count + Unique Customers (all orders)
+          ordersAndCustomers: [
+            {
+              $group: {
+                _id: null,
+                ordersCount: { $sum: 1 },
+                uniqueCustomers: { $addToSet: "$userId" },
+              },
+            },
+          ],
         },
       },
-    ])
+      {
+        $project: {
+          totalSales: {
+            $ifNull: [{ $arrayElemAt: ["$sales.totalSales", 0] }, 0],
+          },
+          ordersCount: {
+            $ifNull: [
+              { $arrayElemAt: ["$ordersAndCustomers.ordersCount", 0] },
+              0,
+            ],
+          },
+          customersCount: {
+            $size: {
+              $ifNull: [
+                { $arrayElemAt: ["$ordersAndCustomers.uniqueCustomers", 0] },
+                [],
+              ],
+            },
+          },
+        },
+      },
+    ]);
 
-    const stats = salesAggregation[0] || { totalSales: 0, ordersCount: 0, uniqueCustomers: [] }
-    const totalSales = stats.totalSales
-    const ordersCount = stats.ordersCount
-    const customersCount = stats.uniqueCustomers.length
+    const stats = salesAggregation[0] || {
+      totalSales: 0,
+      ordersCount: 0,
+      customersCount: 0,
+    };
 
-    console.log(`✅ GET Dashboard Stats: Data fetched for store ${storeId}.`)
     return NextResponse.json(
       {
         success: true,
         data: {
-          totalSales,
-          ordersCount,
-          customersCount,
+          totalSales: stats.totalSales,
+          ordersCount: stats.ordersCount,
+          customersCount: stats.customersCount,
           productsCount,
         },
       },
-      { status: 200 },
-    )
+      { status: 200 }
+    );
   } catch (error: any) {
-    console.error("Error fetching dashboard stats:", error)
+    console.error("Error fetching dashboard stats:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to fetch dashboard stats", error: error.message },
-      { status: 500 },
-    )
+      {
+        success: false,
+        message: error.message || "Failed to fetch dashboard stats",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }

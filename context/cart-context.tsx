@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { createContext, useContext, useReducer, type ReactNode, useEffect } from "react"
+import { createContext, useContext, useReducer, type ReactNode, useEffect, useRef } from "react"
 import { toast } from "sonner"
 
 export interface CartItem {
@@ -11,6 +10,8 @@ export interface CartItem {
   price: number
   quantity: number
   image: string
+  storeId: string
+  productId: string
 }
 
 interface CartState {
@@ -23,6 +24,8 @@ type Action =
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "SET_CART"; payload: CartItem[] }
   | { type: "CLEAR_CART" }
+
+const CART_STORAGE_KEY = "cart"
 
 const initialState: CartState = {
   items: [],
@@ -95,26 +98,60 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
+  const saveTimeout = useRef<number | undefined>(undefined)
 
-  // Load from localStorage only on client
+  // Load from localStorage on mount (client only)
   useEffect(() => {
-    const storedCart = localStorage.getItem("cart")
-    if (storedCart) {
-      try {
-        const items = JSON.parse(storedCart)
-        dispatch({ type: "SET_CART", payload: items })
-      } catch {
-        // ignore parsing errors
+    if (typeof window === "undefined") return
+    try {
+      const stored = localStorage.getItem(CART_STORAGE_KEY)
+      if (!stored) return
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        // basic shape validation (optional)
+        dispatch({ type: "SET_CART", payload: parsed })
       }
+    } catch (err) {
+      // ignore parsing errors and avoid throwing in SSR
+      // optionally remove corrupted key:
+      // localStorage.removeItem(CART_STORAGE_KEY)
+      console.warn("Failed to restore cart from localStorage:", err)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Save cart to localStorage whenever it changes
+  // Persist cart to localStorage when it changes (debounced small delay)
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(state.items))
+    if (typeof window === "undefined") return
+    try {
+      // debounce to avoid too-frequent writes when user updates rapidly
+      if (saveTimeout.current) {
+        window.clearTimeout(saveTimeout.current)
+      }
+      saveTimeout.current = window.setTimeout(() => {
+        try {
+          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items))
+        } catch (e) {
+          console.warn("Failed to save cart to localStorage:", e)
+        }
+      }, 200)
+    } catch (err) {
+      console.warn("Unable to persist cart:", err)
+    }
+
+    return () => {
+      if (saveTimeout.current) {
+        window.clearTimeout(saveTimeout.current)
+      }
+    }
   }, [state.items])
 
   const addToCart = (item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
+    // Guard: Ensure storeId and productId are present
+    if (!item.storeId || !item.productId) {
+      toast.error("Cannot add to cart: Missing store or product information.")
+      return
+    }
     const cartItem: CartItem = {
       ...item,
       quantity: item.quantity || 1,

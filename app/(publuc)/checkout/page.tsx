@@ -1,29 +1,35 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { CreditCard, ShoppingBag, MapPin, Truck, ChevronRight, Shield, ArrowLeft, Trash2, Loader2 } from "lucide-react"
+import { ShoppingBag, MapPin, ChevronRight, Shield, ArrowLeft, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimatedContainer } from "@/components/ui/animated-container"
 import { FormSection } from "@/components/ui/form-section"
 import { useCart } from "@/context/cart-context"
+import { PaystackButton } from "@/components/paystack-button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+
+const CHECKOUT_STORAGE_KEY = "checkout_form_data"
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items: cartItems, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart()
-  const [activeStep, setActiveStep] = useState<"information" | "shipping" | "payment">("information")
+  const [activeStep, setActiveStep] = useState<"information" | "payment">("information")
   const [isProcessing, setIsProcessing] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [authError, setAuthError] = useState<string | null>(null)
+  const [shipping, setShipping] = useState(0)
+  const [isPaystackOpen, setIsPaystackOpen] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Form state for information step
   const [info, setInfo] = useState({
@@ -31,63 +37,75 @@ export default function CheckoutPage() {
     lastName: "",
     email: "",
     address: "",
-    city: "",
     state: "",
-    zip: "",
     phone: "",
-    apartment: "",
+    area: "",
   })
 
-  // Form state for shipping step
-  const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard")
-
-  // Form state for payment step
-  const [payment, setPayment] = useState({
-    method: "card",
-    cardNumber: "",
-    expiry: "",
-    cvc: "",
-    nameOnCard: "",
-  })
-
-  // Load user info on mount
   useEffect(() => {
-    const loadUserInfo = async () => {
+    try {
+      const savedData = localStorage.getItem(CHECKOUT_STORAGE_KEY)
+      if (savedData) {
+        const { info: savedInfo, activeStep: savedStep, shipping: savedShipping } = JSON.parse(savedData)
+        setInfo(
+          savedInfo || {
+            firstName: "",
+            lastName: "",
+            email: "",
+            address: "",
+            state: "",
+            phone: "",
+            area: "",
+          },
+        )
+        setActiveStep(savedStep || "information")
+        setShipping(savedShipping || 0)
+      }
+    } catch (error) {
+      console.error("Failed to load checkout data from localStorage:", error)
+      localStorage.removeItem(CHECKOUT_STORAGE_KEY)
+    }
+    setIsHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isHydrated) return
+
+    // helper to save immediately
+    const saveToStorage = () => {
       try {
-        console.log("Checkout: Verifying user authentication...")
-        const response = await fetch("/api/auth/verify", {
-          credentials: "include",
-        })
-
-        console.log("Checkout: Auth verification response status:", response.status)
-
-        if (response.ok) {
-          const data = await response.json()
-          console.log("Checkout: User verified:", { role: data.user?.role, email: data.user?.email })
-
-          if (data.user?.role !== "buyer") {
-            setAuthError("Only buyers can access checkout")
-            return
-          }
-
-          setInfo((prev) => ({
-            ...prev,
-            email: data.user.email || "",
-          }))
-        } else {
-          console.log("Checkout: Auth verification failed")
-          setAuthError("Please log in to continue")
-        }
+        const dataToSave = { info, activeStep, shipping }
+        localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(dataToSave))
       } catch (error) {
-        console.error("Checkout: Failed to load user info:", error)
-        setAuthError("Authentication error")
-      } finally {
-        setIsLoading(false)
+        console.error("Failed to save checkout data to localStorage:", error)
       }
     }
 
-    loadUserInfo()
-  }, [])
+    // Debounced save (500ms)
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    saveTimeoutRef.current = setTimeout(saveToStorage, 500)
+
+    // Save on visibility change (when tab hidden) and beforeunload to ensure persistence on refresh/close
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") saveToStorage()
+    }
+    const handleBeforeUnload = () => {
+      saveToStorage()
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    // Cleanup
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+      document.removeEventListener("visibilitychange", handleVisibility)
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [info, activeStep, shipping, isHydrated])
 
   // Validation for required fields
   const isInfoValid =
@@ -95,141 +113,127 @@ export default function CheckoutPage() {
     info.lastName.trim() &&
     info.email.trim() &&
     info.address.trim() &&
-    info.city.trim() &&
     info.state.trim() &&
-    info.zip.trim()
-
-  const isShippingValid = !!shippingMethod
-
-  const isPaymentValid =
-    payment.method === "paypal" ||
-    (payment.method === "card" &&
-      payment.cardNumber.trim() &&
-      payment.expiry.trim() &&
-      payment.cvc.trim() &&
-      payment.nameOnCard.trim())
+    info.area.trim()
 
   // Calculate totals
   const subtotal = getTotalPrice()
-  const shipping = shippingMethod === "express" ? 12.99 : 5.99
-  const tax = subtotal * 0.08
-  const total = subtotal + shipping + tax
+  const total = subtotal + shipping
 
-  // Handle order submission
-  const handleCompleteOrder = async () => {
+  const handlePaymentSuccess = async (reference: string) => {
     setIsProcessing(true)
-
+    setIsPaystackOpen(false)
     try {
-      console.log("Checkout: Starting order submission...")
-
-      const orderData = {
-        items: cartItems,
-        shippingInfo: info,
-        shippingMethod,
-        paymentMethod: payment.method,
-        totals: {
-          subtotal,
-          shipping,
-          tax,
-          total,
-        },
-      }
-
-      console.log("Checkout: Order data prepared:", {
-        itemCount: orderData.items.length,
-        total: orderData.totals.total,
-        shippingMethod: orderData.shippingMethod,
-        paymentMethod: orderData.paymentMethod,
+      // Group items by storeId
+      const groupedByStore: Record<string, typeof cartItems> = {}
+      cartItems.forEach((item) => {
+        if (!groupedByStore[item.storeId]) groupedByStore[item.storeId] = []
+        groupedByStore[item.storeId].push(item)
       })
 
-      const response = await fetch("/api/orders", {
+      const orders = Object.entries(groupedByStore).map(([storeId, storeItems]) => {
+        const storeSubtotal = storeItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
+        return {
+          storeId,
+          items: storeItems.map((i) => ({
+            productId: i.productId,
+            productName: i.name,
+            quantity: i.quantity,
+            priceAtPurchase: i.price,
+          })),
+          totalPrice: storeSubtotal,
+        }
+      })
+
+      const orderData = {
+        orders,
+        shippingInfo: {
+          firstName: info.firstName,
+          lastName: info.lastName,
+          email: info.email,
+          address: info.address,
+          state: info.state,
+          phone: info.phone,
+          area: info.area,
+        },
+        paymentMethod: "paystack",
+        deliveryFee: shipping,
+        totalAmount: Math.round(total * 100),
+      }
+
+      console.log("[v0] Verifying payment with reference:", reference)
+
+      const verifyResponse = await fetch("/api/paystack/verify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
-        body: JSON.stringify(orderData),
+        body: JSON.stringify({
+          reference,
+          orderData,
+        }),
       })
 
-      console.log("Checkout: Order API response status:", response.status)
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-        console.error("Checkout: Order submission failed:", errorData)
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to create order`)
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json().catch(() => ({ error: "Unknown error" }))
+        console.error("[v0] Verification failed:", errorData)
+        throw new Error(errorData.error || "Failed to verify payment")
       }
 
-      const result = await response.json()
-      console.log("Checkout: Order created successfully:", result)
+      const verifyData = await verifyResponse.json()
+      console.log("[v0] Payment verified successfully:", verifyData)
 
-      // Clear cart and redirect to confirmation
+      localStorage.removeItem(CHECKOUT_STORAGE_KEY)
       clearCart()
-      toast.success("Order placed successfully!")
-      router.push(`/checkout/confirmation?orderId=${result.orderId}`)
+      toast.success("Payment successful! Your order has been placed.")
+
+      router.push(`/checkout/confirmation?reference=${reference}`)
     } catch (error) {
-      console.error("Checkout: Order submission error:", error)
-      const errorMessage = error instanceof Error ? error.message : "Failed to place order"
+      const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
+      console.error("[v0] Payment error:", errorMessage)
       toast.error(errorMessage)
-    } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handlePaymentClose = () => {
+    setIsPaystackOpen(false)
+    setIsProcessing(false)
+    toast.info("Payment cancelled")
   }
 
   // Step navigation
   const handleContinue = () => {
     if (activeStep === "information") {
-      if (isInfoValid) setActiveStep("shipping")
-    } else if (activeStep === "shipping") {
-      if (isShippingValid) setActiveStep("payment")
-    } else if (activeStep === "payment") {
-      if (isPaymentValid) {
-        handleCompleteOrder()
-      }
+      if (isInfoValid) setActiveStep("payment")
     }
   }
 
   const handleBack = () => {
-    if (activeStep === "shipping") {
+    if (activeStep === "payment") {
       setActiveStep("information")
-    } else if (activeStep === "payment") {
-      setActiveStep("shipping")
     }
   }
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="container px-4 py-20 max-w-[1280px] mx-auto">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin mr-2" />
-          <span>Loading checkout...</span>
-        </div>
-      </div>
-    )
-  }
+  // Handle change for delivery area
+  const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedArea = e.target.value
+    setInfo({ ...info, area: selectedArea })
 
-  // Auth error state
-  if (authError) {
-    return (
-      <div className="container px-4 py-20 max-w-[1280px] mx-auto text-center">
-        <div className="max-w-md mx-auto">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-            <Shield className="h-6 w-6 text-red-600" />
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Access Restricted</h1>
-          <p className="text-muted-foreground mb-6">{authError}</p>
-          <div className="flex flex-col gap-2">
-            <Button onClick={() => router.push("/auth/login")} className="w-full">
-              Login as Buyer
-            </Button>
-            <Button variant="outline" onClick={() => router.push("/")} className="w-full">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Continue Shopping
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+    // Map delivery charges
+    switch (selectedArea) {
+      case "Enugu":
+        setShipping(5000)
+        break
+      case "Nsukka":
+        setShipping(3000)
+        break
+      case "Enugu Ezike":
+        setShipping(2000)
+        break
+      default:
+        setShipping(0)
+    }
   }
 
   // If cart is empty, redirect to cart page
@@ -240,7 +244,7 @@ export default function CheckoutPage() {
           <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
           <p className="text-muted-foreground mb-6">Add some items to your cart before checking out.</p>
-          <Button onClick={() => router.push("/")} className="w-full">
+          <Button onClick={() => router.push("/stores")} className="w-full">
             Continue Shopping
           </Button>
         </div>
@@ -250,11 +254,12 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+
       <div className="container px-4 py-10 max-w-[1280px] mx-auto">
         <AnimatedContainer animation="fadeIn" className="mb-8">
-          <Button variant="ghost" onClick={() => router.push("/cart")} className="mb-4 hover:bg-muted/50">
+          <Button variant="ghost" onClick={() => router.push("/stores")} className="mb-4 hover:bg-muted/50">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Cart
+            Continue shopping
           </Button>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -270,7 +275,7 @@ export default function CheckoutPage() {
           {/* Checkout Form */}
           <div className="lg:col-span-2">
             <Tabs value={activeStep} className="w-full">
-              <TabsList className="w-full grid grid-cols-3 mb-8 bg-muted/50 p-1 rounded-xl">
+              <TabsList className="w-full grid grid-cols-2 mb-8 bg-muted/50 p-1 rounded-xl">
                 <TabsTrigger
                   value="information"
                   className={cn(
@@ -295,37 +300,13 @@ export default function CheckoutPage() {
                   </div>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="shipping"
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg transition-all duration-200",
-                    "data-[state=active]:bg-background data-[state=active]:shadow-sm",
-                  )}
-                  onClick={() => setActiveStep("shipping")}
-                  disabled={!isInfoValid}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
-                        activeStep === "shipping"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      2
-                    </div>
-                    <span className="hidden sm:inline">Shipping</span>
-                    <span className="sm:hidden">Ship</span>
-                  </div>
-                </TabsTrigger>
-                <TabsTrigger
                   value="payment"
                   className={cn(
                     "flex items-center gap-2 rounded-lg transition-all duration-200",
                     "data-[state=active]:bg-background data-[state=active]:shadow-sm",
                   )}
                   onClick={() => setActiveStep("payment")}
-                  disabled={!isInfoValid || !isShippingValid}
+                  disabled={!isInfoValid}
                 >
                   <div className="flex items-center gap-2">
                     <div
@@ -336,7 +317,7 @@ export default function CheckoutPage() {
                           : "bg-muted text-muted-foreground",
                       )}
                     >
-                      3
+                      2
                     </div>
                     <span className="hidden sm:inline">Payment</span>
                     <span className="sm:hidden">Pay</span>
@@ -357,7 +338,7 @@ export default function CheckoutPage() {
                           <Label htmlFor="firstName">First Name *</Label>
                           <Input
                             id="firstName"
-                            placeholder="John"
+                            placeholder="Kingsley"
                             value={info.firstName}
                             onChange={(e) => setInfo({ ...info, firstName: e.target.value })}
                             className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -367,7 +348,7 @@ export default function CheckoutPage() {
                           <Label htmlFor="lastName">Last Name *</Label>
                           <Input
                             id="lastName"
-                            placeholder="Doe"
+                            placeholder="Mamah"
                             value={info.lastName}
                             onChange={(e) => setInfo({ ...info, lastName: e.target.value })}
                             className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -389,7 +370,7 @@ export default function CheckoutPage() {
                         <Label htmlFor="phone">Phone (optional)</Label>
                         <Input
                           id="phone"
-                          placeholder="(123) 456-7890"
+                          placeholder="08012345678"
                           value={info.phone}
                           onChange={(e) => setInfo({ ...info, phone: e.target.value })}
                           className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -400,8 +381,48 @@ export default function CheckoutPage() {
                 </AnimatedContainer>
 
                 <AnimatedContainer animation="fadeIn" delay={0.1}>
-                  <FormSection title="Shipping Address" description="Where should we send your order?" icon={MapPin}>
-                    <div className="grid gap-4">
+                  <FormSection title="Delivery Address" description="Where should we send your order?" icon={MapPin}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="state">State *</Label>
+                        <select
+                          id="state"
+                          value={info.state}
+                          onChange={(e) => setInfo({ ...info, state: e.target.value })}
+                          className="w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all duration-200 bg-transparent"
+                        >
+                          <option className="bg-transparent text-black" value="">
+                            Select a state
+                          </option>
+                          <option className="bg-transparent text-black" value="Enugu">
+                            Enugu
+                          </option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="area">Delivery Area *</Label>
+                        <select
+                          id="area"
+                          value={info.area}
+                          onChange={handleAreaChange}
+                          className="w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all duration-200 bg-transparent"
+                        >
+                          <option className="bg-transparent text-black" value="">
+                            Select delivery area
+                          </option>
+                          <option className="bg-transparent text-black" value="Enugu">
+                            Enugu town ₦5000{" "}
+                          </option>
+                          <option className="bg-transparent text-black" value="Nsukka">
+                            Nsukka ₦3000{" "}
+                          </option>
+                          <option className="bg-transparent text-black" value="Enugu Ezike">
+                            Enugu Ezike ₦2000
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 mt-2">
                       <div className="space-y-2">
                         <Label htmlFor="address">Address *</Label>
                         <Input
@@ -412,48 +433,6 @@ export default function CheckoutPage() {
                           className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="apartment">Apartment, suite, etc. (optional)</Label>
-                        <Input
-                          id="apartment"
-                          placeholder="Apt 4B"
-                          value={info.apartment}
-                          onChange={(e) => setInfo({ ...info, apartment: e.target.value })}
-                          className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="city">City *</Label>
-                          <Input
-                            id="city"
-                            placeholder="New York"
-                            value={info.city}
-                            onChange={(e) => setInfo({ ...info, city: e.target.value })}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State *</Label>
-                          <Input
-                            id="state"
-                            placeholder="NY"
-                            value={info.state}
-                            onChange={(e) => setInfo({ ...info, state: e.target.value })}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="zip">ZIP Code *</Label>
-                          <Input
-                            id="zip"
-                            placeholder="10001"
-                            value={info.zip}
-                            onChange={(e) => setInfo({ ...info, zip: e.target.value })}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                      </div>
                     </div>
                   </FormSection>
                 </AnimatedContainer>
@@ -461,65 +440,8 @@ export default function CheckoutPage() {
                 <div className="flex justify-end">
                   <Button
                     onClick={handleContinue}
-                    className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 hover:from-[#c0a146]/90 hover:to-[#c0a146] shadow-lg hover:shadow-xl transition-all duration-200"
                     disabled={!isInfoValid}
-                    size="lg"
-                  >
-                    Continue to Shipping
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="shipping" className="space-y-6 mt-0">
-                <AnimatedContainer animation="fadeIn">
-                  <FormSection
-                    title="Shipping Method"
-                    description="Choose how you want your order delivered"
-                    icon={Truck}
-                  >
-                    <RadioGroup
-                      value={shippingMethod}
-                      onValueChange={(val) => setShippingMethod(val as "standard" | "express")}
-                      className="space-y-3"
-                    >
-                      <div className="flex items-center justify-between space-x-2 rounded-xl border-2 p-4 transition-all duration-200 hover:border-primary/50 hover:bg-muted/30">
-                        <div className="flex items-center space-x-3">
-                          <RadioGroupItem value="standard" id="standard" />
-                          <div>
-                            <Label htmlFor="standard" className="font-medium cursor-pointer">
-                              Standard Shipping
-                            </Label>
-                            <p className="text-sm text-muted-foreground">3-5 business days</p>
-                          </div>
-                        </div>
-                        <div className="text-lg font-semibold">₦5.99</div>
-                      </div>
-                      <div className="flex items-center justify-between space-x-2 rounded-xl border-2 p-4 transition-all duration-200 hover:border-primary/50 hover:bg-muted/30">
-                        <div className="flex items-center space-x-3">
-                          <RadioGroupItem value="express" id="express" />
-                          <div>
-                            <Label htmlFor="express" className="font-medium cursor-pointer">
-                              Express Shipping
-                            </Label>
-                            <p className="text-sm text-muted-foreground">1-2 business days</p>
-                          </div>
-                        </div>
-                        <div className="text-lg font-semibold">₦12.99</div>
-                      </div>
-                    </RadioGroup>
-                  </FormSection>
-                </AnimatedContainer>
-
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={handleBack} size="lg">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                  </Button>
-                  <Button
-                    onClick={handleContinue}
-                    disabled={!isShippingValid}
-                    className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200"
                     size="lg"
                   >
                     Continue to Payment
@@ -532,86 +454,24 @@ export default function CheckoutPage() {
                 <AnimatedContainer animation="fadeIn">
                   <FormSection
                     title="Payment Method"
-                    description="All transactions are secure and encrypted"
-                    icon={CreditCard}
+                    description="Secure payment powered by Paystack"
+                    icon={ShoppingBag}
                   >
-                    <RadioGroup
-                      value={payment.method}
-                      onValueChange={(val) => setPayment({ ...payment, method: val })}
-                      className="space-y-3"
-                    >
-                      <div className="flex items-center justify-between space-x-2 rounded-xl border-2 p-4 transition-all duration-200 hover:border-primary/50 hover:bg-muted/30">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between space-x-2 rounded-xl border-2 border-primary/50 bg-primary/5 p-4 transition-all duration-200">
                         <div className="flex items-center space-x-3">
-                          <RadioGroupItem value="card" id="card" />
-                          <Label htmlFor="card" className="font-medium cursor-pointer">
-                            Credit / Debit Card
-                          </Label>
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="h-6 w-10 rounded bg-blue-600"></div>
-                          <div className="h-6 w-10 rounded bg-red-500"></div>
-                          <div className="h-6 w-10 rounded bg-yellow-400"></div>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between space-x-2 rounded-xl border-2 p-4 transition-all duration-200 hover:border-primary/50 hover:bg-muted/30">
-                        <div className="flex items-center space-x-3">
-                          <RadioGroupItem value="paypal" id="paypal" />
-                          <Label htmlFor="paypal" className="font-medium cursor-pointer">
-                            PayPal
-                          </Label>
-                        </div>
-                        <div className="h-6 w-16 rounded bg-blue-700 flex items-center justify-center text-white text-xs font-bold">
-                          PayPal
-                        </div>
-                      </div>
-                    </RadioGroup>
-
-                    {payment.method === "card" && (
-                      <div className="mt-6 space-y-4 p-4 bg-muted/30 rounded-xl">
-                        <div className="space-y-2">
-                          <Label htmlFor="cardNumber">Card Number *</Label>
-                          <Input
-                            id="cardNumber"
-                            placeholder="1234 5678 9012 3456"
-                            value={payment.cardNumber}
-                            onChange={(e) => setPayment({ ...payment, cardNumber: e.target.value })}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="expiry">Expiry Date *</Label>
-                            <Input
-                              id="expiry"
-                              placeholder="MM/YY"
-                              value={payment.expiry}
-                              onChange={(e) => setPayment({ ...payment, expiry: e.target.value })}
-                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="cvc">CVC *</Label>
-                            <Input
-                              id="cvc"
-                              placeholder="123"
-                              value={payment.cvc}
-                              onChange={(e) => setPayment({ ...payment, cvc: e.target.value })}
-                              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                            />
+                          <div className="h-6 w-10 rounded bg-gradient-to-r from-[#0052CC] to-[#00A3E0]"></div>
+                          <div>
+                            <p className="font-medium">Paystack</p>
+                            <p className="text-sm text-muted-foreground">Pay securely with your card</p>
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="nameOnCard">Name on Card *</Label>
-                          <Input
-                            id="nameOnCard"
-                            placeholder="John Doe"
-                            value={payment.nameOnCard}
-                            onChange={(e) => setPayment({ ...payment, nameOnCard: e.target.value })}
-                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                          />
-                        </div>
                       </div>
-                    )}
+                      <p className="text-sm text-muted-foreground">
+                        Click the pay button below to complete your payment securely. A popup will appear where you can
+                        enter your card details.
+                      </p>
+                    </div>
                   </FormSection>
                 </AnimatedContainer>
 
@@ -622,9 +482,9 @@ export default function CheckoutPage() {
                         <Shield className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-green-800 dark:text-green-200">Secure Checkout</p>
-                          <p className="text-green-700 dark:text-green-300 mt-1">
-                            Your payment information is processed securely. We do not store credit card details nor have
-                            access to your credit card information.
+                          <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                            Your payment information is processed securely by Paystack. We do not store credit card
+                            details nor have access to your credit card information.
                           </p>
                         </div>
                       </div>
@@ -637,24 +497,27 @@ export default function CheckoutPage() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>
-                  <Button
-                    onClick={handleContinue}
-                    disabled={!isPaymentValid || isProcessing}
-                    className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 shadow-lg hover:shadow-xl transition-all duration-200"
-                    size="lg"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Complete Order
-                        <ChevronRight className="ml-2 h-4 w-4" />
-                      </>
+                  <div className="flex gap-2">
+                    {isPaystackOpen && (
+                      <Button
+                        variant="destructive"
+                        onClick={handlePaymentClose}
+                        size="lg"
+                        className="hover:bg-destructive/90"
+                      >
+                        Cancel Payment
+                      </Button>
                     )}
-                  </Button>
+                    <PaystackButton
+                      amount={total * 100} // amount in kobo
+                      email={info.email}
+                      name={`${info.firstName} ${info.lastName}`}
+                      onSuccess={handlePaymentSuccess}
+                      onClose={handlePaymentClose}
+                      disabled={isProcessing}
+                      onOpen={() => setIsPaystackOpen(true)}
+                    />
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -738,12 +601,8 @@ export default function CheckoutPage() {
                     <span className="font-medium">₦{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
+                    <span className="text-muted-foreground">Delivery charge</span>
                     <span className="font-medium">₦{shipping.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span className="font-medium">₦{tax.toFixed(2)}</span>
                   </div>
                 </div>
 

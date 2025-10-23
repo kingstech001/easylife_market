@@ -4,6 +4,8 @@ import type { NextRequest } from "next/server"
 // Define the structure of the user payload you expect from the JWT
 interface UserPayload {
   id: string
+  role?: string
+  email?: string
   // Add any other properties you store in your JWT payload (e.g., role, email)
 }
 
@@ -14,36 +16,42 @@ interface UserPayload {
  */
 export default async function getUserFromCookies(request: NextRequest): Promise<UserPayload | null> {
   try {
-    // Get the authentication token from the cookies
-    // Assuming your auth token cookie is named 'token'
-    const token = request.cookies.get("token")?.value
+    // token from cookie or fallback to Authorization header
+    const cookieToken = request.cookies.get("token")?.value
+    const authHeader = request.headers.get("authorization")
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined
+    const token = cookieToken || bearerToken
 
     if (!token) {
-      console.log("No token found in cookies.")
+      if (process.env.NODE_ENV !== "production") console.debug("No token found in cookies/authorization.")
       return null
     }
 
-    // Ensure your JWT_SECRET environment variable is set
     if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET environment variable is not set.")
+      if (process.env.NODE_ENV !== "production") console.error("JWT_SECRET environment variable is not set.")
       return null
     }
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET)
 
-    // Verify the JWT token
+    // Verify the JWT token (throws if invalid/expired)
     const { payload } = await jwtVerify(token, secret)
 
-    // Basic validation of the payload
-    if (!payload.id || typeof payload.id !== "string") {
-      console.error("Invalid JWT payload: 'id' is missing or not a string.")
+    const p: any = payload as any
+
+    if (!p?.id || typeof p.id !== "string") {
+      if (process.env.NODE_ENV !== "production") console.error("Invalid JWT payload: 'id' is missing or not a string.")
       return null
     }
 
-    // Return the user payload
-    return { id: payload.id }
+    // return useful fields
+    return {
+      id: p.id,
+      role: typeof p.role === "string" ? p.role : undefined,
+      email: typeof p.email === "string" ? p.email : undefined,
+    }
   } catch (error) {
-    console.error("Error verifying JWT or getting user from cookies:", error)
+    if (process.env.NODE_ENV !== "production") console.error("Error verifying JWT or getting user from cookies:", error)
     return null
   }
 }

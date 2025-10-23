@@ -83,7 +83,7 @@ export default function StoreBuilderPage() {
       try {
         // Fetch store data
         console.log("Fetching store data...")
-        const storeRes = await fetch("/api/seller/store")
+        const storeRes = await fetch("/api/dashboard/seller/store")
 
         if (!storeRes.ok) {
           const errorData = await storeRes.json().catch(() => ({ message: "Unknown error" }))
@@ -95,7 +95,7 @@ export default function StoreBuilderPage() {
 
         // Fetch product data
         console.log("Fetching product data...")
-        const productRes = await fetch("/api/seller/products")
+        const productRes = await fetch("/api/dashboard/seller/products")
         if (!productRes.ok) {
           const errorData = await productRes.json().catch(() => ({ message: "Unknown error" }))
           throw new Error(`Failed to fetch products: ${errorData.message || productRes.statusText}`)
@@ -127,7 +127,7 @@ export default function StoreBuilderPage() {
   const handleDelete = async (productId: string) => {
     setIsSubmitting(true) // Indicate deletion is in progress
     try {
-      const res = await fetch(`/api/seller/products/${productId}`, { method: "DELETE" })
+      const res = await fetch(`/api/dashboard/seller/products/${productId}`, { method: "DELETE" })
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: "Unknown error" }))
         throw new Error(`Failed to delete product: ${errorData.message || res.statusText}`)
@@ -160,7 +160,7 @@ export default function StoreBuilderPage() {
 
       const editingId = editingProduct?.id || editingProduct?._id
       if (editingId) {
-        const res = await fetch(`/api/seller/products/${editingId}`, {
+        const res = await fetch(`/api/dashboard/seller/products/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -176,7 +176,7 @@ export default function StoreBuilderPage() {
         )
         toast.success("Product updated successfully")
       } else {
-        const res = await fetch("/api/seller/products", {
+        const res = await fetch("/api/dashboard/seller/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -206,20 +206,32 @@ export default function StoreBuilderPage() {
       toast.error("No store found to publish.")
       return
     }
+
     setIsSubmitting(true)
-    console.log("Attempting to publish store with ID:", store._id) // Log store ID
+    console.log("Attempting to publish store with ID:", store._id)
+
     try {
-      const res = await fetch("/api/seller/store/publish", {
+      const res = await fetch("/api/dashboard/seller/store/publish", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" }, // Add content type header
-        body: JSON.stringify({ storeId: store._id }), // Send storeId in the request body
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeId: store._id }),
       })
-      const data = await res.json() // Always parse response to get potential error message
+
+      const data = await res.json()
+
       if (!res.ok) {
         throw new Error(data.message || data.error || `Failed to publish store: ${res.statusText}`)
       }
+
       toast.success("Store published successfully!")
-      router.push(`/dashboard/seller/store`)
+
+      // Redirect based on role returned by backend
+      if (data.role === "admin") {
+        router.push("/dashboard/admin")
+      } else {
+        router.push("/dashboard/seller/store")
+      }
+
     } catch (error: any) {
       console.error("Publish error:", error)
       toast.error(error.message || "Failed to publish store")
@@ -227,6 +239,7 @@ export default function StoreBuilderPage() {
       setIsSubmitting(false)
     }
   }
+
 
   if (loading) {
     return (
@@ -382,11 +395,10 @@ export default function StoreBuilderPage() {
                           transition={{ delay: index * 0.05 }}
                         >
                           <Card
-                            className={`cursor-pointer transition-all duration-300 hover:shadow-lg border group ${
-                              isEditing
+                            className={`cursor-pointer transition-all duration-300 hover:shadow-lg border group ${isEditing
                                 ? "border-primary bg-primary/5 shadow-lg"
                                 : "border-border hover:border-border bg-background"
-                            }`}
+                              }`}
                             onClick={() => handleEdit(p)}
                           >
                             <CardContent className="p-4">

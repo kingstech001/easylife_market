@@ -28,6 +28,7 @@ const storeFormSchema = z.object({
   description: z.string().optional(),
   logo_url: z.string().optional(),
   banner_url: z.string().optional(),
+  categories: z.string().optional(), // <-- Add this (comma-separated string)
 })
 
 type StoreFormValues = z.infer<typeof storeFormSchema>
@@ -48,6 +49,7 @@ export default function CreateStorePage() {
       description: "",
       logo_url: "",
       banner_url: "",
+      categories: "", // <-- Add this
     },
   })
 
@@ -114,7 +116,12 @@ export default function CreateStorePage() {
     }
     setIsSubmitting(true)
     try {
-      const res = await fetch("/api/stores/create", {
+      // Convert comma-separated categories to array
+      const categoriesArray = data.categories
+        ? data.categories.split(",").map((cat) => cat.trim()).filter(Boolean)
+        : []
+
+      const res = await fetch("/api/dashboard/seller/store/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -122,6 +129,7 @@ export default function CreateStorePage() {
           ...data,
           logo_url: logoPreview,
           banner_url: bannerPreview,
+          categories: categoriesArray, // <-- Send as array
         }),
       })
 
@@ -141,7 +149,7 @@ export default function CreateStorePage() {
 
   return (
     <main className="min-h-screen py-12 sm:px-6 lg:px-8 ">
-      <div className="max-w-3xl mx-auto bg-background/90 backdrop-blur-sm rounded-xl shadow-lg p-4 dark:bg-background/80">
+      <div className="max-w-full bg-background/90 backdrop-blur-sm rounded-xl shadow-lg p-4 dark:bg-background/80">
         <AnimatedContainer animation="fadeIn" className="mb-6">
           <div className="flex items-center gap-3 mb-8">
             <div className=" hidden md:flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary shadow-sm">
@@ -205,6 +213,25 @@ export default function CreateStorePage() {
                           />
                         </FormControl>
                         <FormDescription>A short description of your store and what you sell.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="categories"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categories</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g. Electronics, Phones, Accessories"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Separate categories with commas.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

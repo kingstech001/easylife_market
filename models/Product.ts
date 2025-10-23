@@ -1,35 +1,37 @@
-import mongoose, { type Document, Schema, type Model } from "mongoose"
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-// TypeScript interface for the Product document
-export interface IProduct extends Document {
-  _id: mongoose.Types.ObjectId
-  name: string
-  description?: string
-  price: number
-  compareAtPrice?: number
-  categoryId?: mongoose.Types.ObjectId
-  inventoryQuantity: number
-  images: {
-    _id?: mongoose.Types.ObjectId
-    url: string
-    altText?: string
-  }[]
-  storeId: mongoose.Types.ObjectId
-  isActive: boolean
-  isDeleted: boolean
-  sku?: string
-  weight?: number
-  dimensions?: {
-    length?: number
-    width?: number
-    height?: number
-  }
-  tags: string[]
-  createdAt: Date
-  updatedAt: Date
+// ================== Interfaces ==================
+export interface IProductImage {
+  _id?: mongoose.Types.ObjectId;
+  url: string;
+  altText?: string;
 }
 
-// Schema definition
+export interface IProduct extends Document {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  description?: string;
+  price: number;
+  compareAtPrice?: number;
+  categoryId?: mongoose.Types.ObjectId;
+  inventoryQuantity: number;
+  images: IProductImage[];
+  storeId: mongoose.Types.ObjectId;
+  isActive: boolean;
+  isDeleted: boolean;
+  sku?: string;
+  weight?: number;
+  dimensions?: {
+    length?: number;
+    width?: number;
+    height?: number;
+  };
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ================== Schema ==================
 const ProductSchema = new Schema<IProduct>(
   {
     name: {
@@ -53,7 +55,8 @@ const ProductSchema = new Schema<IProduct>(
       min: [0, "Compare at price cannot be negative"],
       validate: {
         validator: function (this: IProduct, value: number) {
-          return !value || value > this.price
+          // Only validate if value exists
+          return !value || value > this.price;
         },
         message: "Compare at price should be greater than regular price",
       },
@@ -96,38 +99,57 @@ const ProductSchema = new Schema<IProduct>(
     sku: {
       type: String,
       unique: true,
-      sparse: true,
+      sparse: true, // prevents duplicate index error when null
     },
     weight: {
       type: Number,
       min: [0, "Weight cannot be negative"],
     },
     dimensions: {
-      length: Number,
-      width: Number,
-      height: Number,
+      length: { type: Number, min: 0 },
+      width: { type: Number, min: 0 },
+      height: { type: Number, min: 0 },
     },
-    tags: [String],
+    tags: { type: [String], default: [] },
   },
-  {
-    timestamps: true,
+  { timestamps: true }
+);
+
+// ================== Indexes ==================
+ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 });
+ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ name: "text", description: "text" });
+
+// --- added: index for recent sorting, virtual + clean JSON output ---
+ProductSchema.index({ createdAt: -1 });
+
+// expose a simple primaryImage virtual (useful for UI without extra logic)
+ProductSchema.virtual("primaryImage").get(function (this: IProduct) {
+  return this.images && this.images.length > 0 ? this.images[0].url : undefined;
+});
+
+// clean up JSON output (include virtuals, map _id -> id, remove __v)
+ProductSchema.set("toJSON", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    const out: any = ret;
+    out.id = out._id;
+    delete out._id;
+    delete out.__v;
+    return out;
   },
-)
+});
 
-// Indexes for better query performance
-ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 })
-ProductSchema.index({ categoryId: 1 })
-ProductSchema.index({ name: "text", description: "text" })
-
-// Pre-save middleware
+// ================== Middleware ==================
 ProductSchema.pre<IProduct>("save", function (next) {
   if (!this.sku) {
-    this.sku = `${this.storeId.toString().slice(-6)}-${Date.now()}`
+    this.sku = `${this.storeId.toString().slice(-6)}-${Date.now()}`;
   }
-  next()
-})
+  next();
+});
 
-// Create and export the model
-const Product: Model<IProduct> = mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema)
+// ================== Model ==================
+const Product: Model<IProduct> =
+  mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
 
-export default Product
+export default Product;

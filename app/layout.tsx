@@ -6,6 +6,7 @@ import { Toaster } from "sonner"
 import { CartProvider } from "@/context/cart-context"
 import { WishlistProvider } from "@/context/wishlist-context"
 import "./globals.css"
+import { AuthProvider } from "@/context/AuthContext"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,14 +25,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className ?? ""}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <WishlistProvider>
-            <CartProvider>
-              {children}
-              <Toaster position="bottom-right" richColors />
-            </CartProvider>
-          </WishlistProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <WishlistProvider>
+              <CartProvider>
+                {children}
+                <Toaster position="bottom-right" richColors />
+              </CartProvider>
+            </WishlistProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

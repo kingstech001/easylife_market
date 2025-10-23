@@ -6,7 +6,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   try {
     const { slug } = await params
 
-    console.log("API: Fetching store with slug:", slug)
 
     await connectToDB()
 
@@ -15,10 +14,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       isPublished: true,
     })
 
-    console.log("API: Found store:", store ? store.name : "Not found")
 
     if (!store) {
-      console.log("API: Store not found for slug:", slug)
       return NextResponse.json(
         {
           success: false,
@@ -28,7 +25,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       )
     }
 
-    console.log("API: Returning store:", store.name)
     return NextResponse.json(
       {
         success: true,
@@ -47,7 +43,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       { status: 200 },
     )
   } catch (error: any) {
-    console.error("API Error fetching store:", error)
     return NextResponse.json(
       {
         success: false,

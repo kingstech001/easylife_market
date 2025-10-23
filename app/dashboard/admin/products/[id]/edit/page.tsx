@@ -2,19 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import {
-  ArrowLeft,
-  ImageIcon,
-  Loader2,
-  Plus,
-  Save,
-  Trash2,
-} from "lucide-react"
+import { ArrowLeft, Loader2, Save } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -50,8 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { mockProducts, mockCategories } from "@/lib/mock-data"
-
 const productFormSchema = z.object({
   name: z.string().min(3, {
     message: "Product name must be at least 3 characters.",
@@ -81,9 +71,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("details")
-
-  const product = mockProducts.find((product) => product.id === params.id)
-  const categories = mockCategories
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
+  const [loadingProduct, setLoadingProduct] = useState(true)
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -99,20 +88,45 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     },
   })
 
+  // Fetch product + categories
   useEffect(() => {
-    if (product) {
-      form.reset({
-        name: product.name,
-        description: product.description || "",
-        price: product.price,
-        compare_at_price: product.compare_at_price || undefined,
-        category_id: product.category_id || "",
-        inventory_quantity: product.inventory_quantity,
-        is_published: product.is_published,
-        images: product.images,
-      })
+    const fetchData = async () => {
+      try {
+        setLoadingProduct(true)
+
+        const [productRes, categoriesRes] = await Promise.all([
+          fetch(`/api/products/${params.id}`),
+          fetch(`/api/categories`),
+        ])
+
+        if (!productRes.ok) throw new Error("Failed to fetch product")
+        if (!categoriesRes.ok) throw new Error("Failed to fetch categories")
+
+        const productData = await productRes.json()
+        const categoriesData = await categoriesRes.json()
+
+        setCategories(categoriesData)
+
+        form.reset({
+          name: productData.name,
+          description: productData.description || "",
+          price: productData.price,
+          compare_at_price: productData.compare_at_price || undefined,
+          category_id: productData.category_id || "",
+          inventory_quantity: productData.inventory_quantity,
+          is_published: productData.is_published,
+          images: productData.images || [],
+        })
+      } catch (error) {
+        console.error(error)
+        toast.error("Failed to load product details")
+      } finally {
+        setLoadingProduct(false)
+      }
     }
-  }, [product, form])
+
+    fetchData()
+  }, [params.id, form])
 
   const addPlaceholderImage = () => {
     const currentImages = form.getValues("images") || []
@@ -135,29 +149,36 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   async function onSubmit(data: ProductFormValues) {
     setIsLoading(true)
     try {
-      console.log("Updating product:", data)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const res = await fetch(`/api/products/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) throw new Error("Update failed")
 
       toast.success("Product updated successfully")
       router.push("/dashboard/products")
     } catch (error) {
-      console.error("Error updating product:", error)
-      toast.error("There was an error updating your product. Please try again.")
+      console.error(error)
+      toast.error("There was an error updating your product")
     } finally {
       setIsLoading(false)
     }
   }
 
-  if (!product) {
+  if (loadingProduct) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p>Product not found</p>
+        <Loader2 className="animate-spin mr-2 h-6 w-6" />
+        Loading product...
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="ghost" onClick={() => router.back()}>
@@ -181,6 +202,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         </Button>
       </div>
 
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="details">Product Details</TabsTrigger>
@@ -192,20 +214,104 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           <form onSubmit={form.handleSubmit(onSubmit)}>
             {/* Details Tab */}
             <TabsContent value="details" className="space-y-4">
-              {/* Basic Information Card */}
               <Card>
                 <CardHeader>
                   <CardTitle>Basic Information</CardTitle>
                   <CardDescription>Basic information about your product</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Fields */}
-                  {/* Name */}
-                  {/* Description */}
-                  {/* Price and Compare Price */}
-                  {/* Category */}
-                  {/* Visibility Switch */}
-                  {/* Reuse your form fields here (trimmed to save space) */}
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter product name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Product description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Price</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="compare_at_price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Compare at Price</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="category_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_published"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-3">
+                        <FormLabel>Published</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -218,8 +324,25 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                   <CardDescription>Manage your product images</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Add Image Button */}
-                  {/* Image List */}
+                  <Button type="button" onClick={addPlaceholderImage} className="mb-4">
+                    Add Image
+                  </Button>
+                  <div className="grid grid-cols-3 gap-4">
+                    {form.watch("images")?.map((img) => (
+                      <div key={img.id} className="relative">
+                        <img src={img.url} alt={img.alt_text || ""} className="w-full h-auto" />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1"
+                          onClick={() => removeImage(img.id)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -232,7 +355,19 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                   <CardDescription>Manage your product inventory</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Inventory Quantity Field */}
+                  <FormField
+                    control={form.control}
+                    name="inventory_quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

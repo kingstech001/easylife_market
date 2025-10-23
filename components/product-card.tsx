@@ -62,10 +62,9 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
         price: product.price,
         quantity: 1,
         image: product.images[0]?.url || "/placeholder.svg",
+        storeId: product.store_id,      // <-- Add this line
+        productId: product.id,          // <-- Add this line
       })
-      // toast.success("Added to cart!", {
-      //   description: `${product.name}`,
-      // })
     }, 1000)
   }
 

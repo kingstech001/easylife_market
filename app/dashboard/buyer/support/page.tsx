@@ -21,7 +21,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { useEffect, useState } from "react"
-import { ChevronLeft } from "lucide-react"
+import { FaWhatsapp } from "react-icons/fa"
 
 export default function HelpPage() {
   const [email, setEmail] = useState<string>("")
@@ -47,10 +47,7 @@ export default function HelpPage() {
   }, []);
 
   return (
-    <div className="space-y-8 py-10">
-      <Link href="/dashboard/buyer" className="flex md:hidden items-center mb-4">
-        <ChevronLeft className="h-5 w-5 mr-2" /> Back to Dashboard
-      </Link>
+    <div className="space-y-8 py-5">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Help & Support</h2>
       </div>
@@ -213,17 +210,26 @@ export default function HelpPage() {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Live Chat</CardTitle>
+                      <CardTitle className="text-lg">WhatsApp Support</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm">
-                        Chat with us in real-time during business hours (9 AM - 5 PM, Mon–Fri).
+                        Need quick help? Chat with our support team directly on WhatsApp.
+                        We're available Monday-Friday, 9 AM-5 PM.
                       </p>
                       <div className="mt-4">
-                        <Button>Start Chat</Button>
+                        <a
+                          href="https://wa.me/2348071427831" // 👈 Replace with your actual WhatsApp number
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center p-3 rounded-full bg-green-500 hover:bg-green-600 transition-colors duration-200"
+                        >
+                          <FaWhatsapp size={24} className="text-white" />
+                        </a>
                       </div>
                     </CardContent>
                   </Card>
+
                 </div>
 
               </div>

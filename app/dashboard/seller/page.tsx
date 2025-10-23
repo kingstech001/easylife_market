@@ -3,19 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import {
-  BarChart3,
-  CreditCard,
-  Users,
-  ShoppingBag,
-  Settings,
-  Store,
-  HelpCircle,
-  Loader2,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { BarChart3, Users, ShoppingBag, Store, Loader2, Package, TrendingUp, ArrowUpRight, Eye } from "lucide-react"
 import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { VisitorsChart } from "@/components/dashboard/visitors-chart"
+import { SalesChart } from "@/components/dashboard/sales-chart"
+import { TopProducts } from "@/components/dashboard/top-products"
 
 // Define a type for the dashboard statistics
 type DashboardStats = {
@@ -38,7 +32,7 @@ export default function SellerDashboardPage() {
     setIsLoadingStats(true)
     setStatsError(null)
     try {
-      const response = await fetch("/api/dashboard/seller/stats")
+      const response = await fetch("/api/seller/stats")
       if (!response.ok) {
         let errorMessage = "Failed to fetch dashboard statistics."
         try {
@@ -87,31 +81,14 @@ export default function SellerDashboardPage() {
 
   const dashboardItems = [
     {
-      title: "Analytics",
-      description: "Track sales, revenue, and performance metrics",
-      icon: BarChart3,
-      href: "/dashboard/seller/analytics",
-      buttonText: "View Analytics",
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-100 dark:bg-blue-900/20",
-    },
-    {
-      title: "Billing",
-      description: "Manage invoices and payment methods",
-      icon: CreditCard,
-      href: "/dashboard/seller/billing",
-      buttonText: "Billing Info",
-      iconColor: "text-green-600",
-      iconBg: "bg-green-100 dark:bg-green-900/20",
-    },
-    {
       title: "Customers",
       description: "View and manage your customer base",
       icon: Users,
       href: "/dashboard/seller/customers",
       buttonText: "View Customers",
-      iconColor: "text-purple-600",
-      iconBg: "bg-purple-100 dark:bg-purple-900/20",
+      iconColor: "text-violet-600",
+      iconBg: "bg-violet-50 dark:bg-violet-950/50",
+      borderColor: "border-violet-200 dark:border-violet-800",
     },
     {
       title: "Products",
@@ -119,162 +96,322 @@ export default function SellerDashboardPage() {
       icon: ShoppingBag,
       href: "/dashboard/seller/products",
       buttonText: "Manage Products",
+      iconColor: "text-emerald-600",
+      iconBg: "bg-emerald-50 dark:bg-emerald-950/50",
+      borderColor: "border-emerald-200 dark:border-emerald-800",
+    },
+    {
+      title: "Orders",
+      description: "Track and manage customer orders",
+      icon: Package,
+      href: "/dashboard/seller/orders",
+      buttonText: "View Orders",
       iconColor: "text-orange-600",
-      iconBg: "bg-orange-100 dark:bg-orange-900/20",
-    },
-    {
-      title: "Store Details",
-      description: "Update your shop profile and information",
-      icon: Store,
-      href: "/dashboard/seller/store",
-      buttonText: "Edit Store",
-      iconColor: "text-teal-600",
-      iconBg: "bg-teal-100 dark:bg-teal-900/20",
-    },
-    {
-      title: "Settings",
-      description: "Customize dashboard preferences and configurations",
-      icon: Settings,
-      href: "/dashboard/seller/settings",
-      buttonText: "Go to Settings",
-      iconColor: "text-gray-600 dark:text-gray-400",
-      iconBg: "bg-gray-100 dark:bg-gray-800",
-    },
-    {
-      title: "Support",
-      description: "Need help? Contact our support team",
-      icon: HelpCircle,
-      href: "/dashboard/seller/support",
-      buttonText: "Get Support",
-      iconColor: "text-rose-600",
-      iconBg: "bg-rose-100 dark:bg-rose-900/20",
+      iconBg: "bg-orange-50 dark:bg-orange-950/50",
+      borderColor: "border-orange-200 dark:border-orange-800",
     },
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container px-4 py-8">
-        {/* Header Section */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="hidden h-12 w-12 rounded-xl bg-primary md:flex items-center justify-center">
-              <Store className="h-6 w-6 text-primary-foreground " />
+    <div className="min-h-screen ">
+      <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="relative"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                <Store className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                  Welcome back,{" "}
+                  <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    {storeName || "Your Store"}
+                  </span>
+                </h1>
+                {storeError && <p className="text-red-500 text-sm">{storeError}</p>}
+                <p className="text-sm md:text-lg text-slate-600 dark:text-slate-400">Manage your store and track your success</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Welcome back, {storeName || "Your Store"}
-              </h1>
-              {storeError && <p className="text-red-500 text-sm">{storeError}</p>}
-              <p className="text-lg text-muted-foreground mt-1">Manage your store and track your success</p>
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="px-3 py-1">
+                <Eye className="h-3 w-3 mr-1" />
+                Live Store
+              </Badge>
             </div>
           </div>
         </motion.div>
 
-        {/* Quick Stats Section */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <h2 className="text-2xl font-semibold tracking-tight mb-6">Overview</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Overview</h2>
+            <Badge variant="outline" className="gap-1">
+              <TrendingUp className="h-3 w-3" />
+              Last 30 days
+            </Badge>
+          </div>
+
           {isLoadingStats ? (
-            <div className="grid gap-6 md:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="p-6 animate-pulse">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="h-4 bg-muted rounded w-24 mb-2"></div>
-                      <div className="h-8 bg-muted rounded w-32"></div>
+                <Card key={i} className="border-0 shadow-sm bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse"></div>
+                        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-32 animate-pulse"></div>
+                      </div>
+                      <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-xl animate-pulse">
+                        <Loader2 className="h-6 w-6 text-slate-400 animate-spin" />
+                      </div>
                     </div>
-                    <div className="p-3 bg-muted rounded-xl">
-                      <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
           ) : statsError ? (
-            <div className="flex items-center justify-center h-32 text-destructive">
-              <p>Error loading stats: {statsError}</p>
-            </div>
+            <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
+              <CardContent className="flex items-center justify-center h-32 text-red-600 dark:text-red-400">
+                <p>Error loading stats: {statsError}</p>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="grid gap-6 md:grid-cols-4">
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                    <p className="text-2xl font-bold text-foreground">₦{stats?.totalSales.toFixed(2) || "0.00"}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-xl">
-                    <BarChart3 className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Orders</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.ordersCount || 0}</p>
-                  </div>
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-xl">
-                    <ShoppingBag className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Customers</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.customersCount || 0}</p>
-                  </div>
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-xl">
-                    <Users className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Products</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.productsCount || 0}</p>
-                  </div>
-                  <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-xl">
-                    <Store className="h-6 w-6 text-orange-600" />
-                  </div>
-                </div>
-              </Card>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+              >
+                <Card className="border-1 border transition-all duration-300 group">
+                  <CardContent className="p-6">
+                    <div >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Sales</p>
+                          <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                            ₦{stats?.totalSales.toLocaleString() || 0}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                          <BarChart3 className="h-6 w-6 text-emerald-600" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        +12.5% from last month
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+              >
+                <Card className="border-1 border transition-all duration-300 group">
+                  <CardContent className="p-6">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Orders</p>
+                          <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                            {stats?.ordersCount.toLocaleString() || 0}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/50 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                          <ShoppingBag className="h-6 w-6 text-blue-600" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        +8.2% from last month
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <Card className="border-1 border transition-all duration-300 group">
+                  <CardContent className="p-6">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Customers</p>
+                          <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                            {stats?.customersCount.toLocaleString() || 0}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                          <Users className="h-6 w-6 text-violet-600" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-violet-600 dark:text-violet-400 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        +15.3% from last month
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+              >
+                <Card className="border-1 border transition-all duration-300 group">
+                  <CardContent className="p-6">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Products</p>
+                          <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                            {stats?.productsCount.toLocaleString() || 0}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-orange-50 dark:bg-orange-950/50 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                          <Package className="h-6 w-6 text-orange-600" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        +5.7% from last month
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           )}
         </motion.div>
 
-        {/* Dashboard Grid */}
-        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-          {dashboardItems.map((item, index) => {
-            const Icon = item.icon
-            return (
-              <Card
-                key={index}
-                className="group relative overflow-hidden border hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card hover:bg-accent/50"
-              >
-                <CardHeader className="relative pb-4">
-                  <div className="flex items-center justify-between">
-                    <div
-                      className={`p-3 rounded-xl ${item.iconBg} group-hover:scale-110 transition-transform duration-300`}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+          className="grid gap-6 lg:grid-cols-2"
+        >
+          <Card className="border-1 border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">Visitors</CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">
+                    Total visitors over time
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary">Live</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pl-2">
+              <VisitorsChart />
+            </CardContent>
+          </Card>
+
+          <Card className="border-1 border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sales</CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">
+                    Revenue trends and performance
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary">₦</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pl-2">
+              <SalesChart />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+            className="lg:col-span-2"
+          >
+            <Card className="border-1 border">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  Quick Actions
+                </CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
+                  Manage your store efficiently
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {dashboardItems.map((item, index) => (
+                    <motion.div
+                      key={item.title}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.1 * index }}
                     >
-                      <Icon className={`h-6 w-6 ${item.iconColor}`} />
-                    </div>
-                  </div>
-                  <CardTitle className="text-xl font-semibold text-card-foreground group-hover:text-foreground transition-colors">
-                    {item.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative">
-                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{item.description}</p>
-                  <Link href={item.href}>
-                    <Button size="sm" className="w-full transition-all duration-300 shadow-sm hover:shadow-md">
-                      {item.buttonText}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            )
-          })}
+                      <Link href={item.href}>
+                        <Card
+                          className={`border ${item.borderColor} hover:shadow-md transition-all duration-300 group cursor-pointer`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`p-2 ${item.iconBg} rounded-lg group-hover:scale-110 transition-transform duration-300`}
+                              >
+                                <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                  {item.title}
+                                </h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
+                              </div>
+                              <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+          >
+            <Card className="border-1 border">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">Top Products</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">
+                  Your best-selling items
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TopProducts />
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </div>

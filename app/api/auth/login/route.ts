@@ -23,26 +23,26 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Include fullName in JWT payload
     const token = jwt.sign(
       {
         id: user._id,
         email: user.email,
         role: user.role,
-        fullName: user.fullName, // Add fullName to payload
+        firstName: user.firstName,
+        lastName: user.lastName,
       },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
 
-    // ✅ Send fullName in response
     const response = NextResponse.json({
       message: "Login successful",
       user: {
         id: user._id,
         email: user.email,
         role: user.role,
-        fullName: user.fullName, // Add fullName to client
+        firstName: user.firstName,
+        lastName: user.lastName,
       },
     });
 

@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
@@ -8,51 +8,69 @@ import {
   ShoppingBag,
   BarChart3,
   Users,
-  CreditCard,
   Settings,
   HelpCircle,
   LogOut,
+  Package,
 } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useToast } from "@/components/ui/use-toast"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar"
+import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { toast } from "sonner"
 
 const sidebarNavItems = [
   {
     title: "Overview",
-    href: "/dashboard",
+    href: "/dashboard/admin",
     icon: LayoutDashboard,
   },
   {
     title: "All Stores",
-    href: "/dashboard/stores",
+    href: "/dashboard/admin/stores",
     icon: Store,
   },
   {
     title: "All Products",
-    href: "/dashboard/products",
+    href: "/dashboard/admin/products",
+    icon: Package,
+  },
+  {
+    title: "All Orders",
+    href: "/dashboard/admin/orders",
     icon: ShoppingBag,
   },
   {
     title: "Analytics",
-    href: "/dashboard/analytics",
+    href: "/dashboard/admin/analytics",
     icon: BarChart3,
   },
+]
+
+const managementItems = [
   {
     title: "Users",
-    href: "/dashboard/customers",
+    href: "/dashboard/admin/users",
     icon: Users,
   },
   {
-    title: "Billing",
-    href: "/dashboard/billing",
-    icon: CreditCard,
+    title: "Help Center",
+    href: "/dashboard/admin/help",
+    icon: HelpCircle,
   },
   {
     title: "Settings",
-    href: "/dashboard/settings",
+    href: "/dashboard/admin/settings",
     icon: Settings,
   },
 ]
@@ -60,54 +78,93 @@ const sidebarNavItems = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { toast } = useToast()
 
-   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    toast("Logged out successfully.")
-    router.push("/")
-    router.refresh()
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST", credentials: "include" })
+      if (res.ok) {
+        toast.success("Logged out successfully.")
+        router.push("/")
+        router.refresh()
+      } else {
+        toast.error("Logout failed.")
+      }
+    } catch (error) {
+      console.error("Logout error:", error)
+      toast.error("Logout failed.")
+    }
   }
 
   return (
-    <div className="hidden border-r bg-background md:block">
-      <div className="flex h-[calc(100vh-3.5rem)] flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Users className="h-6 w-6" />
-            <span>Admin Panel</span>
-          </Link>
-        </div>
-        <ScrollArea className="flex-1 px-3 py-2">
-          <div className="flex flex-col gap-1">
-            {sidebarNavItems.map((item) => (
-              <Button
-                key={item.href}
-                variant={pathname === item.href ? "default" : "ghost"}
-                className={cn("justify-start", pathname === item.href && "bg-primary text-primary-foreground")}
-                asChild
-              >
-                <Link href={item.href}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.title}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </ScrollArea>
-        <div className="mt-auto border-t p-4">
-          <div className="flex items-center gap-2 py-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/dashboard/help">
-                <HelpCircle className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton>
+                  <Users className="h-5 w-5" />
+                  <span>Admin Panel</span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {sidebarNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>System & Support</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {managementItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="flex items-center justify-between w-full px-2 py-1">
+              <span className="text-sm font-medium text-sidebar-foreground/70">Sign out</span>
+              <div onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4 hover:text-red-700" />
+              </div>
+            </div>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <div className="flex items-center justify-between w-full px-2 py-1">
+              <span className="text-sm font-medium text-sidebar-foreground/70">Theme</span>
+              <ThemeToggle />
+            </div>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   )
 }

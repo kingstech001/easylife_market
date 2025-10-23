@@ -10,19 +10,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge"
 import { formatPrice } from "@/lib/utils"
 
-// Updated Product type to match your transformed data structure
+// Updated Product type to match your actual API data
 export type Product = {
-  id: string
+  _id: string
   name: string
   description?: string
   price: number
   compare_at_price?: number
   category?: string
-  inventory_quantity: number
+  inventoryQuantity: number // FIX: match backend naming
   images?: { url: string; altText?: string }[]
   store_id: string
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
   status?: "active" | "draft" | "archived"
 }
 
@@ -86,11 +86,11 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => {
-      const price = Number.parseFloat(row.getValue("price"))
+      const price = Number(row.getValue("price"))
       const compareAtPrice = row.original.compare_at_price
 
       return (
-        <div className="text-right">
+        <div >
           <div className="font-medium">{formatPrice(price)}</div>
           {compareAtPrice && compareAtPrice > price && (
             <div className="text-sm text-muted-foreground line-through">{formatPrice(compareAtPrice)}</div>
@@ -100,10 +100,10 @@ export const columns: ColumnDef<Product>[] = [
     },
   },
   {
-    accessorKey: "inventory_quantity",
+    accessorKey: "inventoryQuantity", // FIX: match API field
     header: "Inventory",
     cell: ({ row }) => {
-      const inventory = Number.parseInt(row.getValue("inventory_quantity"))
+      const inventory = Number(row.original.inventoryQuantity) // FIX: read from correct prop
 
       return (
         <div>
@@ -150,10 +150,10 @@ export const columns: ColumnDef<Product>[] = [
     },
   },
   {
-    accessorKey: "created_at",
+    accessorKey: "createdAt",
     header: "Created",
     cell: ({ row }) => {
-      const date = new Date(row.getValue("created_at"))
+      const date = new Date(row.getValue("createdAt"))
       return <div className="text-sm text-muted-foreground">{date.toLocaleDateString()}</div>
     },
   },
@@ -166,12 +166,10 @@ export const columns: ColumnDef<Product>[] = [
       const handleDelete = async () => {
         if (confirm("Are you sure you want to delete this product?")) {
           try {
-            const response = await fetch(`/api/seller/products/${product.id}`, {
+            const response = await fetch(`/api/seller/products/${product._id}`, {
               method: "DELETE",
             })
-
             if (response.ok) {
-              // Refresh the page or update the data
               window.location.reload()
             } else {
               alert("Failed to delete product")
@@ -185,12 +183,10 @@ export const columns: ColumnDef<Product>[] = [
 
       const handleDuplicate = async () => {
         try {
-          const response = await fetch(`/api/seller/products/${product.id}/duplicate`, {
+          const response = await fetch(`/api/seller/products/${product._id}/duplicate`, {
             method: "POST",
           })
-
           if (response.ok) {
-            // Refresh the page or update the data
             window.location.reload()
           } else {
             alert("Failed to duplicate product")
@@ -211,13 +207,13 @@ export const columns: ColumnDef<Product>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/seller/products/${product.id}`}>
+              <Link href={`/dashboard/seller/products/${product._id}`}>
                 <Eye className="mr-2 h-4 w-4" />
                 View
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/seller/products/${product.id}/edit`}>
+              <Link href={`/dashboard/seller/products/${product._id}/edit`}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </Link>
@@ -226,7 +222,10 @@ export const columns: ColumnDef<Product>[] = [
               <Copy className="mr-2 h-4 w-4" />
               Duplicate
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={handleDelete}>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={handleDelete}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, PackageOpen } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 type TopProduct = {
   productId: string;
@@ -23,23 +24,42 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
   const [products, setProducts] = useState<TopProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchTopProducts = useCallback(async () => {
+    if (!user) return; // Don't fetch until user is loaded
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/seller/analytics/top-products?limit=${limit}`,
-        { cache: "no-store" } // ✅ prevents stale data in Next.js
-      );
-      const result = await response.json();
+      const apiUrl =
+        user.role === "admin"
+          ? `/api/dashboard/admin/analytics/top-products?limit=${limit}`
+          : `/api/dashboard/seller/analytics/top-products?limit=${limit}`;
 
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to fetch top products");
+      const res = await fetch(apiUrl, {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to fetch top products");
       }
 
-      const realProducts = Array.isArray(result.data) ? result.data : [];
+      const realProducts = Array.isArray(json.products)
+        ? json.products.map((p: any) => ({
+            productId: p._id,
+            name: p.name,
+            imageUrl:
+              Array.isArray(p.images) && p.images.length > 0
+                ? p.images[0].url || p.images[0]
+                : undefined,
+            totalQuantitySold: p.totalSold,
+            totalRevenue: p.totalRevenue,
+          }))
+        : [];
       setProducts(realProducts);
     } catch (err: any) {
       console.error("Error fetching top products:", err);
@@ -50,13 +70,14 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [limit]);
+  }, [limit, user]);
 
   useEffect(() => {
-    fetchTopProducts();
-  }, [fetchTopProducts]);
+    if (user) {
+      fetchTopProducts();
+    }
+  }, [fetchTopProducts, user]);
 
-  // ✅ Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[200px]">
@@ -68,7 +89,6 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
     );
   }
 
-  // ✅ Error state
   if (error) {
     return (
       <div className="flex items-center justify-center h-[200px] text-destructive">
@@ -77,7 +97,6 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
     );
   }
 
-  // ✅ Empty state
   if (products.length === 0) {
     return (
       <div className="flex items-center justify-center h-[200px] text-muted-foreground">
@@ -86,7 +105,6 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
     );
   }
 
-  // ✅ Success state
   return (
     <CardContent className="p-0">
       <div className="space-y-4">
@@ -117,7 +135,7 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
 
               <div className="text-right">
                 <p className="text-sm font-medium">
-                  ${product.totalRevenue.toFixed(2)}
+                  ₦{product.totalRevenue.toFixed(2)}
                 </p>
               </div>
             </div>

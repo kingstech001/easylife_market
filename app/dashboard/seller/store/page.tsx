@@ -13,6 +13,7 @@ interface StoreType {
   description?: string
   isPublished: boolean
   createdAt: string
+  slug: string
 }
 
 export default function SellerStorePage() {
@@ -157,7 +158,7 @@ export default function SellerStorePage() {
                     </Link>
                   </Button>
                   <Button variant="outline" asChild className="flex-1 sm:flex-none bg-transparent">
-                    <Link href={`/store/${store._id}`}>
+                    <Link href={`/stores/${store.slug}`}>
                       <Eye className="mr-2 h-4 w-4" />
                       View Store
                     </Link>

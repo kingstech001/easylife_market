@@ -41,9 +41,9 @@ export default function HeroSection() {
               {/* Main Content */}
               <div className="space-y-6">
                 <h1 className="text-center sm:text-left text-4xl font-bold tracking-tight sm:text-5xl xl:text-6xl/none bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-                  Create Your Dream{" "}
+                  Buy and Sell{" "}
                   <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    E-commerce Store
+                    Seamlessly with <span className="text-[#c0a146]">EasyLife</span>
                   </span>
                 </h1>
                 <p className="text-center sm:text-left max-w-[600px] text-muted-foreground text-lg md:text-xl leading-relaxed">
@@ -64,7 +64,7 @@ export default function HeroSection() {
                 <div className="text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <TrendingUp className="w-5 h-5 text-primary" />
-                    <span className="text-2xl font-bold">$2M+</span>
+                    <span className="text-2xl font-bold">₦2M+</span>
                   </div>
                   <p className="text-sm text-muted-foreground">Sales Generated</p>
                 </div>
@@ -84,8 +84,8 @@ export default function HeroSection() {
                     size="lg"
                     className={cn(
                       "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                      "shadow-lg hover:shadow-xl hover:shadow-primary/25",
+                      "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 ",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
                       "hover:scale-105 active:scale-95",
                     )}
                   >
@@ -137,7 +137,7 @@ export default function HeroSection() {
                 {/* Main image container */}
                 <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted border border-border/50 backdrop-blur-sm">
                   <Image
-                    src="/hero.jpg"
+                    src="/hero-image.png"
                     alt="Modern E-commerce Dashboard Interface"
                     fill
                     className="object-cover transition-transform duration-700 hover:scale-105"

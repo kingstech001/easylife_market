@@ -42,7 +42,7 @@ export function CartSummaryWidget() {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            Your Cart ({cartTotal})
+            Your Cart <span className="bg-[#c0a146] text-xs w-5 h-5 p-4 rounded-full flex items-center justify-center text-[20px]">{cartTotal}</span>
           </CardTitle>
           <Button asChild variant="outline" size="sm">
             <Link href="/cart">View All</Link>

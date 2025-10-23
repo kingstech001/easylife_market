@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { ArrowLeft, Package, Edit, Trash2, PlusCircle, Search, Filter, ArrowUpDown, Loader2 } from "lucide-react"
+import { Package, Edit, Trash2, PlusCircle, Search, Filter, ArrowUpDown, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -109,7 +109,7 @@ export default function ProductListPage() {
     if (product) {
       toast.info(`Editing ${product.name}`)
     }
-    router.push(`/dashboard/seller/products/${id}/edit`) 
+    router.push(`/dashboard/seller/products/${id}/edit`)
   }
 
   const confirmDelete = async () => {
@@ -145,24 +145,30 @@ export default function ProductListPage() {
       <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
-          <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20 flex-shrink-0">
-              <Package className="h-5 w-5 sm:h-6 sm:w-6" />
+          <div className="flex flex-col md:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20 flex-shrink-0">
+                <Package className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Products</h1>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage your store's product inventory</p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Products</h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage your store's product inventory</p>
-            </div>
-            <Button onClick={() => router.push("/dashboard/seller/products/create")} className="ml-auto">
+            <Button
+              onClick={() => router.push("/dashboard/seller/products/create")}
+              className="w-full md:w-auto md:mr-auto"
+              disabled={products.length >= 10} // ✅ Disable if 10 products already
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Product
+              {products.length >= 10 ? "Limit Reached" : "Add New Product"}
             </Button>
           </div>
         </motion.div>
 
         {/* Product List */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20">
+          <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20 block m-auto">
             <CardHeader className="pb-4 sm:pb-6">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Package className="h-4 w-4 sm:h-5 sm:w-5" />

@@ -1,25 +1,24 @@
 "use client"
 
-import type { Metadata } from "next"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { StoreCard } from "@/components/store-card"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Store, Loader2 } from "lucide-react"
+import { ArrowRight, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Reveal } from "@/components/Reveal"
 
 // Define the StoreData interface to match your IStore Mongoose model
 interface StoreData {
-  _id: string // MongoDB's default ID
+  _id: string 
   name: string
-  slug: string // Added slug
+  slug: string 
   description?: string
   logo_url?: string
   banner_url?: string
   sellerId: string
-  isPublished: boolean // Changed from is_published to isPublished
+  isPublished: boolean
   createdAt: string
   updatedAt: string
 }
@@ -98,7 +97,7 @@ export default function StoresPage() {
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-10" />
 
-        <div className="container relative z-10 px-4 md:px-6">
+        <div className="container relative z-10 px-4 md:px-6 block m-auto">
           {/* Header Section */}
           <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
             {/* Badge */}
@@ -126,7 +125,7 @@ export default function StoresPage() {
           </div>
 
           {/* Store Cards Grid */}
-          <div className="relative">
+          <div className="relative ">
             {/* Decorative elements around the grid */}
             <div className="absolute -top-8 -left-8 w-16 h-16 bg-primary/10 rounded-full blur-xl" />
             <div className="absolute -bottom-8 -right-8 w-20 h-20 bg-secondary/10 rounded-full blur-xl" />
@@ -187,8 +186,8 @@ export default function StoresPage() {
                     size="lg"
                     className={cn(
                       "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                      "shadow-lg hover:shadow-xl hover:shadow-primary/25",
+                      "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 hover:from-[#c0a146]/90 hover:to-[#c0a146]",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
                       "hover:scale-105 active:scale-95",
                     )}
                   >

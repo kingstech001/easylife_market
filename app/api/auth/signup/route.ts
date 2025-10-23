@@ -32,38 +32,25 @@ export async function POST(req: Request) {
 
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase()
-    console.log("Normalized email:", normalizedEmail)
 
     await connectToDB()
     console.log("Database connected successfully")
 
     // Check for existing user
-    console.log("Checking for existing user with email:", normalizedEmail)
     const existingUser = await User.findOne({ email: normalizedEmail })
 
     if (existingUser) {
-      console.log("User already exists:", {
-        id: existingUser._id,
-        email: existingUser.email,
-        verified: existingUser.verified,
-        createdAt: existingUser.createdAt,
-      })
       return NextResponse.json({ message: "Email already in use" }, { status: 400 })
     }
 
-    console.log("No existing user found, proceeding with registration")
 
     // Hash password
-    console.log("Hashing password...")
     const hashedPassword = await bcrypt.hash(password, 10)
-    console.log("Password hashed successfully")
 
     // Generate verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
-    console.log("Generated verification code:", verificationCode)
 
     // Create user
-    console.log("Creating new user...")
     const userData = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -77,17 +64,8 @@ export async function POST(req: Request) {
     }
 
     const user = await User.create(userData)
-    console.log("User created successfully:", {
-      id: user._id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      verified: user.verified,
-    })
 
     // Send verification email
-    console.log("Preparing to send verification email...")
     try {
       const transporter = nodemailer.createTransport({
         service: "Gmail",

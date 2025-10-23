@@ -1,39 +1,84 @@
-import mongoose, { Schema, type Document } from "mongoose"
+import mongoose, { Schema, Document, Model } from "mongoose"
 
-export interface IOrderItem {
-  productId: mongoose.Types.ObjectId
+// Define an interface for each item in the order
+interface IOrderItem {
+  productName: string
+  productId: mongoose.Types.ObjectId // reference to Product
   quantity: number
-  priceAtPurchase: number // Price of the product at the time of purchase
+  priceAtPurchase: number
 }
 
+// Define the full order interface
 export interface IOrder extends Document {
   storeId: mongoose.Types.ObjectId
-  userId: mongoose.Types.ObjectId // The customer who placed the order
+  userId: mongoose.Types.ObjectId
   totalPrice: number
   status: string
-  items: IOrderItem[] // Added items array
+  items: IOrderItem[]
+  paymentMethod?: string
+  receiptUrl?: string
+  shippingInfo?: {
+    firstName: string
+    lastName: string
+    email: string
+    address: string
+    state: string
+    phone: string
+    area: string
+  }
   createdAt: Date
   updatedAt: Date
 }
 
-const OrderItemSchema: Schema = new Schema(
-  {
-    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-    quantity: { type: Number, required: true, min: 1 },
-    priceAtPurchase: { type: Number, required: true },
-  },
-  { _id: false },
-) // Do not create _id for subdocuments
-
-const OrderSchema: Schema = new Schema({
-  storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true },
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Assuming a User model for customers
-  totalPrice: { type: Number, required: true },
-  status: { type: String, default: "pending" }, // e.g., 'pending', 'completed', 'cancelled'
-  items: [OrderItemSchema], // Array of order items
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
+// Create the schema
+const OrderItemSchema = new Schema({
+  productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+  productName: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  priceAtPurchase: { type: Number, required: true },
 })
 
-const Order = mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema)
+const OrderSchema = new Schema<IOrder>(
+  {
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    totalPrice: { type: Number, required: true },
+    status: { type: String, default: "pending", index: true },
+    items: [OrderItemSchema],
+    paymentMethod: { type: String },
+    receiptUrl: { type: String },
+    shippingInfo: {
+      firstName: String,
+      lastName: String,
+      email: String,
+      address: String,
+      state: String,
+      phone: String,
+      area: String,
+    },
+  },
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
+)
+
+// Add indexes to speed common queries and aggregations
+OrderSchema.index({ createdAt: 1 })
+OrderSchema.index({ createdAt: 1, status: 1 })
+OrderSchema.index({ "items.productId": 1 })
+OrderSchema.index({ storeId: 1 })
+OrderSchema.index({ userId: 1 })
+OrderSchema.index({ storeId: 1, createdAt: -1 }) // common for store recent orders
+
+// Optional: remove __v when converting to JSON
+OrderSchema.set("toJSON", {
+  transform: function (doc, ret) {
+    const out = ret as any; // cast to any so `delete` is allowed
+    delete out.__v;
+    return out;
+  },
+})
+
+// ✅ Prevent recompilation issues in Next.js
+const Order: Model<IOrder> =
+  mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema)
+
 export default Order

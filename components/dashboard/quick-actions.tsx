@@ -11,25 +11,25 @@ export function QuickActions() {
       title: "Add Product",
       description: "Create a new product",
       icon: Plus,
-      href: "/dashboard/products/create",
+      href: "/dashboard/admin/products/create",
     },
     {
       title: "Manage Inventory",
       description: "Update stock levels",
       icon: Package,
-      href: "/dashboard/products/inventory",
+      href: "/dashboard/admin/products/inventory",
     },
     {
       title: "Update Prices",
       description: "Change product prices",
       icon: Tag,
-      href: "/dashboard/products/prices",
+      href: "/dashboard/admin/products/prices",
     },
     {
       title: "View Reports",
       description: "See sales analytics",
       icon: BarChart3,
-      href: "/dashboard/analytics",
+      href: "/dashboard/admin/analytics",
     },
   ]
 

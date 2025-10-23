@@ -26,6 +26,9 @@ export async function middleware(req: NextRequest) {
     if (path === '/' && payload.role === 'seller') {
       return NextResponse.redirect(new URL('/dashboard/seller', req.url));
     }
+    if (path === '/' && payload.role === 'admin'){
+    return NextResponse.redirect(new URL('/dashboard/admin', req.url))
+    }
 
     // 🔐 Admin dashboard access
     if (path.startsWith('/dashboard/admin') && payload.role !== 'admin') {

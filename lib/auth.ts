@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
 import { jwtVerify } from "jose"
+import { NextResponse } from "next/server"
 
 interface UserPayload {
   id: string
@@ -27,11 +28,9 @@ export async function getUserFromCookies(): Promise<UserPayload | null> {
 
     // Ensure payload has the expected properties
     if (typeof payload.id !== "string" || typeof payload.email !== "string" || typeof payload.role !== "string") {
-      console.error("Auth: Invalid JWT payload structure:", payload)
       return null
     }
 
-    console.log("Auth: Token decoded successfully for user ID:", payload.id)
     return {
       id: payload.id,
       email: payload.email,
@@ -40,8 +39,8 @@ export async function getUserFromCookies(): Promise<UserPayload | null> {
   } catch (error) {
     console.error("Auth: Error verifying JWT or getting user from cookies:", error)
     // In case of an invalid token, you might want to clear the cookie here
-    // const response = NextResponse.next()
-    // response.cookies.delete("token")
+    const response = NextResponse.next()
+    response.cookies.delete("token")
     return null
   }
 }
@@ -50,7 +49,6 @@ export async function getUserFromCookies(): Promise<UserPayload | null> {
 export async function verifyUserRole(requiredRole: string): Promise<UserPayload | null> {
   const user = await getUserFromCookies()
   if (!user || user.role !== requiredRole) {
-    console.warn(`Auth: User ${user?.id} (role: ${user?.role}) unauthorized for role: ${requiredRole}`)
     return null
   }
   return user

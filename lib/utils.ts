@@ -1,24 +1,23 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function formatPrice(
   price: number | string,
   options: {
-    currency?: "USD" | "EUR" | "GBP" | "BDT"
-    notation?: Intl.NumberFormatOptions["notation"]
-  } = {},
+    notation?: Intl.NumberFormatOptions["notation"];
+  } = {}
 ) {
-  const { currency = "USD", notation = "compact" } = options
+  const { notation = "compact" } = options;
 
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-NG", {
     style: "currency",
-    currency,
+    currency: "NGN", // Nigerian Naira
     notation,
-  }).format(Number(price))
+  }).format(Number(price));
 }
 
 export function slugify(text: string) {
@@ -29,22 +28,22 @@ export function slugify(text: string) {
     .replace(/[^\w-]+/g, "")
     .replace(/--+/g, "-")
     .replace(/^-+/, "")
-    .replace(/-+$/, "")
+    .replace(/-+$/, "");
 }
 
 export function getInitials(name: string) {
-  const parts = name.split(" ")
-  let initials = ""
+  const parts = name.split(" ");
+  let initials = "";
 
   if (parts.length === 1) {
-    initials = parts[0].substring(0, 2)
+    initials = parts[0].substring(0, 2);
   } else {
     parts.forEach((part) => {
       if (part.length > 0) {
-        initials += part[0]
+        initials += part[0];
       }
-    })
+    });
   }
 
-  return initials.toUpperCase().substring(0, 2)
+  return initials.toUpperCase().substring(0, 2);
 }

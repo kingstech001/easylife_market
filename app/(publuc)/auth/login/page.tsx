@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/context/AuthContext"  // ✅ Import useAuth hook
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -22,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login, checkSellerStore } = useAuth()   // ✅ useAuth hook
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -33,44 +35,13 @@ export default function LoginPage() {
     },
   })
 
-  async function checkSellerStore(): Promise<boolean> {
-    try {
-      const res = await fetch("/api/seller/store", {
-        method: "GET",
-        credentials: "include",
-      })
-
-      // If store is found (200), seller has a store
-      if (res.status === 200) {
-        return true
-      }
-
-      // If store not found (404), seller doesn't have a store
-      if (res.status === 404) {
-        return false
-      }
-
-      // For other errors (401, 500, etc.), assume no store for safety
-      console.error("Error checking seller store:", res.status)
-      return false
-    } catch (error) {
-      console.error("Error checking seller store:", error)
-      return false
-    }
-  }
+  
 
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(values),
-      })
-
+      // ✅ Call login from context instead of raw fetch
+      const res = await login(values.email, values.password)
       const data = await res.json()
 
       if (!res.ok) {
@@ -84,19 +55,12 @@ export default function LoginPage() {
         description: `Welcome back, ${data.user.email}`,
       })
 
-      // Handle role-based redirects
+      // Role-based redirects
       if (data.user.role === "admin") {
         router.push("/dashboard/admin")
       } else if (data.user.role === "seller") {
-        // Check if seller has already created a store using existing API
         const hasStore = await checkSellerStore()
-        if (hasStore) {
-          router.push("/dashboard/seller")
-        } else {
-          router.push("/create-store")
-        }
-      } else if (data.user.role === "buyer") {
-        router.push("/")
+        router.push(hasStore ? "/dashboard/seller" : "/create-store")
       } else {
         router.push("/")
       }
@@ -112,7 +76,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4">
+    <div className="min-h-screen flex  items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4">
       <div className="flex w-full max-w-6xl rounded-3xl overflow-hidden shadow-2xl bg-card/80 backdrop-blur-xl border border-border/50 relative">
         {/* Decorative elements */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
@@ -236,8 +200,8 @@ export default function LoginPage() {
                 type="submit"
                 className={cn(
                   "w-full h-12 text-base font-medium transition-all duration-200",
-                  "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                  "shadow-lg hover:shadow-xl hover:shadow-primary/25",
+                  "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 hover:from-[#c0a146]/90 hover:to-[#c0a146]",
+                  "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
                 disabled={isLoading}

@@ -226,8 +226,8 @@ export default function FeaturesSection() {
                     size="lg"
                     className={cn(
                       "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                      "shadow-lg hover:shadow-xl hover:shadow-primary/25",
+                      "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 ",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
                       "hover:scale-105 active:scale-95",
                     )}
                   >

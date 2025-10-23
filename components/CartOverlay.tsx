@@ -118,7 +118,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
                         {/* Footer */}
                         <div className="absolute bottom-0 left-0 w-full bg-background border-t p-4">
-                            <p className="text-xl font-semibold text-foreground">Total: ${total.toFixed(2)}</p>
+                            <p className="text-xl font-semibold text-foreground">Total: ₦{total.toFixed(2)}</p>
                             <Link href="/checkout">
                                 <Button className="mt-2 w-full" onClick={onClose}>Checkout</Button>
                             </Link>

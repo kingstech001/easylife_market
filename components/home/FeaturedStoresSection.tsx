@@ -98,7 +98,7 @@ export default function FeaturedStoresSection() {
 
   return (
     <Reveal direction="down">
-      <section className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden">
+      <section className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden block m-auto">
         {/* Background with gradient and patterns */}
         <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-background to-muted/50" />
 
@@ -112,7 +112,7 @@ export default function FeaturedStoresSection() {
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-10" />
 
-        <div className="container relative z-10 px-4 md:px-6">
+        <div className="container relative z-10 px-4 md:px-6 block m-auto">
           {/* Header Section */}
           <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
             {/* Badge */}
@@ -264,8 +264,8 @@ export default function FeaturedStoresSection() {
                     size="lg"
                     className={cn(
                       "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                      "shadow-lg hover:shadow-xl hover:shadow-primary/25",
+                      "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 ",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
                       "hover:scale-105 active:scale-95",
                     )}
                   >

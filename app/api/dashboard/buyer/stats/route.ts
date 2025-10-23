@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import User from "@/models/User"
-import Order from "@/models/Order"
+import mainOrder from "@/models/MainOrder"
 
 export async function GET(req: Request) {
   try {
@@ -21,9 +21,9 @@ export async function GET(req: Request) {
     }
 
     // Get orders statistics
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 })
+    const orders = await mainOrder.find({ userId }).sort({ createdAt: -1 })
     const totalOrders = orders.length
-    const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+    const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
 
     // Get recent orders (last 3)
     const recentOrders = orders.slice(0, 3).map((order) => ({
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       orderId: order.orderId || `ORD-${order._id.toString().slice(-6)}`,
       date: order.createdAt.toISOString().split("T")[0],
       status: order.status || "Processing",
-      total: `₦${order.total?.toFixed(2) || "0.00"}`,
+      total: `₦${order.totalAmount ?.toFixed(2) || "0.00"}`,
       items: order.items?.length || 0,
     }))
 

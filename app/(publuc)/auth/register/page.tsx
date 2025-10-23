@@ -19,7 +19,14 @@ const registerSchema = z
     firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
     lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
     email: z.string().email({ message: "Please enter a valid email address." }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+    // stronger password rule: min 8, must contain lowercase, uppercase, number and special character
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters." })
+      .refine((val) => /[a-z]/.test(val), { message: "Password must contain at least one lowercase letter." })
+      .refine((val) => /[A-Z]/.test(val), { message: "Password must contain at least one uppercase letter." })
+      .refine((val) => /\d/.test(val), { message: "Password must contain at least one number." })
+      .refine((val) => /[^\w\s]/.test(val), { message: "Password must contain at least one special character." }),
     confirmPassword: z.string(),
     role: z.enum(["buyer", "seller"], {
       required_error: "Please select a role.",
@@ -246,6 +253,12 @@ export default function RegisterPage() {
                         </Button>
                       </div>
                     </FormControl>
+
+                    {/* Password requirements hint */}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use at least 8 characters including uppercase, lowercase, a number and a special character.
+                    </p>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -349,8 +362,8 @@ export default function RegisterPage() {
                 type="submit"
                 className={cn(
                   "w-full h-12 text-base font-medium transition-all duration-200",
-                  "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                  "shadow-lg hover:shadow-xl hover:shadow-primary/25",
+                  "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 hover:from-[#c0a146]/90 hover:to-[#c0a146]",
+                  "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
                 disabled={isLoading}

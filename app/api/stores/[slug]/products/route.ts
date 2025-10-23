@@ -12,7 +12,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   try {
     const { slug } = await params
 
-    console.log("API: Fetching products for store slug:", slug)
 
     // Validate slug
     if (!slug) {
@@ -23,18 +22,14 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       return NextResponse.json(errorResponse, { status: 400 })
     }
 
-    console.log("Attempting to connect to DB for public store products...")
     await connectToDB()
-    console.log("DB connected for public store products")
 
     // Find store by slug first (like your main store route)
-    console.log("Searching for store with slug:", slug)
     const store = await Store.findOne({
       slug: slug,
       isPublished: true,
     })
 
-    console.log("Store found for public products:", store ? store.name : "None")
 
     if (!store) {
       const errorResponse: ApiErrorResponse = {
@@ -44,32 +39,11 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       return NextResponse.json(errorResponse, { status: 404 })
     }
 
-    console.log("Store details:", {
-      id: store._id.toString(),
-      name: store.name,
-      slug: store.slug,
-      sellerId: store.sellerId?.toString(),
-      owner_id: store.owner_id?.toString(),
-    })
-
-    // Find products belonging to this store with more flexible filtering
-    console.log("Searching for products for storeId:", store._id)
 
     // First, let's see what products exist for this store without filters
     const allStoreProducts = await Product.find({
       storeId: store._id,
     }).lean()
-
-    console.log("All products for this store (no filters):", allStoreProducts.length)
-    console.log(
-      "Sample products:",
-      allStoreProducts.slice(0, 2).map((p) => ({
-        id: p._id.toString(),
-        name: p.name,
-        isActive: p.isActive,
-        isDeleted: p.isDeleted,
-      })),
-    )
 
     // Now apply filters more carefully
     const filter: any = {
@@ -85,8 +59,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
     if (allStoreProducts.length > 0 && "isDeleted" in allStoreProducts[0]) {
       filter.isDeleted = false
     }
-
-    console.log("Applied filter:", filter)
 
     const products: IProduct[] = await Product.find(filter)
       .populate("categoryId", "name")
@@ -123,7 +95,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
     return NextResponse.json(successResponse, { status: 200 })
   } catch (error: unknown) {
-    console.error("API Error fetching public store products:", error)
 
     const errorMessage = error instanceof Error ? error.message : "Failed to fetch products"
     const errorResponse: ApiErrorResponse = {

@@ -26,7 +26,8 @@ interface Product {
   category_id?: string
   inventory_quantity: number
   images: { id: string; url: string; alt_text: string | null }[]
-  store_id: string
+  storeId: string
+  productId: string
   created_at: string
   updated_at: string
 }
@@ -128,6 +129,8 @@ export default function ProductPage({
         price: product.price,
         quantity,
         image: product.images[0]?.url || "/placeholder.svg",
+        storeId: product.storeId,
+        productId: product.productId,
       })
       toast.success("Added to cart!", {
         description: `${quantity} × ${product.name}`,
@@ -394,14 +397,15 @@ export default function ProductPage({
                   <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="font-medium">Free Shipping</p>
-                    <p className="text-sm text-muted-foreground">On orders over ₦5,000</p>
+                    <p className="text-sm text-muted-foreground">On orders over ₦20,000</p>
+                    <p className="text-sm text-muted-foreground">Within Ogrute</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="font-medium">Delivery Time</p>
-                    <p className="text-sm text-muted-foreground">3-5 business days</p>
+                    <p className="text-sm text-muted-foreground">1-2 business days</p>
                   </div>
                 </div>
               </div>

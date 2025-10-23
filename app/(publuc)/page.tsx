@@ -3,6 +3,7 @@
 import HeroSection from "@/components/home/HeroSection"
 import FeaturesSection from "@/components/home/FeaturesSection"
 import FeaturedStoresSection from "@/components/home/FeaturedStoresSection"
+import { TestimonialsSection } from "@/components/home/testimonials-section"
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <HeroSection />
       <FeaturesSection />
       <FeaturedStoresSection />
+      <TestimonialsSection />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Clock, Star } from "lucide-react"
+import { VisitTracker } from "@/components/visit-tracker"
 
 // Types for the API responses
 interface Store {
@@ -52,16 +53,11 @@ interface StorePageProps {
 // Fetch store data from API
 async function getStore(slug: string): Promise<Store | null> {
   try {
-    console.log("Fetching store with slug:", slug)
-
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}`
-    console.log("API URL:", apiUrl)
 
     const response = await fetch(apiUrl, {
       cache: "no-store",
     })
-
-    console.log("Response status:", response.status)
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -72,14 +68,11 @@ async function getStore(slug: string): Promise<Store | null> {
     }
 
     const data = await response.json()
-    console.log("Store API response:", data)
 
     if (!data.success) {
-      console.log("API returned error:", data.message)
       return null
     }
 
-    console.log("Store data received:", data.store?.name)
     return data.store
   } catch (error) {
     console.error("Error fetching store:", error)
@@ -90,16 +83,11 @@ async function getStore(slug: string): Promise<Store | null> {
 // Fetch store products from API using slug
 async function getStoreProducts(slug: string): Promise<Product[]> {
   try {
-    console.log("Fetching products for store slug:", slug)
-
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/products`
-    console.log("Products API URL:", apiUrl)
 
     const response = await fetch(apiUrl, {
       cache: "no-store",
     })
-
-    console.log("Products API Response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -108,14 +96,11 @@ async function getStoreProducts(slug: string): Promise<Product[]> {
     }
 
     const data = await response.json()
-    console.log("Products API response:", data)
 
     if (!data.success) {
-      console.log("Products API returned error:", data.message)
       return []
     }
 
-    console.log("Products received:", data.products?.length || 0)
     return data.products || []
   } catch (error) {
     console.error("Error fetching products:", error)
@@ -126,16 +111,11 @@ async function getStoreProducts(slug: string): Promise<Product[]> {
 // Fetch store categories from API using slug
 async function getStoreCategories(slug: string): Promise<Category[]> {
   try {
-    console.log("Fetching categories for store slug:", slug)
-
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/categories`
-    console.log("Categories API URL:", apiUrl)
 
     const response = await fetch(apiUrl, {
       cache: "no-store",
     })
-
-    console.log("Categories API Response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -144,14 +124,12 @@ async function getStoreCategories(slug: string): Promise<Category[]> {
     }
 
     const data = await response.json()
-    console.log("Categories API response:", data)
 
     if (!data.success) {
       console.log("Categories API returned error:", data.message)
       return []
     }
 
-    console.log("Categories received:", data.categories?.length || 0)
     return data.categories || []
   } catch (error) {
     console.error("Error fetching categories:", error)
@@ -178,8 +156,6 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 export default async function StorePage({ params }: StorePageProps) {
   const { slug } = await params
 
-  console.log("Store page loading for slug:", slug)
-
   // Fetch store data
   const store = await getStore(slug)
 
@@ -188,15 +164,13 @@ export default async function StorePage({ params }: StorePageProps) {
     notFound()
   }
 
-  console.log("Store found:", store.name)
-
   // Fetch store products and categories in parallel using slug
   const [storeProducts, storeCategories] = await Promise.all([getStoreProducts(slug), getStoreCategories(slug)])
 
-  console.log("Store data:", { store: store.name, products: storeProducts.length, categories: storeCategories.length })
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      <VisitTracker storeId={store.id} />
+
       {/* Store Banner */}
       <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden">
         {store.banner_url ? (
@@ -213,7 +187,7 @@ export default async function StorePage({ params }: StorePageProps) {
             <AvatarPlaceholder name={store.name} className="h-24 w-24 sm:h-32 sm:w-32 text-4xl" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" /> */}
       </div>
 
       {/* Store Info */}
@@ -262,8 +236,8 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
           </div>
           <p className="text-muted-foreground mb-4 max-w-3xl text-sm sm:text-base">
-              {store.description || "Welcome to our store! Discover amazing products and great deals."}
-            </p>
+            {store.description || "Welcome to our store! Discover amazing products and great deals."}
+          </p>
         </div>
       </div>
 

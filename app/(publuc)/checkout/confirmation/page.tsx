@@ -2,104 +2,93 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { CheckCircle, Package, Truck, CreditCard, ArrowRight } from "lucide-react"
+import { CheckCircle, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AnimatedContainer } from "@/components/ui/animated-container"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function OrderConfirmationPage() {
+export default function PaymentConfirmationPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const orderId = searchParams.get("orderId")
-  const [isLoading, setIsLoading] = useState(true)
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
+    const verifyPayment = async () => {
+      try {
+        const reference = searchParams.get("reference")
 
-    return () => clearTimeout(timer)
-  }, [])
+        // Otherwise, assume verification was already done in checkout
+        if (reference) {
+          console.log("[v0] Verifying payment from Paystack redirect with reference:", reference)
+          const response = await fetch(`/api/paystack/verify?reference=${reference}`)
+          const data = await response.json()
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-20 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Processing your order...</p>
-      </div>
-    )
-  }
+          if (response.ok && data.status === "success") {
+            setStatus("success")
+            setMessage("Your payment has been verified and your order has been created successfully!")
+          } else {
+            setStatus("error")
+            setMessage(data.error || "Payment verification failed")
+          }
+        } else {
+          // No reference means verification was done in checkout page
+          setStatus("success")
+          setMessage("Your payment has been verified and your order has been created successfully!")
+        }
+      } catch (error) {
+        console.error("[v0] Payment verification error:", error)
+        setStatus("error")
+        setMessage("An error occurred while verifying your payment")
+      }
+    }
+
+    verifyPayment()
+  }, [searchParams])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto py-20 max-w-2xl">
-        <AnimatedContainer animation="fadeIn" className="text-center space-y-6">
-          <div className="mx-auto w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-            <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
-          </div>
-
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-            <p className="text-muted-foreground">
-              Thank you for your purchase. Your order has been successfully placed.
-            </p>
-          </div>
-
-          {orderId && (
-            <Card className="text-left">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Order Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Order ID:</span>
-                  <span className="font-mono font-medium">{orderId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <span className="text-green-600 font-medium">Confirmed</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Estimated Delivery:</span>
-                  <span className="font-medium">3-5 business days</span>
-                </div>
-              </CardContent>
-            </Card>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center">
+          {status === "loading" && (
+            <>
+              <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
+              <CardTitle>Verifying Payment</CardTitle>
+              <CardDescription>Please wait while we verify your payment...</CardDescription>
+            </>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="p-4 text-center">
-              <CreditCard className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-medium">Payment</h3>
-              <p className="text-sm text-muted-foreground">Processed</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <Package className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-medium">Processing</h3>
-              <p className="text-sm text-muted-foreground">In progress</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <Truck className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <h3 className="font-medium">Shipping</h3>
-              <p className="text-sm text-muted-foreground">Pending</p>
-            </Card>
-          </div>
+          {status === "success" && (
+            <>
+              <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
+              <CardTitle>Payment Successful!</CardTitle>
+              <CardDescription>Your order has been placed successfully</CardDescription>
+            </>
+          )}
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={() => router.push("/orders")} variant="outline">
-              View Orders
+          {status === "error" && (
+            <>
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-600" />
+              <CardTitle>Payment Failed</CardTitle>
+              <CardDescription>{message}</CardDescription>
+            </>
+          )}
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {status === "success" && <p className="text-sm text-muted-foreground text-center">{message}</p>}
+
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => router.push("/")} className="flex-1">
+              Back to Home
             </Button>
-            <Button onClick={() => router.push("/")} className="bg-gradient-to-r from-primary to-primary/90">
-              Continue Shopping
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            {status === "success" && (
+              <Button onClick={() => router.push("/dashboard/buyer/orders")} className="flex-1">
+                View Orders
+              </Button>
+            )}
           </div>
-        </AnimatedContainer>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

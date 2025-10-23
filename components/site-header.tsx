@@ -149,10 +149,6 @@ export function SiteHeader() {
                         <span className="sr-only">Dashboard</span>
                       </Button>
                     </Link>
-                    <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 px-3 bg-transparent">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </Button>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-1">
@@ -192,7 +188,7 @@ export function SiteHeader() {
           {/* Mobile Menu */}
           <div
             className={cn(
-              "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background/95 backdrop-blur-lg border-b md:hidden transition-all duration-300 ease-in-out",
+              "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background/95 backdrop-blur-lg border-b md:hidden transition-all duration-700 ease-in-out",
               mobileMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none",
             )}
           >
