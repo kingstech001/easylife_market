@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useFormatAmount } from "@/hooks/useFormatAmount"
 
 // Define a type for your product data based on the backend response
 type Product = {
@@ -40,22 +41,27 @@ export default function ProductListPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [sortBy, setSortBy] = useState<keyof Product>("createdAt") // Default sort by creation date
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc") // Default to descending for latest products
+  const [sortBy, setSortBy] = useState<keyof Product>("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null)
+  const { formatAmount } = useFormatAmount();
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch("/api/seller/products")
+      const response = await fetch("/api/dashboard/seller/products")
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || "Failed to fetch products")
       }
       const data = await response.json()
-      setProducts(data.products)
+      const validatedProducts = data.products.map((product: Product, index: number) => ({
+        ...product,
+        _id: product._id || `temp-${Date.now()}-${index}`,
+      }))
+      setProducts(validatedProducts)
     } catch (err: any) {
       console.error("Error fetching products:", err)
       setError(err.message || "An unexpected error occurred.")
@@ -116,7 +122,7 @@ export default function ProductListPage() {
     if (!productToDeleteId) return
 
     try {
-      const response = await fetch(`/api/seller/products/${productToDeleteId}`, {
+      const response = await fetch(`/api/dashboard/seller/products/${productToDeleteId}`, {
         method: "DELETE",
       })
 
@@ -142,11 +148,11 @@ export default function ProductListPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
+      <div className="container max-w-6xl mx-auto py-4 sm:py-8 sm:px-6">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
-          <div className="flex flex-col md:flex-row sm:items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row sm:items-center gap-3 sm:gap-4 md:justify-between">
+            <div className="flex gap-3 w-full md:w-auto">
               <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20 flex-shrink-0">
                 <Package className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
@@ -157,8 +163,8 @@ export default function ProductListPage() {
             </div>
             <Button
               onClick={() => router.push("/dashboard/seller/products/create")}
-              className="w-full md:w-auto md:mr-auto"
-              disabled={products.length >= 10} // ✅ Disable if 10 products already
+              className="w-full md:w-auto "
+              disabled={products.length >= 10}
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               {products.length >= 10 ? "Limit Reached" : "Add New Product"}
@@ -275,9 +281,9 @@ export default function ProductListPage() {
                                 className="w-12 h-12 rounded-md object-cover"
                               />
                             </TableCell>
-                            <TableCell className="font-medium">{product.name}</TableCell>
+                            <TableCell className="font-medium text-[12px]">{product.name}</TableCell>
                             <TableCell className="hidden md:table-cell">{product.category || "N/A"}</TableCell>
-                            <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{formatAmount(product.price)}</TableCell>
                             <TableCell className="text-right hidden sm:table-cell">
                               {product.inventoryQuantity}
                             </TableCell>

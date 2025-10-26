@@ -18,6 +18,7 @@ import { useCart } from "@/context/cart-context"
 import { PaystackButton } from "@/components/paystack-button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useFormatAmount } from "@/hooks/useFormatAmount"
 
 const CHECKOUT_STORAGE_KEY = "checkout_form_data"
 
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const [isPaystackOpen, setIsPaystackOpen] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { formatAmount } = useFormatAmount();
 
   // Form state for information step
   const [info, setInfo] = useState({
@@ -552,7 +554,7 @@ export default function CheckoutPage() {
                       <div className="flex flex-1 flex-col min-w-0">
                         <div className="flex justify-between items-start">
                           <span className="line-clamp-2 font-medium text-sm">{item.name}</span>
-                          <span className="font-semibold text-sm">₦{item.price.toFixed(2)}</span>
+                          <span className="font-semibold text-sm">{formatAmount(item.price)}</span>
                         </div>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
@@ -598,11 +600,11 @@ export default function CheckoutPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">₦{subtotal.toFixed(2)}</span>
+                    <span className="font-medium">{formatAmount(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Delivery charge</span>
-                    <span className="font-medium">₦{shipping.toFixed(2)}</span>
+                    <span className="font-medium">{formatAmount(shipping)}</span>
                   </div>
                 </div>
 
@@ -610,7 +612,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-primary">₦{total.toFixed(2)}</span>
+                  <span className="text-primary">{formatAmount(total)}</span>
                 </div>
               </CardContent>
             </Card>

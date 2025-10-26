@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { FaWhatsapp } from "react-icons/fa"
 
 export default function HelpPage() {
   return (
@@ -26,13 +27,6 @@ export default function HelpPage() {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>How do I create a new store?</AccordionTrigger>
-                  <AccordionContent>
-                    To create a new store, go to the "My Stores" page and click on the "New Store" button. Fill in the
-                    required information and click "Create Store".
-                  </AccordionContent>
-                </AccordionItem>
                 <AccordionItem value="item-2">
                   <AccordionTrigger>How do I add products to my store?</AccordionTrigger>
                   <AccordionContent>
@@ -158,8 +152,8 @@ export default function HelpPage() {
                     <CardContent>
                       <p className="text-sm">
                         Send us an email at{" "}
-                        <a href="mailto:support@shopbuilder.com" className="text-primary hover:underline">
-                          support@shopbuilder.com
+                        <a href="mailto:easylifemarket01@gmail.com" className="text-primary hover:underline">
+                          easylifemarket01@gmail.com
                         </a>
                       </p>
                       <p className="text-sm text-muted-foreground mt-2">
@@ -169,14 +163,22 @@ export default function HelpPage() {
                   </Card>
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Live Chat</CardTitle>
+                      <CardTitle className="text-lg">WhatsApp Support</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm">
-                        Chat with our support team in real-time during business hours (9 AM - 5 PM EST, Monday-Friday).
+                        Need quick help? Chat with our support team directly on WhatsApp.
+                        We're available Monday-Friday, 9 AM-5 PM.
                       </p>
                       <div className="mt-4">
-                        <Button>Start Chat</Button>
+                        <a
+                          href="https://wa.me/2348071427831" // 👈 Replace with your actual WhatsApp number
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center p-3 rounded-full bg-green-500 hover:bg-green-600 transition-colors duration-200"
+                        >
+                          <FaWhatsapp size={24} className="text-white" />
+                        </a>
                       </div>
                     </CardContent>
                   </Card>

@@ -13,6 +13,7 @@ import { ShoppingCart, Star, Heart, Loader2 } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { useWishlist } from "@/context/wishlist-context"
 import { toast } from "sonner"
+import { useFormatAmount } from "@/hooks/useFormatAmount"
 
 interface Product {
   id: string
@@ -38,6 +39,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const { addToCart } = useCart()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { formatAmount } = useFormatAmount();
 
   const mainImage = product.images?.[0]
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
@@ -161,10 +163,10 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-primary">₦{product.price.toFixed(2)}</span>
+              <span className="text-xl font-bold text-primary">{formatAmount(product.price)}</span>
               {hasDiscount && (
                 <span className="text-sm text-muted-foreground line-through">
-                  ₦{product.compare_at_price!.toFixed(2)}
+                  {formatAmount(product.compare_at_price!)}
                 </span>
               )}
             </div>

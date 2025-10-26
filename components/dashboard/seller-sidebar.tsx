@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, Store, ShoppingBag, BarChart3, CreditCard, Settings, HelpCircle, LogOut, Package, ChevronDown, User2 } from 'lucide-react'
+import { LayoutDashboard, Store, ShoppingBag, Settings, HelpCircle, LogOut, Package } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +15,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { toast } from "sonner" // Using sonner for toasts
 
@@ -67,6 +66,12 @@ export function SellerSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
+            <Link href="#" className="flex items-center space-x-2 py-4 px-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#c0a146] to-[#c0a146]/90 rounded-lg flex items-center justify-center">
+                <ShoppingBag className="h-6 w-6 text-white font-bold text-sm" />
+              </div>
+              <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">EasyLife</span>
+            </Link>
             <SidebarMenuButton>
               <Store className="h-5 w-5" />
               <span>Seller Panel</span>

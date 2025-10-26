@@ -42,7 +42,7 @@ export async function middleware(req: NextRequest) {
       }
 
       // 🔐 Check if seller has a store
-      const storeRes = await fetch(`${req.nextUrl.origin}/api/seller/store`, {
+      const storeRes = await fetch(`${req.nextUrl.origin}/api/dashboard/seller/store`, {
         headers: {
           Cookie: `token=${token}`,
         },

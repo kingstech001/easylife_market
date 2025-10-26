@@ -11,9 +11,9 @@ import { Reveal } from "@/components/Reveal"
 
 // Define the StoreData interface to match your IStore Mongoose model
 interface StoreData {
-  _id: string 
+  _id: string
   name: string
-  slug: string 
+  slug: string
   description?: string
   logo_url?: string
   banner_url?: string
@@ -22,7 +22,6 @@ interface StoreData {
   createdAt: string
   updatedAt: string
 }
-
 
 export default function StoresPage() {
   const [stores, setStores] = useState<StoreData[]>([])

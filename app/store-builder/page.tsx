@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -35,6 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import Image from "next/image" // Import next/image
+import ExpandableText from "@/components/ExpandableText"
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -61,10 +62,13 @@ export default function StoreBuilderPage() {
   const router = useRouter()
   const [store, setStore] = useState<any>(null)
   const [products, setProducts] = useState<ProductFormValues[]>([])
+  const DRAFT_KEY = "store-builder:product-draft-v1"
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("details")
   const [editingProduct, setEditingProduct] = useState<ProductFormValues | null>(null)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pauseSave = useRef(false) // when true, skip persisting draft to localStorage
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -77,6 +81,44 @@ export default function StoreBuilderPage() {
       images: [],
     },
   })
+
+  // watch images so UI updates when we add/remove images
+  const watchedImages = form.watch("images")
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.values) {
+          form.reset(parsed.values)
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load product draft:", err)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Persist form values to localStorage (debounced)
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (pauseSave.current) return // don't persist while we're intentionally clearing/resetting
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(() => {
+        try {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({ values, updatedAt: Date.now() }))
+        } catch (err) {
+          console.warn("Failed to save product draft:", err)
+        }
+      }, 400)
+    })
+    return () => {
+      subscription.unsubscribe()
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    }
+  }, [form])
 
   useEffect(() => {
     async function fetchData() {
@@ -122,6 +164,8 @@ export default function StoreBuilderPage() {
   const handleEdit = (p: ProductFormValues) => {
     setEditingProduct(p)
     form.reset(p)
+    // when editing an existing product clear any unsaved draft to avoid conflicts
+    try { localStorage.removeItem(DRAFT_KEY) } catch {}
   }
 
   const handleDelete = async (productId: string) => {
@@ -149,6 +193,12 @@ export default function StoreBuilderPage() {
   }
 
   const handleSubmit = async (data: ProductFormValues) => {
+    // prevent creating more than 10 products
+    const isCreating = !(editingProduct?.id || editingProduct?._id)
+    if (products.length >= 10 && isCreating) {
+      toast.error("Maximum of 10 products reached. Delete an existing product to add a new one.")
+      return
+    }
     if (!store?._id) {
       toast.error("No store found. Please ensure your store is set up.")
       return
@@ -190,9 +240,36 @@ export default function StoreBuilderPage() {
         setProducts((prev) => [...prev, resultProduct])
         toast.success("Product added successfully")
       }
+
+      // Clear draft saved in localStorage after successful save.
+      // Pause the watcher so it doesn't immediately re-save the cleared state.
+      pauseSave.current = true
+      try { localStorage.removeItem(DRAFT_KEY) } catch (err) { console.warn("Failed to clear draft:", err) }
+
+      // Explicitly reset the form to empty defaults so no previous values (like name) remain
+      const emptyValues: ProductFormValues = {
+        name: "",
+        description: "",
+        price: 0,
+        category: "",
+        inventoryQuantity: 0,
+        images: [],
+      }
       setEditingProduct(null)
-      form.reset()
+      form.reset(emptyValues)
+      form.clearErrors()
+      // clear hidden file input value if any
+      try {
+        const uploadInput = document.getElementById("upload") as HTMLInputElement | null
+        if (uploadInput) uploadInput.value = ""
+      } catch (err) {
+        /* ignore */
+      }
       setActiveTab("details")
+      // small delay to allow form.reset to finish and avoid the watcher repopulating localStorage
+      setTimeout(() => {
+        pauseSave.current = false
+      }, 400)
     } catch (error: any) {
       console.error("Save/Update error:", error)
       toast.error(error.message || "Failed to save product")
@@ -285,7 +362,7 @@ export default function StoreBuilderPage() {
           <Button
             onClick={publishStore}
             disabled={isSubmitting || !products.length}
-            className="shadow-lg bg-primary hover:bg-primary/90"
+            className="shadow-lg bg-background hover:bg-background/90"
           >
             {isSubmitting ? (
               <>
@@ -326,9 +403,12 @@ export default function StoreBuilderPage() {
               <h1 className="text-3xl md:text-5xl font-bold leading-tight text-foreground">
                 {store?.name || "Your Store"}
               </h1>
-              <p className="text-base md:text-xl text-muted-foreground mt-2">
-                {store?.description || "Add a description to tell customers about your store"}
-              </p>
+              <div className="mt-2">
+                <ExpandableText
+                  text={store?.description ?? "Add a description to tell customers about your store"}
+                  limit={120}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -355,12 +435,14 @@ export default function StoreBuilderPage() {
                   </CardTitle>
                   <Button
                     size="sm"
+                    disabled={products.length >= 10}
                     onClick={() => {
                       setEditingProduct(null)
                       form.reset()
                       setActiveTab("details")
+                     try { localStorage.removeItem(DRAFT_KEY) } catch {}
                     }}
-                    className="bg-primary hover:bg-primary/90 shadow-lg"
+                    className="bg-primary text-background hover:bg-primary/90 shadow-lg"
                   >
                     <Plus className="h-4 w-4 mr-2" /> Add
                   </Button>
@@ -415,7 +497,7 @@ export default function StoreBuilderPage() {
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                     <span className="flex items-center gap-1 font-medium">
-                                      <DollarSign className="w-3 h-3 text-foreground" />₦{p.price.toFixed(2)}
+                                      ₦ {p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
                                       <Box className="w-3 h-3 text-foreground" />
@@ -490,6 +572,7 @@ export default function StoreBuilderPage() {
                             setEditingProduct(null)
                             form.reset()
                             setActiveTab("details")
+                           try { localStorage.removeItem(DRAFT_KEY) } catch {}
                           }}
                         >
                           <X className="w-4 h-4 mr-2" />
@@ -555,7 +638,7 @@ export default function StoreBuilderPage() {
                                     <FormLabel className="text-lg font-semibold">Price (₦) *</FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground" />
+                                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground">₦</span>
                                         <Input
                                           type="number"
                                           step="0.01"
@@ -616,16 +699,16 @@ export default function StoreBuilderPage() {
                           {/* Images Tab */}
                           <TabsContent value="images" className="space-y-8 mt-8">
                             <div className="space-y-6">
-                              <div className="flex items-center justify-between">
+                              <div className="flex flex-col md:flex-row items-center justify-between w-full">
                                 <div>
-                                  <h3 className="text-xl font-semibold">Product Images</h3>
-                                  <p className="text-muted-foreground mt-1">
+                                  <h3 className="text-xl font-semibold text-center md:text-start">Product Images</h3>
+                                  <p className="text-muted-foreground my-1 text-center md:text-start">
                                     Add high-quality images to showcase your product
                                   </p>
                                 </div>
                                 <label
                                   htmlFor="upload"
-                                  className="inline-flex items-center px-6 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-xl cursor-pointer hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl"
+                                  className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-xl cursor-pointer hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl w-full"
                                 >
                                   <Upload className="mr-2 h-4 w-4" />
                                   Upload Image
@@ -652,14 +735,18 @@ export default function StoreBuilderPage() {
                                       })
                                       if (!res.ok) throw new Error("Failed to upload")
                                       const { secure_url } = await res.json()
-                                      const existingImages = form.getValues("images") ?? []
-                                      form.setValue("images", [
-                                        ...existingImages,
-                                        {
-                                          url: secure_url,
-                                          altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
-                                        },
-                                      ])
+                                      const existingImages = watchedImages ?? []
+                                      form.setValue(
+                                        "images",
+                                        [
+                                          ...existingImages,
+                                          {
+                                            url: secure_url,
+                                            altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
+                                          },
+                                        ],
+                                        { shouldDirty: true }
+                                      )
                                       toast.success("Image uploaded successfully")
                                     } catch (err) {
                                       console.error(err)
@@ -672,48 +759,49 @@ export default function StoreBuilderPage() {
                               </div>
                               <Separator />
                               {/* Image Gallery */}
-                              {(form.getValues("images") ?? []).length > 0 ? (
+                              {(watchedImages ?? []).length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                  {(form.getValues("images") ?? []).map((img, idx) => (
-                                    <motion.div
-                                      key={idx}
-                                      initial={{ opacity: 0, scale: 0.8 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      transition={{ delay: idx * 0.1 }}
-                                      className="relative group"
-                                    >
-                                      <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-primary transition-colors shadow-lg group-hover:shadow-xl">
-                                        <Image
-                                          src={img.url || "/placeholder.svg"}
-                                          alt={img.altText || `Product image ${idx + 1}`}
-                                          fill
-                                          className="object-cover"
-                                        />
-                                      </div>
-                                      <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="sm"
-                                        className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 rounded-full shadow-lg"
-                                        onClick={() => {
-                                          const currentImages = form.getValues("images") ?? []
+                                  {(watchedImages ?? []).map((img, idx) => (
+                                     <motion.div
+                                       key={idx}
+                                       initial={{ opacity: 0, scale: 0.8 }}
+                                       animate={{ opacity: 1, scale: 1 }}
+                                       transition={{ delay: idx * 0.1 }}
+                                       className="relative group"
+                                     >
+                                       <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-primary transition-colors shadow-lg group-hover:shadow-xl">
+                                         <Image
+                                           src={img.url || "/placeholder.svg"}
+                                           alt={img.altText || `Product image ${idx + 1}`}
+                                           fill
+                                           className="object-cover"
+                                         />
+                                       </div>
+                                       <Button
+                                         type="button"
+                                         variant="destructive"
+                                         size="sm"
+                                         className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 rounded-full shadow-lg"
+                                         onClick={() => {
+                                          const currentImages = watchedImages ?? []
                                           form.setValue(
                                             "images",
                                             currentImages.filter((_, i) => i !== idx),
+                                            { shouldDirty: true }
                                           )
-                                        }}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
-                                      {idx === 0 && (
-                                        <Badge className="absolute bottom-3 left-3 bg-primary text-primary-foreground border-0 shadow-lg">
-                                          <Sparkles className="w-3 h-3 mr-1" />
-                                          Main
-                                        </Badge>
-                                      )}
-                                    </motion.div>
-                                  ))}
-                                </div>
+                                         }}
+                                       >
+                                         <X className="h-3 w-3" />
+                                       </Button>
+                                       {idx === 0 && (
+                                         <Badge className="absolute bottom-3 left-3 bg-primary text-primary-foreground border-0 shadow-lg">
+                                           <Sparkles className="w-3 h-3 mr-1" />
+                                           Main
+                                         </Badge>
+                                       )}
+                                     </motion.div>
+                                   ))}
+                                 </div>
                               ) : (
                                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-16 text-center bg-muted/20">
                                   <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
@@ -761,8 +849,8 @@ export default function StoreBuilderPage() {
                           <div className="flex justify-end pt-8 border-t">
                             <Button
                               type="submit"
-                              disabled={isSubmitting}
-                              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl px-8 h-14 text-base font-semibold"
+                              disabled={isSubmitting || products.length >= 10}
+                              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl px-8 h-14 text-base font-semibold text-background"
                             >
                               {isSubmitting ? (
                                 <>

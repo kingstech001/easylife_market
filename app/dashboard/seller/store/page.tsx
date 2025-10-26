@@ -23,7 +23,7 @@ export default function SellerStorePage() {
   useEffect(() => {
     const fetchStore = async () => {
       try {
-        const res = await fetch("/api/seller/store", { cache: "no-store" })
+        const res = await fetch("/api/dashboard/seller/store", { cache: "no-store" })
         if (!res.ok) {
           console.error("Failed to fetch store: ", res.status)
           return

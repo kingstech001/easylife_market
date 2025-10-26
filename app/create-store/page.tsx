@@ -69,12 +69,12 @@ export default function CreateStorePage() {
       try {
         const res = await fetch("/api/me", { credentials: "include" })
         const data = await res.json()
-        if (res.ok && data?.user?.id) {
-          setOwnerId(data.user.id)
+        if (res.ok && data?.user?._id) {
+          setOwnerId(data.user._id)
         } else {
           toast("User not authenticated. Please log in to create a store.")
           // Optionally redirect to login page
-          // router.push("/login")
+          router.push("/auth/login")
         }
       } catch (err) {
         toast("Failed to fetch user data. Please try again.")

@@ -32,7 +32,7 @@ export default function SellerDashboardPage() {
     setIsLoadingStats(true)
     setStatsError(null)
     try {
-      const response = await fetch("/api/seller/stats")
+      const response = await fetch("/api/dashboard/seller/stats")
       if (!response.ok) {
         let errorMessage = "Failed to fetch dashboard statistics."
         try {
@@ -61,7 +61,7 @@ export default function SellerDashboardPage() {
   // Fetch store name
   const fetchStore = useCallback(async () => {
     try {
-      const res = await fetch("/api/seller/store")
+      const res = await fetch("/api/dashboard/seller/store")
       if (!res.ok) {
         const errorData = await res.json().catch(() => null)
         throw new Error(errorData?.message || "Failed to fetch store")

@@ -15,6 +15,7 @@ import { use } from "react"
 import { useCart } from "@/context/cart-context"
 import { useWishlist } from "@/context/wishlist-context"
 import { toast } from "sonner"
+import { useFormatAmount } from "@/hooks/useFormatAmount"
 
 // Types
 interface Product {
@@ -54,6 +55,7 @@ export default function ProductPage({
   const [store, setStore] = useState<Store | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const { formatAmount } = useFormatAmount();
   const [error, setError] = useState<string | null>(null)
 
   const { addToCart } = useCart()
@@ -273,11 +275,11 @@ export default function ProductPage({
 
             <div className="mt-4">
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold">₦{product.price.toFixed(2)}</span>
+                <span className="text-3xl font-bold">{formatAmount(product.price)}</span>
                 {hasDiscount && (
                   <>
                     <span className="text-lg text-muted-foreground line-through">
-                      ₦{product.compare_at_price!.toFixed(2)}
+                      {formatAmount(product.compare_at_price!)}
                     </span>
                     <Badge className="bg-red-500 hover:bg-red-600">{discountPercentage}% OFF</Badge>
                   </>
