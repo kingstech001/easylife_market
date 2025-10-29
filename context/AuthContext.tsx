@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkSellerStore = useCallback(async (): Promise<boolean> => {
     try {
-      const res = await fetch('/api/seller/store', {
+      const res = await fetch('/api/dashboard/seller/store', {
         method: 'GET',
         credentials: 'include',
       });

@@ -39,6 +39,11 @@ const sidebarNavItems = [
     href: "/dashboard/seller/orders",
     icon: Package,
   },
+  {
+    title:"Subscriptions",
+    href:"/dashboard/seller/subscriptions", 
+    icon: Package,
+  }
 ]
 
 export function SellerSidebar() {
