@@ -176,7 +176,7 @@ export default function FeaturedStoresSection() {
                     size="lg"
                     className={cn(
                       "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
+                      "bg-gradient-to-r from-background to-background/90 hover:from-primary/90 hover:to-primary",
                       "shadow-lg hover:shadow-xl hover:shadow-primary/25",
                       "hover:scale-105 active:scale-95",
                     )}

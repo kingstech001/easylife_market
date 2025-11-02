@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -35,7 +35,6 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 type NotificationsFormValues = z.infer<typeof notificationsFormSchema>
 
 export default function SettingsPage() {
-  const { toast } = useToast()
   const [isProfileLoading, setIsProfileLoading] = useState(false)
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false)
   const [user, setUser] = useState({ name: "", email: "" })
@@ -68,8 +67,9 @@ export default function SettingsPage() {
     }
   }, [user, profileForm])
 
+  // cast the resolver to any to avoid incompatible generic inference with RHF
   const notificationsForm = useForm<NotificationsFormValues>({
-    resolver: zodResolver(notificationsFormSchema),
+    resolver: zodResolver(notificationsFormSchema) as any,
     defaultValues: {
       marketingEmails: false,
       orderUpdates: true,
@@ -90,16 +90,9 @@ export default function SettingsPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      })
+      toast.success("Profile updated", { description: "Your profile has been updated successfully." })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An error occurred while updating your profile.",
-        variant: "destructive",
-      })
+      toast.error("Error", { description: "An error occurred while updating your profile." })
     } finally {
       setIsProfileLoading(false)
     }
@@ -112,16 +105,11 @@ export default function SettingsPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      toast({
-        title: "Notification preferences updated",
+      toast.success("Notification preferences updated", {
         description: "Your notification preferences have been updated successfully.",
       })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An error occurred while updating your notification preferences.",
-        variant: "destructive",
-      })
+      toast.error("Error", { description: "An error occurred while updating your notification preferences." })
     } finally {
       setIsNotificationsLoading(false)
     }

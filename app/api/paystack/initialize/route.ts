@@ -3,51 +3,106 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { orders, shippingInfo, totalAmount, paymentMethod } = body
+    const {
+      email,
+      amount,
+      plan,
+      storeId,
+      orders,
+      shippingInfo,
+      paymentMethod,
+      type,
+    } = body
 
-    if (!shippingInfo?.email || !totalAmount) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    // 🧩 Validate common payment fields
+    if (!email || !amount) {
+      return NextResponse.json(
+        { error: "Missing required payment details" },
+        { status: 400 }
+      )
     }
 
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+
     if (!paystackSecretKey) {
-      console.error("PAYSTACK_SECRET_KEY is not set")
-      return NextResponse.json({ error: "Payment service not configured" }, { status: 500 })
+      console.error("⚠️ PAYSTACK_SECRET_KEY is not set")
+      return NextResponse.json(
+        { error: "Payment service not configured" },
+        { status: 500 }
+      )
     }
 
+    if (!appUrl) {
+      console.error("⚠️ NEXT_PUBLIC_APP_URL is not set")
+      return NextResponse.json(
+        { error: "App URL not configured" },
+        { status: 500 }
+      )
+    }
+
+    // 💡 Setup Paystack callback + metadata
+    let callback_url = ""
+    let metadata: Record<string, any> = {}
+
+    if (type === "subscription") {
+      // ✅ Handle Seller Subscription Payments
+      if (!plan || !storeId) {
+        return NextResponse.json(
+          { error: "Missing subscription details" },
+          { status: 400 }
+        )
+      }
+
+      callback_url = `${appUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
+      metadata = { plan, storeId, type: "subscription" }
+    } else {
+      // 🛒 Handle Regular Checkout Payments
+      if (!orders || !shippingInfo) {
+        return NextResponse.json(
+          { error: "Missing checkout details" },
+          { status: 400 }
+        )
+      }
+
+      callback_url = `${appUrl}/payment-success`
+      metadata = { orders, shippingInfo, paymentMethod, type: "checkout" }
+    }
+
+    // 🧮 Convert ₦ to Kobo
     const paystackPayload = {
-      email: shippingInfo.email,
-      amount: totalAmount, // amount already in kobo
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment-success`, // ✅ this line is crucial
-      metadata: {
-        orders,
-        shippingInfo,
-        paymentMethod,
-      },
+      email,
+      amount: amount*100,
+      callback_url,
+      metadata,
     }
 
-    console.log("[v0] Initializing Paystack payment:", paystackPayload)
-
-    const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${paystackSecretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(paystackPayload),
-    })
+    // 🚀 Initialize payment with Paystack
+    const paystackResponse = await fetch(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(paystackPayload),
+      }
+    )
 
     const paystackData = await paystackResponse.json()
 
     if (!paystackResponse.ok) {
-      console.error("[v0] Paystack error:", paystackData)
+      console.error("[Paystack Error]", paystackData)
       return NextResponse.json(
-        { error: paystackData.message || "Failed to initialize payment" },
-        { status: paystackResponse.status },
+        {
+          error: paystackData.message || "Failed to initialize payment",
+        },
+        { status: paystackResponse.status }
       )
     }
 
-    console.log("[v0] Paystack initialized successfully:", paystackData)
+    console.log("[Paystack] Initialized successfully:", paystackData)
 
     return NextResponse.json({
       authorization_url: paystackData.data.authorization_url,
@@ -55,7 +110,10 @@ export async function POST(request: NextRequest) {
       reference: paystackData.data.reference,
     })
   } catch (error) {
-    console.error("[v0] Payment initialization error:", error)
-    return NextResponse.json({ error: "Failed to initialize payment" }, { status: 500 })
+    console.error("[Paystack] Initialization error:", error)
+    return NextResponse.json(
+      { error: "Failed to initialize payment" },
+      { status: 500 }
+    )
   }
 }

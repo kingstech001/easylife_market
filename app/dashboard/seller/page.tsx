@@ -1,83 +1,100 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { BarChart3, Users, ShoppingBag, Store, Loader2, Package, TrendingUp, ArrowUpRight, Eye } from "lucide-react"
-import { toast } from "sonner"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { VisitorsChart } from "@/components/dashboard/visitors-chart"
-import { SalesChart } from "@/components/dashboard/sales-chart"
-import { TopProducts } from "@/components/dashboard/top-products"
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  BarChart3,
+  Users,
+  ShoppingBag,
+  Store,
+  Loader2,
+  Package,
+  TrendingUp,
+  ArrowUpRight,
+  Eye,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { VisitorsChart } from "@/components/dashboard/visitors-chart";
+import { SalesChart } from "@/components/dashboard/sales-chart";
+import { TopProducts } from "@/components/dashboard/top-products";
+import { LoadingSpinner } from "@/components/ui/loading";
 
 // Define a type for the dashboard statistics
 type DashboardStats = {
-  totalSales: number
-  ordersCount: number
-  customersCount: number
-  productsCount: number
-}
+  totalSales: number;
+  ordersCount: number;
+  customersCount: number;
+  productsCount: number;
+};
 
 export default function SellerDashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [isLoadingStats, setIsLoadingStats] = useState(true)
-  const [statsError, setStatsError] = useState<string | null>(null)
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
-  const [storeName, setStoreName] = useState<string | null>(null)
-  const [storeError, setStoreError] = useState<string | null>(null)
+  const [storeName, setStoreName] = useState<string | null>(null);
+  const [storeError, setStoreError] = useState<string | null>(null);
 
   // Fetch dashboard stats
   const fetchDashboardStats = useCallback(async () => {
-    setIsLoadingStats(true)
-    setStatsError(null)
+    setIsLoadingStats(true);
+    setStatsError(null);
     try {
-      const response = await fetch("/api/dashboard/seller/stats")
+      const response = await fetch("/api/dashboard/seller/stats");
       if (!response.ok) {
-        let errorMessage = "Failed to fetch dashboard statistics."
+        let errorMessage = "Failed to fetch dashboard statistics.";
         try {
-          const errorData = await response.json()
-          errorMessage = errorData.message || errorMessage
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
         } catch {
-          const errorText = await response.text().catch(() => "")
+          const errorText = await response.text().catch(() => "");
           if (errorText) {
-            errorMessage = `Server error: ${errorText.substring(0, 100)}...`
+            errorMessage = `Server error: ${errorText.substring(0, 100)}...`;
           }
         }
-        throw new Error(errorMessage)
+        throw new Error(errorMessage);
       }
-      const data = await response.json()
-      setStats(data.data)
+      const data = await response.json();
+      setStats(data.data);
     } catch (err: any) {
-      setStatsError(err.message || "An unexpected error occurred.")
+      setStatsError(err.message || "An unexpected error occurred.");
       toast.error("Failed to load dashboard stats", {
         description: err.message || "Please try again later.",
-      })
+      });
     } finally {
-      setIsLoadingStats(false)
+      setIsLoadingStats(false);
     }
-  }, [])
+  }, []);
 
   // Fetch store name
   const fetchStore = useCallback(async () => {
     try {
-      const res = await fetch("/api/dashboard/seller/store")
+      const res = await fetch("/api/dashboard/seller/store");
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null)
-        throw new Error(errorData?.message || "Failed to fetch store")
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to fetch store");
       }
-      const data = await res.json()
-      setStoreName(data.store.name)
+      const data = await res.json();
+      setStoreName(data.store.name);
     } catch (error: any) {
-      console.error("Error fetching store:", error)
-      setStoreError(error.message || "Unable to fetch store")
+      console.error("Error fetching store:", error);
+      setStoreError(error.message || "Unable to fetch store");
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    fetchDashboardStats()
-    fetchStore()
-  }, [fetchDashboardStats, fetchStore])
+    fetchDashboardStats();
+    fetchStore();
+  }, [fetchDashboardStats, fetchStore]);
 
   const dashboardItems = [
     {
@@ -110,7 +127,15 @@ export default function SellerDashboardPage() {
       iconBg: "bg-orange-50 dark:bg-orange-950/50",
       borderColor: "border-orange-200 dark:border-orange-800",
     },
-  ]
+  ];
+
+  if (isLoadingStats && !stats) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center text-center">
+        <LoadingSpinner text="Loading your dashboard…" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen ">
@@ -127,14 +152,18 @@ export default function SellerDashboardPage() {
                 <Store className="h-8 w-8 text-blue-600" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                <h1 className="text-xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                   Welcome back,{" "}
                   <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                     {storeName || "Your Store"}
                   </span>
                 </h1>
-                {storeError && <p className="text-red-500 text-sm">{storeError}</p>}
-                <p className="text-sm md:text-lg text-slate-600 dark:text-slate-400">Manage your store and track your success</p>
+                {storeError && (
+                  <p className="text-red-500 text-sm">{storeError}</p>
+                )}
+                <p className="text-sm md:text-lg text-slate-600 dark:text-slate-400">
+                  Manage your store and track your success
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -152,32 +181,16 @@ export default function SellerDashboardPage() {
           transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Overview</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+              Overview
+            </h2>
             <Badge variant="outline" className="gap-1">
               <TrendingUp className="h-3 w-3" />
               Last 30 days
             </Badge>
           </div>
 
-          {isLoadingStats ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="border-0 shadow-sm bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse"></div>
-                        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-32 animate-pulse"></div>
-                      </div>
-                      <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-xl animate-pulse">
-                        <Loader2 className="h-6 w-6 text-slate-400 animate-spin" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : statsError ? (
+          {statsError ? (
             <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
               <CardContent className="flex items-center justify-center h-32 text-red-600 dark:text-red-400">
                 <p>Error loading stats: {statsError}</p>
@@ -192,10 +205,12 @@ export default function SellerDashboardPage() {
               >
                 <Card className="border-1 border transition-all duration-300 group">
                   <CardContent className="p-6">
-                    <div >
+                    <div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Sales</p>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            Total Sales
+                          </p>
                           <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
                             ₦{stats?.totalSales.toLocaleString() || 0}
                           </p>
@@ -223,7 +238,9 @@ export default function SellerDashboardPage() {
                     <div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Orders</p>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            Orders
+                          </p>
                           <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
                             {stats?.ordersCount.toLocaleString() || 0}
                           </p>
@@ -251,7 +268,9 @@ export default function SellerDashboardPage() {
                     <div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Customers</p>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            Customers
+                          </p>
                           <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
                             {stats?.customersCount.toLocaleString() || 0}
                           </p>
@@ -279,7 +298,9 @@ export default function SellerDashboardPage() {
                     <div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Products</p>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            Products
+                          </p>
                           <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
                             {stats?.productsCount.toLocaleString() || 0}
                           </p>
@@ -310,7 +331,9 @@ export default function SellerDashboardPage() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">Visitors</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Visitors
+                  </CardTitle>
                   <CardDescription className="text-slate-600 dark:text-slate-400">
                     Total visitors over time
                   </CardDescription>
@@ -327,7 +350,9 @@ export default function SellerDashboardPage() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sales</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Sales
+                  </CardTitle>
                   <CardDescription className="text-slate-600 dark:text-slate-400">
                     Revenue trends and performance
                   </CardDescription>
@@ -375,13 +400,17 @@ export default function SellerDashboardPage() {
                               <div
                                 className={`p-2 ${item.iconBg} rounded-lg group-hover:scale-110 transition-transform duration-300`}
                               >
-                                <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+                                <item.icon
+                                  className={`h-5 w-5 ${item.iconColor}`}
+                                />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                   {item.title}
                                 </h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{item.description}</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                  {item.description}
+                                </p>
                               </div>
                               <ArrowUpRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
                             </div>
@@ -402,7 +431,9 @@ export default function SellerDashboardPage() {
           >
             <Card className="border-1 border">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">Top Products</CardTitle>
+                <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  Top Products
+                </CardTitle>
                 <CardDescription className="text-slate-600 dark:text-slate-400">
                   Your best-selling items
                 </CardDescription>
@@ -415,5 +446,5 @@ export default function SellerDashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -44,6 +44,53 @@ export async function POST(request: NextRequest) {
 
     if (verifyData.data.status === "success") {
       const paystackMetadata = verifyData.data.metadata ?? {}
+
+      // ✅✅ NEW: CHECK IF THIS PAYMENT IS FOR SUBSCRIPTION
+      if (paystackMetadata.type === "subscription") {
+        console.log("[v0] Processing subscription payment...")
+
+        const { plan, storeId } = paystackMetadata
+        if (!plan || !storeId) {
+          return NextResponse.json({ error: "Invalid subscription metadata" }, { status: 400 })
+        }
+
+        // ✅ Update seller subscription
+        const subscriptionResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/dashboard/seller/subscription`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              plan,
+              storeId,
+              amount: verifyData.data.amount / 100, // Convert kobo → naira
+              reference,
+            }),
+          },
+        )
+
+        if (!subscriptionResponse.ok) {
+          const errorData = await subscriptionResponse.json().catch(() => ({}))
+          console.error("[v0] Failed to update subscription:", errorData)
+          return NextResponse.json(
+            { error: "Payment verified but failed to update subscription" },
+            { status: 500 },
+          )
+        }
+
+        const subscriptionResult = await subscriptionResponse.json()
+
+        return NextResponse.json({
+          status: "success",
+          message: "Subscription payment verified and updated successfully",
+          data: subscriptionResult,
+        })
+      }
+
+      // ✅ ✅ NORMAL CHECKOUT PAYMENT (your existing logic remains unchanged)
       const merged = {
         ...paystackMetadata,
         ...(orderData ?? {}),
@@ -151,8 +198,24 @@ export async function GET(request: NextRequest) {
     if (verifyData.data.status === "success") {
       const metadata = verifyData.data.metadata ?? {}
 
-      // If metadata doesn't contain orders, it means the verification was already done via POST
-      // Return success status so the frontend can proceed
+      // ✅ ✅ NEW: HANDLE SUBSCRIPTION FOR GET REQUEST
+      if (metadata.type === "subscription") {
+        console.log("[v0] GET subscription verification success")
+
+        return NextResponse.json({
+          status: "success",
+          message: "Subscription payment verified",
+          data: {
+            reference,
+            plan: metadata.plan,
+            storeId: metadata.storeId,
+            amount: verifyData.data.amount / 100,
+            paymentStatus: "success",
+          },
+        })
+      }
+
+      // ✅ ✅ EXISTING CHECKOUT LOGIC (left unchanged)
       if (!metadata.orders || !Array.isArray(metadata.orders) || metadata.orders.length === 0) {
         console.log("[v0] GET verification: Orders not in metadata (likely already verified via POST)")
         return NextResponse.json({
