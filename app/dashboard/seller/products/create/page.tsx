@@ -107,7 +107,7 @@ export default function CreateProductPage() {
       setStoreError(null)
       try {
         // Assuming an API endpoint like /api/seller/store exists to get the current seller's store ID
-        const response = await fetch("/api/seller/store")
+        const response = await fetch("/api/dashboard/seller/store")
         if (!response.ok) {
           let errorMessage = "Failed to fetch store information."
           try {
@@ -256,7 +256,7 @@ export default function CreateProductPage() {
     try {
       // The 'data' object already contains the Cloudinary URLs in data.images
       // and now also the storeId
-      const response = await fetch("/api/seller/products", {
+      const response = await fetch("/api/dashboard/seller/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json", // Send as JSON

@@ -23,8 +23,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
     console.log(`✅ GET Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
 
-    const resolvedParams = await Promise.resolve(params)
-    const { id } = resolvedParams
+    
+    const { id } = await Promise.resolve(params)
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ GET Product: Invalid product ID format: ${id}.`)

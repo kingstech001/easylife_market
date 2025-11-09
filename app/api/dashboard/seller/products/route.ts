@@ -90,8 +90,10 @@ export async function POST(req: Request) {
       storeId: store._id,
       sellerId: user.id,
     })
-
-    return NextResponse.json({ success: true, product }, { status: 201 })
+    const productObject = product.toObject()
+    const productWithId = { ...productObject, id: productObject._id.toString() }
+    
+    return NextResponse.json({ success: true, product: productWithId }, { status: 201 })
   } catch (error: any) {
     console.error("POST /api/seller/products error:", error)
     if (error.code === 11000) {

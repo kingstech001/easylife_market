@@ -27,6 +27,7 @@ import { useFormatAmount } from "@/hooks/useFormatAmount"
 // Define a type for your product data based on the backend response
 type Product = {
   _id: string // MongoDB's default ID field
+  id: string
   name: string
   category?: string // Optional as per backend schema
   price: number
@@ -59,7 +60,7 @@ export default function ProductListPage() {
       const data = await response.json()
       const validatedProducts = data.products.map((product: Product, index: number) => ({
         ...product,
-        _id: product._id || `temp-${Date.now()}-${index}`,
+        _id: product._id || product.id,
       }))
       setProducts(validatedProducts)
     } catch (err: any) {

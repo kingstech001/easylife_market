@@ -98,7 +98,7 @@ export default function EditProductPage() {
     setIsLoading(true)
     setProductError(null)
     try {
-      const response = await fetch(`/api/seller/products/${id}`)
+      const response = await fetch(`/api/dashboard/seller/products/${id}`)
       if (!response.ok) {
         let errorMessage = "Failed to fetch product details."
         try {
@@ -248,7 +248,7 @@ export default function EditProductPage() {
   async function onSubmit(data: ProductFormValues) {
     setIsSubmitting(true)
     try {
-      const response = await fetch(`/api/seller/products/${id}`, {
+      const response = await fetch(`/api/dashboard/seller/products/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
