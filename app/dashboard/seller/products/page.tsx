@@ -26,8 +26,8 @@ import { useFormatAmount } from "@/hooks/useFormatAmount"
 
 // Define a type for your product data based on the backend response
 type Product = {
-  _id: string // MongoDB's default ID field (or mapped from 'id')
-  id?: string // Backend returns 'id' instead of '_id'
+  _id: string // MongoDB's default ID field
+  id: string
   name: string
   category?: string // Optional as per backend schema
   price: number
@@ -65,27 +65,11 @@ export default function ProductListPage() {
         throw new Error(errorData.message || "Failed to fetch products")
       }
       const data = await response.json()
-      
-      // 🔍 DEBUG: Log the raw response
-      console.log('🔍 Raw API Response:', data)
-      console.log('🔍 Products array:', data.products)
-      
-      // 🔍 DEBUG: Check first product structure
-      if (data.products && data.products.length > 0) {
-        console.log('🔍 First product:', data.products[0])
-        console.log('🔍 First product _id:', data.products[0]._id)
-        console.log('🔍 First product id:', data.products[0].id)
-      }
-      
-      // ✅ FIX: Map 'id' to '_id' since backend returns 'id' instead of '_id'
-      const productsWithCorrectId = data.products.map((product: any) => ({
+      const validatedProducts = data.products.map((product: Product, index: number) => ({
         ...product,
-        _id: product.id || product._id, // Use 'id' if '_id' doesn't exist
+        _id: product._id || product.id,
       }))
-      
-      console.log('✅ Fixed products with _id:', productsWithCorrectId[0])
-      
-      setProducts(productsWithCorrectId)
+      setProducts(validatedProducts)
     } catch (err: any) {
       console.error("Error fetching products:", err)
       setError(err.message || "An unexpected error occurred.")

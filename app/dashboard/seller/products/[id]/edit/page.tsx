@@ -105,10 +105,7 @@ export default function EditProductPage() {
     console.log("📡 Fetching from:", apiUrl)
 
     try {
-      const response = await fetch(apiUrl)
-
-      console.log("📡 Response status:", response.status)
-
+      const response = await fetch(`/api/dashboard/seller/products/${id}`)
       if (!response.ok) {
         let errorMessage = "Failed to fetch product details."
 
@@ -274,7 +271,7 @@ export default function EditProductPage() {
     console.log("📡 Updating product at:", apiUrl)
 
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`/api/dashboard/seller/products/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
