@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation" // Import useParams
+import { useRouter, useParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -17,10 +17,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 
-// Define a type for your product data based on the backend response
 type Product = {
   _id: string
   name: string
@@ -55,29 +53,27 @@ const productFormSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productFormSchema>
 
-const categories = [
-  "Electronics",
-  "Clothing",
-  "Home & Garden",
-  "Sports & Outdoors",
-  "Books",
-  "Health & Beauty",
-  "Toys & Games",
-  "Automotive",
-  "Food & Beverages",
-  "Other",
-]
-
 export default function EditProductPage() {
   const router = useRouter()
-  const params = useParams() // Use useParams hook
-  const id = params.id as string // Access id from useParams
+  const params = useParams()
+  const id = params.id as string
+
+  // Debug logging
+  console.log("🔍 Params:", params)
+  console.log("🔍 ID:", id)
+  console.log("🔍 ID type:", typeof id)
+
   const [isLoading, setIsLoading] = useState(true)
   const [productError, setProductError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("details")
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]) // For all images (existing + new)
-  const [isUploadingImages, setIsUploadingImages] = useState(false) // State for image upload loading
+
+  // Debug: Log active tab changes
+  useEffect(() => {
+    console.log("🔄 Active tab changed to:", activeTab)
+  }, [activeTab])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -95,30 +91,46 @@ export default function EditProductPage() {
   const [isDragOver, setIsDragOver] = useState(false)
 
   const fetchProduct = useCallback(async () => {
+    if (!id) {
+      console.error("❌ No ID available for fetching product")
+      setProductError("Product ID is missing")
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setProductError(null)
+
+    const apiUrl = `/api/dashboard/seller/products/${id}`
+    console.log("📡 Fetching from:", apiUrl)
+
     try {
-      const response = await fetch(`/api/seller/products/${id}`)
+      const response = await fetch(apiUrl)
+
+      console.log("📡 Response status:", response.status)
+
       if (!response.ok) {
         let errorMessage = "Failed to fetch product details."
+
         try {
           const errorData = await response.json()
+          console.error("❌ Error data:", errorData)
           errorMessage = errorData.message || errorMessage
         } catch (jsonError) {
-          // If parsing JSON fails, it means the response body was not JSON or empty.
-          console.warn("Could not parse error response as JSON, trying text:", jsonError)
           try {
             const errorText = await response.text()
+            console.error("❌ Error text:", errorText)
             if (errorText) {
-              errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...` // Truncate long messages
+              errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
             }
-          } catch (textError) {
-            console.warn("Could not get error response as text:", textError)
-          }
+          } catch {}
         }
+
         throw new Error(errorMessage)
       }
+
       const data: { product: Product } = await response.json()
+      console.log("✅ Product data received:", data)
       const product = data.product
 
       form.reset({
@@ -131,12 +143,11 @@ export default function EditProductPage() {
         images: product.images || [],
       })
 
-      // Initialize image previews with existing images
       if (product.images) {
         setImagePreviews(product.images.map((img) => img.url))
       }
     } catch (err: any) {
-      console.error("Error fetching product:", err)
+      console.error("❌ Fetch error:", err)
       setProductError(err.message || "An unexpected error occurred.")
       toast.error("Failed to load product", {
         description: err.message || "Please try again later.",
@@ -147,18 +158,25 @@ export default function EditProductPage() {
   }, [id, form])
 
   useEffect(() => {
+    console.log("🔄 useEffect triggered, ID:", id)
     if (id) {
-      // Ensure id is available before fetching
+      console.log("✅ ID exists, fetching product...")
       fetchProduct()
+    } else {
+      console.error("❌ ID is undefined in useEffect")
+      setProductError("Product ID is missing")
+      setIsLoading(false)
     }
   }, [fetchProduct, id])
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return
 
-    const newFilesArray = Array.from(files).slice(0, 5 - imagePreviews.length) // Max 5 images total
+    const newFilesArray = Array.from(files).slice(0, 5 - imagePreviews.length)
     if (newFilesArray.length === 0) {
-      toast.info("Maximum 5 images allowed.", { description: "Please remove existing images to upload more." })
+      toast.info("Maximum 5 images allowed.", {
+        description: "Please remove existing images to upload more.",
+      })
       return
     }
 
@@ -182,39 +200,37 @@ export default function EditProductPage() {
 
         if (!response.ok) {
           let errorMessage = "Image upload failed."
+
           try {
             const errorData = await response.json()
             errorMessage = errorData.error || errorMessage
-          } catch (jsonError) {
-            console.warn("Could not parse image upload error response as JSON, trying text:", jsonError)
+          } catch {
             try {
               const errorText = await response.text()
-              if (errorText) {
-                errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
-              }
-            } catch (textError) {
-              console.warn("Could not get image upload error response as text:", textError)
-            }
+              errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
+            } catch {}
           }
+
           throw new Error(errorMessage)
         }
 
         const result = await response.json()
         uploadedImageUrls.push({
           url: result.secure_url,
-          altText: `${form.getValues("name") || "Product"} image ${imagePreviews.length + uploadedImageUrls.length + 1}`,
+          altText: `${form.getValues("name") || "Product"} image ${
+            imagePreviews.length + uploadedImageUrls.length + 1
+          }`,
         })
-        setImagePreviews((prev) => [...prev, result.secure_url]) // Update previews immediately
+
+        setImagePreviews((prev) => [...prev, result.secure_url])
         toast.success(`Image "${file.name}" uploaded.`)
       } catch (error: any) {
-        console.error("Error uploading image:", error)
         toast.error(`Failed to upload "${file.name}"`, {
           description: error.message || "Please try again.",
         })
       }
     }
 
-    // Update the form state with the new image URLs
     const currentImages = form.getValues("images") || []
     form.setValue("images", [...currentImages, ...uploadedImageUrls])
     setIsUploadingImages(false)
@@ -242,45 +258,57 @@ export default function EditProductPage() {
 
     setImagePreviews(updatedPreviews)
     form.setValue("images", updatedImages)
-    toast.info("Image removed.") // Added toast for image removal
+    toast.info("Image removed.")
   }
 
   async function onSubmit(data: ProductFormValues) {
+    if (!id) {
+      toast.error("Product ID is missing", {
+        description: "Cannot update product without ID.",
+      })
+      return
+    }
+
     setIsSubmitting(true)
+    const apiUrl = `/api/dashboard/seller/products/${id}`
+    console.log("📡 Updating product at:", apiUrl)
+
     try {
-      const response = await fetch(`/api/seller/products/${id}`, {
+      const response = await fetch(apiUrl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data), // Send all form data, including image URLs
+        body: JSON.stringify(data),
       })
+
+      console.log("📡 Update response status:", response.status)
 
       if (!response.ok) {
         let errorMessage = "Failed to update product."
+
         try {
           const errorData = await response.json()
+          console.error("❌ Update error data:", errorData)
           errorMessage = errorData.message || errorMessage
-        } catch (jsonError) {
-          console.warn("Could not parse error response as JSON, trying text:", jsonError)
+        } catch {
           try {
             const errorText = await response.text()
-            if (errorText) {
-              errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
-            }
-          } catch (textError) {
-            console.warn("Could not get error response as text:", textError)
-          }
+            console.error("❌ Update error text:", errorText)
+            errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
+          } catch {}
         }
+
         throw new Error(errorMessage)
       }
 
+      console.log("✅ Product updated successfully")
       toast.success("Product updated successfully!", {
         description: "Your product changes have been saved.",
       })
       router.push("/dashboard/seller/products")
     } catch (error: any) {
-      console.error("Error updating product:", error)
+      console.error("❌ Update error:", error)
       toast.error("Failed to update product", {
         description: error.message || "Please try again later.",
       })
@@ -302,6 +330,7 @@ export default function EditProductPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-destructive">
         <p className="text-lg">Error loading product: {productError}</p>
+        <p className="text-sm text-muted-foreground mt-2">Product ID: {id || "undefined"}</p>
         <Button onClick={() => router.back()} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Go Back
@@ -313,7 +342,6 @@ export default function EditProductPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
-        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-4 -ml-4 hover:bg-muted">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -332,7 +360,7 @@ export default function EditProductPage() {
             </div>
             <Button
               onClick={form.handleSubmit(onSubmit)}
-              disabled={isSubmitting || isUploadingImages} // Disable if uploading images
+              disabled={isSubmitting || isUploadingImages}
               className="ml-auto"
             >
               {isSubmitting ? (
@@ -350,7 +378,6 @@ export default function EditProductPage() {
           </div>
         </motion.div>
 
-        {/* Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
@@ -379,17 +406,14 @@ export default function EditProductPage() {
                   <span className="hidden sm:inline">Inventory</span>
                 </TabsTrigger>
               </TabsList>
+
               <TabsContent value="details" className="mt-4 sm:mt-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <div>
                   <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20">
                     <CardHeader className="pb-4 sm:pb-6">
                       <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                         <Tag className="h-4 w-4 sm:h-5 sm:w-5" />
-                        Product Information
+                        Product Details
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
@@ -398,242 +422,88 @@ export default function EditProductPage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm sm:text-base">Product Name *</FormLabel>
+                            <FormLabel>Product Name</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="e.g. Premium Wireless Headphones"
-                                className="bg-background text-sm sm:text-base"
-                                {...field}
-                              />
+                              <Input placeholder="Enter product name" {...field} />
                             </FormControl>
-                            <FormDescription className="text-xs sm:text-sm">
-                              Choose a clear, descriptive name for your product
-                            </FormDescription>
+                            <FormDescription>This is the name that will be displayed to customers.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
                       <FormField
                         control={form.control}
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm sm:text-base">Description</FormLabel>
+                            <FormLabel>Description</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Describe your product features, benefits, and specifications..."
-                                className="resize-none min-h-[100px] sm:min-h-[120px] bg-background text-sm sm:text-base"
+                                placeholder="Describe your product..."
+                                className="min-h-[120px] resize-none"
                                 {...field}
                               />
                             </FormControl>
-                            <FormDescription className="text-xs sm:text-sm">
-                              Provide detailed information to help customers understand your product
-                            </FormDescription>
+                            <FormDescription>Provide a detailed description of your product.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
                           name="price"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm sm:text-base">Price *</FormLabel>
+                              <FormLabel>Price</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                                    $
-                                  </span>
-                                  <Input
-                                    className="pl-7 sm:pl-8 bg-background text-sm sm:text-base"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    {...field}
-                                  />
-                                </div>
+                                <Input type="number" step="0.01" placeholder="0.00" {...field} />
                               </FormControl>
+                              <FormDescription>Regular selling price</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
+
                         <FormField
                           control={form.control}
                           name="compareAtPrice"
-                          render={({ field: { value, onChange, ...field } }) => (
+                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-sm sm:text-base">Compare-at Price</FormLabel>
+                              <FormLabel>Compare at Price (Optional)</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                                    $
-                                  </span>
-                                  <Input
-                                    className="pl-7 sm:pl-8 bg-background text-sm sm:text-base"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    {...field}
-                                    value={value !== undefined ? value.toString() : ""}
-                                    onChange={(e) => {
-                                      const val = e.target.value
-                                      onChange(val === "" ? undefined : Number(val))
-                                    }}
-                                  />
-                                </div>
+                                <Input type="number" step="0.01" placeholder="0.00" {...field} />
                               </FormControl>
-                              <FormDescription className="text-xs sm:text-sm">
-                                Original price to show discount (optional)
-                              </FormDescription>
+                              <FormDescription>Original price (for discounts)</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
+
                       <FormField
                         control={form.control}
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm sm:text-base">Category</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value !== undefined ? field.value : ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-background text-sm sm:text-base">
-                                  <SelectValue placeholder="Select a category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {categories.map((category) => (
-                                  <SelectItem key={category} value={category} className="text-sm sm:text-base">
-                                    {category}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormDescription className="text-xs sm:text-sm">
-                              Help customers find your product by selecting the right category
-                            </FormDescription>
+                            <FormLabel>Category</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Electronics, Clothing" {...field} />
+                            </FormControl>
+                            <FormDescription>Product category for organization</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </CardContent>
                   </Card>
-                </motion.div>
+                </div>
               </TabsContent>
-              <TabsContent value="images" className="mt-4 sm:mt-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20">
-                    <CardHeader className="pb-4 sm:pb-6">
-                      <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                        <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                        Product Images
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
-                      <FormField
-                        control={form.control}
-                        name="images"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm sm:text-base">Images (Max 5)</FormLabel>
-                            {/* Upload Area */}
-                            <div
-                              className={`relative border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-colors ${
-                                isDragOver
-                                  ? "border-primary bg-primary/5"
-                                  : "border-muted-foreground/25 hover:border-muted-foreground/50"
-                              }`}
-                              onDrop={handleDrop}
-                              onDragOver={handleDragOver}
-                              onDragLeave={handleDragLeave}
-                            >
-                              <input
-                                id="image-upload"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                onChange={(e) => handleImageUpload(e.target.files)}
-                                disabled={imagePreviews.length >= 5 || isUploadingImages} // Disable if max images or uploading
-                              />
-                              <div className="space-y-3 sm:space-y-4">
-                                <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full flex items-center justify-center">
-                                  {isUploadingImages ? (
-                                    <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground animate-spin" />
-                                  ) : (
-                                    <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    {isUploadingImages
-                                      ? "Uploading images..."
-                                      : imagePreviews.length >= 5
-                                        ? "Maximum images reached"
-                                        : "Drop images here or click to upload"}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB each</p>
-                                </div>
-                              </div>
-                            </div>
-                            {/* Image Previews */}
-                            {imagePreviews.length > 0 && (
-                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                                {imagePreviews.map((preview, index) => (
-                                  <motion.div
-                                    key={`image-${index}`}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    className="relative group aspect-square rounded-lg overflow-hidden border bg-muted shadow-sm hover:shadow-md transition-shadow"
-                                  >
-                                    <img
-                                      src={preview || "/placeholder.svg"}
-                                      alt={`Product image ${index + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                      <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="icon"
-                                        className="h-7 w-7 sm:h-8 sm:w-8"
-                                        onClick={() => removeImage(index)}
-                                      >
-                                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                                      </Button>
-                                    </div>
-                                    {index === 0 && (
-                                      <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs">Main</Badge>
-                                    )}
-                                  </motion.div>
-                                ))}
-                              </div>
-                            )}
-                            <FormDescription className="text-xs sm:text-sm">
-                              Upload high-quality images of your product. The first image will be the main product
-                              image.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </TabsContent>
+
               <TabsContent value="inventory" className="mt-4 sm:mt-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <div>
                   <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20">
                     <CardHeader className="pb-4 sm:pb-6">
                       <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -647,81 +517,111 @@ export default function EditProductPage() {
                         name="inventoryQuantity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm sm:text-base">Stock Quantity *</FormLabel>
+                            <FormLabel>Stock Quantity</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" className="bg-background text-sm sm:text-base" {...field} />
+                              <Input type="number" placeholder="0" {...field} />
                             </FormControl>
-                            <FormDescription className="text-xs sm:text-sm">
-                              Number of items available for sale
-                            </FormDescription>
+                            <FormDescription>Number of items available for sale</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4">
-                        <div className="flex items-start gap-2 sm:gap-3">
-                          <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div className="text-xs sm:text-sm">
-                            <p className="font-medium text-blue-900 dark:text-blue-100">Inventory Tracking</p>
-                            <p className="text-blue-700 dark:text-blue-300 mt-1">
-                              Your inventory will be automatically updated when customers make purchases. You'll receive
-                              notifications when stock runs low.
+
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 p-4">
+                        <div className="flex gap-3">
+                          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Inventory Tips</p>
+                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                              Keep your stock levels up to date to avoid overselling. Consider setting a low stock alert
+                              threshold.
                             </p>
                           </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="images" className="mt-4 sm:mt-6">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <div
+                    className="relative border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-colors"
+                    onMouseEnter={() => setIsDragOver(true)}
+                    onMouseLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => handleImageUpload(e.target.files)}
+                      disabled={imagePreviews.length >= 5 || isUploadingImages}
+                    />
+
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full flex items-center justify-center">
+                        {isUploadingImages ? (
+                          <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground animate-spin" />
+                        ) : (
+                          <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium">
+                          {isUploadingImages
+                            ? "Uploading images..."
+                            : imagePreviews.length >= 5
+                              ? "Maximum images reached"
+                              : "Drop images here or click to upload"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB each</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <motion.div
+                          key={`image-${index}`}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="relative group aspect-square rounded-lg overflow-hidden border bg-muted shadow-sm"
+                        >
+                          <img
+                            src={preview || "/placeholder.svg"}
+                            alt={`Product image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="h-7 w-7 sm:h-8 sm:w-8"
+                              onClick={() => removeImage(index)}
+                            >
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </div>
+
+                          {index === 0 && (
+                            <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs">Main</Badge>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               </TabsContent>
             </Tabs>
-            {/* Submit Button (redundant if button in header is used, but kept for consistency with original form structure) */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20 flex-shrink-0">
-                        <Save className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm sm:text-base">Ready to save changes</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Review your information and save when ready
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => router.back()}
-                        className="w-full sm:w-auto order-2 sm:order-1"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting || isUploadingImages} // Disable if uploading images
-                        className="w-full sm:w-auto sm:min-w-[140px] order-1 sm:order-2"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
           </form>
         </Form>
       </div>

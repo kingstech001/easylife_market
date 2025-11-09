@@ -8,23 +8,30 @@ import mongoose from "mongoose"
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   await connectToDB()
   console.log("DB connected for GET product.")
+
   try {
     const user = await getUserFromCookies(request as NextRequest)
+
     if (!user) {
       console.log("❌ GET Product: User not authenticated.")
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
+
     console.log(`Debug: Authenticated user ID: ${user.id}`)
 
     const userStore = await Store.findOne({ sellerId: new mongoose.Types.ObjectId(user.id) })
+
     if (!userStore) {
       console.log(`❌ GET Product: Store not found for seller ID ${user.id}.`)
-      return NextResponse.json({ success: false, message: "Forbidden: Store not found for this user" }, { status: 403 })
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Store not found for this user" },
+        { status: 403 },
+      )
     }
+
     console.log(`✅ GET Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
 
-    const resolvedParams = await Promise.resolve(params)
-    const { id } = resolvedParams
+    const { id } = await Promise.resolve(params)
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ GET Product: Invalid product ID format: ${id}.`)
@@ -38,7 +45,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 })
     }
 
-    // Ensure the product belongs to the authenticated user's store
     if (product.storeId.toString() !== userStore._id.toString()) {
       console.log(
         `❌ GET Product: User ${user.id} attempted to access product ${id} not owned by their store (${product.storeId}).`,
@@ -63,36 +69,50 @@ export async function GET(request: Request, { params }: { params: { id: string }
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   await connectToDB()
   console.log("DB connected for PUT product.")
+
   try {
-    // Explicitly cast request to NextRequest before passing to getUserFromCookies
     const user = await getUserFromCookies(request as NextRequest)
+
     if (!user) {
       console.log("❌ PUT Product: User not authenticated.")
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
+
     console.log(`Debug: Authenticated user ID: ${user.id}`)
+
     const userStore = await Store.findOne({ sellerId: new mongoose.Types.ObjectId(user.id) })
+
     if (!userStore) {
       console.log(`❌ PUT Product: Store not found for seller ID ${user.id}.`)
+
       const allStores = await Store.find({}, { sellerId: 1, name: 1 }).limit(5)
       console.log(
         "Sample stores in DB (sellerId field):",
         allStores.map((s) => ({ id: s._id, sellerId: s.sellerId, name: s.name })),
       )
-      return NextResponse.json({ success: false, message: "Forbidden: Store not found for this user" }, { status: 403 })
+
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Store not found for this user" },
+        { status: 403 },
+      )
     }
+
     console.log(`✅ PUT Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
-    const resolvedParams = await Promise.resolve(params)
-    const { id } = resolvedParams
+
+    const { id } = await Promise.resolve(params)
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ PUT Product: Invalid product ID format: ${id}.`)
       return NextResponse.json({ success: false, message: "Invalid product ID format" }, { status: 400 })
     }
+
     const product = await Product.findById(id)
+
     if (!product) {
       console.log(`❌ PUT Product: Product with ID ${id} not found.`)
       return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 })
     }
+
     if (product.storeId.toString() !== userStore._id.toString()) {
       console.log(
         `❌ PUT Product: User ${user.id} attempted to update product ${id} not owned by their store (${product.storeId}).`,
@@ -102,19 +122,26 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         { status: 403 },
       )
     }
+    
     const updates = await request.json()
-    product.name = updates.name !== undefined ? updates.name : product.name
-    product.description = updates.description !== undefined ? updates.description : product.description
-    product.price = updates.price !== undefined ? updates.price : product.price
-    product.compareAtPrice = updates.compareAtPrice !== undefined ? updates.compareAtPrice : product.compareAtPrice
-    product.categoryId = updates.categoryId !== undefined ? updates.categoryId : product.categoryId
-    product.inventoryQuantity =
-      updates.inventoryQuantity !== undefined ? updates.inventoryQuantity : product.inventoryQuantity
-    product.images = updates.images !== undefined ? updates.images : product.images
+
+    product.name = updates.name ?? product.name
+    product.description = updates.description ?? product.description
+    product.price = updates.price ?? product.price
+    product.compareAtPrice = updates.compareAtPrice ?? product.compareAtPrice
+    product.category = updates.categoryId ?? product.category
+    product.inventoryQuantity = updates.inventoryQuantity ?? product.inventoryQuantity
+    product.images = updates.images ?? product.images
     product.updatedAt = new Date()
+
     await product.save()
+
     console.log(`✅ PUT Product: Product ${id} updated successfully by store ${userStore._id}.`)
-    return NextResponse.json({ success: true, message: "Product updated successfully", data: product }, { status: 200 })
+
+    return NextResponse.json(
+      { success: true, message: "Product updated successfully", data: product },
+      { status: 200 },
+    )
   } catch (error: any) {
     console.error("Error updating product:", error)
     return NextResponse.json(
@@ -127,36 +154,51 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   await connectToDB()
   console.log("DB connected for DELETE product.")
+
   try {
-    // Explicitly cast request to NextRequest before passing to getUserFromCookies
     const user = await getUserFromCookies(request as NextRequest)
+
     if (!user) {
       console.log("❌ DELETE Product: User not authenticated.")
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
+
     console.log(`Debug: Authenticated user ID: ${user.id}`)
+
     const userStore = await Store.findOne({ sellerId: new mongoose.Types.ObjectId(user.id) })
+
     if (!userStore) {
       console.log(`❌ DELETE Product: Store not found for seller ID ${user.id}.`)
+
       const allStores = await Store.find({}, { sellerId: 1, name: 1 }).limit(5)
       console.log(
         "Sample stores in DB (sellerId field):",
-        allStores.map((s) => ({ id: s._id, sellerId: s.sellerId, name: s.name })),
+        allStores.map((s) => ({ id: s._id, sellerId: s.sellerId, name: s.name }))
+
       )
-      return NextResponse.json({ success: false, message: "Forbidden: Store not found for this user" }, { status: 403 })
+
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Store not found for this user" },
+        { status: 403 },
+      )
     }
+
     console.log(`✅ DELETE Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
-    const resolvedParams = await Promise.resolve(params)
-    const { id } = resolvedParams
+
+    const { id } = await Promise.resolve(params)
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ DELETE Product: Invalid product ID format: ${id}.`)
       return NextResponse.json({ success: false, message: "Invalid product ID format" }, { status: 400 })
     }
+
     const product = await Product.findById(id)
+
     if (!product) {
       console.log(`❌ DELETE Product: Product with ID ${id} not found.`)
       return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 })
     }
+
     if (product.storeId.toString() !== userStore._id.toString()) {
       console.log(
         `❌ DELETE Product: User ${user.id} attempted to delete product ${id} not owned by their store (${product.storeId}).`,
@@ -166,8 +208,11 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
         { status: 403 },
       )
     }
+
     await Product.deleteOne({ _id: id })
+
     console.log(`✅ DELETE Product: Product ${id} deleted successfully by store ${userStore._id}.`)
+
     return NextResponse.json({ success: true, message: "Product deleted successfully" }, { status: 200 })
   } catch (error: any) {
     console.error("Error deleting product:", error)

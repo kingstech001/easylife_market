@@ -204,7 +204,7 @@ export default function AdminOrdersPage() {
       <div className="container px-4 py-8 max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start sm:items-center space-x-4">
+            <div className="flex space-x-4">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
                 <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
               </div>

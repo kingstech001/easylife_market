@@ -13,7 +13,7 @@ export interface IProduct extends Document {
   description?: string;
   price: number;
   compareAtPrice?: number;
-  categoryId?: mongoose.Types.ObjectId;
+  category?: mongoose.Types.ObjectId;
   inventoryQuantity: number;
   images: IProductImage[];
   storeId: mongoose.Types.ObjectId;
@@ -61,7 +61,7 @@ const ProductSchema = new Schema<IProduct>(
         message: "Compare at price should be greater than regular price",
       },
     },
-    categoryId: {
+    category: {
       type: Schema.Types.ObjectId,
       ref: "Category",
     },

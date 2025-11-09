@@ -14,6 +14,7 @@ export interface IStore extends Document {
   subscriptionPlan: "free" | "basic" | "standard" | "premium"
   subscriptionStartDate?: Date
   subscriptionEndDate?: Date
+  location?: string // ✅ Just a single address field
   createdAt: Date
   updatedAt: Date
 }
@@ -36,6 +37,7 @@ const StoreSchema: Schema = new Schema(
     },
     subscriptionStartDate: { type: Date },
     subscriptionEndDate: { type: Date },
+    location: { type: String, required: true },
   },
   {
     timestamps: true,
@@ -50,6 +52,7 @@ StoreSchema.pre("save", function (next) {
   next()
 })
 
-const Store = mongoose.models.Store || mongoose.model<IStore>("Store", StoreSchema)
+const Store =
+  mongoose.models.Store || mongoose.model<IStore>("Store", StoreSchema)
 
 export default Store

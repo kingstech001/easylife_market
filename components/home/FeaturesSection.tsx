@@ -94,7 +94,7 @@ export default function FeaturesSection() {
                   Succeed
                 </span>
               </h2>
-              <p className="max-w-[800px] text-muted-foreground text-lg md:text-xl leading-relaxed">
+              <p className="max-w-[800px] m-auto text-muted-foreground text-lg md:text-xl leading-relaxed">
                 Our comprehensive platform provides all the tools, features, and support you need to create, manage, and
                 scale your online business successfully.
               </p>

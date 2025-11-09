@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -50,11 +51,6 @@ const sidebarNavItems = [
     href: "/dashboard/admin/orders",
     icon: ShoppingBag,
   },
-  {
-    title: "Analytics",
-    href: "/dashboard/admin/analytics",
-    icon: BarChart3,
-  },
 ]
 
 const managementItems = [
@@ -62,11 +58,6 @@ const managementItems = [
     title: "Users",
     href: "/dashboard/admin/users",
     icon: Users,
-  },
-  {
-    title: "Help Center",
-    href: "/dashboard/admin/help",
-    icon: HelpCircle,
   },
   {
     title: "Settings",
@@ -78,6 +69,7 @@ const managementItems = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { toggleSidebar } = useSidebar()
 
   const handleLogout = async () => {
     try {
@@ -92,6 +84,11 @@ export function AdminSidebar() {
     } catch (error) {
       console.error("Logout error:", error)
       toast.error("Logout failed.")
+    }
+  }
+  const handleSidebarClick = () => {
+    if (window.innerWidth < 1024) {
+      toggleSidebar()
     }
   }
 
@@ -118,7 +115,7 @@ export function AdminSidebar() {
             <SidebarMenu>
               {sidebarNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href} onClick={handleSidebarClick}>
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>

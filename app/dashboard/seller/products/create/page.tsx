@@ -50,7 +50,7 @@ const productFormSchema = z.object({
       }),
     )
     .optional(),
-  storeId: z.string().min(1, { message: "Store ID is required." }), // Added storeId to schema
+  storeId: z.string().min(1, { message: "Store ID is required." }),
 })
 
 type ProductFormValues = z.infer<typeof productFormSchema>
@@ -75,9 +75,9 @@ export default function CreateProductPage() {
   const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
-  const [storeId, setStoreId] = useState<string | null>(null) // State for storeId
-  const [isStoreLoading, setIsStoreLoading] = useState(true) // State for store loading
-  const [storeError, setStoreError] = useState<string | null>(null) // State for store error
+  const [storeId, setStoreId] = useState<string | null>(null)
+  const [isStoreLoading, setIsStoreLoading] = useState(true)
+  const [storeError, setStoreError] = useState<string | null>(null)
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -89,14 +89,14 @@ export default function CreateProductPage() {
       category: "",
       inventoryQuantity: 0,
       images: [],
-      storeId: "", // Initialize storeId
+      storeId: "",
     },
   })
 
   const { clearStorage } = useFormPersistence({
     form,
     storageKey: "create-product-form",
-    excludeFields: ["storeId"], // Don't persist storeId as it's fetched from API
+    excludeFields: ["storeId"],
     debounceMs: 300,
   })
 
@@ -106,30 +106,26 @@ export default function CreateProductPage() {
       setIsStoreLoading(true)
       setStoreError(null)
       try {
-        // Assuming an API endpoint like /api/seller/store exists to get the current seller's store ID
-        const response = await fetch("/api/seller/store")
+        const response = await fetch("/api/dashboard/seller/store")
         if (!response.ok) {
           let errorMessage = "Failed to fetch store information."
           try {
             const errorData = await response.json()
             errorMessage = errorData.message || errorMessage
           } catch (jsonError) {
-            console.warn("Could not parse store error response as JSON, trying text:", jsonError)
             try {
               const errorText = await response.text()
               if (errorText) {
                 errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
               }
-            } catch (textError) {
-              console.warn("Could not get store error response as text:", textError)
-            }
+            } catch {}
           }
           throw new Error(errorMessage)
         }
         const data = await response.json()
         if (data.store && data.store._id) {
           setStoreId(data.store._id)
-          form.setValue("storeId", data.store._id) // Set storeId in form
+          form.setValue("storeId", data.store._id)
         } else {
           throw new Error("Store ID not found in response.")
         }
@@ -144,7 +140,7 @@ export default function CreateProductPage() {
       }
     }
     fetchStoreId()
-  }, [form]) // Depend on form to ensure it's ready when setting value
+  }, [form])
 
   useEffect(() => {
     const images = form.watch("images")
@@ -157,7 +153,7 @@ export default function CreateProductPage() {
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return
 
-    const newFilesArray = Array.from(files).slice(0, 5 - imagePreviews.length) // Max 5 images total
+    const newFilesArray = Array.from(files).slice(0, 5 - imagePreviews.length)
     if (newFilesArray.length === 0) {
       toast.info("Maximum 5 images allowed.", { description: "Please remove existing images to upload more." })
       return
@@ -187,15 +183,12 @@ export default function CreateProductPage() {
             const errorData = await response.json()
             errorMessage = errorData.error || errorMessage
           } catch (jsonError) {
-            console.warn("Could not parse image upload error response as JSON, trying text:", jsonError)
             try {
               const errorText = await response.text()
               if (errorText) {
                 errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
               }
-            } catch (textError) {
-              console.warn("Could not get image upload error response as text:", textError)
-            }
+            } catch {}
           }
           throw new Error(errorMessage)
         }
@@ -205,7 +198,7 @@ export default function CreateProductPage() {
           url: result.secure_url,
           altText: `${form.getValues("name") || "Product"} image ${imagePreviews.length + uploadedImageUrls.length + 1}`,
         })
-        setImagePreviews((prev) => [...prev, result.secure_url]) // Update previews immediately
+        setImagePreviews((prev) => [...prev, result.secure_url])
         toast.success(`Image "${file.name}" uploaded.`)
       } catch (error: any) {
         console.error("Error uploading image:", error)
@@ -215,7 +208,6 @@ export default function CreateProductPage() {
       }
     }
 
-    // Update the form state with the new image URLs
     const currentImages = form.getValues("images") || []
     form.setValue("images", [...currentImages, ...uploadedImageUrls])
     setIsUploadingImages(false)
@@ -254,12 +246,10 @@ export default function CreateProductPage() {
 
     setIsSubmitting(true)
     try {
-      // The 'data' object already contains the Cloudinary URLs in data.images
-      // and now also the storeId
-      const response = await fetch("/api/seller/products", {
+      const response = await fetch("/api/dashboard/seller/products", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // Send as JSON
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       })
@@ -270,15 +260,12 @@ export default function CreateProductPage() {
           const errorData = await response.json()
           errorMessage = errorData.message || errorMessage
         } catch (jsonError) {
-          console.warn("Could not parse product creation error response as JSON, trying text:", jsonError)
           try {
             const errorText = await response.text()
             if (errorText) {
               errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
             }
-          } catch (textError) {
-            console.warn("Could not get product creation error response as text:", textError)
-          }
+          } catch {}
         }
         throw new Error(errorMessage)
       }
@@ -292,10 +279,10 @@ export default function CreateProductPage() {
         category: "",
         inventoryQuantity: 0,
         images: [],
-        storeId: storeId, // Keep the storeId as it's needed for the form
+        storeId: storeId,
       })
-      setImagePreviews([]) // Clear image previews
-      setActiveTab("details") // Reset to first tab
+      setImagePreviews([])
+      setActiveTab("details")
 
       toast.success("Product created successfully!", {
         description: "Your product has been added to your store.",
@@ -320,17 +307,16 @@ export default function CreateProductPage() {
       category: "",
       inventoryQuantity: 0,
       images: [],
-      storeId: storeId || "", // Keep the storeId as it's needed for the form
+      storeId: storeId || "",
     })
     setImagePreviews([])
-    setActiveTab("details") // Reset to first tab
+    setActiveTab("details")
     clearStorage()
     toast.info("Form cleared", {
       description: "All saved data has been removed.",
     })
   }
 
-  // Render loading/error states for store information
   if (isStoreLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -358,7 +344,6 @@ export default function CreateProductPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
-        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-4 -ml-4 hover:bg-muted">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -390,7 +375,6 @@ export default function CreateProductPage() {
             </Button>
           </div>
         </motion.div>
-        {/* Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
@@ -582,7 +566,6 @@ export default function CreateProductPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm sm:text-base">Images (Max 5)</FormLabel>
-                            {/* Upload Area */}
                             <div
                               className={`relative border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-colors ${
                                 isDragOver
@@ -622,7 +605,6 @@ export default function CreateProductPage() {
                                 </div>
                               </div>
                             </div>
-                            {/* Image Previews */}
                             {imagePreviews.length > 0 && (
                               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {imagePreviews.map((preview, index) => (
@@ -715,7 +697,6 @@ export default function CreateProductPage() {
                 </motion.div>
               </TabsContent>
             </Tabs>
-            {/* Submit Button */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5">
                 <CardContent className="p-4 sm:p-6">
@@ -742,7 +723,7 @@ export default function CreateProductPage() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={isSubmitting || isUploadingImages} // Disable if uploading images
+                        disabled={isSubmitting || isUploadingImages}
                         className="w-full sm:w-auto sm:min-w-[140px] order-1 sm:order-2"
                       >
                         {isSubmitting ? (

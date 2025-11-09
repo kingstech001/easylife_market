@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from 'react'
 
 export default function ExpandableText({ text, limit = 120 }: { text?: string | null; limit?: number }) {

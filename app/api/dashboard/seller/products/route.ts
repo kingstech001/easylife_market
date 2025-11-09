@@ -31,7 +31,16 @@ export async function GET(req: Request) {
 
     const products = await Product.find({ storeId: store._id }).sort({ createdAt: -1 })
 
-    return NextResponse.json({ store, products }, { status: 200 })
+    // ✅ FIX: Convert Mongoose documents to plain objects and ensure _id is preserved
+    const productsWithId = products.map(product => {
+      const productObj = product.toObject()
+      return {
+        ...productObj,
+        _id: productObj._id.toString(), // Explicitly keep _id as string
+      }
+    })
+
+    return NextResponse.json({ store, products: productsWithId }, { status: 200 })
   } catch (error) {
     console.error("GET /api/seller/products error:", error)
     return NextResponse.json({ message: "Internal Server Error", error: String(error) }, { status: 500 })
@@ -70,7 +79,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Store not found or does not belong to this user" }, { status: 404 })
     }
 
-
     const productCount = await Product.countDocuments({ storeId: store._id })
     if (productCount >= 10) {
       return NextResponse.json(
@@ -91,7 +99,14 @@ export async function POST(req: Request) {
       sellerId: user.id,
     })
 
-    return NextResponse.json({ success: true, product }, { status: 201 })
+    // ✅ FIX: Convert to plain object with _id preserved
+    const productObj = product.toObject()
+    const productWithId = {
+      ...productObj,
+      _id: productObj._id.toString(),
+    }
+
+    return NextResponse.json({ success: true, product: productWithId }, { status: 201 })
   } catch (error: any) {
     console.error("POST /api/seller/products error:", error)
     if (error.code === 11000) {

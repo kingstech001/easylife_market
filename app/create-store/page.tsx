@@ -1,24 +1,41 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { z } from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Loader2, StoreIcon, Building, ImageIcon, Upload, Check } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
-import { slugify } from "@/lib/utils"
-import { AnimatedContainer } from "@/components/ui/animated-container"
-import { FormSection } from "@/components/ui/form-section"
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Loader2,
+  StoreIcon,
+  Building,
+  ImageIcon,
+  Upload,
+  Check,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { slugify } from "@/lib/utils";
+import { AnimatedContainer } from "@/components/ui/animated-container";
+import { FormSection } from "@/components/ui/form-section";
 
 const storeFormSchema = z.object({
-  name: z.string().min(3, { message: "Store name must be at least 3 characters." }),
+  name: z
+    .string()
+    .min(3, { message: "Store name must be at least 3 characters." }),
   slug: z
     .string()
     .min(3)
@@ -29,17 +46,20 @@ const storeFormSchema = z.object({
   logo_url: z.string().optional(),
   banner_url: z.string().optional(),
   categories: z.string().optional(), // <-- Add this (comma-separated string)
-})
+  location: z
+    .string()
+    .min(5, { message: "Please provide a valid address for your store." }),
+});
 
-type StoreFormValues = z.infer<typeof storeFormSchema>
+type StoreFormValues = z.infer<typeof storeFormSchema>;
 
 export default function CreateStorePage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
-  const [ownerId, setOwnerId] = useState<string | null>(null)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
 
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
@@ -50,76 +70,92 @@ export default function CreateStorePage() {
       logo_url: "",
       banner_url: "",
       categories: "", // <-- Add this
+      location: "",
     },
-  })
+  });
 
   // Auto-generate slug
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "name" && value.name && !form.formState.dirtyFields.slug) {
-        form.setValue("slug", slugify(value.name), { shouldValidate: true })
+        form.setValue("slug", slugify(value.name), { shouldValidate: true });
       }
-    })
-    return () => subscription.unsubscribe()
-  }, [form])
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Get user from JWT via API
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/me", { credentials: "include" })
-        const data = await res.json()
+        const res = await fetch("/api/me", { credentials: "include" });
+        const data = await res.json();
         if (res.ok && data?.user?._id) {
-          setOwnerId(data.user._id)
+          setOwnerId(data.user._id);
         } else {
-          toast("User not authenticated. Please log in to create a store.")
+          toast("User not authenticated. Please log in to create a store.");
           // Optionally redirect to login page
-          router.push("/auth/login")
+          router.push("/auth/login");
         }
       } catch (err) {
-        toast("Failed to fetch user data. Please try again.")
+        toast("Failed to fetch user data. Please try again.");
       }
-    }
-    fetchUser()
-  }, [toast])
+    };
+    fetchUser();
+  }, [toast]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => setLogoPreview(e.target?.result as string)
-      reader.readAsDataURL(file)
-      form.setValue("logo_url", "placeholder-url-for-upload", { shouldDirty: true, shouldValidate: true })
+      const reader = new FileReader();
+      reader.onload = (e) => setLogoPreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+      form.setValue("logo_url", "placeholder-url-for-upload", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     } else {
-      setLogoPreview(null)
-      form.setValue("logo_url", "", { shouldDirty: true, shouldValidate: true })
+      setLogoPreview(null);
+      form.setValue("logo_url", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
-  }
+  };
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => setBannerPreview(e.target?.result as string)
-      reader.readAsDataURL(file)
-      form.setValue("banner_url", "placeholder-url-for-upload", { shouldDirty: true, shouldValidate: true })
+      const reader = new FileReader();
+      reader.onload = (e) => setBannerPreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+      form.setValue("banner_url", "placeholder-url-for-upload", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     } else {
-      setBannerPreview(null)
-      form.setValue("banner_url", "", { shouldDirty: true, shouldValidate: true })
+      setBannerPreview(null);
+      form.setValue("banner_url", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
-  }
+  };
 
   async function onSubmit(data: StoreFormValues) {
     if (!ownerId) {
-      toast("Please log in to create a store.")
-      return
+      toast("Please log in to create a store.");
+      return;
     }
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       // Convert comma-separated categories to array
       const categoriesArray = data.categories
-        ? data.categories.split(",").map((cat) => cat.trim()).filter(Boolean)
-        : []
+        ? data.categories
+            .split(",")
+            .map((cat) => cat.trim())
+            .filter(Boolean)
+        : [];
 
       const res = await fetch("/api/dashboard/seller/store/create", {
         method: "POST",
@@ -131,19 +167,19 @@ export default function CreateStorePage() {
           banner_url: bannerPreview,
           categories: categoriesArray, // <-- Send as array
         }),
-      })
+      });
 
       if (!res.ok) {
-        toast("An unexpected error occurred while creating your store.")
-        return
+        toast("An unexpected error occurred while creating your store.");
+        return;
       }
 
-      toast("Your store has been successfully set up.")
-      router.push("/store-builder")
+      toast("Your store has been successfully set up.");
+      router.push("/store-builder");
     } catch (error) {
-      toast("Could not create store. Please try again.")
+      toast("Could not create store. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -156,15 +192,23 @@ export default function CreateStorePage() {
               <StoreIcon className="h-7 w-7 " />
             </div>
             <div>
-              <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Create Your Store</h1>
-              <p className="text-lg text-muted-foreground mt-1">Launch your online presence in minutes</p>
+              <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+                Create Your Store
+              </h1>
+              <p className="text-lg text-muted-foreground mt-1">
+                Launch your online presence in minutes
+              </p>
             </div>
           </div>
         </AnimatedContainer>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
             <AnimatedContainer animation="slideUp" delay={0.1}>
-              <FormSection title="Store Information" description="Basic details about your store" icon={Building}>
+              <FormSection
+                title="Store Information"
+                description="Basic details about your store"
+                icon={Building}
+              >
                 <div className="grid gap-6">
                   <FormField
                     control={form.control}
@@ -175,11 +219,34 @@ export default function CreateStorePage() {
                         <FormControl>
                           <Input placeholder="My Awesome Store" {...field} />
                         </FormControl>
-                        <FormDescription>This is the name customers will see.</FormDescription>
+                        <FormDescription>
+                          This is the name customers will see.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Store Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g. No. 12 amufie Road Ogrute, Enugu, Nigeria"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Enter your store's physical address or business
+                          location.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="slug"
@@ -194,7 +261,9 @@ export default function CreateStorePage() {
                             <Input className="rounded-l-none" {...field} />
                           </div>
                         </FormControl>
-                        <FormDescription>This will be your store’s public URL.</FormDescription>
+                        <FormDescription>
+                          This will be your store’s public URL.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -212,7 +281,9 @@ export default function CreateStorePage() {
                             {...field}
                           />
                         </FormControl>
-                        <FormDescription>A short description of your store and what you sell.</FormDescription>
+                        <FormDescription>
+                          A short description of your store and what you sell.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -241,7 +312,11 @@ export default function CreateStorePage() {
             </AnimatedContainer>
 
             <AnimatedContainer animation="slideUp" delay={0.2}>
-              <FormSection title="Store Branding" description="Upload your store logo and banner" icon={ImageIcon}>
+              <FormSection
+                title="Store Branding"
+                description="Upload your store logo and banner"
+                icon={ImageIcon}
+              >
                 <div className="grid gap-6">
                   <FormField
                     control={form.control}
@@ -266,7 +341,9 @@ export default function CreateStorePage() {
                               variant="outline"
                               type="button"
                               className="w-full bg-transparent"
-                              onClick={() => document.getElementById("logo-upload")?.click()}
+                              onClick={() =>
+                                document.getElementById("logo-upload")?.click()
+                              }
                             >
                               <Upload className="mr-2 h-4 w-4" />
                               Upload Logo
@@ -278,7 +355,9 @@ export default function CreateStorePage() {
                               className="hidden"
                               onChange={handleLogoUpload}
                             />
-                            <FormDescription>Recommended: square image, min 200×200px</FormDescription>
+                            <FormDescription>
+                              Recommended: square image, min 200×200px
+                            </FormDescription>
                           </div>
                         </div>
                       </FormItem>
@@ -308,7 +387,9 @@ export default function CreateStorePage() {
                             variant="outline"
                             type="button"
                             className="w-full bg-transparent"
-                            onClick={() => document.getElementById("banner-upload")?.click()}
+                            onClick={() =>
+                              document.getElementById("banner-upload")?.click()
+                            }
                           >
                             <Upload className="mr-2 h-4 w-4" />
                             Upload Banner
@@ -320,7 +401,9 @@ export default function CreateStorePage() {
                             className="hidden"
                             onChange={handleBannerUpload}
                           />
-                          <FormDescription>Recommended: 1200×400px</FormDescription>
+                          <FormDescription>
+                            Recommended: 1200×400px
+                          </FormDescription>
                         </div>
                       </FormItem>
                     )}
@@ -337,7 +420,11 @@ export default function CreateStorePage() {
                       <Check className="h-5 w-5 text-green-600" />
                       <span>Your store is almost ready!</span>
                     </div>
-                    <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full sm:w-auto"
+                    >
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -358,5 +445,5 @@ export default function CreateStorePage() {
         </Form>
       </div>
     </main>
-  )
+  );
 }

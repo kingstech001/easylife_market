@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +17,7 @@ interface StoreCardProps {
     isPublished: boolean
     createdAt: string
     updatedAt: string
+    productCount?: number
   }
 }
 
@@ -44,7 +47,7 @@ export function StoreCard({ store }: StoreCardProps) {
           )}
         </div>
 
-        {/* Logo (on top of everything) */}
+        {/* Logo */}
         {store.logo_url && (
           <div className="absolute z-20 top-28 left-4 w-20 h-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden">
             <Image
@@ -64,6 +67,7 @@ export function StoreCard({ store }: StoreCardProps) {
           </CardDescription>
         </CardHeader>
 
+        {/* Store Stats */}
         <CardContent className="p-4 pt-0">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -76,7 +80,7 @@ export function StoreCard({ store }: StoreCardProps) {
             </div>
             <div className="flex items-center gap-1">
               <Package className="w-4 h-4" />
-              <span>120 Products</span>
+              <span>{store.productCount ?? 0} Products</span>
             </div>
           </div>
         </CardContent>

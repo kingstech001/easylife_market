@@ -27,11 +27,11 @@ interface Product {
   category_id?: string
   inventory_quantity: number
   images: { id: string; url: string; alt_text: string | null }[]
-  storeId: string
-  productId: string
+  store_id: string
   created_at: string
   updated_at: string
 }
+
 
 interface Store {
   id: string
@@ -131,11 +131,8 @@ export default function ProductPage({
         price: product.price,
         quantity,
         image: product.images[0]?.url || "/placeholder.svg",
-        storeId: product.storeId,
-        productId: product.productId,
-      })
-      toast.success("Added to cart!", {
-        description: `${quantity} × ${product.name}`,
+        storeId: product.store_id,
+        productId: product.id,
       })
     }, 1000)
   }

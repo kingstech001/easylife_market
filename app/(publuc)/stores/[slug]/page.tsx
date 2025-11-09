@@ -3,11 +3,11 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import { ProductCard } from "@/components/product-card"
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
+import ExpandableText from "@/components/ExpandableText"   // ✅ Import added
 
 // Types for the API responses
 interface Store {
@@ -18,14 +18,6 @@ interface Store {
   logo_url?: string
   banner_url?: string
   owner_id: string
-  created_at: string
-  updated_at: string
-}
-
-interface Category {
-  id: string
-  name: string
-  store_id: string
   created_at: string
   updated_at: string
 }
@@ -45,94 +37,42 @@ interface Product {
 }
 
 interface StorePageProps {
-  params: Promise<{
-    slug: string
-  }>
+  params: Promise<{ slug: string }>
 }
 
-// Fetch store data from API
+// ✅ Fetch store data
 async function getStore(slug: string): Promise<Store | null> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}`
 
-    const response = await fetch(apiUrl, {
-      cache: "no-store",
-    })
+    const response = await fetch(apiUrl, { cache: "no-store" })
 
     if (!response.ok) {
-      if (response.status === 404) {
-        console.log("Store not found (404)")
-        return null
-      }
-      throw new Error(`Failed to fetch store: ${response.status} ${response.statusText}`)
+      if (response.status === 404) return null
+      throw new Error(`Failed to fetch store: ${response.status}`)
     }
 
     const data = await response.json()
-
-    if (!data.success) {
-      return null
-    }
-
-    return data.store
+    return data.success ? data.store : null
   } catch (error) {
     console.error("Error fetching store:", error)
     return null
   }
 }
 
-// Fetch store products from API using slug
+// ✅ Fetch products only (categories removed)
 async function getStoreProducts(slug: string): Promise<Product[]> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/products`
 
-    const response = await fetch(apiUrl, {
-      cache: "no-store",
-    })
+    const response = await fetch(apiUrl, { cache: "no-store" })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.log("Products API Error response:", errorText)
-      throw new Error(`Failed to fetch products: ${response.statusText}`)
-    }
+    if (!response.ok) throw new Error(`Failed to fetch products`)
 
     const data = await response.json()
-
-    if (!data.success) {
-      return []
-    }
-
-    return data.products || []
+    return data.success ? data.products : []
   } catch (error) {
     console.error("Error fetching products:", error)
-    return []
-  }
-}
-
-// Fetch store categories from API using slug
-async function getStoreCategories(slug: string): Promise<Category[]> {
-  try {
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/categories`
-
-    const response = await fetch(apiUrl, {
-      cache: "no-store",
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.log("Categories API Error response:", errorText)
-      throw new Error(`Failed to fetch categories: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-
-    if (!data.success) {
-      console.log("Categories API returned error:", data.message)
-      return []
-    }
-
-    return data.categories || []
-  } catch (error) {
-    console.error("Error fetching categories:", error)
     return []
   }
 }
@@ -141,14 +81,10 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
   const { slug } = await params
   const store = await getStore(slug)
 
-  if (!store) {
-    return {
-      title: "Store Not Found",
-    }
-  }
+  if (!store) return { title: "Store Not Found" }
 
   return {
-    title: `${store.name} | ShopBuilder`,
+    title: `${store.name}`,
     description: store.description || `Shop at ${store.name}`,
   }
 }
@@ -156,16 +92,12 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 export default async function StorePage({ params }: StorePageProps) {
   const { slug } = await params
 
-  // Fetch store data
+  // Fetch store
   const store = await getStore(slug)
+  if (!store) notFound()
 
-  if (!store) {
-    console.log("Store not found, showing 404")
-    notFound()
-  }
-
-  // Fetch store products and categories in parallel using slug
-  const [storeProducts, storeCategories] = await Promise.all([getStoreProducts(slug), getStoreCategories(slug)])
+  // ✅ Fetch products ONLY
+  const storeProducts = await getStoreProducts(slug)
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -187,13 +119,12 @@ export default async function StorePage({ params }: StorePageProps) {
             <AvatarPlaceholder name={store.name} className="h-24 w-24 sm:h-32 sm:w-32 text-4xl" />
           </div>
         )}
-        {/* <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" /> */}
       </div>
 
       {/* Store Info */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col items-start gap-4 md:gap-6  z-10 relative">
-          <div className="flex  gap-4">
+        <div className="flex flex-col items-start gap-4 md:gap-6">
+          <div className="flex gap-4">
             <div className="relative flex-shrink-0">
               {store.logo_url ? (
                 <Image
@@ -201,7 +132,7 @@ export default async function StorePage({ params }: StorePageProps) {
                   alt={`${store.name} logo`}
                   width={96}
                   height={96}
-                  className="w-16 h-16 md:w-28 md:h-28 rounded-3xl object-cover border-4 shadow-xl"
+                  className="w-16 h-16 md:w-28 md:h-28 rounded-full object-cover border-4 shadow-xl"
                 />
               ) : (
                 <AvatarPlaceholder
@@ -212,12 +143,11 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className=" gap-2 sm:gap-4 mb-2 space-y-2">
+              <div className="mb-2 space-y-2">
                 <h1 className="text-2xl sm:text-4xl font-bold text-foreground">{store.name}</h1>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-current" />
-                    4.5
+                    <Star className="h-3 w-3 fill-current" /> 4.5
                   </Badge>
                   <Badge variant="outline">Open</Badge>
                 </div>
@@ -235,115 +165,40 @@ export default async function StorePage({ params }: StorePageProps) {
               </div>
             </div>
           </div>
-          <p className="text-muted-foreground mb-4 max-w-3xl text-sm sm:text-base">
-            {store.description || "Welcome to our store! Discover amazing products and great deals."}
-          </p>
+
+          {/* ✅ Expandable Text used here */}
+          <div className="mb-4">
+            <ExpandableText
+              text={store.description || "Welcome to our store! Discover amazing products and great deals."}
+              limit={150}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Store Products */}
+      {/* ✅ Simple Product List Only */}
       <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="container mx-auto max-w-screen-xl">
-          {storeCategories.length > 0 ? (
-            <Tabs defaultValue="all" className="w-full">
-              <div className="mb-6">
-                <TabsList className="grid w-full grid-cols-2 sm:flex sm:w-auto gap-2 h-auto p-1 bg-muted/50">
-                  <TabsTrigger
-                    value="all"
-                    className="flex-shrink-0 text-xs px-3 py-2 sm:text-sm sm:px-4 data-[state=active]:bg-background"
-                  >
-                    All Products ({storeProducts.length})
-                  </TabsTrigger>
-                  {storeCategories.map((category) => {
-                    const categoryProductCount = storeProducts.filter((p) => p.category_id === category.id).length
-                    return (
-                      <TabsTrigger
-                        key={category.id}
-                        value={category.id}
-                        className="flex-shrink-0 text-xs px-3 py-2 sm:text-sm sm:px-4 data-[state=active]:bg-background"
-                      >
-                        {category.name} ({categoryProductCount})
-                      </TabsTrigger>
-                    )
-                  })}
-                </TabsList>
-              </div>
+          <h2 className="text-xl font-semibold mb-6">Products</h2>
 
-              {/* All Products Tab */}
-              <TabsContent value="all" className="mt-0">
-                {storeProducts.length > 0 ? (
-                  <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {storeProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} storeSlug={store.slug} />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="p-8">
-                    <CardContent className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                        <span className="text-2xl">📦</span>
-                      </div>
-                      <h3 className="text-lg font-semibold mb-2">No Products Yet</h3>
-                      <p className="text-muted-foreground">
-                        This store hasn't added any products yet. Check back later!
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              {/* Category Tabs */}
-              <>
-                {storeCategories.map((category) => {
-                  const filteredProducts = storeProducts.filter((product) => product.category_id === category.id)
-                  return (
-                    <TabsContent key={category.id} value={category.id} className="mt-0">
-                      {filteredProducts.length > 0 ? (
-                        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                          {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} storeSlug={store.slug} />
-                          ))}
-                        </div>
-                      ) : (
-                        <Card className="p-8">
-                          <CardContent className="text-center">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                              <span className="text-2xl">🏷️</span>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">No Products in {category.name}</h3>
-                            <p className="text-muted-foreground">This category doesn't have any products yet.</p>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </TabsContent>
-                  )
-                })}
-              </>
-            </Tabs>
-          ) : (
-            // No categories, show all products directly
-            <div>
-              <h2 className="text-xl font-semibold mb-6">Products</h2>
-              {storeProducts.length > 0 ? (
-                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {storeProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} storeSlug={store.slug} />
-                  ))}
-                </div>
-              ) : (
-                <Card className="p-8">
-                  <CardContent className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-2xl">🏪</span>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">Store Coming Soon</h3>
-                    <p className="text-muted-foreground">
-                      {store.name} is setting up their store. Products will be available soon!
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+          {storeProducts.length > 0 ? (
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {storeProducts.map((product) => (
+                <ProductCard key={product.id} product={product} storeSlug={store.slug} />
+              ))}
             </div>
+          ) : (
+            <Card className="p-8">
+              <CardContent className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-2xl">🏪</span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Store Coming Soon</h3>
+                <p className="text-muted-foreground">
+                  {store.name} is setting up their store. Products will be available soon!
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

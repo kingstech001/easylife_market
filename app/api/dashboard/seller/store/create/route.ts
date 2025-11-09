@@ -17,6 +17,7 @@ const storeSchema = z.object({
   logo_url: z.string().optional(),
   banner_url: z.string().optional(),
   categories: z.array(z.string()).optional(), // <-- Accept array of strings
+  location: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
       logo_url,
       banner_url,
       categories: categories || [], // <-- Save categories
+      location: parsed.data.location,
     });
 
     return NextResponse.json({ store }, { status: 201 });

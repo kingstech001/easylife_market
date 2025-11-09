@@ -1,43 +1,43 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { Plus, StoreIcon, AlertCircle } from "lucide-react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { StoreCard } from "@/components/dashboard/store-card"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Plus, StoreIcon, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { StoreCard } from "@/components/dashboard/store-card";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AdminStore {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  logo_url: string | null
-  banner_url: string | null
-  is_published: boolean
-  created_at: string
-  updated_at: string
-  isApproved: boolean
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  banner_url: string | null;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+  isApproved: boolean;
 }
 
 export default function StoresPage() {
-  const [stores, setStores] = useState<AdminStore[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [stores, setStores] = useState<AdminStore[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        setLoading(true)
-        const response = await fetch("/api/dashboard/admin/stores")
+        setLoading(true);
+        const response = await fetch("/api/dashboard/admin/stores");
 
         if (!response.ok) {
-          throw new Error("Failed to fetch stores")
+          throw new Error("Failed to fetch stores");
         }
 
-        const data = await response.json()
-        const rawStores = Array.isArray(data) ? data : data.stores || []
+        const data = await response.json();
+        const rawStores = Array.isArray(data) ? data : data.stores || [];
 
         // Map API data to match StoreCard's expected props
         const formattedStores: AdminStore[] = rawStores.map((s: any) => ({
@@ -51,18 +51,18 @@ export default function StoresPage() {
           created_at: s.created_at ?? s.createdAt ?? "",
           updated_at: s.updated_at ?? s.updatedAt ?? "",
           isApproved: s.isApproved ?? true,
-        }))
+        }));
 
-        setStores(formattedStores)
+        setStores(formattedStores);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred")
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchStores()
-  }, [])
+    fetchStores();
+  }, []);
 
   if (loading) {
     return (
@@ -93,7 +93,7 @@ export default function StoresPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -112,7 +112,9 @@ export default function StoresPage() {
               </div>
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold text-foreground">Failed to Load Stores</h3>
+              <h3 className="text-xl font-semibold text-foreground">
+                Failed to Load Stores
+              </h3>
               <p className="text-muted-foreground max-w-md">{error}</p>
             </div>
             <Button onClick={() => window.location.reload()} size="lg">
@@ -121,7 +123,7 @@ export default function StoresPage() {
           </motion.div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -132,7 +134,7 @@ export default function StoresPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center justify-between"
+          className="flex flex-col md:flex-row justify-between"
         >
           <div className="flex items-center gap-4">
             <motion.div
@@ -147,12 +149,23 @@ export default function StoresPage() {
               </div>
             </motion.div>
             <div>
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Stores</h1>
-              <p className="text-muted-foreground mt-1">Manage and monitor all your stores</p>
+              <h1 className="text-5xl font-bold tracking-tight text-foreground">
+                Stores
+              </h1>
+              <p className="text-muted-foreground mt-1 hidden md:block">
+            Manage and monitor all your stores
+          </p>
             </div>
           </div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-            <Button asChild size="lg" className="shadow-lg">
+          <p className="text-muted-foreground mt-1 md:hidden">
+            Manage and monitor all your stores
+          </p>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Button asChild size="lg" className="shadow-lg w-full">
               <Link href="/dashboard/admin/stores/create">
                 <Plus className="mr-2 h-5 w-5" />
                 New Store
@@ -177,9 +190,12 @@ export default function StoresPage() {
                     <StoreIcon className="h-16 w-16 text-primary" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-semibold text-foreground mb-2">No stores yet</h3>
+                <h3 className="text-2xl font-semibold text-foreground mb-2">
+                  No stores yet
+                </h3>
                 <p className="text-muted-foreground mb-6 max-w-md">
-                  You haven't created any stores yet. Create your first store to get started with your business.
+                  You haven't created any stores yet. Create your first store to
+                  get started with your business.
                 </p>
                 <Button asChild size="lg" className="shadow-lg">
                   <Link href="/admin/stores/create">
@@ -211,5 +227,5 @@ export default function StoresPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

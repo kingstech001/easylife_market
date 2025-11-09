@@ -53,6 +53,7 @@
     "jose": "^6.0.11",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.454.0",
+    "mongodb": "^6.20.0",
     "mongoose": "^8.16.2",
     "next": "15.2.4",
     "next-auth": "^4.24.11",
@@ -75,6 +76,7 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongodb": "^4.0.7",
     "@types/next-auth": "^3.15.0",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.17",

@@ -24,11 +24,11 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
 
         <div className="container relative z-10 px-4 md:px-6 py-12 md:py-24 lg:py-32">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center max-w-7xl mx-auto">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16  max-w-7xl mx-auto">
             {/* Left Content */}
             <div className="flex flex-col justify-center space-y-8">
               {/* Badge */}
-              <div className="flex justify-center sm:justify-start">
+              <div className="flex justify-center lg:justify-start">
                 <Badge
                   variant="secondary"
                   className="px-4 py-2 text-sm font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
@@ -40,20 +40,20 @@ export default function HeroSection() {
 
               {/* Main Content */}
               <div className="space-y-6">
-                <h1 className="text-center sm:text-left text-4xl font-bold tracking-tight sm:text-5xl xl:text-6xl/none bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-center lg:text-left font-bold tracking-tight text-5xl xl:text-7xl/none bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
                   Buy and Sell{" "}
                   <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                     Seamlessly with <span className="text-[#c0a146]">EasyLife</span>
                   </span>
                 </h1>
-                <p className="text-center sm:text-left max-w-[600px] text-muted-foreground text-lg md:text-xl leading-relaxed">
+                <p className="text-center lg:text-left max-w-[600px] text-muted-foreground text-lg md:text-xl leading-relaxed m-auto lg:m-0">
                   Build, customize, and launch your online store in minutes. Join thousands of successful entrepreneurs
                   who trust our platform.
                 </p>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 py-6">
+              <div className="grid grid-cols-3 gap-6 py-6 m-auto lg:m-0 ">
                 <div className="text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <Users className="w-5 h-5 text-primary" />
@@ -78,7 +78,7 @@ export default function HeroSection() {
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start items-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
                 <Link href="/auth/login">
                   <Button
                     size="lg"
@@ -153,7 +153,7 @@ export default function HeroSection() {
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-xs font-medium">Live Sales</span>
                     </div>
-                    <p className="text-lg font-bold mt-1">$12,847</p>
+                    <p className="text-lg font-bold mt-1">₦12,847</p>
                   </div>
 
                   <div className="absolute bottom-6 left-6 bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg p-3 shadow-lg">
@@ -166,8 +166,8 @@ export default function HeroSection() {
                 </div>
 
                 {/* Arrow indicator */}
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-                  <ArrowRight className="w-6 h-6 text-primary rotate-90" />
+                <div className="absolute -bottom-17 lg:-bottom-9 left-1/2 lg:left-1/3 transform -translate-x-1/2 animate-bounce">
+                  <ArrowRight className="w-12 h-12 lg:w-24 lg:h-24 text-primary rotate-90" />
                 </div>
               </div>
             </div>
