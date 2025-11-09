@@ -1,9 +1,9 @@
 import mongoose, { Schema, type Document } from "mongoose"
-import slugify from "slugify" // Import slugify
+import slugify from "slugify"
 
 export interface IStore extends Document {
   name: string
-  slug: string // Added slug field
+  slug: string
   description?: string
   logo_url?: string
   banner_url?: string
@@ -11,6 +11,9 @@ export interface IStore extends Document {
   isApproved: boolean
   categories?: string[]
   isPublished: boolean
+  subscriptionPlan: "free" | "basic" | "standard" | "premium"
+  subscriptionStartDate?: Date
+  subscriptionEndDate?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -18,7 +21,7 @@ export interface IStore extends Document {
 const StoreSchema: Schema = new Schema(
   {
     name: { type: String, required: true, unique: true },
-    slug: { type: String, unique: true, index: true }, // Added slug to schema
+    slug: { type: String, unique: true, index: true },
     description: { type: String },
     logo_url: { type: String },
     banner_url: { type: String },
@@ -26,6 +29,13 @@ const StoreSchema: Schema = new Schema(
     isPublished: { type: Boolean, default: false },
     isApproved: { type: Boolean, default: false },
     categories: [{ type: String }],
+    subscriptionPlan: {
+      type: String,
+      enum: ["free", "basic", "standard", "premium"],
+      default: "free",
+    },
+    subscriptionStartDate: { type: Date },
+    subscriptionEndDate: { type: Date },
   },
   {
     timestamps: true,

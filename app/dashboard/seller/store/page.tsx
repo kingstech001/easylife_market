@@ -12,6 +12,7 @@ interface StoreType {
   name: string
   description?: string
   isPublished: boolean
+  isApproved: boolean
   createdAt: string
   slug: string
 }
@@ -46,7 +47,6 @@ export default function SellerStorePage() {
       <div className="min-h-screen bg-background">
         <div className="container px-4 py-8 ">
           <div className="space-y-8">
-            {/* Header Skeleton */}
             <div className="flex items-center space-x-4">
               <div className="h-12 w-12 rounded-xl bg-muted animate-pulse" />
               <div className="space-y-2">
@@ -55,7 +55,6 @@ export default function SellerStorePage() {
               </div>
             </div>
 
-            {/* Card Skeleton */}
             <Card className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -78,9 +77,8 @@ export default function SellerStorePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container  px-4 py-8">
-        {/* Header Section */}
         <div className="mb-12">
-          <div className="flex items-center space-x-4 mb-4">
+          <div className="flex space-x-4 mb-4">
             <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center">
               <StoreIcon className="h-6 w-6 text-primary-foreground" />
             </div>
@@ -95,7 +93,6 @@ export default function SellerStorePage() {
 
         {store ? (
           <div className="space-y-8">
-            {/* Store Overview Card */}
             <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card border">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
@@ -103,6 +100,8 @@ export default function SellerStorePage() {
                     <CardTitle className="text-2xl font-bold text-card-foreground group-hover:text-foreground transition-colors">
                       {store.name}
                     </CardTitle>
+
+                    {/* ✅ Status badges (Published + Approved) */}
                     <div className="flex items-center space-x-2">
                       <Badge
                         variant={store.isPublished ? "default" : "secondary"}
@@ -124,10 +123,22 @@ export default function SellerStorePage() {
                           </>
                         )}
                       </Badge>
+
+                      {/* ✅ Approval Badge */}
+                      <Badge
+                        className={`${
+                          store.isApproved
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
+                        }`}
+                      >
+                        {store.isApproved ? "Approved" : "Pending Approval"}
+                      </Badge>
                     </div>
                   </div>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div>
@@ -136,6 +147,13 @@ export default function SellerStorePage() {
                       {store.description || "No description available."}
                     </p>
                   </div>
+
+                  {/* ✅ Approval Warning */}
+                  {!store.isApproved && (
+                    <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800">
+                      Your store is under review and will be approved once we are done.
+                    </div>
+                  )}
 
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4" />
@@ -167,7 +185,6 @@ export default function SellerStorePage() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
             <div className="grid gap-6 md:grid-cols-3">
               <Card className="p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
@@ -177,10 +194,10 @@ export default function SellerStorePage() {
                   </div>
                   <div
                     className={`p-3 rounded-xl ${
-                      store.isPublished ? "bg-green-100 dark:bg-green-900/20" : "bg-gray-100 dark:bg-gray-800"
+                      store.isApproved ? "bg-green-100 dark:bg-green-900/20" : "bg-gray-100 dark:bg-gray-800"
                     }`}
                   >
-                    {store.isPublished ? (
+                    {store.isApproved ? (
                       <Eye className="h-6 w-6 text-green-600" />
                     ) : (
                       <EyeOff className="h-6 w-6 text-gray-600 dark:text-gray-400" />

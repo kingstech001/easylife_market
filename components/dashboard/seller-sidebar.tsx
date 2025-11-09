@@ -14,41 +14,23 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { toast } from "sonner" // Using sonner for toasts
+import { toast } from "sonner"
 
 const sidebarNavItems = [
-  {
-    title: "Overview",
-    href: "/dashboard/seller",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "My Store",
-    href: "/dashboard/seller/store",
-    icon: Store,
-  },
-  {
-    title: "Products",
-    href: "/dashboard/seller/products",
-    icon: ShoppingBag,
-  },
-  {
-    title: "Orders",
-    href: "/dashboard/seller/orders",
-    icon: Package,
-  },
-  {
-    title:"Subscriptions",
-    href:"/dashboard/seller/subscriptions", 
-    icon: Package,
-  }
+  { title: "Overview", href: "/dashboard/seller", icon: LayoutDashboard },
+  { title: "My Store", href: "/dashboard/seller/store", icon: Store },
+  { title: "Products", href: "/dashboard/seller/products", icon: ShoppingBag },
+  { title: "Orders", href: "/dashboard/seller/orders", icon: Package },
+  { title: "Subscriptions", href: "/dashboard/seller/subscriptions", icon: Package },
 ]
 
 export function SellerSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { toggleSidebar } = useSidebar() // ✅ sidebar control
 
   const handleLogout = async () => {
     try {
@@ -63,6 +45,13 @@ export function SellerSidebar() {
     } catch (error) {
       console.error("Logout error:", error)
       toast.error("Logout failed.")
+    }
+  }
+
+  // ✅ Function to close sidebar only on mobile
+  const handleSidebarClick = () => {
+    if (window.innerWidth < 1024) { // Tailwind 'lg' breakpoint = 1024px
+      toggleSidebar()
     }
   }
 
@@ -84,6 +73,7 @@ export function SellerSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
@@ -91,7 +81,11 @@ export function SellerSidebar() {
             <SidebarMenu>
               {sidebarNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                    onClick={handleSidebarClick} // ✅ only close on mobile
+                  >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -102,12 +96,17 @@ export function SellerSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Support</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/seller/support"}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard/seller/support"}
+                  onClick={handleSidebarClick}
+                >
                   <Link href="/dashboard/seller/support">
                     <HelpCircle className="h-4 w-4" />
                     <span>Help Center</span>
@@ -115,7 +114,11 @@ export function SellerSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/seller/settings"}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard/seller/settings"}
+                  onClick={handleSidebarClick}
+                >
                   <Link href="/dashboard/seller/settings">
                     <Settings className="h-4 w-4" />
                     <span>Settings</span>
@@ -126,6 +129,7 @@ export function SellerSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>

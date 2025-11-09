@@ -5,18 +5,15 @@ import { connectToDB } from "@/lib/db";
 
 export async function PATCH(req: Request) {
   try {
-    console.log("PATCH /api/store/publish: Connecting to DB...");
     await connectToDB();
 
     const user = await getUserFromCookies();
     if (!user || (user.role !== "seller" && user.role !== "admin")) {
-      console.log("PATCH /api/store/publish: Unauthorized user.");
       return NextResponse.json(
         { error: "Unauthorized. Only sellers or admins can publish stores." },
         { status: 401 }
       );
     }
-    console.log("PATCH /api/store/publish: User authenticated:", user.id, user.role);
 
     // Parse request body
     let body: { storeId?: string };

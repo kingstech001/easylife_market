@@ -24,6 +24,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import Link from "next/link"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 // Define types for orders
 type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled"
@@ -126,32 +127,6 @@ export default function SellerOrdersPage() {
     }
   }, [])
 
-  const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
-    setIsUpdating(orderId)
-    try {
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
-
-      toast.success("Order status updated successfully")
-    } catch (error) {
-      console.error("Failed to update order status:", error)
-      toast.error("Failed to update order status")
-    } finally {
-      setIsUpdating(null)
-    }
-  }
-
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
@@ -187,12 +162,12 @@ export default function SellerOrdersPage() {
       <div className="container px-4 py-8">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col sm:flex-row items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex space-x-4">
               <div className="h-12 w-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
                 <Package className="h-6 w-6 text-indigo-600" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                <h1 className="text-xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                   Orders Management
                 </h1>
                 <p className="text-sm sm:text-lg text-muted-foreground mt-1">Track and manage all your customer orders</p>
@@ -249,23 +224,7 @@ export default function SellerOrdersPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded w-32"></div>
-                        <div className="h-3 bg-muted rounded w-48"></div>
-                      </div>
-                      <div className="h-6 bg-muted rounded w-20"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredOrders.length === 0 ? (
+          {isLoading ? <LoadingSpinner text="Please wait..." /> : filteredOrders.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

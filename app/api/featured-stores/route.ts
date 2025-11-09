@@ -5,8 +5,8 @@ import { connectToDB } from "@/lib/db"
 export async function GET() {
   try {
     await connectToDB()
-    // Fetch all published stores, sorted by creation date (newest first)
-    const stores = await Store.find({ isPublished: true }).sort({ createdAt: -1 })
+    // Fetch all published and approved stores, sorted by creation date (newest first)
+    const stores = await Store.find({ isPublished: true, isApproved: true }).sort({ createdAt: -1 })
     return NextResponse.json({ success: true, stores }, { status: 200 })
   } catch (error: any) {
     return NextResponse.json(
