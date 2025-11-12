@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import type { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
@@ -7,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
-import ExpandableText from "@/components/ExpandableText"   // ✅ Import added
+import ExpandableText from "@/components/ExpandableText"
 
 // Types for the API responses
 interface Store {
