@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { ShoppingCart, User, Menu, X, Heart, LogOut, LogIn, LayoutDashboard, Search, Bell } from "lucide-react"
+import { ShoppingCart, User, Menu, X, Heart, LogOut, LogIn, LayoutDashboard, Search, Bell, Store, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { MainNav } from "@/components/main-nav"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useCart } from "@/context/cart-context"
@@ -14,12 +15,17 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Card } from "@/components/ui/card"
 
 export function SiteHeader() {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<{stores: any[], products: any[]}>({ stores: [], products: [] })
+  const [isSearching, setIsSearching] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [dashboardLink, setDashboardLink] = useState("/dashboard")
@@ -51,6 +57,43 @@ export function SiteHeader() {
     checkAuth()
   }, [pathname])
 
+  // Search functionality
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length > 2) {
+        setIsSearching(true)
+        try {
+          const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+          if (response.ok) {
+            const data = await response.json()
+            setSearchResults(data)
+          }
+        } catch (error) {
+          console.error("Search error:", error)
+        } finally {
+          setIsSearching(false)
+        }
+      } else {
+        setSearchResults({ stores: [], products: [] })
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [searchQuery])
+
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (searchOpen && !target.closest('.search-container')) {
+        setSearchOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [searchOpen])
+
   async function handleLogout() {
     const res = await fetch("/api/auth/logout", {
       method: "POST",
@@ -67,6 +110,12 @@ export function SiteHeader() {
     }
   }
 
+  const handleSearchResultClick = () => {
+    setSearchOpen(false)
+    setSearchQuery("")
+    setSearchResults({ stores: [], products: [] })
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -81,7 +130,12 @@ export function SiteHeader() {
             <div className="hidden md:flex items-center space-x-2">
               <nav className="flex items-center space-x-1">
                 {/* Search Button */}
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9"
+                  onClick={() => setSearchOpen(!searchOpen)}
+                >
                   <Search className="h-4 w-4" />
                   <span className="sr-only">Search</span>
                 </Button>
@@ -185,6 +239,126 @@ export function SiteHeader() {
             </div>
           </div>
 
+          {/* Search Bar - Desktop */}
+          <div
+            className={cn(
+              "search-container overflow-hidden transition-all duration-300 ease-in-out",
+              searchOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+            )}
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search for stores or products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 h-12 text-base"
+                autoFocus
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setSearchResults({ stores: [], products: [] })
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
+            {/* Search Results */}
+            {searchQuery.length > 2 && (
+              <Card className="mt-2 max-h-80 overflow-y-auto">
+                {isSearching ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2">Searching...</p>
+                  </div>
+                ) : searchResults.stores.length === 0 && searchResults.products.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No results found for "{searchQuery}"</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {/* Stores Results */}
+                    {searchResults.stores.length > 0 && (
+                      <div className="p-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">Stores</h3>
+                        <div className="space-y-1">
+                          {searchResults.stores.map((store: any) => (
+                            <Link
+                              key={store._id}
+                              href={`/stores/${store.slug || store._id}`}
+                              onClick={handleSearchResultClick}
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
+                            >
+                              {store.logo ? (
+                                <img
+                                  src={store.logo}
+                                  alt={store.businessName}
+                                  className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Store className="h-5 w-5 text-primary" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{store.businessName}</p>
+                                <p className="text-sm text-muted-foreground truncate line-clamp-1">
+                                  {store.description || store.location}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Products Results */}
+                    {searchResults.products.length > 0 && (
+                      <div className="p-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">Products</h3>
+                        <div className="space-y-1">
+                          {searchResults.products.map((product: any) => (
+                            <Link
+                              key={product._id}
+                              href={`/stores/${product.storeSlug}/products/${product._id}`}
+                              onClick={handleSearchResultClick}
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
+                            >
+                              {product.image ? (
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-5 w-5 text-primary" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{product.name}</p>
+                                <p className="text-sm text-muted-foreground">₦{product.price?.toLocaleString()}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+
           {/* Mobile Menu */}
           <div
             className={cn(
@@ -226,7 +400,10 @@ export function SiteHeader() {
                 <Button
                   variant="outline"
                   className="w-full justify-start h-11 bg-transparent"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setSearchOpen(true)
+                    setMobileMenuOpen(false)
+                  }}
                 >
                   <Search className="mr-3 h-4 w-4" />
                   Search

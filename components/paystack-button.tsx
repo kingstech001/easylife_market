@@ -1,104 +1,125 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Spinner } from "@/components/ui/spinner"
+import { CreditCard } from "lucide-react"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 interface PaystackButtonProps {
-  amount: number // amount in kobo (smallest currency unit)
+  amount: number
   email: string
-  name?: string
-  onSuccess?: (reference: string) => void
-  onClose?: () => void
-  onOpen?: () => void
+  name: string
+  onSuccess: (reference: string) => void
+  onClose: () => void
   disabled?: boolean
+  onOpen?: () => void
+  isLoading?: boolean
 }
 
-export function PaystackButton({ amount, email, name, onSuccess, onClose, onOpen, disabled }: PaystackButtonProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [scriptLoaded, setScriptLoaded] = useState(false)
-
-  useEffect(() => {
-    if (scriptLoaded) return
-
-    const script = document.createElement("script")
-    script.src = "https://js.paystack.co/v1/inline.js"
-    script.async = true
-    script.onload = () => setScriptLoaded(true)
-    script.onerror = () => console.error("Failed to load Paystack script")
-    document.body.appendChild(script)
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script)
+declare global {
+  interface Window {
+    PaystackPop?: {
+      setup: (config: {
+        key: string
+        email: string
+        amount: number
+        currency: string
+        ref: string
+        metadata: {
+          custom_fields: Array<{
+            display_name: string
+            variable_name: string
+            value: string
+          }>
+        }
+        onClose: () => void
+        callback: (response: { reference: string }) => void
+      }) => {
+        openIframe: () => void
       }
     }
-  }, [scriptLoaded])
-
-  const generateReference = () => {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   }
+}
+
+export function PaystackButton({
+  amount,
+  email,
+  name,
+  onSuccess,
+  onClose,
+  disabled = false,
+  onOpen,
+  isLoading = false,
+}: PaystackButtonProps) {
+  const scriptLoadedRef = useRef(false)
+
+  useEffect(() => {
+    if (!scriptLoadedRef.current) {
+      const script = document.createElement("script")
+      script.src = "https://js.paystack.co/v1/inline.js"
+      script.async = true
+      document.body.appendChild(script)
+      scriptLoadedRef.current = true
+
+      return () => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script)
+        }
+      }
+    }
+  }, [])
 
   const handlePayment = () => {
-    if (!scriptLoaded) {
+    if (!window.PaystackPop) {
       console.error("Paystack script not loaded")
       return
     }
 
-    const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
-    if (!publicKey) {
-      console.error("Paystack public key not configured")
-      return
+    if (onOpen) {
+      onOpen()
     }
 
-    setIsLoading(true)
-    onOpen?.()
-
-    const ref = generateReference()
-    console.debug("Opening Paystack with ref:", ref, "amount(kobo):", amount)
-
-    const handler = (window as any).PaystackPop.setup({
-      key: publicKey,
+    const handler = window.PaystackPop.setup({
+      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
       email,
-      // amount is already provided in kobo by the caller — do NOT multiply here
       amount,
-      ref,
-      metadata: { custom_fields: [{ display_name: "Customer Name", variable_name: "name", value: name || "" }] },
-      callback: (response: any) => {
-        setIsLoading(false)
-        console.debug("Paystack callback response:", response)
-        onSuccess?.(response.reference)
+      currency: "NGN",
+      ref: `${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Customer Name",
+            variable_name: "customer_name",
+            value: name,
+          },
+        ],
       },
-      onClose: () => {
-        setIsLoading(false)
-        onClose?.()
+      onClose,
+      callback: (response) => {
+        onSuccess(response.reference)
       },
     })
 
-    try {
-      handler.openIframe()
-    } catch (err) {
-      setIsLoading(false)
-      console.error("Failed to open Paystack iframe", err)
-    }
+    handler.openIframe()
   }
 
   return (
     <Button
       onClick={handlePayment}
-      disabled={isLoading || !scriptLoaded || disabled}
-      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:bg-gray-400 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+      disabled={disabled || isLoading}
       size="lg"
+      className="bg-gradient-to-r from-[#0052CC] to-[#00A3E0] hover:from-[#0052CC]/90 hover:to-[#00A3E0]/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
     >
       {isLoading ? (
-        <div className="flex items-center gap-2">
-          <Spinner className="size-4" />
-          <span>Processing</span>
-        </div>
-      ) : scriptLoaded ? (
-        "Pay Now"
+        <>
+          <LoadingSpinner  />
+          Initializing Payment...
+        </>
       ) : (
-        "Loading..."
+        <>
+          <CreditCard className="mr-2 h-4 w-4" />
+          Pay ₦{(amount / 100).toLocaleString()}
+        </>
       )}
     </Button>
   )

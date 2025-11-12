@@ -37,7 +37,7 @@ export function ModernFooter() {
                         <div className="space-y-4">
                             <Link href="/" className="flex items-center space-x-2">
                                 <div className="w-8 h-8 bg-gradient-to-br from-[#c0a146] to-[#c0a146]/90 rounded-lg flex items-center justify-center">
-                                    <ShoppingBag className="h-6 w-6 text-white font-bold text-sm" />
+                                    <ShoppingBag className="h-6 w-6 text-foreground font-bold text-sm" />
                                 </div>
                                 <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">EasyLife</span>
                             </Link>

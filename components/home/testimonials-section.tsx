@@ -195,7 +195,7 @@ function MarqueeRow({
 
 export function TestimonialsSection() {
   return (
-    <section className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden block m-auto">
+    <section className="relative w-full py-12 overflow-hidden block m-auto">
       {/* Background with gradient and patterns */}
       <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-background to-muted/50" />
       {/* Animated background elements */}

@@ -11,8 +11,11 @@ export async function POST(request: NextRequest) {
       orders,
       shippingInfo,
       paymentMethod,
+      deliveryFee,
       type,
     } = body
+
+    console.log("[Paystack Initialize] Request body:", body)
 
     // 🧩 Validate common payment fields
     if (!email || !amount) {
@@ -56,9 +59,13 @@ export async function POST(request: NextRequest) {
 
       callback_url = `${appUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
       metadata = { plan, storeId, type: "subscription" }
-    } else {
+    } else if (type === "checkout") {
       // 🛒 Handle Regular Checkout Payments
       if (!orders || !shippingInfo) {
+        console.error("[Paystack Initialize] Missing checkout details:", {
+          hasOrders: !!orders,
+          hasShippingInfo: !!shippingInfo,
+        })
         return NextResponse.json(
           { error: "Missing checkout details" },
           { status: 400 }
@@ -66,16 +73,30 @@ export async function POST(request: NextRequest) {
       }
 
       callback_url = `${appUrl}/payment-success`
-      metadata = { orders, shippingInfo, paymentMethod, type: "checkout" }
+      metadata = {
+        orders,
+        shippingInfo,
+        paymentMethod: paymentMethod || "paystack",
+        deliveryFee: deliveryFee || 0,
+        totalAmount: amount * 100, // Store total in kobo
+        type: "checkout",
+      }
+    } else {
+      return NextResponse.json(
+        { error: "Invalid payment type" },
+        { status: 400 }
+      )
     }
 
     // 🧮 Convert ₦ to Kobo
     const paystackPayload = {
       email,
-      amount: amount*100,
+      amount: amount * 100,
       callback_url,
       metadata,
     }
+
+    console.log("[Paystack Initialize] Payload:", paystackPayload)
 
     // 🚀 Initialize payment with Paystack
     const paystackResponse = await fetch(

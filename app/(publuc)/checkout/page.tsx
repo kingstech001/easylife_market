@@ -470,8 +470,9 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Click the pay button below to complete your payment securely. A popup will appear where you can
-                        enter your card details.
+                        Click the pay button below to complete your payment
+                        securely. You will be redirected to Paystack's secure
+                        payment page.
                       </p>
                     </div>
                   </FormSection>

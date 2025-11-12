@@ -60,7 +60,7 @@ export default function FeaturesSection() {
 
   return (
     <Reveal direction="down">
-      <section className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden">
+      <section className="relative w-full py-12 overflow-hidden">
         {/* Background with gradient and patterns */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
 
@@ -211,7 +211,7 @@ export default function FeaturesSection() {
           </div>
 
           {/* CTA Section */}
-          <div className="flex flex-col items-center justify-center space-y-6 mt-16 pt-8">
+          <div className="flex flex-col items-center justify-center space-y-6 pt-8">
             {/* Decorative line */}
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 

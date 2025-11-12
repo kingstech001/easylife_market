@@ -12,6 +12,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   try {
     const { slug } = await params
 
+    console.log('🔍 Fetching products for store slug:', slug)
 
     // Validate slug
     if (!slug) {
@@ -24,14 +25,14 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
     await connectToDB()
 
-    // Find store by slug first (like your main store route)
+    // Find store by slug first
     const store = await Store.findOne({
       slug: slug,
       isPublished: true,
     })
 
-
     if (!store) {
+      console.log('❌ Store not found for slug:', slug)
       const errorResponse: ApiErrorResponse = {
         success: false,
         message: "Store not found or not published",
@@ -39,53 +40,84 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       return NextResponse.json(errorResponse, { status: 404 })
     }
 
+    console.log('✅ Store found:', store.name, 'ID:', store._id)
 
-    // First, let's see what products exist for this store without filters
+    // First, check what products exist for this store
     const allStoreProducts = await Product.find({
       storeId: store._id,
     }).lean()
 
-    // Now apply filters more carefully
+    console.log('📦 Total products found for store:', allStoreProducts.length)
+
+    // Build filter carefully
     const filter: any = {
       storeId: store._id,
     }
 
-    // Only add isActive filter if the field exists
-    if (allStoreProducts.length > 0 && "isActive" in allStoreProducts[0]) {
-      filter.isActive = true
+    // Only add filters if the fields exist in the schema
+    if (allStoreProducts.length > 0) {
+      const sampleProduct = allStoreProducts[0]
+      if ("isActive" in sampleProduct) {
+        filter.isActive = true
+      }
+      if ("isDeleted" in sampleProduct) {
+        filter.isDeleted = false
+      }
     }
 
-    // Only add isDeleted filter if the field exists
-    if (allStoreProducts.length > 0 && "isDeleted" in allStoreProducts[0]) {
-      filter.isDeleted = false
-    }
+    console.log('🔍 Using filter:', filter)
 
+    // Fetch products - don't populate categoryId since it might not exist or be a string
     const products: IProduct[] = await Product.find(filter)
-      .populate("categoryId", "name")
       .sort({ createdAt: -1 })
       .lean()
 
-    console.log("API: Found products after filtering:", products.length)
+    console.log('✅ Products after filtering:', products.length)
 
-    // Transform the products to match the expected frontend format
-    const transformedProducts: ProductResponse[] = products.map((product) => ({
-      id: product._id.toString(),
-      name: product.name,
-      description: product.description || null,
-      price: product.price,
-      compare_at_price: product.compareAtPrice || null,
-      category_id: product.categoryId?.toString() || null,
-      inventory_quantity: product.inventoryQuantity,
-      images:
-        product.images?.map((img) => ({
-          id: img._id?.toString() || Math.random().toString(),
-          url: img.url,
-          alt_text: img.altText || null,
-        })) || [],
-      store_id: product.storeId.toString(),
-      created_at: product.createdAt,
-      updated_at: product.updatedAt,
-    }))
+    // Transform the products safely
+    const transformedProducts: ProductResponse[] = products.map((product) => {
+      try {
+        return {
+          id: product._id.toString(),
+          name: product.name || "Untitled Product",
+          description: product.description || null,
+          price: product.price || 0,
+          compare_at_price: product.compareAtPrice || null,
+          // Handle category - it might be a string or ObjectId
+          category_id: product.category ? product.category.toString() : null,
+          inventory_quantity: product.inventoryQuantity || 0,
+          // Safely transform images
+          images: Array.isArray(product.images)
+            ? product.images.map((img: any, index: number) => ({
+                id: img._id?.toString() || `img-${index}`,
+                url: img.url || "",
+                alt_text: img.altText || img.alt_text || null,
+              }))
+            : [],
+          store_id: product.storeId.toString(),
+          created_at: product.createdAt || new Date(),
+          updated_at: product.updatedAt || new Date(),
+        }
+      } catch (transformError) {
+        console.error('❌ Error transforming product:', product._id, transformError)
+        // Return a basic product structure to avoid breaking the entire response
+        return {
+          id: product._id?.toString() || "unknown",
+          name: product.name || "Error loading product",
+          description: null,
+          price: 0,
+          compare_at_price: null,
+          category_id: null,
+          inventory_quantity: 0,
+          images: [],
+          store_id: product.storeId?.toString() || "",
+          created_at: new Date(),
+          updated_at: new Date(),
+        }
+      }
+    })
+
+    console.log('✅ Successfully transformed products:', transformedProducts.length)
 
     const successResponse: ProductsApiResponse = {
       success: true,
@@ -95,8 +127,14 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
     return NextResponse.json(successResponse, { status: 200 })
   } catch (error: unknown) {
-
+    console.error('❌ Error in GET /api/stores/[slug]/products:', error)
+    
     const errorMessage = error instanceof Error ? error.message : "Failed to fetch products"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error('Error message:', errorMessage)
+    console.error('Error stack:', errorStack)
+    
     const errorResponse: ApiErrorResponse = {
       success: false,
       message: errorMessage,

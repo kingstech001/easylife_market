@@ -6,12 +6,10 @@ import {
   Package,
   Search,
   Filter,
-  Eye,
   CheckCircle,
   XCircle,
   Clock,
   Truck,
-  ArrowLeft,
   Download,
   RefreshCw,
   ShoppingBag,
@@ -46,6 +44,7 @@ interface MainOrder {
   userId: string
   orderNumber: string
   totalAmount: number
+  grandTotal: number
   deliveryFee: number
   paymentMethod: string
   receiptUrl?: string
@@ -295,8 +294,8 @@ export default function BuyerOrdersPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Total Amount</p>
-                        <p className="font-bold text-xl">{formatCurrency(mainOrder.totalAmount)}</p>
+                        <p className="text-sm text-muted-foreground">Grand Total</p>
+                        <p className="font-bold text-xl">{formatCurrency(mainOrder.grandTotal)}</p>
                         <p className="text-xs text-muted-foreground">
                           (incl. {formatCurrency(mainOrder.deliveryFee)} delivery)
                         </p>
@@ -316,29 +315,23 @@ export default function BuyerOrdersPage() {
                             </div>
                           </div>
 
-                          <div className="grid md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground mb-2">Items</p>
-                              <div className="space-y-1">
-                                {subOrder.items.map((item, itemIndex) => (
-                                  <div key={item.productId || itemIndex} className="flex justify-between">
-                                    <span>
-                                      {item.quantity}x {item.productName}
-                                    </span>
-
-                                  </div>
-                                ))}
-                              </div>
+                          <div className="space-y-3">
+                            <p className="text-muted-foreground text-sm">Items</p>
+                            <div className="space-y-2">
+                              {subOrder.items.map((item, itemIndex) => (
+                                <div key={`${subOrder._id}-${itemIndex}`} className="flex justify-between items-center">
+                                  <span className="text-sm">
+                                    {item.quantity}x {item.productName}
+                                  </span>
+                                  <span className="font-medium text-sm">
+                                    {formatCurrency(item.priceAtPurchase * item.quantity)}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-
-                            <div>
-                              <p className="text-muted-foreground mb-2">Items price</p>
-                              <div className="space-y-1">
-                                <p>
-                                  <span className="text-muted-foreground"></span>{" "}
-                                  {formatCurrency(subOrder.totalPrice)}
-                                </p>
-                              </div>
+                            <div className="flex justify-between items-center pt-2 border-t">
+                              <span className="font-medium">Subtotal</span>
+                              <span className="font-bold">{formatCurrency(subOrder.totalPrice)}</span>
                             </div>
                           </div>
                         </div>

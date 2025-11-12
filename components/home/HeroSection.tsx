@@ -23,7 +23,7 @@ export default function HeroSection() {
         {/* Grid pattern overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
 
-        <div className="container relative z-10 px-4 md:px-6 py-12 md:py-24 lg:py-32">
+        <div className="container relative z-10 px-4 md:px-6 py-12 ">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16  max-w-7xl mx-auto">
             {/* Left Content */}
             <div className="flex flex-col justify-center space-y-8">
