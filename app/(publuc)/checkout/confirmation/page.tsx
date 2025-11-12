@@ -1,12 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function PaymentConfirmationPage() {
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
+function PaymentConfirmationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
@@ -90,5 +93,24 @@ export default function PaymentConfirmationPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+// Loading fallback
+function PaymentConfirmationLoading() {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center text-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
+    </div>
+  )
+}
+
+// Main component with Suspense
+export default function PaymentConfirmationPage() {
+  return (
+    <Suspense fallback={<PaymentConfirmationLoading />}>
+      <PaymentConfirmationContent />
+    </Suspense>
   )
 }

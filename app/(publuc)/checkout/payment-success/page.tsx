@@ -1,14 +1,17 @@
 "use client"
 
 import { useSearchParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { Loader2, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 import { useCart } from "@/context/cart-context"
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 const CHECKOUT_STORAGE_KEY = "checkout_form_data"
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
@@ -96,4 +99,23 @@ export default function PaymentSuccessPage() {
   }
 
   return null
+}
+
+// Loading fallback
+function PaymentSuccessLoading() {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center text-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
+    </div>
+  )
+}
+
+// Main component with Suspense
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<PaymentSuccessLoading />}>
+      <PaymentSuccessContent />
+    </Suspense>
+  )
 }

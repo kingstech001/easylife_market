@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -20,7 +20,7 @@ const verifySchema = z.object({
 
 type VerifyFormValues = z.infer<typeof verifySchema>
 
-export default function VerifyEmailPage() {
+function VerifyEmailForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
@@ -221,7 +221,7 @@ export default function VerifyEmailPage() {
                   type="submit"
                   className={cn(
                     "w-full h-12 text-base font-medium transition-all duration-200",
-                    "bg-gradient-to-r from-background to-background/90 hover:from-primary/90 hover:to-primary",
+                    "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
                     "shadow-lg hover:shadow-xl hover:shadow-primary/25",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
@@ -272,5 +272,26 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Loading fallback component
+function VerifyEmailLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+// Main component with Suspense boundary
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<VerifyEmailLoading />}>
+      <VerifyEmailForm />
+    </Suspense>
   )
 }
