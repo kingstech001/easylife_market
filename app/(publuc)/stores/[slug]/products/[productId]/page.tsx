@@ -1,130 +1,145 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { motion } from "framer-motion"
-import { Heart, ShoppingCart, Share2, Star, ChevronLeft, Check, Info, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { AnimatedContainer } from "@/components/ui/animated-container"
-import { use } from "react"
-import { useCart } from "@/context/cart-context"
-import { useWishlist } from "@/context/wishlist-context"
-import { toast } from "sonner"
-import { useFormatAmount } from "@/hooks/useFormatAmount"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import {
+  Heart,
+  ShoppingCart,
+  Share2,
+  Star,
+  ChevronLeft,
+  Check,
+  Info,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { AnimatedContainer } from "@/components/ui/animated-container";
+import { use } from "react";
+import { useCart } from "@/context/cart-context";
+import { useWishlist } from "@/context/wishlist-context";
+import { toast } from "sonner";
+import { useFormatAmount } from "@/hooks/useFormatAmount";
+import ExpandableText from "@/components/ExpandableText";
 
 // Types
 interface Product {
-  id: string
-  name: string
-  description: string | null
-  price: number
-  compare_at_price: number | null
-  category_id?: string
-  inventory_quantity: number
-  images: { id: string; url: string; alt_text: string | null }[]
-  store_id: string
-  created_at: string
-  updated_at: string
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  compare_at_price: number | null;
+  category_id?: string;
+  inventory_quantity: number;
+  images: { id: string; url: string; alt_text: string | null }[];
+  store_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-
 interface Store {
-  id: string
-  name: string
-  slug: string
-  description?: string
-  logo_url?: string
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
 }
 
 export default function ProductPage({
   params: paramsPromise,
 }: {
-  params: Promise<{ slug: string; productId: string }>
+  params: Promise<{ slug: string; productId: string }>;
 }) {
-  const params = use(paramsPromise)
-  const router = useRouter()
-  const [quantity, setQuantity] = useState(1)
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
-  const [product, setProduct] = useState<Product | null>(null)
-  const [store, setStore] = useState<Store | null>(null)
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const params = use(paramsPromise);
+  const router = useRouter();
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [store, setStore] = useState<Store | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { formatAmount } = useFormatAmount();
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
 
-  const { addToCart } = useCart()
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   // Fetch product data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true);
+        setError(null);
 
         // Fetch product details
-        const productResponse = await fetch(`/api/stores/${params.slug}/products/${params.productId}`)
+        const productResponse = await fetch(
+          `/api/stores/${params.slug}/products/${params.productId}`
+        );
 
         if (!productResponse.ok) {
           if (productResponse.status === 404) {
-            setError("Product not found")
-            return
+            setError("Product not found");
+            return;
           }
-          throw new Error("Failed to fetch product")
+          throw new Error("Failed to fetch product");
         }
 
-        const productData = await productResponse.json()
+        const productData = await productResponse.json();
         if (!productData.success) {
-          throw new Error(productData.message || "Failed to fetch product")
+          throw new Error(productData.message || "Failed to fetch product");
         }
 
-        setProduct(productData.product)
+        setProduct(productData.product);
 
         // Fetch store details
-        const storeResponse = await fetch(`/api/stores/${params.slug}`)
+        const storeResponse = await fetch(`/api/stores/${params.slug}`);
         if (storeResponse.ok) {
-          const storeData = await storeResponse.json()
+          const storeData = await storeResponse.json();
           if (storeData.success) {
-            setStore(storeData.store)
+            setStore(storeData.store);
           }
         }
 
         // Fetch related products (other products from same store)
-        const relatedResponse = await fetch(`/api/stores/${params.slug}/products`)
+        const relatedResponse = await fetch(
+          `/api/stores/${params.slug}/products`
+        );
         if (relatedResponse.ok) {
-          const relatedData = await relatedResponse.json()
+          const relatedData = await relatedResponse.json();
           if (relatedData.success) {
             // Filter out current product and limit to 4
-            const filtered = relatedData.products.filter((p: Product) => p.id !== params.productId).slice(0, 4)
-            setRelatedProducts(filtered)
+            const filtered = relatedData.products
+              .filter((p: Product) => p.id !== params.productId)
+              .slice(0, 4);
+            setRelatedProducts(filtered);
           }
         }
       } catch (err) {
-        console.error("Error fetching product data:", err)
-        setError(err instanceof Error ? err.message : "Failed to load product")
+        console.error("Error fetching product data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load product");
         toast.error("Failed to load product", {
           description: "Please try again later",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [params.slug, params.productId])
+    fetchData();
+  }, [params.slug, params.productId]);
 
   const handleAddToCart = () => {
-    if (!product) return
+    if (!product) return;
 
-    setIsAddingToCart(true)
+    setIsAddingToCart(true);
     setTimeout(() => {
-      setIsAddingToCart(false)
+      setIsAddingToCart(false);
       addToCart({
         id: product.id,
         name: product.name,
@@ -133,12 +148,12 @@ export default function ProductPage({
         image: product.images[0]?.url || "/placeholder.svg",
         storeId: product.store_id,
         productId: product.id,
-      })
-    }, 1000)
-  }
+      });
+    }, 1000);
+  };
 
   const toggleWishlist = () => {
-    if (!product || !store) return
+    if (!product || !store) return;
 
     const wishlistItem = {
       id: product.id,
@@ -146,19 +161,19 @@ export default function ProductPage({
       price: product.price,
       image: product.images[0]?.url || "/placeholder.svg",
       storeSlug: store.slug,
-    }
+    };
 
     if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id)
-      toast.success("Removed from wishlist")
+      removeFromWishlist(product.id);
+      toast.success("Removed from wishlist");
     } else {
-      addToWishlist(wishlistItem)
-      toast.success("Added to wishlist")
+      addToWishlist(wishlistItem);
+      toast.success("Added to wishlist");
     }
-  }
+  };
 
-  const incrementQuantity = () => setQuantity((prev) => prev + 1)
-  const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1))
+  const incrementQuantity = () => setQuantity((prev) => prev + 1);
+  const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
   // Loading state
   if (loading) {
@@ -167,26 +182,34 @@ export default function ProductPage({
         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
         <p className="text-muted-foreground">Loading product...</p>
       </div>
-    )
+    );
   }
 
   // Error state
   if (error || !product || !store) {
     return (
       <div className="container py-20 text-center">
-        <h1 className="text-3xl font-bold mb-4">{error === "Product not found" ? "Product Not Found" : "Error"}</h1>
+        <h1 className="text-3xl font-bold mb-4">
+          {error === "Product not found" ? "Product Not Found" : "Error"}
+        </h1>
         <p className="text-muted-foreground mb-8">
-          {error || "The product you're looking for doesn't exist or has been removed."}
+          {error ||
+            "The product you're looking for doesn't exist or has been removed."}
         </p>
         <Button onClick={() => router.back()}>Go Back</Button>
       </div>
-    )
+    );
   }
 
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
+  const hasDiscount =
+    product.compare_at_price && product.compare_at_price > product.price;
   const discountPercentage = hasDiscount
-    ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
-    : 0
+    ? Math.round(
+        ((product.compare_at_price! - product.price) /
+          product.compare_at_price!) *
+          100
+      )
+    : 0;
 
   return (
     <div className="container py-10 max-w-[1280px] mx-auto px-6 sm:px-8">
@@ -202,7 +225,11 @@ export default function ProductPage({
         <AnimatedContainer animation="slideIn" className="space-y-4">
           <div className="relative aspect-square overflow-hidden rounded-lg border bg-background">
             <Image
-              src={product.images[selectedImage]?.url || "/placeholder.svg?height=600&width=600" || "/placeholder.svg"}
+              src={
+                product.images[selectedImage]?.url ||
+                "/placeholder.svg?height=600&width=600" ||
+                "/placeholder.svg"
+              }
               alt={product.images[selectedImage]?.alt_text || product.name}
               fill
               className="object-cover"
@@ -248,7 +275,9 @@ export default function ProductPage({
                 <Button variant="ghost" size="icon" onClick={toggleWishlist}>
                   <Heart
                     className={`h-5 w-5 transition-colors duration-300 ${
-                      isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
+                      isInWishlist(product.id)
+                        ? "fill-red-500 text-red-500"
+                        : ""
                     }`}
                   />
                 </Button>
@@ -259,23 +288,30 @@ export default function ProductPage({
             </div>
 
             <div className="flex justify-between items-center">
-
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${i < 4 ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}
-                  />
-                ))}
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < 4
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  (24 reviews)
+                </span>
               </div>
-              <span className="text-sm text-muted-foreground">(24 reviews)</span>
-            </div>
-            <div className="flex items-start gap-2 md:hidden ">
+              <div className="flex items-start gap-2 md:hidden ">
                 <Button variant="ghost" size="icon" onClick={toggleWishlist}>
                   <Heart
                     className={`h-5 w-5 transition-colors duration-300 ${
-                      isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
+                      isInWishlist(product.id)
+                        ? "fill-red-500 text-red-500"
+                        : ""
                     }`}
                   />
                 </Button>
@@ -287,13 +323,17 @@ export default function ProductPage({
 
             <div className="mt-4">
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold">{formatAmount(product.price)}</span>
+                <span className="text-3xl font-bold">
+                  {formatAmount(product.price)}
+                </span>
                 {hasDiscount && (
                   <>
                     <span className="text-lg text-muted-foreground line-through">
                       {formatAmount(product.compare_at_price!)}
                     </span>
-                    <Badge className="bg-red-500 hover:bg-red-600">{discountPercentage}% OFF</Badge>
+                    <Badge className="bg-red-500 hover:bg-red-600">
+                      {discountPercentage}% OFF
+                    </Badge>
                   </>
                 )}
               </div>
@@ -309,7 +349,9 @@ export default function ProductPage({
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
                     <Check className="h-4 w-4" />
                   </div>
-                  <span className="text-sm">In stock - {product.inventory_quantity} available</span>
+                  <span className="text-sm">
+                    In stock - {product.inventory_quantity} available
+                  </span>
                 </>
               ) : (
                 <>
@@ -357,7 +399,9 @@ export default function ProductPage({
                 ) : (
                   <>
                     <ShoppingCart className="mr-2 h-4 w-4" />
-                    {product.inventory_quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                    {product.inventory_quantity === 0
+                      ? "Out of Stock"
+                      : "Add to Cart"}
                   </>
                 )}
               </Button>
@@ -380,19 +424,29 @@ export default function ProductPage({
             </TabsList>
             <TabsContent value="description" className="pt-4">
               <p className="text-muted-foreground">
-                {product.description || "No description available for this product."}
+                <ExpandableText
+                  text={
+                    product.description ||
+                    "nop description found."
+                  }
+                  limit={150}
+                />
               </p>
             </TabsContent>
             <TabsContent value="details" className="pt-4">
               <div className="space-y-2">
                 <div className="flex justify-between py-2 border-b">
                   <span className="font-medium">SKU</span>
-                  <span className="text-muted-foreground">SKU-{product.id}</span>
+                  <span className="text-muted-foreground">
+                    SKU-{product.id}
+                  </span>
                 </div>
                 <div className="flex justify-between py-2 border-b">
                   <span className="font-medium">Category</span>
                   <span className="text-muted-foreground">
-                    {product.category_id ? "Category " + product.category_id : "Uncategorized"}
+                    {product.category_id
+                      ? "Category " + product.category_id
+                      : "Uncategorized"}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-b">
@@ -401,7 +455,9 @@ export default function ProductPage({
                 </div>
                 <div className="flex justify-between py-2 border-b">
                   <span className="font-medium">Stock</span>
-                  <span className="text-muted-foreground">{product.inventory_quantity} units</span>
+                  <span className="text-muted-foreground">
+                    {product.inventory_quantity} units
+                  </span>
                 </div>
               </div>
             </TabsContent>
@@ -411,15 +467,21 @@ export default function ProductPage({
                   <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="font-medium">Free Shipping</p>
-                    <p className="text-sm text-muted-foreground">On orders over ₦20,000</p>
-                    <p className="text-sm text-muted-foreground">Within Ogrute</p>
+                    <p className="text-sm text-muted-foreground">
+                      On orders over ₦20,000
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Within Ogrute
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="font-medium">Delivery Time</p>
-                    <p className="text-sm text-muted-foreground">1-2 business days</p>
+                    <p className="text-sm text-muted-foreground">
+                      1-2 business days
+                    </p>
                   </div>
                 </div>
               </div>
@@ -437,7 +499,11 @@ export default function ProductPage({
               <Card
                 key={relatedProduct.id}
                 className="overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => router.push(`/stores/${params.slug}/products/${relatedProduct.id}`)}
+                onClick={() =>
+                  router.push(
+                    `/stores/${params.slug}/products/${relatedProduct.id}`
+                  )
+                }
               >
                 <div className="relative aspect-square overflow-hidden">
                   <Image
@@ -448,8 +514,12 @@ export default function ProductPage({
                   />
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold line-clamp-2">{relatedProduct.name}</h3>
-                  <p className="text-muted-foreground text-sm mt-1">₦{relatedProduct.price.toFixed(2)}</p>
+                  <h3 className="font-semibold line-clamp-2">
+                    {relatedProduct.name}
+                  </h3>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    ₦{relatedProduct.price.toFixed(2)}
+                  </p>
                 </div>
               </Card>
             ))}
@@ -457,5 +527,5 @@ export default function ProductPage({
         </AnimatedContainer>
       )}
     </div>
-  )
+  );
 }
