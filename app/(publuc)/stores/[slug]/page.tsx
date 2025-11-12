@@ -7,9 +7,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
-import ExpandableText from "@/components/ExpandableText"   // ✅ Import added
+import ExpandableText from "@/components/ExpandableText"
 
-// Types for the API responses
+// ✅ Types for the API responses
 interface Store {
   id: string
   name: string
@@ -37,14 +37,13 @@ interface Product {
 }
 
 interface StorePageProps {
-  params: Promise<{ slug: string }>
+  params: { slug: string }
 }
 
 // ✅ Fetch store data
 async function getStore(slug: string): Promise<Store | null> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}`
-
     const response = await fetch(apiUrl, { cache: "no-store" })
 
     if (!response.ok) {
@@ -60,11 +59,10 @@ async function getStore(slug: string): Promise<Store | null> {
   }
 }
 
-// ✅ Fetch products only (categories removed)
+// ✅ Fetch products only
 async function getStoreProducts(slug: string): Promise<Product[]> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/products`
-
     const response = await fetch(apiUrl, { cache: "no-store" })
 
     if (!response.ok) throw new Error(`Failed to fetch products`)
@@ -77,26 +75,28 @@ async function getStoreProducts(slug: string): Promise<Product[]> {
   }
 }
 
+// ✅ Metadata generation
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
-  const { slug } = await params
+  const { slug } = params
   const store = await getStore(slug)
 
   if (!store) return { title: "Store Not Found" }
 
   return {
-    title: `${store.name}`,
+    title: store.name,
     description: store.description || `Shop at ${store.name}`,
   }
 }
 
+// ✅ Page component
 export default async function StorePage({ params }: StorePageProps) {
-  const { slug } = await params
+  const { slug } = params
 
   // Fetch store
   const store = await getStore(slug)
   if (!store) notFound()
 
-  // ✅ Fetch products ONLY
+  // Fetch store products
   const storeProducts = await getStoreProducts(slug)
 
   return (
@@ -107,7 +107,7 @@ export default async function StorePage({ params }: StorePageProps) {
       <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden">
         {store.banner_url ? (
           <Image
-            src={store.banner_url || "/placeholder.svg"}
+            src={store.banner_url}
             alt={`${store.name} banner`}
             fill
             className="object-cover"
@@ -128,7 +128,7 @@ export default async function StorePage({ params }: StorePageProps) {
             <div className="relative flex-shrink-0">
               {store.logo_url ? (
                 <Image
-                  src={store.logo_url || "/placeholder.svg"}
+                  src={store.logo_url}
                   alt={`${store.name} logo`}
                   width={96}
                   height={96}
@@ -166,7 +166,7 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
           </div>
 
-          {/* ✅ Expandable Text used here */}
+          {/* Store Description */}
           <div className="mb-4">
             <ExpandableText
               text={store.description || "Welcome to our store! Discover amazing products and great deals."}
@@ -176,7 +176,7 @@ export default async function StorePage({ params }: StorePageProps) {
         </div>
       </div>
 
-      {/* ✅ Simple Product List Only */}
+      {/* Products Section */}
       <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="container mx-auto max-w-screen-xl">
           <h2 className="text-xl font-semibold mb-6">Products</h2>
