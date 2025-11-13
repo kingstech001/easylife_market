@@ -9,7 +9,7 @@ import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
 import ExpandableText from "@/components/ExpandableText"
 
-// ✅ Types for the API responses
+// Types for the API responses
 interface Store {
   id: string
   name: string
@@ -37,14 +37,46 @@ interface Product {
 }
 
 interface StorePageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
+}
+
+// ✅ NEW: Generate static params for all published stores
+export async function generateStaticParams() {
+  try {
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores`
+    
+    const response = await fetch(apiUrl, {
+      cache: "no-store",
+      next: { revalidate: 3600 } // Optional: Revalidate every hour
+    })
+
+    if (!response.ok) {
+      console.error("Failed to fetch stores for static generation")
+      return []
+    }
+
+    const data = await response.json()
+    const stores = data.success ? data.stores : []
+
+    // Return array of { slug: "store-slug" } objects
+    return stores.map((store: Store) => ({
+      slug: store.slug,
+    }))
+  } catch (error) {
+    console.error("Error generating static params:", error)
+    return []
+  }
 }
 
 // ✅ Fetch store data
 async function getStore(slug: string): Promise<Store | null> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}`
-    const response = await fetch(apiUrl, { cache: "no-store" })
+
+    const response = await fetch(apiUrl, { 
+      cache: "no-store",
+      next: { revalidate: 3600 } // Optional: ISR
+    })
 
     if (!response.ok) {
       if (response.status === 404) return null
@@ -63,7 +95,11 @@ async function getStore(slug: string): Promise<Store | null> {
 async function getStoreProducts(slug: string): Promise<Product[]> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/products`
-    const response = await fetch(apiUrl, { cache: "no-store" })
+
+    const response = await fetch(apiUrl, { 
+      cache: "no-store",
+      next: { revalidate: 3600 } // Optional: ISR
+    })
 
     if (!response.ok) throw new Error(`Failed to fetch products`)
 
@@ -75,28 +111,26 @@ async function getStoreProducts(slug: string): Promise<Product[]> {
   }
 }
 
-// ✅ Metadata generation
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
-  const { slug } = params
+  const { slug } = await params
   const store = await getStore(slug)
 
   if (!store) return { title: "Store Not Found" }
 
   return {
-    title: store.name,
+    title: `${store.name}`,
     description: store.description || `Shop at ${store.name}`,
   }
 }
 
-// ✅ Page component
 export default async function StorePage({ params }: StorePageProps) {
-  const { slug } = params
+  const { slug } = await params
 
   // Fetch store
   const store = await getStore(slug)
   if (!store) notFound()
 
-  // Fetch store products
+  // Fetch products
   const storeProducts = await getStoreProducts(slug)
 
   return (
@@ -107,7 +141,7 @@ export default async function StorePage({ params }: StorePageProps) {
       <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden">
         {store.banner_url ? (
           <Image
-            src={store.banner_url}
+            src={store.banner_url || "/placeholder.svg"}
             alt={`${store.name} banner`}
             fill
             className="object-cover"
@@ -128,7 +162,7 @@ export default async function StorePage({ params }: StorePageProps) {
             <div className="relative flex-shrink-0">
               {store.logo_url ? (
                 <Image
-                  src={store.logo_url}
+                  src={store.logo_url || "/placeholder.svg"}
                   alt={`${store.name} logo`}
                   width={96}
                   height={96}
@@ -166,7 +200,6 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
           </div>
 
-          {/* Store Description */}
           <div className="mb-4">
             <ExpandableText
               text={store.description || "Welcome to our store! Discover amazing products and great deals."}
@@ -176,7 +209,7 @@ export default async function StorePage({ params }: StorePageProps) {
         </div>
       </div>
 
-      {/* Products Section */}
+      {/* Product List */}
       <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="container mx-auto max-w-screen-xl">
           <h2 className="text-xl font-semibold mb-6">Products</h2>

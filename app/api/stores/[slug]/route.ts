@@ -2,12 +2,10 @@ import { NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store from "@/models/Store"
 
-export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const { slug } = params
+    const { slug } = await params
+
 
     await connectToDB()
 
@@ -15,6 +13,7 @@ export async function GET(
       slug: slug,
       isPublished: true,
     })
+
 
     if (!store) {
       return NextResponse.json(
