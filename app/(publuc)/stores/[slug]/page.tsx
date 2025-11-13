@@ -9,7 +9,7 @@ import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
 import ExpandableText from "@/components/ExpandableText"
 
-// Types for the API responses
+// ✅ Types
 interface Store {
   id: string
   name: string
@@ -40,97 +40,152 @@ interface StorePageProps {
   params: Promise<{ slug: string }>
 }
 
-// ✅ NEW: Generate static params for all published stores
+// ✅ Generate static paths at build time
 export async function generateStaticParams() {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores`
     
+    console.log("🔍 [Build] Fetching stores from:", apiUrl)
+    
     const response = await fetch(apiUrl, {
       cache: "no-store",
-      next: { revalidate: 3600 } // Optional: Revalidate every hour
     })
 
+    console.log("📡 [Build] Response status:", response.status)
+
     if (!response.ok) {
-      console.error("Failed to fetch stores for static generation")
+      console.error("❌ [Build] Failed to fetch stores:", response.status)
       return []
     }
 
     const data = await response.json()
-    const stores = data.success ? data.stores : []
+    
+    if (!data.success || !Array.isArray(data.stores)) {
+      console.error("❌ [Build] Invalid response format:", data)
+      return []
+    }
+    
+    console.log("🏪 [Build] Stores found:", data.stores.length)
 
-    // Return array of { slug: "store-slug" } objects
-    return stores.map((store: Store) => ({
+    const params = data.stores.map((store: any) => ({
       slug: store.slug,
     }))
+    
+    console.log("✅ [Build] Generated params:", params.length)
+    return params
   } catch (error) {
-    console.error("Error generating static params:", error)
+    console.error("💥 [Build] Error generating static params:", error)
     return []
   }
 }
 
-// ✅ Fetch store data
+// ✅ Fetch store data with error handling
 async function getStore(slug: string): Promise<Store | null> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}`
-
+    
+    console.log("🔍 Fetching store:", apiUrl)
+    
     const response = await fetch(apiUrl, { 
       cache: "no-store",
-      next: { revalidate: 3600 } // Optional: ISR
+      signal: AbortSignal.timeout(10000),
     })
 
+    console.log("📡 Store response status:", response.status)
+
     if (!response.ok) {
-      if (response.status === 404) return null
+      if (response.status === 404) {
+        console.log("❌ Store not found:", slug)
+        return null
+      }
       throw new Error(`Failed to fetch store: ${response.status}`)
     }
 
     const data = await response.json()
-    return data.success ? data.store : null
+    
+    if (!data.success || !data.store) {
+      console.error("❌ Invalid store response:", data)
+      return null
+    }
+    
+    console.log("✅ Store fetched:", data.store.name)
+    return data.store
   } catch (error) {
-    console.error("Error fetching store:", error)
+    console.error("❌ Error fetching store:", error)
     return null
   }
 }
 
-// ✅ Fetch products only
+// ✅ Fetch products with error handling
 async function getStoreProducts(slug: string): Promise<Product[]> {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/stores/${slug}/products`
-
+    
+    console.log("🔍 Fetching products:", apiUrl)
+    
     const response = await fetch(apiUrl, { 
       cache: "no-store",
-      next: { revalidate: 3600 } // Optional: ISR
+      signal: AbortSignal.timeout(10000),
     })
 
-    if (!response.ok) throw new Error(`Failed to fetch products`)
+    console.log("📡 Products response status:", response.status)
+
+    if (!response.ok) {
+      console.error("❌ Failed to fetch products:", response.status)
+      return []
+    }
 
     const data = await response.json()
-    return data.success ? data.products : []
+    
+    if (!data.success || !Array.isArray(data.products)) {
+      console.error("❌ Invalid products response:", data)
+      return []
+    }
+    
+    console.log("✅ Products fetched:", data.products.length)
+    return data.products
   } catch (error) {
-    console.error("Error fetching products:", error)
+    console.error("❌ Error fetching products:", error)
     return []
   }
 }
 
+// ✅ Generate metadata
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
   const { slug } = await params
   const store = await getStore(slug)
 
-  if (!store) return { title: "Store Not Found" }
+  if (!store) {
+    return { 
+      title: "Store Not Found",
+      description: "The store you're looking for could not be found.",
+    }
+  }
 
   return {
-    title: `${store.name}`,
+    title: store.name,
     description: store.description || `Shop at ${store.name}`,
+    openGraph: {
+      title: store.name,
+      description: store.description || `Shop at ${store.name}`,
+      images: store.banner_url ? [store.banner_url] : [],
+    },
   }
 }
 
+// ✅ Main page component
 export default async function StorePage({ params }: StorePageProps) {
   const { slug } = await params
 
-  // Fetch store
-  const store = await getStore(slug)
-  if (!store) notFound()
+  console.log("🎯 Rendering store page for slug:", slug)
 
-  // Fetch products
+  const store = await getStore(slug)
+  
+  if (!store) {
+    console.log("❌ Store not found, showing 404")
+    notFound()
+  }
+
   const storeProducts = await getStoreProducts(slug)
 
   return (
@@ -141,7 +196,7 @@ export default async function StorePage({ params }: StorePageProps) {
       <div className="relative h-48 sm:h-56 md:h-64 w-full overflow-hidden">
         {store.banner_url ? (
           <Image
-            src={store.banner_url || "/placeholder.svg"}
+            src={store.banner_url}
             alt={`${store.name} banner`}
             fill
             className="object-cover"
@@ -162,7 +217,7 @@ export default async function StorePage({ params }: StorePageProps) {
             <div className="relative flex-shrink-0">
               {store.logo_url ? (
                 <Image
-                  src={store.logo_url || "/placeholder.svg"}
+                  src={store.logo_url}
                   alt={`${store.name} logo`}
                   width={96}
                   height={96}
@@ -209,7 +264,7 @@ export default async function StorePage({ params }: StorePageProps) {
         </div>
       </div>
 
-      {/* Product List */}
+      {/* Products Section */}
       <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="container mx-auto max-w-screen-xl">
           <h2 className="text-xl font-semibold mb-6">Products</h2>
