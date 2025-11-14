@@ -14,14 +14,24 @@ async function verifyToken(token: string) {
 
 // ================== Helper: Extract token from cookies or Authorization header ==================
 function getTokenFromRequest(request: NextRequest): string | null {
+  // Check cookies first
   const cookieToken = request.cookies.get("token")?.value
-  if (cookieToken) return cookieToken
+  if (cookieToken) {
+    console.log("✅ Token found in cookies")
+    return cookieToken
+  }
 
+  // Check Authorization header
   const authHeader = request.headers.get("authorization")
   if (authHeader?.startsWith("Bearer ")) {
+    console.log("✅ Token found in Authorization header")
     return authHeader.slice(7)
   }
 
+  // Debug: Log all cookies to see what's available
+  console.log("❌ No token found. Available cookies:", 
+    Array.from(request.cookies.getAll()).map(c => c.name).join(", "))
+  
   return null
 }
 
@@ -30,14 +40,28 @@ export async function POST(request: NextRequest) {
   try {
     const token = getTokenFromRequest(request)
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized - No token provided" }, { status: 401 })
+      console.error("❌ POST /api/orders/buyer - No token provided")
+      return NextResponse.json(
+        { 
+          error: "Unauthorized - No token provided",
+          debug: "Please make sure you're logged in" 
+        }, 
+        { status: 401 }
+      )
     }
 
     let payload
     try {
       payload = await verifyToken(token)
-    } catch {
-      return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 })
+    } catch (error) {
+      console.error("❌ POST /api/orders/buyer - Invalid token:", error)
+      return NextResponse.json(
+        { 
+          error: "Unauthorized - Invalid token",
+          debug: "Token verification failed. Please log in again." 
+        }, 
+        { status: 401 }
+      )
     }
 
     if (payload.role !== "buyer") {
@@ -132,7 +156,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Buyer Orders API POST error:", error.message || error)
+    console.error("❌ POST /api/orders/buyer error:", error.message || error)
     console.error("Stack trace:", error.stack)
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
   }
@@ -141,23 +165,42 @@ export async function POST(request: NextRequest) {
 // ================== GET - Fetch Main Orders with Sub-Orders ==================
 export async function GET(request: NextRequest) {
   try {
+    console.log("🔍 GET /api/orders/buyer - Request received")
+    
     const token = getTokenFromRequest(request)
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized - No token provided" }, { status: 401 })
+      console.error("❌ GET /api/orders/buyer - No token provided")
+      return NextResponse.json(
+        { 
+          error: "Unauthorized - No token provided",
+          debug: "Please make sure you're logged in. Check if cookies are being sent." 
+        }, 
+        { status: 401 }
+      )
     }
 
     let payload
     try {
       payload = await verifyToken(token)
-    } catch {
-      return NextResponse.json({ error: "Unauthorized - Invalid token" }, { status: 401 })
+      console.log("✅ Token verified for user:", payload.id || payload._id)
+    } catch (error) {
+      console.error("❌ GET /api/orders/buyer - Invalid token:", error)
+      return NextResponse.json(
+        { 
+          error: "Unauthorized - Invalid token",
+          debug: "Token verification failed. Please log in again." 
+        }, 
+        { status: 401 }
+      )
     }
 
     if (payload.role !== "buyer") {
+      console.error("❌ GET /api/orders/buyer - User is not a buyer")
       return NextResponse.json({ error: "Only buyers can fetch their orders" }, { status: 403 })
     }
 
     await connectToDB()
+    console.log("✅ Database connected")
 
     const mainOrders = await MainOrder.find({
       userId: payload.id || payload._id,
@@ -179,6 +222,8 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean()
 
+    console.log("✅ Found", mainOrders.length, "orders for user")
+
     mainOrders.forEach((order: any) => {
       order.subOrders.forEach((subOrder: any) => {
         subOrder.storeName = subOrder.storeId?.name || "Unknown Store"
@@ -187,7 +232,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ orders: mainOrders }, { status: 200 })
   } catch (error: any) {
-    console.error("Buyer Orders API GET error:", error.message || error)
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
+    console.error("❌ GET /api/orders/buyer error:", error.message || error)
+    console.error("Stack trace:", error.stack)
+    return NextResponse.json(
+      { 
+        error: error.message || "Internal server error",
+        debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }, 
+      { status: 500 }
+    )
   }
 }

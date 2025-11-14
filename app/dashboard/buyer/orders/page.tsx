@@ -14,14 +14,17 @@ import {
   RefreshCw,
   ShoppingBag,
   Store,
+  AlertCircle,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface SubOrder {
   _id: string
@@ -98,33 +101,58 @@ const statusConfig = {
 export default function BuyerOrdersPage() {
   const [orders, setOrders] = useState<MainOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const router = useRouter()
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
+    
     try {
+      console.log("🔍 Fetching orders from /api/orders/buyer...")
+      
       const res = await fetch("/api/orders/buyer", {
-        credentials: "include",
+        method: "GET",
+        credentials: "include", // Important: Include cookies
+        headers: {
+          "Content-Type": "application/json",
+        },
       })
 
+      console.log("📡 Response status:", res.status)
+
+      if (res.status === 401) {
+        // Unauthorized - redirect to login
+        console.error("❌ Unauthorized - redirecting to login")
+        toast.error("Session expired", {
+          description: "Please log in again to view your orders.",
+        })
+        router.push("/login")
+        return
+      }
+
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
+        const errorData = await res.json().catch(() => ({}))
+        console.error("❌ API Error:", errorData)
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`)
       }
 
       const data = await res.json()
-      console.log("[v0] Fetched orders data:", data)
+      console.log("✅ Fetched orders:", data.orders?.length || 0, "orders")
 
       setOrders(data.orders || [])
-    } catch (error) {
-      console.error("Failed to fetch orders:", error)
+    } catch (error: any) {
+      console.error("❌ Failed to fetch orders:", error)
+      setError(error.message || "Failed to load orders")
       toast.error("Failed to load orders", {
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
       })
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     fetchOrders()
@@ -178,7 +206,6 @@ export default function BuyerOrdersPage() {
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-
           <div className="flex flex-col sm:flex-row items-center justify-between">
             <div className="flex space-x-4">
               <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
@@ -204,6 +231,20 @@ export default function BuyerOrdersPage() {
             </div>
           </div>
         </motion.div>
+
+        {error && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {error}
+                <Button variant="link" className="ml-2 h-auto p-0" onClick={fetchOrders}>
+                  Try again
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="mb-8">
@@ -310,9 +351,7 @@ export default function BuyerOrdersPage() {
                               <Store className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium">{subOrder.storeName || "Unknown Store"}</span>
                             </div>
-                            <div className="text-right">
-                              {getStatusBadge(subOrder.status)}
-                            </div>
+                            <div className="text-right">{getStatusBadge(subOrder.status)}</div>
                           </div>
 
                           <div className="space-y-3">
