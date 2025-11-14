@@ -271,20 +271,6 @@ export default function ProductPage({
           <div>
             <div className="flex justify-between">
               <h1 className="text-x lg:text-3xl font-bold">{product.name}</h1>
-              <div className=" hidden md:flex items-start gap-2">
-                <Button variant="ghost" size="icon" onClick={toggleWishlist}>
-                  <Heart
-                    className={`h-5 w-5 transition-colors duration-300 ${
-                      isInWishlist(product.id)
-                        ? "fill-red-500 text-red-500"
-                        : ""
-                    }`}
-                  />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </div>
             </div>
 
             <div className="flex justify-between items-center">
@@ -305,7 +291,7 @@ export default function ProductPage({
                   (24 reviews)
                 </span>
               </div>
-              <div className="flex items-start gap-2 md:hidden ">
+              <div className="flex items-start gap-2 ">
                 <Button variant="ghost" size="icon" onClick={toggleWishlist}>
                   <Heart
                     className={`h-5 w-5 transition-colors duration-300 ${

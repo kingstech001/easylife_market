@@ -94,6 +94,18 @@ export function SiteHeader() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [searchOpen])
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileMenuOpen])
+
   async function handleLogout() {
     const res = await fetch("/api/auth/logout", {
       method: "POST",
@@ -359,14 +371,23 @@ export function SiteHeader() {
             )}
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu - IMPROVED SMOOTH TRANSITION */}
           <div
             className={cn(
-              "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background/95 backdrop-blur-lg border-b md:hidden transition-all duration-700 ease-in-out",
-              mobileMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none",
+              "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background/98 backdrop-blur-xl border-b md:hidden",
+              "transition-all duration-300 ease-out",
+              mobileMenuOpen 
+                ? "translate-y-0 opacity-100 visible" 
+                : "-translate-y-4 opacity-0 invisible"
             )}
           >
-            <div className="container mx-auto px-4 py-6">
+            <div 
+              className={cn(
+                "container mx-auto px-4 py-6 h-full overflow-y-auto",
+                "transition-all duration-300 delay-75",
+                mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+              )}
+            >
               {/* Navigation Links */}
               <div className="space-y-1 mb-6">
                 <Link
@@ -512,13 +533,16 @@ export function SiteHeader() {
       {/* Cart Overlay */}
       {cartOpen && <CartOverlay onClose={() => setCartOpen(false)} />}
 
-      {/* Mobile Menu Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
+      {/* Mobile Menu Backdrop - IMPROVED */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden transition-all duration-300 ease-out",
+          mobileMenuOpen 
+            ? "opacity-100 visible" 
+            : "opacity-0 invisible"
+        )}
+        onClick={() => setMobileMenuOpen(false)}
+      />
     </>
   )
 }

@@ -141,7 +141,7 @@ export default function StoresPage() {
   // Main content
   return (
     <Reveal direction="down">
-      <section className="relative w-full py-16 md:py-24 lg:py-32 overflow-hidden">
+      <section className="relative w-full py-16 overflow-hidden">
         {/* Background with gradient and patterns */}
         <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-background to-muted/50" />
 
