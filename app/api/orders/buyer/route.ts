@@ -4,6 +4,7 @@ import { connectToDB } from "@/lib/db"
 import Order from "@/models/Order"
 import MainOrder from "@/models/MainOrder"
 import Product from "@/models/Product"
+import Store from "@/models/Store" // ← Add this import
 
 // ================== JWT Helper ==================
 async function verifyToken(token: string) {
@@ -215,6 +216,7 @@ export async function GET(request: NextRequest) {
           },
           {
             path: "storeId",
+            model: Store, // ← Explicitly specify the model
             select: "name",
           },
         ],
