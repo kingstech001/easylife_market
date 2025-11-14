@@ -1,14 +1,14 @@
 let userConfig = undefined;
 
 try {
-  // Try to import ESM first
+  // Try to import ESM config first
   userConfig = await import("./v0-user-next.config.mjs");
 } catch (e) {
   try {
-    // Fallback to CJS import
+    // Fallback to CommonJS config
     userConfig = await import("./v0-user-next.config");
   } catch (innerError) {
-    // ignore
+    // Ignore if no user config exists
   }
 }
 
@@ -28,13 +28,13 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
 
-    // ✅ Added as requested
-    nodeMiddleware: true,
+    // ❌ Removed because it only works on Next.js canary
+    // nodeMiddleware: true,
   },
 };
 
 if (userConfig) {
-  // Handle ESM default export
+  // Handle both ESM default exports and CJS
   const config = userConfig.default || userConfig;
 
   for (const key in config) {
