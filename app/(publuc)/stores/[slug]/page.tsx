@@ -9,8 +9,7 @@ import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
 import ExpandableText from "@/components/ExpandableText"
 
-// ✅ CRITICAL: Enable dynamic rendering to prevent build errors
-export const dynamic = 'force-dynamic'
+// ✅ Allow dynamic params not returned by generateStaticParams
 export const dynamicParams = true
 
 // ✅ Types
@@ -44,20 +43,66 @@ interface StorePageProps {
   params: Promise<{ slug: string }>
 }
 
-// ✅ Helper function to get correct API URL for both dev and production
+// ✅ Helper function to get correct API URL
 function getApiUrl(): string {
-  // Production (Vercel) - use VERCEL_URL
+  // For Vercel production builds
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`
   }
   
-  // Use NEXT_PUBLIC_API_URL if set
+  // For custom production URL
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL
   }
   
-  // Fallback to localhost for development
+  // Fallback for local development
   return "http://localhost:3000"
+}
+
+// ✅ Generate static paths at build time (PRODUCTION ONLY)
+export async function generateStaticParams() {
+  // Skip during development to avoid localhost fetch issues
+  if (process.env.NODE_ENV === 'development') {
+    console.log("⚠️ [Dev] Skipping generateStaticParams in development")
+    return []
+  }
+
+  try {
+    const apiUrl = `${getApiUrl()}/api/stores/slug`
+    
+    console.log("🔍 [Build] Fetching stores from:", apiUrl)
+    
+    const response = await fetch(apiUrl, {
+      next: { revalidate: 3600 }, // Revalidate every hour
+    })
+
+    console.log("📡 [Build] Response status:", response.status)
+
+    if (!response.ok) {
+      console.error("❌ [Build] Failed to fetch stores:", response.status)
+      return []
+    }
+
+    const data = await response.json()
+    
+    if (!data.success || !Array.isArray(data.stores)) {
+      console.error("❌ [Build] Invalid response format:", data)
+      return []
+    }
+    
+    console.log("🏪 [Build] Stores found:", data.stores.length)
+
+    const params = data.stores.map((store: any) => ({
+      slug: store.slug,
+    }))
+    
+    console.log("✅ [Build] Generated params:", params.length)
+    return params
+  } catch (error) {
+    console.error("💥 [Build] Error generating static params:", error)
+    // Return empty array to allow dynamic rendering as fallback
+    return []
+  }
 }
 
 // ✅ Fetch store data with comprehensive error handling
@@ -68,9 +113,7 @@ async function getStore(slug: string): Promise<Store | null> {
     console.log("🔍 Fetching store from:", apiUrl)
     
     const response = await fetch(apiUrl, { 
-      cache: "no-store",
-      next: { revalidate: 0 },
-      signal: AbortSignal.timeout(10000),
+      next: { revalidate: 60 }, // Cache for 60 seconds
     })
 
     console.log("📡 Store response status:", response.status)
@@ -107,9 +150,7 @@ async function getStoreProducts(slug: string): Promise<Product[]> {
     console.log("🔍 Fetching products from:", apiUrl)
     
     const response = await fetch(apiUrl, { 
-      cache: "no-store",
-      next: { revalidate: 0 },
-      signal: AbortSignal.timeout(10000),
+      next: { revalidate: 60 }, // Cache for 60 seconds
     })
 
     console.log("📡 Products response status:", response.status)
