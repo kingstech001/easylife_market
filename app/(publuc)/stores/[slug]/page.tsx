@@ -8,12 +8,15 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Clock, Star } from "lucide-react"
 import { VisitTracker } from "@/components/visit-tracker"
 import ExpandableText from "@/components/ExpandableText"
+import { connectToDB } from "@/lib/db"
+import Store from "@/models/Store"
+import Product from "@/models/Product"
 
-// ✅ Allow dynamic params not returned by generateStaticParams
+// ✅ Allow dynamic params
 export const dynamicParams = true
 
 // ✅ Types
-interface Store {
+interface StoreData {
   id: string
   name: string
   slug: string
@@ -25,7 +28,7 @@ interface Store {
   updated_at: string
 }
 
-interface Product {
+interface ProductData {
   id: string
   name: string
   description: string | null
@@ -43,56 +46,26 @@ interface StorePageProps {
   params: Promise<{ slug: string }>
 }
 
-// ✅ Helper function to get correct API URL
-function getApiUrl(): string {
-  // For Vercel production builds
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-  
-  // For custom production URL
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL
-  }
-  
-  // Fallback for local development
-  return "http://localhost:3000"
-}
-
-// ✅ Generate static paths at build time (PRODUCTION ONLY)
+// ✅ Generate static paths - DIRECT DATABASE ACCESS (NO HTTP)
 export async function generateStaticParams() {
-  // Skip during development to avoid localhost fetch issues
+  // Skip during development
   if (process.env.NODE_ENV === 'development') {
     console.log("⚠️ [Dev] Skipping generateStaticParams in development")
     return []
   }
 
   try {
-    const apiUrl = `${getApiUrl()}/api/stores/slug`
+    console.log("🔍 [Build] Fetching stores directly from database")
     
-    console.log("🔍 [Build] Fetching stores from:", apiUrl)
+    await connectToDB()
     
-    const response = await fetch(apiUrl, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-    })
-
-    console.log("📡 [Build] Response status:", response.status)
-
-    if (!response.ok) {
-      console.error("❌ [Build] Failed to fetch stores:", response.status)
-      return []
-    }
-
-    const data = await response.json()
+    const stores = await Store.find({ isPublished: true })
+      .select('slug')
+      .lean()
     
-    if (!data.success || !Array.isArray(data.stores)) {
-      console.error("❌ [Build] Invalid response format:", data)
-      return []
-    }
-    
-    console.log("🏪 [Build] Stores found:", data.stores.length)
+    console.log("🏪 [Build] Stores found:", stores.length)
 
-    const params = data.stores.map((store: any) => ({
+    const params = stores.map((store: any) => ({
       slug: store.slug,
     }))
     
@@ -105,70 +78,120 @@ export async function generateStaticParams() {
   }
 }
 
-// ✅ Fetch store data with comprehensive error handling
-async function getStore(slug: string): Promise<Store | null> {
+// ✅ Fetch store data - DIRECT DATABASE ACCESS
+async function getStore(slug: string): Promise<StoreData | null> {
   try {
-    const apiUrl = `${getApiUrl()}/api/stores/${slug}`
+    console.log("🔍 Fetching store from database:", slug)
     
-    console.log("🔍 Fetching store from:", apiUrl)
-    
-    const response = await fetch(apiUrl, { 
-      next: { revalidate: 60 }, // Cache for 60 seconds
-    })
+    await connectToDB()
 
-    console.log("📡 Store response status:", response.status)
+    const store = await Store.findOne({
+      slug: slug,
+      isPublished: true,
+    }).lean() as any
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.log("❌ Store not found:", slug)
-        return null
-      }
-      console.error(`❌ Failed to fetch store: ${response.status}`)
+    if (!store) {
+      console.log("❌ Store not found:", slug)
       return null
     }
 
-    const data = await response.json()
-    
-    if (!data.success || !data.store) {
-      console.error("❌ Invalid store response format:", data)
-      return null
+    console.log("✅ Store fetched successfully:", store.name)
+
+    // Transform store data
+    return {
+      id: store._id?.toString() || "",
+      name: store.name || "Unnamed Store",
+      slug: store.slug || slug,
+      description: store.description || "",
+      logo_url: store.logo_url || "",
+      banner_url: store.banner_url || "",
+      owner_id: store.sellerId?.toString() || "",
+      created_at: store.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: store.updatedAt?.toISOString() || new Date().toISOString(),
     }
-    
-    console.log("✅ Store fetched successfully:", data.store.name)
-    return data.store
   } catch (error) {
     console.error("❌ Error fetching store:", error)
     return null
   }
 }
 
-// ✅ Fetch products with comprehensive error handling
-async function getStoreProducts(slug: string): Promise<Product[]> {
+// ✅ Fetch products - DIRECT DATABASE ACCESS with flexible querying
+async function getStoreProducts(storeId: string, storeSlug: string): Promise<ProductData[]> {
   try {
-    const apiUrl = `${getApiUrl()}/api/stores/${slug}/products`
+    console.log("🔍 Fetching products from database for store:", storeId)
     
-    console.log("🔍 Fetching products from:", apiUrl)
+    await connectToDB()
+
+    // Find store first to get the correct reference
+    const store = await Store.findOne({ slug: storeSlug }).lean() as any
     
-    const response = await fetch(apiUrl, { 
-      next: { revalidate: 60 }, // Cache for 60 seconds
+    if (!store) {
+      console.log("⚠️ Store not found for products lookup:", storeSlug)
+      return []
+    }
+
+    // Try multiple query variations to find products
+    let products: any[] = []
+    
+    // Try 1: With isPublished filter
+    products = await Product.find({
+      storeId: store._id,
+      isPublished: true,
     })
+    .populate('images')
+    .lean() as any[]
 
-    console.log("📡 Products response status:", response.status)
+    console.log("🔍 Try 1 (with isPublished): Found", products.length, "products")
 
-    if (!response.ok) {
-      console.error(`❌ Failed to fetch products: ${response.status}`)
+    // Try 2: Without isPublished filter if nothing found
+    if (!products || products.length === 0) {
+      console.log("🔍 Try 2: Fetching without isPublished filter...")
+      products = await Product.find({
+        storeId: store._id,
+      })
+      .populate('images')
+      .lean() as any[]
+      
+      console.log("🔍 Try 2 (without isPublished): Found", products.length, "products")
+    }
+
+    // Try 3: Check with string comparison if ObjectId comparison failed
+    if (!products || products.length === 0) {
+      console.log("🔍 Try 3: Fetching with string storeId comparison...")
+      products = await Product.find({
+        storeId: store._id.toString(),
+      })
+      .populate('images')
+      .lean() as any[]
+      
+      console.log("🔍 Try 3 (string comparison): Found", products.length, "products")
+    }
+
+    if (!products || products.length === 0) {
+      console.log("⚠️ No products found for store after all attempts:", storeSlug)
       return []
     }
 
-    const data = await response.json()
-    
-    if (!data.success || !Array.isArray(data.products)) {
-      console.error("❌ Invalid products response format:", data)
-      return []
-    }
-    
-    console.log("✅ Products fetched successfully:", data.products.length)
-    return data.products
+    console.log("✅ Products fetched successfully:", products.length)
+
+    // Transform product data
+    return products.map((product: any) => ({
+      id: product._id?.toString() || "",
+      name: product.name || "Unnamed Product",
+      description: product.description || null,
+      price: product.price || 0,
+      compare_at_price: product.compareAtPrice || null,
+      category_id: product.categoryId?.toString() || undefined,
+      inventory_quantity: product.inventoryQuantity || 0,
+      images: (product.images || []).map((img: any) => ({
+        id: img._id?.toString() || "",
+        url: img.url || "",
+        alt_text: img.altText || null,
+      })),
+      store_id: product.storeId?.toString() || "",
+      created_at: product.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: product.updatedAt?.toISOString() || new Date().toISOString(),
+    }))
   } catch (error) {
     console.error("❌ Error fetching products:", error)
     return []
@@ -206,14 +229,14 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
   }
 }
 
-// ✅ Main page component with full error handling
+// ✅ Main page component
 export default async function StorePage({ params }: StorePageProps) {
   try {
     const { slug } = await params
 
     console.log("🎯 Rendering store page for slug:", slug)
 
-    // Fetch store data
+    // Fetch store data directly from database
     const store = await getStore(slug)
     
     // If store not found, show 404 page
@@ -222,8 +245,8 @@ export default async function StorePage({ params }: StorePageProps) {
       notFound()
     }
 
-    // Fetch products (non-blocking, returns empty array on error)
-    const storeProducts = await getStoreProducts(slug)
+    // Fetch products directly from database
+    const storeProducts = await getStoreProducts(store.id, slug)
 
     return (
       <div className="flex flex-col min-h-screen bg-background">
@@ -346,7 +369,6 @@ export default async function StorePage({ params }: StorePageProps) {
     )
   } catch (error) {
     console.error("❌ Critical error in StorePage:", error)
-    // Trigger error boundary or show 404
     notFound()
   }
 }
