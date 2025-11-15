@@ -1,258 +1,264 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Pencil, Plus, StoreIcon, Calendar, Eye, EyeOff } from "lucide-react"
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { Store, Edit, Loader2, AlertCircle, MapPin, Calendar, ExternalLink } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useRouter } from "next/navigation"
 
-interface StoreType {
+interface StoreData {
   _id: string
   name: string
-  description?: string
-  isPublished: boolean
-  isApproved: boolean
-  createdAt: string
   slug: string
+  description?: string
+  logo_url?: string
+  banner_url?: string
+  createdAt?: string
 }
 
-export default function SellerStorePage() {
-  const [store, setStore] = useState<StoreType | null>(null)
-  const [loading, setLoading] = useState(true)
+export default function StoreViewPage() {
+  const router = useRouter()
+  const [store, setStore] = useState<StoreData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
+  // Fetch store data
   useEffect(() => {
-    const fetchStore = async () => {
-      try {
-        const res = await fetch("/api/dashboard/seller/store", { cache: "no-store" })
-        if (!res.ok) {
-          console.error("Failed to fetch store: ", res.status)
-          return
-        }
-        const text = await res.text()
-        if (!text) return
-        const data = JSON.parse(text)
-        setStore(data.store || null)
-      } catch (err) {
-        console.error("Failed to fetch store", err)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchStore()
   }, [])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container px-4 py-8 ">
-          <div className="space-y-8">
-            <div className="flex items-center space-x-4">
-              <div className="h-12 w-12 rounded-xl bg-muted animate-pulse" />
-              <div className="space-y-2">
-                <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-                <div className="h-4 w-64 bg-muted rounded animate-pulse" />
-              </div>
-            </div>
+  const fetchStore = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/dashboard/seller/store")
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch store")
+      }
 
-            <Card className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="h-6 w-32 bg-muted rounded animate-pulse" />
-                  <div className="h-6 w-20 bg-muted rounded animate-pulse" />
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                  <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
-                </div>
-                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
-              </div>
-            </Card>
-          </div>
-        </div>
+      const data = await response.json()
+      setStore(data.store)
+    } catch (error) {
+      console.error("Error fetching store:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEditStore = () => {
+    router.push(`/dashboard/seller/store/${store?._id}/edit`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-muted-foreground">Loading your store...</span>
+      </div>
+    )
+  }
+
+  if (!store) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Store not found. Please contact support.</AlertDescription>
+        </Alert>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container  px-4 py-8">
-        <div className="mb-12">
-          <div className="flex space-x-4 mb-4">
-            <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center">
-              <StoreIcon className="h-6 w-6 text-primary-foreground" />
+      <div className="container max-w-6xl mx-auto py-8 px-4 sm:px-6">
+        {/* Header with Edit Button */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Store className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                My Store
-              </h1>
-              <p className="text-lg text-muted-foreground mt-1">Manage your store settings and information</p>
+              <h1 className="text-3xl font-bold">My Store</h1>
+              <p className="text-muted-foreground">View and manage your store</p>
             </div>
           </div>
-        </div>
+          <Button onClick={handleEditStore} size="lg">
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Store
+          </Button>
+        </motion.div>
 
-        {store ? (
-          <div className="space-y-8">
-            <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card border">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <CardTitle className="text-2xl font-bold text-card-foreground group-hover:text-foreground transition-colors">
-                      {store.name}
-                    </CardTitle>
+        <div className="space-y-6">
+          {/* Banner & Logo Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="overflow-hidden">
+              {/* Banner */}
+              <div className="relative w-full h-64 bg-gradient-to-r from-primary/20 to-primary/10">
+                {store.banner_url ? (
+                  <img
+                    src={store.banner_url}
+                    alt="Store banner"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <Store className="h-16 w-16 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No banner set</p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                    {/* ✅ Status badges (Published + Approved) */}
-                    <div className="flex items-center space-x-2">
-                      <Badge
-                        variant={store.isPublished ? "default" : "secondary"}
-                        className={`${
-                          store.isPublished
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-                        }`}
-                      >
-                        {store.isPublished ? (
-                          <>
-                            <Eye className="w-3 h-3 mr-1" />
-                            Published
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="w-3 h-3 mr-1" />
-                            Draft
-                          </>
-                        )}
-                      </Badge>
+              {/* Logo Overlay */}
+              <div className="relative px-6 pb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-16">
+                  <div className="relative">
+                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-background shadow-xl bg-muted">
+                      {store.logo_url ? (
+                        <img
+                          src={store.logo_url}
+                          alt="Store logo"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <Store className="h-12 w-12 opacity-50" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                      {/* ✅ Approval Badge */}
-                      <Badge
-                        className={`${
-                          store.isApproved
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
-                        }`}
-                      >
-                        {store.isApproved ? "Approved" : "Pending Approval"}
-                      </Badge>
+                  <div className="flex-1 pt-4">
+                    <h2 className="text-3xl font-bold mb-2">{store.name}</h2>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        <span>/{store.slug}</span>
+                      </div>
+                      {store.createdAt && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Joined {new Date(store.createdAt).toLocaleDateString('en-US', { 
+                              month: 'long', 
+                              year: 'numeric' 
+                            })}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Store Description */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>About This Store</CardTitle>
               </CardHeader>
-
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
-                    <p className="text-foreground leading-relaxed">
-                      {store.description || "No description available."}
-                    </p>
+              <CardContent>
+                {store.description ? (
+                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                    {store.description}
+                  </p>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No description added yet</p>
+                    <Button onClick={handleEditStore} variant="outline">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Add Description
+                    </Button>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
-                  {/* ✅ Approval Warning */}
-                  {!store.isApproved && (
-                    <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800">
-                      Your store is under review and will be approved once we are done.
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      Created on{" "}
-                      {new Date(store.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
-                  <Button asChild className="flex-1 sm:flex-none">
-                    <Link href={`/dashboard/seller/store/${store._id}/edit`}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit Store Details
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="flex-1 sm:flex-none bg-transparent">
-                    <Link href={`/stores/${store.slug}`}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Store
-                    </Link>
+          {/* Store Details Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="grid gap-6 md:grid-cols-2"
+          >
+            {/* Store URL */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Store URL</CardTitle>
+                <CardDescription>Your public store link</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                  <code className="flex-1 text-sm">
+                    /stores/{store.slug}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => window.open(`/stores/${store.slug}`, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Store Status</p>
-                    <p className="text-2xl font-bold text-foreground">{store.isPublished ? "Live" : "Draft"}</p>
-                  </div>
-                  <div
-                    className={`p-3 rounded-xl ${
-                      store.isApproved ? "bg-green-100 dark:bg-green-900/20" : "bg-gray-100 dark:bg-gray-800"
-                    }`}
-                  >
-                    {store.isApproved ? (
-                      <Eye className="h-6 w-6 text-green-600" />
-                    ) : (
-                      <EyeOff className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-                    )}
-                  </div>
+            {/* Store ID */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Store ID</CardTitle>
+                <CardDescription>Your unique store identifier</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-3 bg-muted rounded-lg">
+                  <code className="text-sm break-all">{store._id}</code>
                 </div>
-              </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="bg-gradient-to-r from-primary/5 to-primary/10">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Days Active</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {Math.floor((Date.now() - new Date(store.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
+                    <h3 className="font-semibold mb-1">Customize Your Store</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add your logo, banner, and description to make your store stand out
                     </p>
                   </div>
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-xl">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
+                  <Button onClick={handleEditStore} size="lg" className="shrink-0">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Store Settings
+                  </Button>
                 </div>
-              </Card>
-
-              <Card className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Store ID</p>
-                    <p className="text-lg font-mono text-foreground truncate">{store._id?.slice(0, 8) || "N/A"}...</p>
-                  </div>
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-xl">
-                    <StoreIcon className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        ) : (
-          <Card className="border-dashed border-2 hover:border-primary/50 transition-colors">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-6 p-4 bg-muted rounded-full">
-                <StoreIcon className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h3 className="text-2xl font-semibold text-foreground mb-2">No store found</h3>
-              <p className="text-muted-foreground mb-8 max-w-md">
-                You haven&apos;t created a store yet. Get started by creating your first store to begin selling your
-                products.
-              </p>
-              <Button asChild size="lg" className="shadow-lg hover:shadow-xl transition-shadow">
-                <Link href="/dashboard/seller/stores/create">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Create Your First Store
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     </div>
   )
