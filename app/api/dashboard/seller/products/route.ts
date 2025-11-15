@@ -121,12 +121,12 @@ export async function POST(req: Request) {
     const productCount = await Product.countDocuments({ storeId: store._id })
     console.log("📦 Current product count:", productCount)
 
-    // Plan limits based on subscription
+    // Plan limits based on your subscription tiers
     const planLimits: Record<string, number> = {
-      free: 10,
-      basic: 50,
-      standard: 999999, // Unlimited (using large number)
-      premium: 999999,  // Unlimited
+      free: 10,      // Free: Up to 10 products
+      basic: 20,     // Basic: Up to 20 products  
+      standard: 50,  // Standard: Up to 50 products
+      premium: 999999, // Premium: Unlimited (using large number)
     }
 
     const productLimit = planLimits[subscriptionPlan] || 10
@@ -155,33 +155,19 @@ export async function POST(req: Request) {
     // ✅ Create product
     console.log("🚀 Creating product...")
     
-    // Handle category - only include if it's a valid ObjectId format
-    // Skip if it's a string name like "Food & Beverages"
-    let categoryId = null
-    if (category && typeof category === 'string') {
-      // Check if it looks like a valid ObjectId (24 hex characters)
-      if (/^[0-9a-fA-F]{24}$/.test(category)) {
-        categoryId = category
-      } else {
-        console.warn("⚠️ Invalid category format (not an ObjectId):", category)
-        console.log("💡 Category should be an ObjectId, not a name. Skipping category field.")
-      }
-    }
-    
     const productData = {
       name,
       description,
       price,
       compareAtPrice,
+      category: category || undefined, // Allow string category
       inventoryQuantity,
       images: images || [],
       storeId: store._id,
       sellerId: user.id,
-      // Only include category if it's a valid ObjectId
-      ...(categoryId ? { category: categoryId } : {}),
     }
     
-    console.log("📝 Product data:", { ...productData, category: categoryId || 'none' })
+    console.log("📝 Product data:", productData)
     
     const product = await Product.create(productData)
 

@@ -63,7 +63,7 @@ const plans: Plan[] = [
     price: 2000,
     icon: <Zap className="h-6 w-6 text-blue-600" />,
     features: [
-      "Up to 50 products",
+      "Up to 20 products",
       "Advanced analytics",
       "Priority email support",
       "Reduced commission rate",
@@ -84,7 +84,7 @@ const plans: Plan[] = [
     price: 4000,
     icon: <Crown className="h-6 w-6 text-emerald-600" />,
     features: [
-      "Unlimited products",
+      "Up to 50 products",
       "Real-time analytics",
       "24/7 phone support",
       "Lowest commission rate",
@@ -107,6 +107,8 @@ const plans: Plan[] = [
     icon: <Crown className="h-6 w-6 text-violet-600" />,
     features: [
       "Everything in Standard",
+      "Unlimited products",
+      "Dedicated support team",
       "Dedicated account manager",
       "Custom integrations",
       "White-label options",

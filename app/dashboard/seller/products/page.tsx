@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Package, Edit, Trash2, PlusCircle, Search, Filter, ArrowUpDown, Loader2 } from "lucide-react"
+import { Package, Edit, Trash2, PlusCircle, Search, Filter, ArrowUpDown, Loader2, Crown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,16 +24,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useFormatAmount } from "@/hooks/useFormatAmount"
 
-// Define a type for your product data based on the backend response
 type Product = {
-  _id: string // MongoDB's default ID field
+  _id: string
   id: string
   name: string
-  category?: string // Optional as per backend schema
+  category?: string
   price: number
   inventoryQuantity: number
-  images?: { url: string; altText?: string }[] // Optional as per backend schema
-  createdAt: string // For sorting by creation date
+  images?: { url: string; altText?: string }[]
+  createdAt: string
 }
 
 export default function ProductListPage() {
@@ -47,13 +46,16 @@ export default function ProductListPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null)
   const { formatAmount } = useFormatAmount()
+  
   const PRODUCT_LIMITS: Record<string, number | null> = {
-    free: 10,
-    basic: 50,
-    standard: null,
-    premium: null,
+    free: 10,      // Up to 10 products
+    basic: 20,     // Up to 20 products
+    standard: 50,  // Up to 50 products
+    premium: null, // Unlimited products
   }
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null)
+  
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string>("free")
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -65,7 +67,7 @@ export default function ProductListPage() {
         throw new Error(errorData.message || "Failed to fetch products")
       }
       const data = await response.json()
-      const validatedProducts = data.products.map((product: Product, index: number) => ({
+      const validatedProducts = data.products.map((product: Product) => ({
         ...product,
         _id: product._id || product.id,
       }))
@@ -87,14 +89,18 @@ export default function ProductListPage() {
   
   useEffect(() => {
     const fetchPlan = async () => {
+      setIsLoadingPlan(true)
       try {
         const res = await fetch("/api/dashboard/seller/subscription/current?storeId=current")
         if (res.ok) {
           const data = await res.json()
-          setSubscriptionPlan(data.plan)
+          setSubscriptionPlan(data.plan || "free")
         }
       } catch (error) {
         console.error("Failed to fetch subscription plan:", error)
+        setSubscriptionPlan("free") // Default to free on error
+      } finally {
+        setIsLoadingPlan(false)
       }
     }
 
@@ -130,29 +136,12 @@ export default function ProductListPage() {
   }
 
   const handleDeleteProduct = (id: string) => {
-    console.log('🗑️ Delete product ID:', id)
     setProductToDeleteId(id)
     setShowDeleteConfirm(true)
   }
 
   const handleEditProduct = (id: string) => {
-    console.log('✏️ Edit product ID:', id)
-    console.log('✏️ ID type:', typeof id)
-    
-    const product = products.find((p) => p._id === id)
-    console.log('✏️ Found product:', product)
-    
-    if (product) {
-      toast.info(`Editing ${product.name}`)
-    } else {
-      console.error('❌ Product not found with ID:', id)
-      toast.error("Product not found")
-      return
-    }
-    
-    const url = `/dashboard/seller/products/${id}/edit`
-    console.log('✏️ Navigating to:', url)
-    router.push(url)
+    router.push(`/dashboard/seller/products/${id}/edit`)
   }
 
   const confirmDelete = async () => {
@@ -169,9 +158,7 @@ export default function ProductListPage() {
       }
 
       setProducts(products.filter((product) => product._id !== productToDeleteId))
-      toast.success("Product deleted successfully!", {
-        description: `Product ${productToDeleteId} has been removed.`,
-      })
+      toast.success("Product deleted successfully!")
     } catch (err: any) {
       console.error("Error deleting product:", err)
       toast.error("Failed to delete product", {
@@ -183,35 +170,66 @@ export default function ProductListPage() {
     }
   }
   
-  const currentLimit = subscriptionPlan ? PRODUCT_LIMITS[subscriptionPlan] : null
+  // Calculate limit info
+  const currentLimit = PRODUCT_LIMITS[subscriptionPlan]
+  const isUnlimited = currentLimit === null
+  const isLimitReached = !isUnlimited && products.length >= currentLimit
+  const remainingProducts = isUnlimited ? null : currentLimit - products.length
 
-  const isLimitReached = currentLimit !== null && products.length >= currentLimit
+  const handleAddProduct = () => {
+    if (isLimitReached) {
+      toast.error("Product limit reached", {
+        description: `Upgrade your plan to add more than ${currentLimit} products.`,
+        action: {
+          label: "Upgrade",
+          onClick: () => router.push("/dashboard/seller/subscriptions"),
+        },
+      })
+      return
+    }
+    router.push("/dashboard/seller/products/create")
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-6xl mx-auto py-4 sm:py-8 sm:px-6">
-        {/* Header */}
+        {/* Limit Warning Banner */}
         {isLimitReached && (
-          <div className="mb-6 p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800"
+          >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-semibold text-yellow-800 dark:text-yellow-300">Product Limit Reached</h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                  Your <span className="font-medium capitalize">{subscriptionPlan}</span> plan allows{" "}
-                  <span className="font-bold">{currentLimit}</span> products. Upgrade your subscription to add more.
-                </p>
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/40 flex-shrink-0">
+                  <Crown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-yellow-800 dark:text-yellow-300">
+                    Product Limit Reached
+                  </h3>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                    Your <span className="font-medium capitalize">{subscriptionPlan}</span> plan allows{" "}
+                    <span className="font-bold">{currentLimit}</span> products ({products.length}/{currentLimit} used).
+                    Upgrade to add more products.
+                  </p>
+                </div>
               </div>
 
               <Button
+                size="sm"
                 className="bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-700 dark:hover:bg-yellow-600"
                 onClick={() => router.push("/dashboard/seller/subscriptions")}
               >
+                <Crown className="mr-2 h-4 w-4" />
                 Upgrade Plan
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
 
+        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
           <div className="flex flex-col md:flex-row sm:items-center gap-3 sm:gap-4 md:justify-between">
             <div className="flex gap-3 w-full md:w-auto">
@@ -220,16 +238,37 @@ export default function ProductListPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="text-2xl sm:text-5xl font-bold tracking-tight">Products</h1>
-                <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage your store's product inventory</p>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  Manage your store's product inventory
+                  {!isLoadingPlan && (
+                    <span className="ml-2">
+                      ({products.length}
+                      {isUnlimited ? "" : `/${currentLimit}`})
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
             <Button
-              onClick={() => router.push("/dashboard/seller/products/create")}
+              onClick={handleAddProduct}
               className="w-full md:w-auto"
               disabled={isLimitReached}
+              variant={isLimitReached ? "outline" : "default"}
             >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              {isLimitReached ? `Limit Reached (${currentLimit} products)` : "Add New Product"}
+              {isLimitReached ? (
+                <>
+                  <Crown className="mr-2 h-4 w-4" />
+                  Upgrade to Add More
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Product
+                  {!isUnlimited && remainingProducts !== null && remainingProducts <= 5 && (
+                    <span className="ml-2 text-xs opacity-70">({remainingProducts} left)</span>
+                  )}
+                </>
+              )}
             </Button>
           </div>
         </motion.div>
@@ -256,7 +295,7 @@ export default function ProductListPage() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="sm:ml-auto bg-transparent">
                       <Filter className="mr-2 h-4 w-4" />
-                      Filter
+                      Sort
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -330,56 +369,47 @@ export default function ProductListPage() {
                       {filteredAndSortedProducts.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                            No products found.
+                            {searchTerm ? "No products match your search." : "No products yet. Add your first product!"}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredAndSortedProducts.map((product) => {
-                          // 🔍 DEBUG: Log each product's ID
-                          console.log('🔍 Rendering product:', product.name, 'ID:', product._id)
-                          
-                          return (
-                            <TableRow key={product._id || product.name}>
-                              <TableCell>
-                                <img
-                                  src={
-                                    product.images?.[0]?.url ||
-                                    "/placeholder.svg?height=60&width=60&query=product" ||
-                                    "/placeholder.svg"
-                                  }
-                                  alt={product.name}
-                                  className="w-12 h-12 rounded-md object-cover"
-                                />
-                              </TableCell>
-                              <TableCell className="font-medium text-[12px]">{product.name}</TableCell>
-                              <TableCell className="hidden md:table-cell">{product.category || "N/A"}</TableCell>
-                              <TableCell className="text-right">{formatAmount(product.price)}</TableCell>
-                              <TableCell className="text-right hidden sm:table-cell">
-                                {product.inventoryQuantity}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                      <span className="sr-only">Open menu</span>
-                                      <ArrowUpDown className="h-4 w-4 rotate-90" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditProduct(product._id)}>
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDeleteProduct(product._id)}>
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          )
-                        })
+                        filteredAndSortedProducts.map((product) => (
+                          <TableRow key={product._id}>
+                            <TableCell>
+                              <img
+                                src={product.images?.[0]?.url || "/placeholder.svg"}
+                                alt={product.name}
+                                className="w-12 h-12 rounded-md object-cover"
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium text-[12px]">{product.name}</TableCell>
+                            <TableCell className="hidden md:table-cell">{product.category || "Uncategorized"}</TableCell>
+                            <TableCell className="text-right">{formatAmount(product.price)}</TableCell>
+                            <TableCell className="text-right hidden sm:table-cell">
+                              {product.inventoryQuantity}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <span className="sr-only">Open menu</span>
+                                    <ArrowUpDown className="h-4 w-4 rotate-90" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditProduct(product._id)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDeleteProduct(product._id)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
                       )}
                     </TableBody>
                   </Table>
@@ -388,6 +418,7 @@ export default function ProductListPage() {
             </CardContent>
           </Card>
         </motion.div>
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
           <AlertDialogContent>
