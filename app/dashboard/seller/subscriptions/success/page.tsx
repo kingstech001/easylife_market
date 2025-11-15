@@ -21,37 +21,63 @@ function SubscriptionSuccessContent() {
   useEffect(() => {
     const verifyPayment = async () => {
       const reference = searchParams.get("reference")
+      const planParam = searchParams.get("plan")
+      
+      console.log("🔍 Verifying payment with reference:", reference)
       
       if (!reference) {
+        console.error("❌ No reference found in URL")
         setStatus("error")
         setMessage("Payment reference not found")
         return
       }
 
       try {
-        const response = await fetch("/api/paystack/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference }),
+        console.log("📡 Calling verify API...")
+        
+        // Use GET method since that's what your API expects for the callback
+        const response = await fetch(`/api/paystack/verify?reference=${reference}`, {
+          method: "GET",
+          credentials: "include", // Important: include cookies
         })
 
-        const data = await response.json()
+        console.log("📡 Verify response status:", response.status)
 
-        if (response.ok && data.success) {
+        const data = await response.json()
+        console.log("📡 Verify response data:", JSON.stringify(data, null, 2))
+
+        // ✅ Check for success - check ALL possible success indicators
+        const isSuccess = 
+          response.ok && (
+            data.status === "success" || 
+            data.success === true || 
+            data.data?.paymentStatus === "success" ||
+            (data.message && data.message.includes("verified and updated successfully"))
+          )
+
+        if (isSuccess) {
+          console.log("✅ Payment verified successfully!")
           setStatus("success")
           setMessage(data.message || "Subscription activated successfully!")
-          setPlan(data.plan || "")
-          toast.success("Payment successful!")
+          setPlan(planParam || data.data?.plan || data.plan || "")
+          toast.success("Payment successful!", {
+            description: "Your subscription has been activated."
+          })
         } else {
+          console.error("❌ Payment verification failed:", data)
           setStatus("error")
-          setMessage(data.message || "Payment verification failed")
-          toast.error("Payment verification failed")
+          setMessage(data.error || data.message || "Payment verification failed")
+          toast.error("Payment verification failed", {
+            description: data.error || "Please contact support if the issue persists."
+          })
         }
-      } catch (error) {
-        console.error("Verification error:", error)
+      } catch (error: any) {
+        console.error("❌ Verification error:", error)
         setStatus("error")
         setMessage("An error occurred while verifying your payment")
-        toast.error("Verification failed")
+        toast.error("Verification failed", {
+          description: "Please try refreshing the page."
+        })
       }
     }
 
@@ -150,7 +176,7 @@ function SubscriptionSuccessContent() {
             {status === "error" && (
               <p className="text-center text-sm text-muted-foreground">
                 Need help?{" "}
-                <a href="/support" className="text-primary hover:underline">
+                <a href="/dashboard/seller/support" className="text-primary hover:underline">
                   Contact Support
                 </a>
               </p>

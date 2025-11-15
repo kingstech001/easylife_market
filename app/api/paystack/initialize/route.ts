@@ -1,5 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Helper to get the correct base URL for all environments
+function getBaseUrl() {
+  // Production on Vercel
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  
+  // Custom production domain
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL
+  }
+  
+  // Local development fallback
+  return "http://localhost:3000"
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -15,88 +31,123 @@ export async function POST(request: NextRequest) {
       type,
     } = body
 
-    console.log("[Paystack Initialize] Request body:", body)
+    console.log("[Paystack Initialize] Request body:", {
+      type,
+      email,
+      amount,
+      hasPlan: !!plan,
+      hasStoreId: !!storeId,
+      hasOrders: !!orders,
+    })
 
-    // 🧩 Validate common payment fields
+    // ✅ Validate common payment fields
     if (!email || !amount) {
+      console.error("[Paystack Initialize] Missing required fields:", { email: !!email, amount: !!amount })
       return NextResponse.json(
         { error: "Missing required payment details" },
         { status: 400 }
       )
     }
 
-    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    if (!type || (type !== "subscription" && type !== "checkout")) {
+      console.error("[Paystack Initialize] Invalid payment type:", type)
+      return NextResponse.json(
+        { error: "Invalid payment type. Must be 'subscription' or 'checkout'" },
+        { status: 400 }
+      )
+    }
 
+    // ✅ Check environment variables
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
     if (!paystackSecretKey) {
-      console.error("⚠️ PAYSTACK_SECRET_KEY is not set")
+      console.error("❌ PAYSTACK_SECRET_KEY is not set in environment variables")
       return NextResponse.json(
         { error: "Payment service not configured" },
         { status: 500 }
       )
     }
 
-    if (!appUrl) {
-      console.error("⚠️ NEXT_PUBLIC_APP_URL is not set")
-      return NextResponse.json(
-        { error: "App URL not configured" },
-        { status: 500 }
-      )
-    }
+    // ✅ Get base URL (works in all environments)
+    const baseUrl = getBaseUrl()
+    console.log("[Paystack Initialize] Using base URL:", baseUrl)
 
-    // 💡 Setup Paystack callback + metadata
+    // ✅ Setup Paystack callback + metadata based on payment type
     let callback_url = ""
     let metadata: Record<string, any> = {}
 
     if (type === "subscription") {
-      // ✅ Handle Seller Subscription Payments
+      // 💳 Handle Seller Subscription Payments
       if (!plan || !storeId) {
+        console.error("[Paystack Initialize] Missing subscription details:", { plan, storeId })
         return NextResponse.json(
-          { error: "Missing subscription details" },
+          { error: "Missing subscription details (plan or storeId)" },
           { status: 400 }
         )
       }
 
-      callback_url = `${appUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
-      metadata = { plan, storeId, type: "subscription" }
+      // Paystack will append reference, but we can add it as a placeholder
+      callback_url = `${baseUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
+      metadata = { 
+        plan, 
+        storeId, 
+        type: "subscription",
+        callback_url: `${baseUrl}/dashboard/seller/subscriptions/success` // Store for reference
+      }
+      
+      console.log("[Paystack Initialize] Subscription payment initialized:", { plan, storeId })
     } else if (type === "checkout") {
       // 🛒 Handle Regular Checkout Payments
-      if (!orders || !shippingInfo) {
-        console.error("[Paystack Initialize] Missing checkout details:", {
+      if (!orders || !Array.isArray(orders) || orders.length === 0) {
+        console.error("[Paystack Initialize] Invalid orders:", {
           hasOrders: !!orders,
-          hasShippingInfo: !!shippingInfo,
+          isArray: Array.isArray(orders),
+          length: orders?.length,
         })
         return NextResponse.json(
-          { error: "Missing checkout details" },
+          { error: "Invalid orders data. At least one order is required." },
           { status: 400 }
         )
       }
 
-      callback_url = `${appUrl}/payment-success`
+      if (!shippingInfo) {
+        console.error("[Paystack Initialize] Missing shipping info")
+        return NextResponse.json(
+          { error: "Shipping information is required" },
+          { status: 400 }
+        )
+      }
+
+      callback_url = `${baseUrl}/payment-success`
       metadata = {
         orders,
         shippingInfo,
-        paymentMethod: paymentMethod || "paystack",
+        paymentMethod: paymentMethod || "card",
         deliveryFee: deliveryFee || 0,
-        totalAmount: amount * 100, // Store total in kobo
         type: "checkout",
       }
-    } else {
-      return NextResponse.json(
-        { error: "Invalid payment type" },
-        { status: 400 }
-      )
+      
+      console.log("[Paystack Initialize] Checkout payment initialized:", { 
+        orderCount: orders.length,
+        deliveryFee 
+      })
     }
 
-    // 🧮 Convert ₦ to Kobo
+    // ✅ Convert Naira to Kobo (Paystack uses smallest currency unit)
+    const amountInKobo = Math.round(amount * 100)
+    
     const paystackPayload = {
       email,
-      amount: amount * 100,
+      amount: amountInKobo,
       callback_url,
       metadata,
     }
 
-    console.log("[Paystack Initialize] Payload:", paystackPayload)
+    console.log("[Paystack Initialize] Payload:", {
+      email,
+      amount: amountInKobo,
+      callback_url,
+      metadataKeys: Object.keys(metadata),
+    })
 
     // 🚀 Initialize payment with Paystack
     const paystackResponse = await fetch(
@@ -114,26 +165,40 @@ export async function POST(request: NextRequest) {
     const paystackData = await paystackResponse.json()
 
     if (!paystackResponse.ok) {
-      console.error("[Paystack Error]", paystackData)
+      console.error("[Paystack Initialize] Error response:", {
+        status: paystackResponse.status,
+        message: paystackData.message,
+        data: paystackData,
+      })
       return NextResponse.json(
         {
           error: paystackData.message || "Failed to initialize payment",
+          details: process.env.NODE_ENV === "development" ? paystackData : undefined,
         },
         { status: paystackResponse.status }
       )
     }
 
-    console.log("[Paystack] Initialized successfully:", paystackData)
+    console.log("[Paystack Initialize] ✅ Success:", {
+      reference: paystackData.data.reference,
+      access_code: paystackData.data.access_code,
+    })
 
     return NextResponse.json({
+      success: true,
       authorization_url: paystackData.data.authorization_url,
       access_code: paystackData.data.access_code,
       reference: paystackData.data.reference,
     })
-  } catch (error) {
-    console.error("[Paystack] Initialization error:", error)
+  } catch (error: any) {
+    console.error("[Paystack Initialize] ❌ Unexpected error:", error)
+    console.error("Stack trace:", error.stack)
+    
     return NextResponse.json(
-      { error: "Failed to initialize payment" },
+      { 
+        error: "Failed to initialize payment",
+        details: process.env.NODE_ENV === "development" ? error.message : undefined,
+      },
       { status: 500 }
     )
   }
