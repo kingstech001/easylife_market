@@ -715,7 +715,7 @@ export default function CreateProductPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 justify-between">
                       <Button
                         type="button"
                         variant="outline"
