@@ -78,6 +78,7 @@ export default function CreateProductPage() {
   const [storeId, setStoreId] = useState<string | null>(null)
   const [isStoreLoading, setIsStoreLoading] = useState(true)
   const [storeError, setStoreError] = useState<string | null>(null)
+  const [formKey, setFormKey] = useState(0) // ← Add this to force form re-render
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -106,7 +107,6 @@ export default function CreateProductPage() {
       setIsStoreLoading(true)
       setStoreError(null)
       try {
-        // Assuming an API endpoint like /api/seller/store exists to get the current seller's store ID
         const response = await fetch("/api/dashboard/seller/store")
         if (!response.ok) {
           let errorMessage = "Failed to fetch store information."
@@ -247,8 +247,6 @@ export default function CreateProductPage() {
 
     setIsSubmitting(true)
     try {
-      // The 'data' object already contains the Cloudinary URLs in data.images
-      // and now also the storeId
       const response = await fetch("/api/dashboard/seller/products", {
         method: "POST",
         headers: {
@@ -273,7 +271,13 @@ export default function CreateProductPage() {
         throw new Error(errorMessage)
       }
 
+      // ✅ IMPROVED FORM RESET
       clearStorage()
+      
+      // Clear image previews first
+      setImagePreviews([])
+      
+      // Reset form completely
       form.reset({
         name: "",
         description: "",
@@ -284,7 +288,9 @@ export default function CreateProductPage() {
         images: [],
         storeId: storeId,
       })
-      setImagePreviews([])
+      
+      // Force complete form re-render by changing key
+      setFormKey(prev => prev + 1)
       setActiveTab("details")
 
       toast.success("Product created successfully!", {
@@ -302,6 +308,10 @@ export default function CreateProductPage() {
   }
 
   const handleClearForm = () => {
+    // Clear image previews
+    setImagePreviews([])
+    
+    // Reset form
     form.reset({
       name: "",
       description: "",
@@ -312,9 +322,12 @@ export default function CreateProductPage() {
       images: [],
       storeId: storeId || "",
     })
-    setImagePreviews([])
+    
+    // Force complete form re-render by changing key
+    setFormKey(prev => prev + 1)
     setActiveTab("details")
     clearStorage()
+    
     toast.info("Form cleared", {
       description: "All saved data has been removed.",
     })
@@ -353,7 +366,7 @@ export default function CreateProductPage() {
             <span className="hidden sm:inline">Back to Products</span>
             <span className="sm:hidden">Back</span>
           </Button>
-          <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-start gap-3 sm:gap-4">
             <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20 flex-shrink-0">
               <Package className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
@@ -378,7 +391,7 @@ export default function CreateProductPage() {
             </Button>
           </div>
         </motion.div>
-        <Form {...form}>
+        <Form {...form} key={formKey}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
               <TabsList className="grid w-full grid-cols-3 h-10 sm:h-12 bg-muted/50 dark:bg-muted/20 p-1">
@@ -494,7 +507,7 @@ export default function CreateProductPage() {
                               <FormControl>
                                 <div className="relative">
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                                    $
+                                    ₦
                                   </span>
                                   <Input
                                     className="pl-7 sm:pl-8 bg-background text-sm sm:text-base"
@@ -674,7 +687,17 @@ export default function CreateProductPage() {
                           <FormItem>
                             <FormLabel className="text-sm sm:text-base">Stock Quantity *</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" className="bg-background text-sm sm:text-base" {...field} />
+                              <Input 
+                                type="number" 
+                                min="0" 
+                                className="bg-background text-sm sm:text-base" 
+                                {...field}
+                                value={field.value ?? 0}
+                                onChange={(e) => {
+                                  const value = e.target.value === "" ? 0 : Number(e.target.value)
+                                  field.onChange(value)
+                                }}
+                              />
                             </FormControl>
                             <FormDescription className="text-xs sm:text-sm">
                               Number of items available for sale
