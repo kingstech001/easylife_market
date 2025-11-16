@@ -108,7 +108,7 @@ export function PaystackButton({
       onClick={handlePayment}
       disabled={disabled || isLoading}
       size="lg"
-      className="bg-gradient-to-r from-[#0052CC] to-[#00A3E0] hover:from-[#0052CC]/90 hover:to-[#00A3E0]/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+      className="bg-gradient-to-r from-[#0052CC] to-[#00A3E0] hover:from-[#0052CC]/90 hover:to-[#00A3E0]/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full"
     >
       {isLoading ? (
         <>

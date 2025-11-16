@@ -204,9 +204,9 @@ export default function BuyerOrdersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container px-4 py-8">
+      <div className="container  py-8">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex flex-col sm:flex-row justify-between">
             <div className="flex space-x-4">
               <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
                 <ShoppingBag className="h-6 w-6 text-blue-600" />
@@ -219,12 +219,12 @@ export default function BuyerOrdersPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={fetchOrders} disabled={isLoading}>
+            <div className="flex gap-3 w-full md:w-auto">
+              <Button variant="outline" size="sm" onClick={fetchOrders} disabled={isLoading} className="w-full md:w-auto">
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full md:w-auto">
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
@@ -322,7 +322,7 @@ export default function BuyerOrdersPage() {
             <div className="space-y-6">
               {filteredOrders.map((mainOrder) => (
                 <Card key={mainOrder._id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center space-x-4">
                         <div>

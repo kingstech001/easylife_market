@@ -13,9 +13,19 @@ import {
   Check,
   Info,
   Loader2,
+  Package,
+  Truck,
+  ShieldCheck,
+  Clock,
+  Store as StoreIcon,
+  BadgeCheck,
+  Minus,
+  Plus,
+  MapPin,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -77,7 +87,6 @@ export default function ProductPage({
         setLoading(true);
         setError(null);
 
-        // Fetch product details
         const productResponse = await fetch(
           `/api/stores/${params.slug}/products/${params.productId}`
         );
@@ -97,7 +106,6 @@ export default function ProductPage({
 
         setProduct(productData.product);
 
-        // Fetch store details
         const storeResponse = await fetch(`/api/stores/${params.slug}`);
         if (storeResponse.ok) {
           const storeData = await storeResponse.json();
@@ -106,14 +114,12 @@ export default function ProductPage({
           }
         }
 
-        // Fetch related products (other products from same store)
         const relatedResponse = await fetch(
           `/api/stores/${params.slug}/products`
         );
         if (relatedResponse.ok) {
           const relatedData = await relatedResponse.json();
           if (relatedData.success) {
-            // Filter out current product and limit to 4
             const filtered = relatedData.products
               .filter((p: Product) => p.id !== params.productId)
               .slice(0, 4);
@@ -172,15 +178,20 @@ export default function ProductPage({
     }
   };
 
-  const incrementQuantity = () => setQuantity((prev) => prev + 1);
+  const incrementQuantity = () => {
+    if (product && quantity < product.inventory_quantity) {
+      setQuantity((prev) => prev + 1);
+    }
+  };
+  
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
   // Loading state
   if (loading) {
     return (
       <div className="container py-20 text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading product...</p>
+        <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+        <p className="text-lg text-muted-foreground">Loading product details...</p>
       </div>
     );
   }
@@ -189,14 +200,22 @@ export default function ProductPage({
   if (error || !product || !store) {
     return (
       <div className="container py-20 text-center">
-        <h1 className="text-3xl font-bold mb-4">
-          {error === "Product not found" ? "Product Not Found" : "Error"}
-        </h1>
-        <p className="text-muted-foreground mb-8">
-          {error ||
-            "The product you're looking for doesn't exist or has been removed."}
-        </p>
-        <Button onClick={() => router.back()}>Go Back</Button>
+        <div className="max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-destructive/10 flex items-center justify-center">
+            <Package className="h-10 w-10 text-destructive" />
+          </div>
+          <h1 className="text-3xl font-bold mb-4">
+            {error === "Product not found" ? "Product Not Found" : "Error"}
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            {error ||
+              "The product you're looking for doesn't exist or has been removed."}
+          </p>
+          <Button onClick={() => router.back()} size="lg" className="rounded-xl">
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }
@@ -212,306 +231,485 @@ export default function ProductPage({
     : 0;
 
   return (
-    <div className="container py-10 max-w-[1280px] mx-auto px-6 sm:px-8">
-      <AnimatedContainer animation="fadeIn" className="mb-6">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Back to {store.name}
-        </Button>
-      </AnimatedContainer>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="container py-8 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <AnimatedContainer animation="fadeIn" className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.back()} 
+            className="mb-4 hover:bg-primary/10 rounded-xl"
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back to {store.name}
+          </Button>
+        </AnimatedContainer>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Product Images */}
-        <AnimatedContainer animation="slideIn" className="space-y-4">
-          <div className="relative aspect-square overflow-hidden rounded-lg border bg-background">
-            <Image
-              src={
-                product.images[selectedImage]?.url ||
-                "/placeholder.svg?height=600&width=600" ||
-                "/placeholder.svg"
-              }
-              alt={product.images[selectedImage]?.alt_text || product.name}
-              fill
-              className="object-cover"
-              priority
-            />
-            {hasDiscount && (
-              <Badge className="absolute top-4 left-4 bg-destructive text-destructive-foreground">
-                -{discountPercentage}% OFF
-              </Badge>
-            )}
-          </div>
-
-          {product.images.length > 1 && (
-            <div className="flex gap-2 overflow-auto pb-2">
-              {product.images.map((image, index) => (
-                <motion.div
-                  key={image.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`relative aspect-square w-20 cursor-pointer overflow-hidden rounded-md border ${
-                    selectedImage === index ? "ring-2 ring-primary" : ""
-                  }`}
-                  onClick={() => setSelectedImage(index)}
-                >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-7xl mx-auto">
+          {/* Product Images Section - Left Side */}
+          <div className="lg:max-w-[600px] mx-auto w-full">
+            <AnimatedContainer animation="slideIn" className="space-y-4 sticky top-8">
+              {/* Main Image */}
+              <Card className="overflow-hidden border-2 shadow-lg">
+                <div className="relative aspect-square bg-muted">
                   <Image
-                    src={image.url || "/placeholder.svg"}
-                    alt={image.alt_text || `Product image ${index + 1}`}
+                    src={
+                      product.images[selectedImage]?.url ||
+                      "/placeholder.svg?height=800&width=800"
+                    }
+                    alt={product.images[selectedImage]?.alt_text || product.name}
                     fill
                     className="object-cover"
+                    priority
                   />
+                  {hasDiscount && (
+                    <div className="absolute top-6 left-6">
+                      <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 text-base font-bold shadow-lg">
+                        -{discountPercentage}% OFF
+                      </Badge>
+                    </div>
+                  )}
+                  {product.inventory_quantity < 10 && product.inventory_quantity > 0 && (
+                    <div className="absolute top-6 right-6">
+                      <Badge className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-4 py-2 shadow-lg">
+                        Only {product.inventory_quantity} left!
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Thumbnail Gallery */}
+              {product.images.length > 1 && (
+                <div className="flex gap-3 overflow-auto pb-2">
+                  {product.images.map((image, index) => (
+                    <motion.button
+                      key={image.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`relative aspect-square w-24 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 transition-all ${
+                        selectedImage === index
+                          ? "ring-4 ring-primary border-primary shadow-lg"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      onClick={() => setSelectedImage(index)}
+                    >
+                      <Image
+                        src={image.url || "/placeholder.svg"}
+                        alt={image.alt_text || `Product image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+
+              {/* Trust Badges */}
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                        <ShieldCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <p className="text-sm font-medium">Secure Payment</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                        <Truck className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <p className="text-sm font-medium">Fast Delivery</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                        <Award className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <p className="text-sm font-medium">Quality Guaranteed</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </AnimatedContainer>
+          </div>
+
+          {/* Product Info Section - Right Side */}
+          <div className="lg:max-w-[600px] mx-auto w-full">
+            <AnimatedContainer animation="slideUp" className="space-y-6">
+              {/* Store Badge */}
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    {store.logo_url ? (
+                      <Image
+                        src={store.logo_url}
+                        alt={store.name}
+                        width={48}
+                        height={48}
+                        className="rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <StoreIcon className="h-6 w-6 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground">Sold by</p>
+                      <p className="font-semibold">{store.name}</p>
+                    </div>
+                    <Badge variant="secondary" className="gap-1">
+                      <BadgeCheck className="h-3 w-3" />
+                      Verified
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Product Title & Rating */}
+              <div>
+                <h1 className="text-3xl lg:text-4xl font-bold leading-tight mb-4">
+                  {product.name}
+                </h1>
+
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${
+                            i < 4
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-muted-foreground fill-muted-foreground/20"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium">4.8</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-5" />
+                  <span className="text-sm text-muted-foreground">
+                    24 reviews
+                  </span>
+                  <Separator orientation="vertical" className="h-5" />
+                  <span className="text-sm text-muted-foreground">
+                    156 sold
+                  </span>
+                </div>
+
+                {/* Price Section */}
+                <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-4xl font-bold text-primary">
+                            {formatAmount(product.price)}
+                          </span>
+                          {hasDiscount && (
+                            <span className="text-xl text-muted-foreground line-through">
+                              {formatAmount(product.compare_at_price!)}
+                            </span>
+                          )}
+                        </div>
+                        {hasDiscount && (
+                          <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
+                            You save {formatAmount(product.compare_at_price! - product.price)}
+                          </p>
+                        )}
+                      </div>
+                      {hasDiscount && (
+                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white text-lg px-4 py-2 shadow-lg">
+                          -{discountPercentage}%
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Separator />
+
+              {/* Stock Status */}
+              <Card className={`border-2 ${
+                product.inventory_quantity > 0 
+                  ? 'border-green-200 bg-green-50 dark:bg-green-950/20' 
+                  : 'border-red-200 bg-red-50 dark:bg-red-950/20'
+              }`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                      product.inventory_quantity > 0
+                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
+                        : 'bg-red-100 text-red-600 dark:bg-red-900/30'
+                    }`}>
+                      {product.inventory_quantity > 0 ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <Info className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      {product.inventory_quantity > 0 ? (
+                        <>
+                          <p className="font-semibold text-green-900 dark:text-green-100">
+                            In Stock
+                          </p>
+                          <p className="text-sm text-green-700 dark:text-green-300">
+                            {product.inventory_quantity} units available
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-semibold text-red-900 dark:text-red-100">
+                            Out of Stock
+                          </p>
+                          <p className="text-sm text-red-700 dark:text-red-300">
+                            Currently unavailable
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quantity & Add to Cart */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center border-2 rounded-xl overflow-hidden">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-12 w-12 rounded-none hover:bg-primary/10"
+                      onClick={decrementQuantity}
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="w-16 text-center font-semibold text-lg">
+                      {quantity}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-12 w-12 rounded-none hover:bg-primary/10"
+                      onClick={incrementQuantity}
+                      disabled={quantity >= product.inventory_quantity}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button
+                    className="flex-1 h-12 text-base font-semibold rounded-xl shadow-lg"
+                    size="lg"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart || product.inventory_quantity === 0}
+                  >
+                    {isAddingToCart ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="mr-2 h-5 w-5" />
+                        {product.inventory_quantity === 0
+                          ? "Out of Stock"
+                          : "Add to Cart"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-12 rounded-xl border-2"
+                    onClick={toggleWishlist}
+                  >
+                    <Heart
+                      className={`mr-2 h-5 w-5 transition-colors ${
+                        isInWishlist(product.id)
+                          ? "fill-red-500 text-red-500"
+                          : ""
+                      }`}
+                    />
+                    {isInWishlist(product.id) ? "Saved" : "Save"}
+                  </Button>
+                  <Button variant="outline" className="h-12 rounded-xl border-2">
+                    <Share2 className="mr-2 h-5 w-5" />
+                    Share
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Product Tabs */}
+              <Tabs defaultValue="description" className="w-full">
+                <TabsList className="w-full h-12 rounded-xl">
+                  <TabsTrigger value="description" className="flex-1 rounded-lg">
+                    Description
+                  </TabsTrigger>
+                  <TabsTrigger value="details" className="flex-1 rounded-lg">
+                    Details
+                  </TabsTrigger>
+                  <TabsTrigger value="shipping" className="flex-1 rounded-lg">
+                    Shipping
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="description" className="pt-6">
+                  <Card className="border-0 shadow-sm">
+                    <CardContent className="p-6">
+                      <ExpandableText
+                        text={
+                          product.description ||
+                          "No description available for this product."
+                        }
+                        limit={200}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="details" className="pt-6">
+                  <Card className="border-0 shadow-sm">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex justify-between py-3 border-b">
+                        <span className="font-medium flex items-center gap-2">
+                          <Package className="h-4 w-4 text-primary" />
+                          SKU
+                        </span>
+                        <span className="text-muted-foreground font-mono">
+                          SKU-{product.id.slice(0, 8)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between py-3 border-b">
+                        <span className="font-medium flex items-center gap-2">
+                          <StoreIcon className="h-4 w-4 text-primary" />
+                          Store
+                        </span>
+                        <span className="text-muted-foreground">{store.name}</span>
+                      </div>
+                      <div className="flex justify-between py-3 border-b">
+                        <span className="font-medium flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" />
+                          Stock
+                        </span>
+                        <Badge variant="secondary">
+                          {product.inventory_quantity} units
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between py-3">
+                        <span className="font-medium flex items-center gap-2">
+                          <BadgeCheck className="h-4 w-4 text-primary" />
+                          Category
+                        </span>
+                        <span className="text-muted-foreground">
+                          {product.category_id || "Uncategorized"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="shipping" className="pt-6">
+                  <Card className="border-0 shadow-sm">
+                    <CardContent className="p-6 space-y-6">
+                      
+                      <Separator />
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-lg mb-1">Fast Delivery</p>
+                          <p className="text-sm text-muted-foreground">
+                            Estimated delivery: 24 hours 
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-lg mb-1">Track Your Order</p>
+                          <p className="text-sm text-muted-foreground">
+                            Real-time tracking available after dispatch
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </AnimatedContainer>
+          </div>
+        </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <AnimatedContainer animation="fadeIn" delay={0.3} className="mt-20">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold mb-2">You might also like</h2>
+              <p className="text-muted-foreground">
+                More great products from {store.name}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <motion.div
+                  key={relatedProduct.id}
+                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Card
+                    className="overflow-hidden h-full flex flex-col cursor-pointer border-2 hover:border-primary/50 hover:shadow-xl transition-all"
+                    onClick={() =>
+                      router.push(
+                        `/stores/${params.slug}/products/${relatedProduct.id}`
+                      )
+                    }
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-muted">
+                      <Image
+                        src={relatedProduct.images[0]?.url || "/placeholder.svg"}
+                        alt={relatedProduct.name}
+                        fill
+                        className="object-cover transition-transform hover:scale-110 duration-300"
+                      />
+                    </div>
+                    <CardContent className="p-4 flex-1">
+                      <h3 className="font-semibold line-clamp-2 mb-2">
+                        {relatedProduct.name}
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-primary">
+                          ₦{relatedProduct.price.toFixed(2)}
+                        </span>
+                        {relatedProduct.compare_at_price && (
+                          <span className="text-sm text-muted-foreground line-through">
+                            ₦{relatedProduct.compare_at_price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               ))}
             </div>
-          )}
-        </AnimatedContainer>
-
-        {/* Product Info */}
-        <AnimatedContainer animation="slideUp" className="space-y-6">
-          <div>
-            <div className="flex justify-between">
-              <h1 className="text-x lg:text-3xl font-bold">{product.name}</h1>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < 4
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-muted-foreground"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  (24 reviews)
-                </span>
-              </div>
-              <div className="flex items-start gap-2 ">
-                <Button variant="ghost" size="icon" onClick={toggleWishlist}>
-                  <Heart
-                    className={`h-5 w-5 transition-colors duration-300 ${
-                      isInWishlist(product.id)
-                        ? "fill-red-500 text-red-500"
-                        : ""
-                    }`}
-                  />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold">
-                  {formatAmount(product.price)}
-                </span>
-                {hasDiscount && (
-                  <>
-                    <span className="text-lg text-muted-foreground line-through">
-                      {formatAmount(product.compare_at_price!)}
-                    </span>
-                    <Badge className="bg-red-500 hover:bg-red-600">
-                      {discountPercentage}% OFF
-                    </Badge>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              {product.inventory_quantity > 0 ? (
-                <>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
-                    <Check className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm">
-                    In stock - {product.inventory_quantity} available
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
-                    <Info className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm text-red-600">Out of stock</span>
-                </>
-              )}
-            </div>
-
-            <div className="flex custom-xsm:flex-col sm:flex-row items-center gap-4 w-full">
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-r-none h-10 w-10"
-                  onClick={decrementQuantity}
-                  disabled={quantity <= 1}
-                >
-                  -
-                </Button>
-                <div className="w-12 text-center">{quantity}</div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-l-none h-10 w-10"
-                  onClick={incrementQuantity}
-                  disabled={quantity >= product.inventory_quantity}
-                >
-                  +
-                </Button>
-              </div>
-              <Button
-                className="flex-1 py-4 w-full"
-                size="lg"
-                onClick={handleAddToCart}
-                disabled={isAddingToCart || product.inventory_quantity === 0}
-              >
-                {isAddingToCart ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    {product.inventory_quantity === 0
-                      ? "Out of Stock"
-                      : "Add to Cart"}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
-          <Tabs defaultValue="description">
-            <TabsList className="w-full">
-              <TabsTrigger value="description" className="flex-1">
-                Description
-              </TabsTrigger>
-              <TabsTrigger value="details" className="flex-1">
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="shipping" className="flex-1">
-                Shipping
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="description" className="pt-4">
-              <p className="text-muted-foreground">
-                <ExpandableText
-                  text={
-                    product.description ||
-                    "nop description found."
-                  }
-                  limit={150}
-                />
-              </p>
-            </TabsContent>
-            <TabsContent value="details" className="pt-4">
-              <div className="space-y-2">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="font-medium">SKU</span>
-                  <span className="text-muted-foreground">
-                    SKU-{product.id}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="font-medium">Category</span>
-                  <span className="text-muted-foreground">
-                    {product.category_id
-                      ? "Category " + product.category_id
-                      : "Uncategorized"}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="font-medium">Store</span>
-                  <span className="text-muted-foreground">{store.name}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="font-medium">Stock</span>
-                  <span className="text-muted-foreground">
-                    {product.inventory_quantity} units
-                  </span>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="shipping" className="pt-4">
-              <div className="space-y-4">
-                <div className="flex items-start gap-2">
-                  <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium">Free Shipping</p>
-                    <p className="text-sm text-muted-foreground">
-                      On orders over ₦20,000
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Within Ogrute
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium">Delivery Time</p>
-                    <p className="text-sm text-muted-foreground">
-                      1-2 business days
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </AnimatedContainer>
+          </AnimatedContainer>
+        )}
       </div>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <AnimatedContainer animation="fadeIn" delay={0.3} className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">You might also like</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <Card
-                key={relatedProduct.id}
-                className="overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() =>
-                  router.push(
-                    `/stores/${params.slug}/products/${relatedProduct.id}`
-                  )
-                }
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <Image
-                    src={relatedProduct.images[0]?.url || "/placeholder.svg"}
-                    alt={relatedProduct.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold line-clamp-2">
-                    {relatedProduct.name}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    ₦{relatedProduct.price.toFixed(2)}
-                  </p>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </AnimatedContainer>
-      )}
     </div>
   );
 }

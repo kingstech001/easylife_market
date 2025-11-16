@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, Suspense } from "react"
-import { Loader2, CheckCircle } from "lucide-react"
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { useCart } from "@/context/cart-context"
 
@@ -14,11 +14,12 @@ const CHECKOUT_STORAGE_KEY = "checkout_form_data"
 function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { clearCart } = useCart()
+  const { clearCart, items: cartItems, getTotalPrice } = useCart()
   const reference = searchParams.get("reference") || searchParams.get("trxref")
 
   const [loading, setLoading] = useState(true)
   const [verified, setVerified] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!reference) {
@@ -29,27 +30,77 @@ function PaymentSuccessContent() {
 
     const verifyPayment = async () => {
       try {
-        console.log("[v0] Verifying payment with reference:", reference)
+        console.log("[PaymentSuccess] Verifying payment with reference:", reference)
 
+        // Get checkout data from localStorage
+        const checkoutDataStr = localStorage.getItem(CHECKOUT_STORAGE_KEY)
+        if (!checkoutDataStr) {
+          throw new Error("Checkout data not found. Please try again.")
+        }
+
+        const checkoutData = JSON.parse(checkoutDataStr)
+        const { info, shipping } = checkoutData
+
+        // Prepare order data
+        const groupedByStore: Record<string, typeof cartItems> = {}
+        cartItems.forEach((item) => {
+          if (!groupedByStore[item.storeId]) groupedByStore[item.storeId] = []
+          groupedByStore[item.storeId].push(item)
+        })
+
+        const orders = Object.entries(groupedByStore).map(([storeId, storeItems]) => {
+          const storeSubtotal = storeItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
+          return {
+            storeId,
+            items: storeItems.map((i) => ({
+              productId: i.productId,
+              productName: i.name,
+              quantity: i.quantity,
+              priceAtPurchase: i.price,
+            })),
+            totalPrice: storeSubtotal,
+          }
+        })
+
+        const subtotal = getTotalPrice()
+        const total = subtotal + shipping
+
+        const orderData = {
+          orders,
+          shippingInfo: {
+            firstName: info.firstName,
+            lastName: info.lastName,
+            email: info.email,
+            address: info.address,
+            state: info.state,
+            phone: info.phone,
+            area: info.area,
+          },
+          paymentMethod: "paystack",
+          deliveryFee: shipping,
+          totalAmount: Math.round(total * 100),
+        }
+
+        console.log("[PaymentSuccess] Sending order data with reference")
+
+        // Verify payment and create orders
         const res = await fetch("/api/paystack/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             reference,
-            // The verify endpoint will retrieve orderData from Paystack metadata
+            orderData,
           }),
         })
 
         const data = await res.json()
 
         if (!res.ok) {
-          console.error("[v0] Verification failed:", data)
-          toast.error(data.error || "Payment verification failed")
-          router.push("/checkout")
-          return
+          console.error("[PaymentSuccess] Verification failed:", data)
+          throw new Error(data.error || "Payment verification failed")
         }
 
-        console.log("[v0] Payment verified successfully:", data)
+        console.log("[PaymentSuccess] Payment verified and order created successfully:", data)
 
         setVerified(true)
         
@@ -63,24 +114,45 @@ function PaymentSuccessContent() {
         setTimeout(() => {
           router.push(`/checkout/confirmation?reference=${reference}`)
         }, 2000)
-      } catch (err) {
-        console.error("[v0] Verification error:", err)
-        toast.error("Payment verification error")
-        router.push("/checkout")
+      } catch (err: any) {
+        console.error("[PaymentSuccess] Verification error:", err)
+        setError(err.message || "Payment verification error")
+        toast.error(err.message || "Failed to verify payment")
+        
+        // Don't redirect immediately on error - show the error
+        setTimeout(() => {
+          router.push("/checkout")
+        }, 5000)
       } finally {
         setLoading(false)
       }
     }
 
     verifyPayment()
-  }, [reference, router, clearCart])
+  }, [reference, router, clearCart, cartItems, getTotalPrice])
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-        <p className="mt-4 text-lg text-slate-700 dark:text-slate-300">
-          Verifying your payment…
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">Verifying Payment</h2>
+        <p className="text-muted-foreground">
+          Please wait while we verify your payment and create your order...
+        </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <AlertCircle className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">Verification Failed</h2>
+        <p className="text-muted-foreground max-w-md">
+          {error}
+        </p>
+        <p className="text-sm text-muted-foreground mt-4">
+          Redirecting to checkout in 5 seconds...
         </p>
       </div>
     )
@@ -88,11 +160,14 @@ function PaymentSuccessContent() {
 
   if (verified) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-center">
-        <CheckCircle className="h-16 w-16 text-emerald-600" />
-        <h2 className="mt-4 text-2xl font-semibold">Payment Verified</h2>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">
-          Your order has been placed successfully. Redirecting...
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">Payment Verified!</h2>
+        <p className="text-muted-foreground max-w-md">
+          Your order has been placed successfully. You will receive a confirmation email shortly.
+        </p>
+        <p className="text-sm text-muted-foreground mt-4">
+          Redirecting to order confirmation...
         </p>
       </div>
     )
@@ -104,7 +179,7 @@ function PaymentSuccessContent() {
 // Loading fallback
 function PaymentSuccessLoading() {
   return (
-    <div className="h-screen flex flex-col items-center justify-center text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center text-center">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
       <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
     </div>

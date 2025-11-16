@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Users,
   Eye,
+  Loader2,
 } from "lucide-react";
 import {
   Card,
@@ -22,6 +23,7 @@ import { VisitorsChart } from "@/components/dashboard/visitors-chart";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { TopProducts } from "@/components/dashboard/top-products";
 import { TopStores } from "@/components/dashboard/top-stores";
+import { useAuth } from "@/context/AuthContext"; // ✅ Add this import
 
 interface DashboardData {
   totalStores?: number;
@@ -48,8 +50,12 @@ const itemVariants = {
 export default function AnalyticsOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth(); // ✅ Get auth state
 
   const fetchDashboardData = useCallback(async () => {
+    // ✅ Don't fetch until auth is loaded and user exists
+    if (authLoading || !user) return;
+    
     setLoading(true);
     try {
       const response = await fetch("/api/dashboard/admin");
@@ -61,7 +67,7 @@ export default function AnalyticsOverview() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authLoading, user]); // ✅ Add dependencies
 
   useEffect(() => {
     fetchDashboardData();
@@ -106,6 +112,29 @@ export default function AnalyticsOverview() {
     },
   ];
 
+  // ✅ Show loading state while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Handle case where user is not loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Please log in to view analytics</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -141,13 +170,13 @@ export default function AnalyticsOverview() {
             variants={itemVariants}
             className="flex items-start justify-between"
           >
-              <h1 className="text-xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">
-                Analytics Overview
-              </h1>
-              <Badge variant="secondary" className="px-3 py-1">
-                <TrendingUp className="h-3 w-3 m-auto" />
-                Last 30 days
-              </Badge>
+            <h1 className="text-xl sm:text-3xl lg:text-5xl font-bold tracking-tight text-foreground">
+              Analytics Overview
+            </h1>
+            <Badge variant="secondary" className="px-3 py-1">
+              <TrendingUp className="h-3 w-3 m-auto" />
+              Last 30 days
+            </Badge>
           </motion.div>
           <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mt-1">
             Monitor your platform performance and key metrics
@@ -249,7 +278,7 @@ export default function AnalyticsOverview() {
               <CardHeader>
                 <CardTitle className="text-lg">Top Products</CardTitle>
                 <CardDescription>
-                  Your best-selling products this month
+                  Best-selling products across all stores
                 </CardDescription>
               </CardHeader>
               <CardContent>

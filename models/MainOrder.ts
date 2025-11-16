@@ -40,7 +40,7 @@ const MainOrderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["card", "transfer"],
+      enum: ["card", "transfer", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
       required: true,
     },
     receiptUrl: {

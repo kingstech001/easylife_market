@@ -43,9 +43,17 @@ const OrderSchema = new Schema<IOrder>(
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     totalPrice: { type: Number, required: true },
-    status: { type: String, default: "pending", index: true },
+    status: { 
+      type: String, 
+      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
+      default: "pending", 
+      index: true 
+    },
     items: [OrderItemSchema],
-    paymentMethod: { type: String },
+    paymentMethod: { 
+      type: String,
+      enum: ["card", "transfer", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
+    },
     receiptUrl: { type: String },
     shippingInfo: {
       firstName: String,
