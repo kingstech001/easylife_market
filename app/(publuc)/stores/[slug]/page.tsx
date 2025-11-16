@@ -285,7 +285,7 @@ export default async function StorePage({ params }: StorePageProps) {
         {/* Store Header Section */}
         <div className="relative -mt-16 md:-mt-20">
           <div className="container mx-auto lg:px-8">
-            <Card className="border-2 shadow-xl">
+            <Card className="border-none md:border-2 shadow-xl">
               <CardContent className=" p-2 md:p-8">
                 <div className="flex flex-col gap-6 md:gap-8">
                   {/* Store Logo */}
@@ -334,13 +334,6 @@ export default async function StorePage({ params }: StorePageProps) {
                             >
                               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
                               Open Now
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="flex items-center gap-1"
-                            >
-                              <Award className="h-3 w-3" />
-                              Verified
                             </Badge>
                           </div>
                         </div>
