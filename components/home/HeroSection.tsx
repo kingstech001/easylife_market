@@ -171,7 +171,7 @@ export default function HeroSection() {
             </div>
 
             {/* Right Content - Hero Image */}
-            <div className="relative flex justify-center lg:justify-end order-1 lg:order-2">
+            <div className="relative flex justify-center lg:justify-end order-1 lg:order-2 mt-4 md:mt-0">
               <div className="relative w-full max-w-[280px] xs:max-w-[350px] sm:max-w-[450px] md:max-w-[550px] lg:max-w-[600px]">
                 {/* Decorative elements */}
                 <div className="absolute -top-4 -left-4 w-16 h-16 sm:w-24 sm:h-24 bg-[#c0a146]/20 rounded-full blur-2xl animate-pulse" />
