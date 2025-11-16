@@ -288,7 +288,7 @@ export function TestimonialsSection() {
             </div>
 
             {/* Stats */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8 pt-4">
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6">
               {[
                 { value: "10K+", label: "Happy Sellers", icon: Users },
                 { value: "4.9/5", label: "Average Rating", icon: Star },
@@ -296,12 +296,12 @@ export function TestimonialsSection() {
               ].map((stat, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 border border-border/50 hover:border-[#c0a146]/30 transition-all"
+                  className="flex flex-col items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50 hover:border-[#c0a146]/30 transition-all"
                 >
                   <div className="p-1.5 rounded-md bg-[#c0a146]/10">
                     <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#c0a146]" />
                   </div>
-                  <div className="text-left">
+                  <div className="text-center">
                     <p className="text-sm sm:text-base font-bold text-foreground">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
@@ -367,7 +367,7 @@ export function TestimonialsSection() {
             </div>
 
             {/* Stats */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8 pt-4">
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6">
               {[
                 { value: "50K+", label: "Happy Buyers", icon: Users },
                 { value: "4.8/5", label: "Average Rating", icon: Star },
@@ -375,12 +375,12 @@ export function TestimonialsSection() {
               ].map((stat, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 border border-border/50 hover:border-primary/30 transition-all"
+                  className="flex flex-col items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50 hover:border-primary/30 transition-all"
                 >
                   <div className="p-1.5 rounded-md bg-primary/10">
                     <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   </div>
-                  <div className="text-left">
+                  <div className="text-center">
                     <p className="text-sm sm:text-base font-bold text-foreground">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>

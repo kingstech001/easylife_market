@@ -187,7 +187,7 @@ export default function FeaturedStoresSection() {
 
             {/* Stats bar - Responsive */}
             <motion.div variants={itemVariants} className="w-full max-w-4xl">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6">
+              <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6">
                 {[
                   { icon: Store, label: "Live stores", value: "2,847", color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
                   { icon: TrendingUp, label: "Avg. growth", value: "+156%", color: "text-[#c0a146]", bgColor: "bg-[#c0a146]/10" },
