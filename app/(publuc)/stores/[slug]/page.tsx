@@ -340,7 +340,7 @@ export default async function StorePage({ params }: StorePageProps) {
 
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-4 text-[12px] md:text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-4 w-4 text-primary" />
                           <span>9:00 AM - 9:00 PM</span>
