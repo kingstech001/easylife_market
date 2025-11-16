@@ -142,7 +142,7 @@ export default function FeaturesSection() {
             </div>
 
             {/* Stats - Responsive grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6 w-full max-w-3xl">
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6 w-full max-w-3xl">
               {stats.map((stat, index) => (
                 <div 
                   key={index}
