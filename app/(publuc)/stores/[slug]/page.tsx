@@ -358,7 +358,7 @@ export default async function StorePage({ params }: StorePageProps) {
                   <div className="flex-1 min-w-0 space-y-4">
                     {/* Store Description */}
                     {store.description && (
-                      <div className="pt-2">
+                      <div>
                         <ExpandableText text={store.description} limit={180} />
                       </div>
                     )}
