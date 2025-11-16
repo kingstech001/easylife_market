@@ -6,7 +6,7 @@ import nodemailer from "nodemailer"
 
 export async function POST(req: NextRequest) {
   try {
-    await connectToDB
+    await connectToDB()
 
     const { email } = await req.json()
 
@@ -17,7 +17,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() })
+    // ✅ FIX: Select reset token fields so we can update them
+    const user = await User.findOne({ 
+      email: email.toLowerCase() 
+    }).select('+resetPasswordToken +resetPasswordExpires')
 
     // Always return success to prevent email enumeration
     if (!user) {
@@ -27,8 +30,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString("hex")
+    // Generate reset token - using base64url for URL safety
+    const resetToken = crypto.randomBytes(32).toString("base64url")
     const resetTokenHash = crypto
       .createHash("sha256")
       .update(resetToken)
