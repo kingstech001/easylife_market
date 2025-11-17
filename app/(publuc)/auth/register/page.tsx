@@ -6,10 +6,11 @@ import Link from "next/link"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight, Sparkles, Store, ShoppingBag } from "lucide-react"
+import { Loader2, Eye, EyeOff, Mail, Lock, User, ShoppingBag, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -19,7 +20,6 @@ const registerSchema = z
     firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
     lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
     email: z.string().email({ message: "Please enter a valid email address." }),
-    // stronger password rule: min 8, must contain lowercase, uppercase, number and special character
     password: z
       .string()
       .min(8, { message: "Password must be at least 8 characters." })
@@ -60,13 +60,6 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true)
 
-    console.log("Starting registration process:", {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      role: data.role,
-    })
-
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -77,23 +70,18 @@ export default function RegisterPage() {
       })
 
       const response = await res.json()
-      console.log("Registration response:", { status: res.status, response })
 
       if (!res.ok) {
-        console.error("Registration failed:", response)
         toast.error(response.message || "Something went wrong.")
         return
       }
 
-      console.log("Registration successful, redirecting to verification")
       toast.success("Registration successful", {
         description: "Please check your email for verification code.",
       })
 
-      // Redirect to verify email page with email parameter
       router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`)
     } catch (err) {
-      console.error("Registration error:", err)
       toast.error("An error occurred while registering.", {
         description: "Please try again later.",
       })
@@ -103,63 +91,55 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4">
-      <div className="flex w-full max-w-6xl rounded-3xl overflow-hidden shadow-2xl bg-card/80 backdrop-blur-xl border border-border/50 relative">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-x-16 -translate-y-16" />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-secondary/10 rounded-full blur-3xl translate-x-16 translate-y-16" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/10 to-background p-4">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-[20%] right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
 
-        {/* Left side - Image/Branding */}
-        <div className="hidden lg:flex flex-1 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent" />
-          <div
-            className="w-full h-full bg-[url('/register.png')] bg-no-repeat bg-center bg-cover"
-            style={{ filter: "brightness(0.9) contrast(1.1)" }}
-          />
-          <div className="absolute inset-0 flex flex-col justify-end p-12 text-white">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-6 w-6" />
-                <span className="text-lg font-semibold">Join Our Community</span>
+      <Card className="w-full max-w-md border-border/50 shadow-xl relative z-10">
+        <CardHeader className="space-y-4 text-center">
+          {/* Logo */}
+          <div className="mx-auto">
+            <div className="relative inline-block">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#c0a146] to-[#d4b55e] rounded-xl flex items-center justify-center shadow-lg">
+                <ShoppingBag className="h-8 w-8 text-white" />
               </div>
-              <h2 className="text-3xl font-bold leading-tight">Start your journey with us today</h2>
-              <p className="text-white/80 text-lg">
-                Create your account and unlock a world of possibilities, whether you're a buyer or a seller.
-              </p>
+              <div className="absolute -top-1 -right-1">
+                <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right side - Form */}
-        <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center relative z-10">
-          <div className="mb-8 space-y-2">
-            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Create Account
-            </h1>
-            <p className="text-muted-foreground text-base">Join us and start your journey today.</p>
+          {/* Title */}
+          <div className="space-y-2">
+            <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+            <CardDescription className="text-base">
+              Join EasyLife and start your journey
+            </CardDescription>
           </div>
+        </CardHeader>
 
+        <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* First and Last Name */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium">First Name</FormLabel>
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="Your first name"
+                            placeholder="John"
                             {...field}
-                            className={cn(
-                              "pl-10 h-12 bg-background/50 border-border/50 backdrop-blur-sm transition-all duration-200",
-                              "focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-background",
-                              "hover:border-border hover:bg-background/70",
-                            )}
+                            disabled={isLoading}
+                            className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
                           />
                         </div>
                       </FormControl>
@@ -172,19 +152,16 @@ export default function RegisterPage() {
                   control={form.control}
                   name="lastName"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium">Last Name</FormLabel>
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="Your last name"
+                            placeholder="Doe"
                             {...field}
-                            className={cn(
-                              "pl-10 h-12 bg-background/50 border-border/50 backdrop-blur-sm transition-all duration-200",
-                              "focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-background",
-                              "hover:border-border hover:bg-background/70",
-                            )}
+                            disabled={isLoading}
+                            className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
                           />
                         </div>
                       </FormControl>
@@ -194,23 +171,22 @@ export default function RegisterPage() {
                 />
               </div>
 
+              {/* Email Field */}
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium">Email Address</FormLabel>
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                          placeholder="you@example.com"
+                          type="email"
+                          placeholder="name@example.com"
                           {...field}
-                          className={cn(
-                            "pl-10 h-12 bg-background/50 border-border/50 backdrop-blur-sm transition-all duration-200",
-                            "focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-background",
-                            "hover:border-border hover:bg-background/70",
-                          )}
+                          disabled={isLoading}
+                          className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
                         />
                       </div>
                     </FormControl>
@@ -219,24 +195,22 @@ export default function RegisterPage() {
                 )}
               />
 
+              {/* Password Field */}
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium">Password</FormLabel>
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder="Create a password"
                           {...field}
-                          className={cn(
-                            "pl-10 pr-10 h-12 bg-background/50 border-border/50 backdrop-blur-sm transition-all duration-200",
-                            "focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-background",
-                            "hover:border-border hover:bg-background/70",
-                          )}
+                          disabled={isLoading}
+                          className="pl-10 pr-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
                         />
                         <Button
                           type="button"
@@ -244,6 +218,7 @@ export default function RegisterPage() {
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -253,35 +228,30 @@ export default function RegisterPage() {
                         </Button>
                       </div>
                     </FormControl>
-
-                    {/* Password requirements hint */}
                     <p className="text-xs text-muted-foreground mt-1">
-                      Use at least 8 characters including uppercase, lowercase, a number and a special character.
+                      Min 8 characters with uppercase, lowercase, number & special character
                     </p>
-
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Confirm Password Field */}
               <FormField
                 control={form.control}
                 name="confirmPassword"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium">Confirm Password</FormLabel>
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder="Confirm your password"
                           {...field}
-                          className={cn(
-                            "pl-10 pr-10 h-12 bg-background/50 border-border/50 backdrop-blur-sm transition-all duration-200",
-                            "focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:bg-background",
-                            "hover:border-border hover:bg-background/70",
-                          )}
+                          disabled={isLoading}
+                          className="pl-10 pr-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
                         />
                         <Button
                           type="button"
@@ -289,6 +259,7 @@ export default function RegisterPage() {
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          disabled={isLoading}
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -303,17 +274,19 @@ export default function RegisterPage() {
                 )}
               />
 
+              {/* Role Selection */}
               <FormField
                 control={form.control}
                 name="role"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium">I want to register as a:</FormLabel>
+                  <FormItem>
+                    <FormLabel>I want to register as:</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="grid grid-cols-2 gap-4"
+                        className="grid grid-cols-2 gap-3"
+                        disabled={isLoading}
                       >
                         <FormItem>
                           <FormControl>
@@ -322,15 +295,12 @@ export default function RegisterPage() {
                           <FormLabel
                             htmlFor="buyer"
                             className={cn(
-                              "flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-card p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-all duration-200",
-                              field.value === "buyer" && "border-primary ring-2 ring-primary/20",
+                              "flex flex-col items-center justify-center rounded-lg border-2 border-border/50 bg-card p-3 hover:bg-accent hover:border-[#c0a146]/30 cursor-pointer transition-all duration-200",
+                              field.value === "buyer" && "border-[#c0a146] bg-[#c0a146]/5"
                             )}
                           >
-                            <ShoppingBag className="mb-3 h-6 w-6 text-primary" />
+                            <ShoppingBag className="h-5 w-5 text-[#c0a146] mb-2" />
                             <span className="text-sm font-medium">Buyer</span>
-                            <span className="text-xs text-muted-foreground text-center mt-1">
-                              Discover stores and purchase products
-                            </span>
                           </FormLabel>
                         </FormItem>
                         <FormItem>
@@ -340,15 +310,12 @@ export default function RegisterPage() {
                           <FormLabel
                             htmlFor="seller"
                             className={cn(
-                              "flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-card p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-all duration-200",
-                              field.value === "seller" && "border-primary ring-2 ring-primary/20",
+                              "flex flex-col items-center justify-center rounded-lg border-2 border-border/50 bg-card p-3 hover:bg-accent hover:border-[#c0a146]/30 cursor-pointer transition-all duration-200",
+                              field.value === "seller" && "border-[#c0a146] bg-[#c0a146]/5"
                             )}
                           >
-                            <Store className="mb-3 h-6 w-6 text-primary" />
+                            <Store className="h-5 w-5 text-[#c0a146] mb-2" />
                             <span className="text-sm font-medium">Seller</span>
-                            <span className="text-xs text-muted-foreground text-center mt-1">
-                              Create and manage your own store
-                            </span>
                           </FormLabel>
                         </FormItem>
                       </RadioGroup>
@@ -358,55 +325,53 @@ export default function RegisterPage() {
                 )}
               />
 
+              {/* Submit Button */}
               <Button
                 type="submit"
-                className={cn(
-                  "w-full h-12 text-base font-medium transition-all duration-200",
-                  "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 hover:from-[#c0a146]/90 hover:to-[#c0a146]",
-                  "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                )}
+                className="w-full h-11 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300 shadow-lg hover:shadow-xl"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Creating account...</span>
-                  </div>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <span>Register</span>
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </div>
+                  <>
+                    <User className="mr-2 h-4 w-4" />
+                    Create Account
+                  </>
                 )}
               </Button>
             </form>
           </Form>
+        </CardContent>
 
+        <CardFooter className="flex flex-col space-y-4">
           {/* Divider */}
-          <div className="relative my-8">
+          <div className="relative w-full">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border/50" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-4 text-muted-foreground font-medium">Already have an account?</span>
+              <span className="bg-card px-2 text-muted-foreground">
+                Already have an account?
+              </span>
             </div>
           </div>
 
-          {/* Login link */}
-          <div className="text-center">
-            <p className="text-muted-foreground text-sm">
-              <Link
-                href="/auth/login"
-                className="text-primary hover:text-primary/80 transition-colors font-medium inline-flex items-center gap-1"
-              >
-                Login here
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
+          {/* Login Link */}
+          <Link href="/auth/login" className="w-full">
+            <Button
+              variant="outline"
+              className="w-full h-11 border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] transition-all duration-300"
+              disabled={isLoading}
+            >
+              Sign In Instead
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
     </div>
   )
 }
