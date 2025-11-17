@@ -1,88 +1,102 @@
-import mongoose, { Schema, Document, models } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
   firstName: string;
   lastName: string;
   email: string;
   password: string;
   role: "buyer" | "seller" | "admin";
-  verified: boolean;
-  verificationCode?: string; // Temporary OTP
-  codeExpires?: Date; // Expiry for OTP
-  resetPasswordToken?: string; // Hashed reset token
-  resetPasswordExpires?: Date; // Expiry for reset token
+  isVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const userSchema = new Schema<IUser>(
   {
-    firstName: { 
-      type: String, 
-      required: true 
+    firstName: {
+      type: String,
+      required: [true, "First name is required"],
+      trim: true,
     },
-    lastName: { 
-      type: String, 
-      required: true 
+    lastName: {
+      type: String,
+      required: [true, "Last name is required"],
+      trim: true,
     },
-    email: { 
-      type: String, 
-      required: true, 
+    email: {
+      type: String,
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
-      trim: true
+      trim: true,
     },
-    password: { 
-      type: String, 
-      required: true,
-      select: false // Don't return password by default
-    },
-    role: { 
-      type: String, 
-      enum: ["buyer", "seller", "admin"], 
-      default: "buyer" 
-    },
-    verified: { 
-      type: Boolean, 
-      default: false 
-    },
-    verificationCode: {
+    password: {
       type: String,
-      select: false // Don't return verification code by default
+      required: [true, "Password is required"],
+      minlength: 8,
     },
-    codeExpires: {
+    role: {
+      type: String,
+      enum: ["buyer", "seller", "admin"],
+      default: "buyer",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: false,
+    },
+    verificationTokenExpires: {
       type: Date,
-      select: false // Don't return expiry by default
+      required: false,
     },
     resetPasswordToken: {
       type: String,
-      select: false // Don't return reset token by default
+      required: false,
     },
     resetPasswordExpires: {
       type: Date,
-      select: false // Don't return reset token expiry by default
+      required: false,
     },
   },
-  { 
-    timestamps: true // Automatically adds createdAt and updatedAt
+  {
+    timestamps: true,
   }
 );
 
-// Indexes for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ resetPasswordToken: 1 });
-userSchema.index({ verificationCode: 1 });
+// Create a single compound index
+userSchema.index({ email: 1 }, { unique: true });
 
-// Method to check if reset token is expired
-userSchema.methods.isResetTokenExpired = function(): boolean {
-  if (!this.resetPasswordExpires) return true;
-  return this.resetPasswordExpires < new Date();
-};
+// Pre-save hook to hash password only during registration
+userSchema.pre("save", async function (next) {
+  // Only hash password if it's being modified during initial registration
+  // Skip hashing if password is already a bcrypt hash (for password resets)
+  if (!this.isModified("password")) {
+    return next();
+  }
 
-// Method to check if verification code is expired
-userSchema.methods.isVerificationCodeExpired = function(): boolean {
-  if (!this.codeExpires) return true;
-  return this.codeExpires < new Date();
-};
+  // Check if password is already hashed (bcrypt hashes start with $2a$ or $2b$)
+  const isBcryptHash = /^\$2[aby]\$/.test(this.password);
+  
+  if (isBcryptHash) {
+    console.log("⚠️ Password is already hashed, skipping hash in pre-save hook");
+    return next();
+  }
 
-export default models.User || mongoose.model<IUser>("User", userSchema);
+  console.log("🔒 Hashing password in pre-save hook");
+  const bcrypt = require("bcryptjs");
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+
+export default User;
