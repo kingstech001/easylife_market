@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3,
@@ -23,7 +23,7 @@ import { VisitorsChart } from "@/components/dashboard/visitors-chart";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { TopProducts } from "@/components/dashboard/top-products";
 import { TopStores } from "@/components/dashboard/top-stores";
-import { useAuth } from "@/context/AuthContext"; // ✅ Add this import
+import { useAuth } from "@/context/AuthContext";
 
 interface DashboardData {
   totalStores?: number;
@@ -50,34 +50,42 @@ const itemVariants = {
 export default function AnalyticsOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { user, loading: authLoading } = useAuth(); // ✅ Get auth state
-
-  const fetchDashboardData = useCallback(async () => {
-    // ✅ Don't fetch until auth is loaded and user exists
-    if (authLoading || !user) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch("/api/dashboard/admin");
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
-      const dashboardData = await response.json();
-      setData(dashboardData);
-    } catch (error) {
-      console.error("Failed to load dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [authLoading, user]); // ✅ Add dependencies
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
+    // ✅ Only wait for auth to finish loading
+    if (authLoading) return;
+
+    // ✅ Fetch data - let the API handle auth
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/dashboard/admin", {
+          credentials: "include",
+        });
+        
+        // ✅ If unauthorized, API will handle redirect via middleware
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+        
+        const dashboardData = await response.json();
+        setData(dashboardData);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [authLoading]);
 
   const metrics = [
     {
       title: "Total Visitors",
       value: data?.totalVisits?.toLocaleString() || "0",
-      change: `${data?.visitsChange ?? 0 > 0 ? "+" : ""}${
+      change: `${data?.visitsChange && data.visitsChange > 0 ? "+" : ""}${
         data?.visitsChange ?? 0
       }%`,
       icon: Eye,
@@ -87,7 +95,7 @@ export default function AnalyticsOverview() {
     {
       title: "Total Sales",
       value: data?.totalSales?.toLocaleString() || "0",
-      change: `${data?.salesChange ?? 0 > 0 ? "+" : ""}${
+      change: `${data?.salesChange && data.salesChange > 0 ? "+" : ""}${
         data?.salesChange ?? 0
       }%`,
       icon: ShoppingBag,
@@ -112,30 +120,8 @@ export default function AnalyticsOverview() {
     },
   ];
 
-  // ✅ Show loading state while auth is loading
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ✅ Handle case where user is not loaded
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Please log in to view analytics</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
+  // ✅ Show loading while auth or data is loading
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container max-w-7xl mx-auto px-4 py-12 space-y-8">
