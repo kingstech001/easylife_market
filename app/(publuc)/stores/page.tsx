@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { StoreCard } from "@/components/store-card"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Store, AlertCircle } from "lucide-react"
+import { ArrowRight, Store, AlertCircle, Search, Filter, TrendingUp, Users, Zap, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Reveal } from "@/components/Reveal"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -35,14 +35,12 @@ export default function StoresPage() {
         console.log("🔍 Fetching stores from /api/stores")
         
         const res = await fetch("/api/stores", {
-          // Add timeout to prevent hanging
-          signal: AbortSignal.timeout(15000), // 15 seconds
+          signal: AbortSignal.timeout(15000),
         })
         
         console.log("📡 Response status:", res.status)
 
         if (!res.ok) {
-          // Try to get error message from response
           const errorData = await res.json().catch(() => ({
             message: `HTTP ${res.status}: ${res.statusText}`
           }))
@@ -52,7 +50,6 @@ export default function StoresPage() {
         const data = await res.json()
         console.log("📦 Data received:", data)
 
-        // Validate response structure
         if (!data.success) {
           throw new Error(data.message || "API returned unsuccessful response")
         }
@@ -67,7 +64,6 @@ export default function StoresPage() {
       } catch (err: any) {
         console.error("❌ Error fetching stores:", err)
         
-        // Set user-friendly error message
         if (err.name === "AbortError" || err.name === "TimeoutError") {
           setError("Request timed out. Please check your connection and try again.")
         } else if (err.message.includes("fetch")) {
@@ -76,7 +72,6 @@ export default function StoresPage() {
           setError(err.message || "Failed to load stores. Please try again later.")
         }
         
-        // Set empty stores array so UI can still render
         setStores([])
       } finally {
         setLoading(false)
@@ -92,9 +87,9 @@ export default function StoresPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto"></div>
+            <div className="w-20 h-20 border-4 border-muted border-t-[#c0a146] rounded-full animate-spin mx-auto"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Store className="w-8 h-8 text-primary animate-pulse" />
+              <Store className="w-8 h-8 text-[#c0a146] animate-pulse" />
             </div>
           </div>
           <div className="space-y-2">
@@ -123,6 +118,7 @@ export default function StoresPage() {
             <Button 
               onClick={() => window.location.reload()} 
               variant="default"
+              className="bg-[#c0a146] hover:bg-[#c0a146]/90"
             >
               Try Again
             </Button>
@@ -141,132 +137,168 @@ export default function StoresPage() {
   // Main content
   return (
     <Reveal direction="down">
-      <section className="relative w-full py-16 overflow-hidden">
-        {/* Background with gradient and patterns */}
-        <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-background to-muted/50" />
-
-        {/* Animated background elements */}
+      <section className="relative w-full min-h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+        {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-primary/3 via-transparent to-secondary/3 rounded-full blur-3xl" />
+          <div className="absolute top-[20%] left-[20%] w-96 h-96 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[20%] right-[20%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
 
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-10" />
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-10" />
 
-        <div className="container relative z-10 px-4 md:px-6 block m-auto">
+        <div className="container relative z-10 px-4 md:px-6 py-16 md:py-24 mx-auto max-w-7xl">
           {/* Header Section */}
-          <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
+          <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16 md:mb-20">
+            {/* Badge */}
             <Badge
               variant="secondary"
-              className="px-4 py-2 text-sm font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
+              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
             >
-              <Store className="w-4 h-4 mr-2" />
-              Explore Our Diverse Stores
+              <Sparkles className="w-4 h-4 mr-2 text-[#c0a146]" />
+              Explore Our Marketplace
             </Badge>
 
-            <div className="space-y-4">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-                Discover Amazing{" "}
-                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {/* Main Heading */}
+            <div className="space-y-4 max-w-3xl">
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                <span className="block bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
+                  Discover Premium
+                </span>
+                <span className="block mt-2 bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-clip-text text-transparent">
                   Online Stores
                 </span>
               </h1>
-              <p className="max-w-[800px] text-muted-foreground text-lg md:text-xl leading-relaxed">
-                Browse through a curated collection of unique shops, find your next favorite product, and support
-                independent entrepreneurs.
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+                Browse through a curated collection of trusted shops. Find quality products and support independent entrepreneurs building their dreams.
               </p>
             </div>
           </div>
 
           {/* Store Cards Grid */}
-          <div className="relative">
-            <div className="absolute -top-8 -left-8 w-16 h-16 bg-primary/10 rounded-full blur-xl" />
-            <div className="absolute -bottom-8 -right-8 w-20 h-20 bg-secondary/10 rounded-full blur-xl" />
-
-            {stores.length === 0 ? (
-              <div className="text-center py-20 space-y-4">
-                <Store className="h-16 w-16 text-muted-foreground mx-auto" />
-                <h3 className="text-2xl font-semibold text-foreground">No Stores Found</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  It looks like there are no stores available right now. Check back later or consider creating your own!
-                </p>
-                <Link href="/auth/register">
-                  <Button
-                    size="lg"
-                    className={cn(
-                      "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                      "shadow-lg hover:shadow-xl hover:shadow-primary/25",
-                      "hover:scale-105 active:scale-95"
-                    )}
-                  >
-                    Start Your Own Store
-                    <Store className="ml-2 h-4 w-4 transition-transform group-hover:rotate-12" />
-                  </Button>
-                </Link>
+          {stores.length === 0 ? (
+            <div className="text-center py-20 space-y-6 max-w-2xl mx-auto">
+              <div className="inline-flex p-4 rounded-full bg-muted/50">
+                <Store className="h-16 w-16 text-muted-foreground" />
               </div>
-            ) : (
-              <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-10">
-                {stores.map((store) => (
+              <div className="space-y-3">
+                <h3 className="text-2xl md:text-3xl font-bold text-foreground">No Stores Available Yet</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  Be the first to create a store on our platform. Start your entrepreneurial journey today and reach thousands of potential customers.
+                </p>
+              </div>
+              <Link href="/auth/register">
+                <Button
+                  size="lg"
+                  className={cn(
+                    "group h-12 px-8 text-base font-semibold transition-all duration-300",
+                    "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                    "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                    "hover:scale-105 active:scale-95"
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    Launch Your Store
+                    <Store className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Stores Grid */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-16">
+                {stores.map((store, index) => (
                   <div
                     key={store._id}
-                    className={cn("group relative transition-all duration-500 hover:scale-105", "hover:z-10")}
+                    className="group relative transition-all duration-300 hover:scale-[1.02]"
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-1 transition-all duration-300 group-hover:bg-card/80 group-hover:border-border group-hover:shadow-2xl">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#c0a146]/20 via-transparent to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative bg-card border border-border rounded-xl overflow-hidden transition-all duration-300 group-hover:border-[#c0a146]/50 group-hover:shadow-xl group-hover:shadow-[#c0a146]/10">
                       <StoreCard store={store} />
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
 
-          {/* Call to Action Section */}
-          <div className="flex flex-col items-center justify-center space-y-6 mt-16">
-            <div className="w-24 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+              {/* Call to Action Section */}
+              <div className="relative mt-20">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#c0a146]/5 via-primary/5 to-[#c0a146]/5 rounded-3xl blur-3xl" />
+                <div className="relative bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 rounded-2xl p-8 md:p-12">
+                  <div className="flex flex-col items-center text-center space-y-6 max-w-2xl mx-auto">
+                    <div className="inline-flex p-3 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20">
+                      <Store className="w-8 h-8 text-[#c0a146]" />
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                        Ready to Start Your Journey?
+                      </h2>
+                      <p className="text-muted-foreground text-lg leading-relaxed">
+                        Join thousands of successful entrepreneurs. Create your store in minutes and start selling today.
+                      </p>
+                    </div>
 
-            <div className="text-center space-y-4">
-              <p className="text-muted-foreground text-lg">Can't find what you're looking for?</p>
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <Link href="/auth/register">
-                  <Button
-                    size="lg"
-                    className={cn(
-                      "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-gradient-to-r from-[#c0a146] to-[#c0a146]/90 hover:from-[#c0a146]/90 hover:to-[#c0a146]",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/25",
-                      "hover:scale-105 active:scale-95"
-                    )}
-                  >
-                    Start Your Own Store
-                    <Store className="ml-2 h-4 w-4 transition-transform group-hover:rotate-12" />
-                  </Button>
-                </Link>
-                <Link href="/contact">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className={cn(
-                      "group h-12 px-8 text-base font-medium transition-all duration-300",
-                      "bg-background/50 backdrop-blur-sm border-border/50",
-                      "hover:bg-background hover:border-border hover:shadow-lg",
-                      "hover:scale-105 active:scale-95"
-                    )}
-                  >
-                    Contact Support
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
+                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full sm:w-auto">
+                      <Link href="/auth/register" className="w-full sm:w-auto">
+                        <Button
+                          size="lg"
+                          className={cn(
+                            "group w-full sm:w-auto h-12 px-8 text-base font-semibold transition-all duration-300",
+                            "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                            "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                            "hover:scale-105 active:scale-95"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            Create Your Store
+                            <Store className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                          </span>
+                        </Button>
+                      </Link>
+                      <Link href="/contact" className="w-full sm:w-auto">
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className={cn(
+                            "group w-full sm:w-auto h-12 px-8 text-base font-semibold transition-all duration-300",
+                            "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#c0a146]/50",
+                            "hover:bg-muted/50 hover:shadow-lg",
+                            "hover:scale-105 active:scale-95"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            Contact Support
+                            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                          </span>
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       </section>
+
+      <style jsx>{`
+        .bg-size-200 {
+          background-size: 200%;
+        }
+
+        .bg-pos-0 {
+          background-position: 0%;
+        }
+
+        .hover\:bg-pos-100:hover {
+          background-position: 100%;
+        }
+      `}</style>
     </Reveal>
   )
 }

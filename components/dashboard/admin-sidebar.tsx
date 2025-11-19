@@ -59,11 +59,7 @@ const managementItems = [
     href: "/dashboard/admin/users",
     icon: Users,
   },
-  {
-    title: "Settings",
-    href: "/dashboard/admin/settings",
-    icon: Settings,
-  },
+  
 ]
 
 export function AdminSidebar() {
