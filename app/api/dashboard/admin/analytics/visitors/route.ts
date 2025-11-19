@@ -37,32 +37,36 @@ export async function GET(req: Request) {
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
     // ✅ Step 4: Fetch Analytics for All Stores
+    // 🔴 FIXED: Changed visitedAt to createdAt
     const totalVisits = await Visit.countDocuments({
-      visitedAt: { $gte: startDate },
+      createdAt: { $gte: startDate },
     })
 
     const uniqueUsers = await Visit.distinct("userId", {
       userId: { $ne: null },
-      visitedAt: { $gte: startDate },
+      createdAt: { $gte: startDate },
     })
 
     const uniqueAnonymous = await Visit.distinct("ip", {
       userId: null,
-      visitedAt: { $gte: startDate },
+      createdAt: { $gte: startDate },
     })
 
+    // 🔴 FIXED: Changed visitedAt to createdAt in aggregation
     const dailyVisits = await Visit.aggregate([
       {
-        $match: { visitedAt: { $gte: startDate } },
+        $match: { createdAt: { $gte: startDate } },
       },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$visitedAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
           count: { $sum: 1 },
         },
       },
       { $sort: { _id: 1 } },
     ])
+
+    console.log("📊 Daily Visits Result:", dailyVisits) // Debug log
 
     // ✅ Step 5: Respond with Analytics
     return NextResponse.json({

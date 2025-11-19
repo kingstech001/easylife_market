@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/components/dashboard/data-table"
 import { columns, Customer } from "@/components/dashboard/customers-columns"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -48,7 +49,7 @@ export default function CustomersPage() {
           <CardDescription>View and manage your customers</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? <p>Loading...</p> : <DataTable columns={columns} data={customers} />}
+          {loading ? <LoadingSpinner text="Please wait..." /> : <DataTable columns={columns} data={customers} />}
         </CardContent>
       </Card>
     </div>
