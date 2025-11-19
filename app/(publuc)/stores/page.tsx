@@ -1,85 +1,104 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState, useEffect } from "react"
-import { StoreCard } from "@/components/store-card"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Store, AlertCircle, Search, Filter, TrendingUp, Users, Zap, Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Reveal } from "@/components/Reveal"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { StoreCard } from "@/components/store-card";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  Store,
+  AlertCircle,
+  Search,
+  Filter,
+  TrendingUp,
+  Users,
+  Zap,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/Reveal";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FaWhatsapp } from "react-icons/fa";
 
 interface StoreData {
-  _id: string
-  name: string
-  slug: string
-  description?: string
-  logo_url?: string
-  banner_url?: string
-  sellerId: string
-  isPublished: boolean
-  createdAt: string
-  updatedAt: string
-  productCount?: number
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  logo_url?: string;
+  banner_url?: string;
+  sellerId: string;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  productCount?: number;
 }
 
 export default function StoresPage() {
-  const [stores, setStores] = useState<StoreData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [stores, setStores] = useState<StoreData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchStores() {
       try {
-        console.log("🔍 Fetching stores from /api/stores")
-        
+        console.log("🔍 Fetching stores from /api/stores");
+
         const res = await fetch("/api/stores", {
           signal: AbortSignal.timeout(15000),
-        })
-        
-        console.log("📡 Response status:", res.status)
+        });
+
+        console.log("📡 Response status:", res.status);
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({
-            message: `HTTP ${res.status}: ${res.statusText}`
-          }))
-          throw new Error(errorData.message || `Failed to fetch stores: ${res.statusText}`)
+            message: `HTTP ${res.status}: ${res.statusText}`,
+          }));
+          throw new Error(
+            errorData.message || `Failed to fetch stores: ${res.statusText}`
+          );
         }
 
-        const data = await res.json()
-        console.log("📦 Data received:", data)
+        const data = await res.json();
+        console.log("📦 Data received:", data);
 
         if (!data.success) {
-          throw new Error(data.message || "API returned unsuccessful response")
+          throw new Error(data.message || "API returned unsuccessful response");
         }
 
         if (!Array.isArray(data.stores)) {
-          throw new Error("Invalid response format: stores is not an array")
+          throw new Error("Invalid response format: stores is not an array");
         }
 
-        console.log("✅ Stores loaded:", data.stores.length)
-        setStores(data.stores)
-        setError(null)
+        console.log("✅ Stores loaded:", data.stores.length);
+        setStores(data.stores);
+        setError(null);
       } catch (err: any) {
-        console.error("❌ Error fetching stores:", err)
-        
+        console.error("❌ Error fetching stores:", err);
+
         if (err.name === "AbortError" || err.name === "TimeoutError") {
-          setError("Request timed out. Please check your connection and try again.")
+          setError(
+            "Request timed out. Please check your connection and try again."
+          );
         } else if (err.message.includes("fetch")) {
-          setError("Network error. Please check your connection and try again.")
+          setError(
+            "Network error. Please check your connection and try again."
+          );
         } else {
-          setError(err.message || "Failed to load stores. Please try again later.")
+          setError(
+            err.message || "Failed to load stores. Please try again later."
+          );
         }
-        
-        setStores([])
+
+        setStores([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchStores()
-  }, [])
+    fetchStores();
+  }, []);
 
   // Loading state
   if (loading) {
@@ -94,11 +113,13 @@ export default function StoresPage() {
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold">Loading stores...</h3>
-            <p className="text-sm text-muted-foreground">Please wait while we fetch the latest stores</p>
+            <p className="text-sm text-muted-foreground">
+              Please wait while we fetch the latest stores
+            </p>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Error state
@@ -113,17 +134,17 @@ export default function StoresPage() {
               <p className="mt-2">{error}</p>
             </AlertDescription>
           </Alert>
-          
+
           <div className="flex gap-3 justify-center">
-            <Button 
-              onClick={() => window.location.reload()} 
+            <Button
+              onClick={() => window.location.reload()}
               variant="default"
               className="bg-[#c0a146] hover:bg-[#c0a146]/90"
             >
               Try Again
             </Button>
-            <Button 
-              onClick={() => window.location.href = "/"} 
+            <Button
+              onClick={() => (window.location.href = "/")}
               variant="outline"
             >
               Go Home
@@ -131,7 +152,7 @@ export default function StoresPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Main content
@@ -141,7 +162,10 @@ export default function StoresPage() {
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-[20%] left-[20%] w-96 h-96 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-[20%] right-[20%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div
+            className="absolute bottom-[20%] right-[20%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          />
         </div>
 
         {/* Grid pattern overlay */}
@@ -170,7 +194,9 @@ export default function StoresPage() {
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                Browse through a curated collection of trusted shops. Find quality products and support independent entrepreneurs building their dreams.
+                Browse through a curated collection of trusted shops. Find
+                quality products and support independent entrepreneurs building
+                their dreams.
               </p>
             </div>
           </div>
@@ -182,9 +208,13 @@ export default function StoresPage() {
                 <Store className="h-16 w-16 text-muted-foreground" />
               </div>
               <div className="space-y-3">
-                <h3 className="text-2xl md:text-3xl font-bold text-foreground">No Stores Available Yet</h3>
+                <h3 className="text-2xl md:text-3xl font-bold text-foreground">
+                  No Stores Available Yet
+                </h3>
                 <p className="text-muted-foreground text-lg leading-relaxed">
-                  Be the first to create a store on our platform. Start your entrepreneurial journey today and reach thousands of potential customers.
+                  Be the first to create a store on our platform. Start your
+                  entrepreneurial journey today and reach thousands of potential
+                  customers.
                 </p>
               </div>
               <Link href="/auth/register">
@@ -230,13 +260,14 @@ export default function StoresPage() {
                     <div className="inline-flex p-3 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20">
                       <Store className="w-8 h-8 text-[#c0a146]" />
                     </div>
-                    
+
                     <div className="space-y-3">
                       <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                         Ready to Start Your Journey?
                       </h2>
                       <p className="text-muted-foreground text-lg leading-relaxed">
-                        Join thousands of successful entrepreneurs. Create your store in minutes and start selling today.
+                        Join thousands of successful entrepreneurs. Create your
+                        store in minutes and start selling today.
                       </p>
                     </div>
 
@@ -257,7 +288,10 @@ export default function StoresPage() {
                           </span>
                         </Button>
                       </Link>
-                      <Link href="/contact" className="w-full sm:w-auto">
+                      <Link href="https://wa.me/2348071427831" // 👈 Replace with your actual WhatsApp number
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center p-3 rounded-full  transition-colors duration-200 w-full sm:w-auto">
                         <Button
                           variant="outline"
                           size="lg"
@@ -268,6 +302,7 @@ export default function StoresPage() {
                             "hover:scale-105 active:scale-95"
                           )}
                         >
+                            <FaWhatsapp size={24} className="text-green-500" />
                           <span className="flex items-center gap-2">
                             Contact Support
                             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -300,5 +335,5 @@ export default function StoresPage() {
         }
       `}</style>
     </Reveal>
-  )
+  );
 }
