@@ -1,77 +1,64 @@
 import { NextResponse } from "next/server"
-import User from "@/models/User"
 import { connectToDB } from "@/lib/db"
+import User from "@/models/User"
 import nodemailer from "nodemailer"
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { email, code, resend } = body
+    await connectToDB()
 
-    // Debug logging
-    console.log("Verification request received:", { email, code: code ? "***" : undefined, resend })
+    const { email, code, resend } = await req.json()
+
+    console.log("Verification request:", { email, code: code ? "***" : undefined, resend })
 
     if (!email) {
       return NextResponse.json({ message: "Email is required" }, { status: 400 })
     }
 
-    await connectToDB()
+    // Find user with multiple fallback methods
+    let user = await User.findOne({ email: email.toLowerCase().trim() })
 
-    // Try multiple search methods to debug the issue
-    console.log("Searching for user with email:", email)
-
-    // First, try exact match
-    let user = await User.findOne({ email: email })
-    console.log("Exact match result:", user ? "Found" : "Not found")
-
-    // If not found, try case-insensitive search
     if (!user) {
+      // Try case-insensitive search
       user = await User.findOne({
         email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
       })
-      console.log("Case-insensitive match result:", user ? "Found" : "Not found")
     }
 
-    // If still not found, try trimmed version
     if (!user) {
-      const trimmedEmail = email.trim().toLowerCase()
-      user = await User.findOne({ email: trimmedEmail })
-      console.log("Trimmed lowercase match result:", user ? "Found" : "Not found")
-    }
-
-    // Debug: List all users to see what's in the database (remove in production)
-    const allUsers = await User.find({}, { email: 1, _id: 1 }).limit(10)
-    console.log(
-      "Sample users in database:",
-      allUsers.map((u) => ({ id: u._id, email: u.email })),
-    )
-
-    if (!user) {
-      console.log("User not found after all search attempts")
+      console.log("❌ User not found")
       return NextResponse.json(
-        {
-          message: "User not found. Please check your email address or register first.",
-        },
-        { status: 404 },
+        { message: "User not found. Please check your email or register first." },
+        { status: 404 }
       )
     }
 
-    console.log("User found:", { id: user._id, email: user.email, verified: user.verified })
+    console.log("✅ User found:", {
+      id: user._id,
+      email: user.email,
+      isVerified: user.isVerified,
+      hasToken: !!user.verificationToken,
+      tokenExpires: user.verificationTokenExpires,
+    })
 
-    // Handle resend logic
+    // Handle resend request
     if (resend) {
-      if (user.verified) {
+      if (user.isVerified) {
         return NextResponse.json({ message: "Email already verified." }, { status: 400 })
       }
 
+      // Generate new code
       const newCode = Math.floor(100000 + Math.random() * 900000).toString()
-      user.verificationCode = newCode
-      user.codeExpires = new Date(Date.now() + 10 * 60 * 1000) // 10 min expiry
+      const codeExpires = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+
+      // Update user with new code
+      user.verificationToken = newCode
+      user.verificationTokenExpires = codeExpires
       await user.save()
 
-      console.log("New verification code generated for user:", user.email)
+      console.log("📝 New verification code generated:", { code: newCode, expires: codeExpires })
 
-      // Resend email
+      // Send email
       try {
         const transporter = nodemailer.createTransport({
           service: "Gmail",
@@ -84,64 +71,108 @@ export async function POST(req: Request) {
         await transporter.sendMail({
           from: `"Easylife Market" <${process.env.EMAIL_USER}>`,
           to: email,
-          subject: "Your new verification code",
+          subject: "Your New Verification Code",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>Your New Verification Code</h2>
-              <p>Your new verification code is:</p>
-              <div style="background-color: #f0f0f0; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                ${newCode}
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #c0a146 0%, #d4b55e 100%); border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0;">Easylife Market</h1>
               </div>
-              <p>This code will expire in 10 minutes.</p>
-              <p>If you didn't request this code, please ignore this email.</p>
+              
+              <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #333; margin-top: 0;">Your New Verification Code</h2>
+                <p style="color: #666; font-size: 16px; line-height: 1.5;">
+                  Hello ${user.firstName},
+                </p>
+                <p style="color: #666; font-size: 16px; line-height: 1.5;">
+                  You requested a new verification code. Here it is:
+                </p>
+                
+                <div style="background-color: white; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 30px 0; border: 2px dashed #c0a146; border-radius: 8px; color: #c0a146;">
+                  ${newCode}
+                </div>
+                
+                <p style="color: #666; font-size: 14px; line-height: 1.5;">
+                  This code will expire in <strong>10 minutes</strong>.
+                </p>
+                <p style="color: #999; font-size: 12px; line-height: 1.5; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                  If you didn't request this code, please ignore this email or contact support if you have concerns.
+                </p>
+              </div>
             </div>
           `,
-          text: `Your new verification code is ${newCode}. It will expire in 10 minutes.`,
+          text: `Hello ${user.firstName},\n\nYour new verification code is: ${newCode}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
         })
 
-        console.log("Verification email sent successfully to:", email)
+        console.log("✅ Verification email sent to:", email)
       } catch (emailError: any) {
-        console.error("Failed to send verification email:", emailError)
-        return NextResponse.json({ message: "Failed to send verification email. Please try again." }, { status: 500 })
+        console.error("❌ Failed to send email:", emailError)
+        return NextResponse.json(
+          { message: "Failed to send verification email. Please try again." },
+          { status: 500 }
+        )
       }
 
       return NextResponse.json({ message: "New code sent to your email." }, { status: 200 })
     }
 
-    // Verification logic
+    // Verify code
     if (!code) {
       return NextResponse.json({ message: "Verification code is required" }, { status: 400 })
     }
 
-    console.log("Verifying code for user:", user.email)
-    console.log("Stored code:", user.verificationCode)
-    console.log("Provided code:", code)
-    console.log("Code expires:", user.codeExpires)
+    // Check if user already verified
+    if (user.isVerified) {
+      return NextResponse.json({ message: "Email already verified" }, { status: 400 })
+    }
 
-    if (user.verificationCode !== code) {
+    console.log("🔍 Verifying code:", {
+      stored: user.verificationToken,
+      provided: code,
+      expires: user.verificationTokenExpires,
+    })
+
+    // Check if verification code exists
+    if (!user.verificationToken) {
+      return NextResponse.json(
+        { message: "No verification code found. Please request a new code by clicking 'Resend Code'." },
+        { status: 400 }
+      )
+    }
+
+    // Check if code expired
+    if (!user.verificationTokenExpires || user.verificationTokenExpires < new Date()) {
+      return NextResponse.json(
+        { message: "Verification code has expired. Please request a new code." },
+        { status: 400 }
+      )
+    }
+
+    // Verify code
+    if (user.verificationToken !== code.trim()) {
+      console.log("❌ Code mismatch:", { 
+        stored: user.verificationToken, 
+        provided: code.trim() 
+      })
       return NextResponse.json({ message: "Invalid verification code" }, { status: 400 })
     }
 
-    if (user.codeExpires && user.codeExpires < new Date()) {
-      return NextResponse.json({ message: "Verification code has expired" }, { status: 400 })
-    }
-
-    // Mark as verified
-    user.verified = true
-    user.verificationCode = undefined
-    user.codeExpires = undefined
+    // Mark user as verified and clear verification fields
+    user.isVerified = true
+    user.verificationToken = undefined
+    user.verificationTokenExpires = undefined
     await user.save()
 
-    console.log("User verified successfully:", user.email)
+    console.log("✅ User verified successfully:", user.email)
 
-    return NextResponse.json({ message: "Email verified successfully!" }, { status: 200 })
+    return NextResponse.json({ 
+      message: "Email verified successfully! You can now log in." 
+    }, { status: 200 })
+    
   } catch (error: any) {
-    console.error("Verification error:", error)
+    console.error("❌ Verification error:", error)
     return NextResponse.json(
-      {
-        message: "Server error occurred during verification",
-      },
-      { status: 500 },
+      { message: "Server error occurred during verification" },
+      { status: 500 }
     )
   }
 }

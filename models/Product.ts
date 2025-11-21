@@ -13,7 +13,7 @@ export interface IProduct extends Document {
   description?: string;
   price: number;
   compareAtPrice?: number;
-  category?: mongoose.Types.ObjectId;
+  category?: string; // Updated to string only
   inventoryQuantity: number;
   images: IProductImage[];
   storeId: mongoose.Types.ObjectId;
@@ -62,8 +62,9 @@ const ProductSchema = new Schema<IProduct>(
       },
     },
     category: {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
+      type: String, // Changed to simple String type
+      required: false,
+      trim: true,
     },
     inventoryQuantity: {
       type: Number,
@@ -117,10 +118,8 @@ const ProductSchema = new Schema<IProduct>(
 
 // ================== Indexes ==================
 ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 });
-ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ category: 1 }); // Fixed: was categoryId, should be category
 ProductSchema.index({ name: "text", description: "text" });
-
-// --- added: index for recent sorting, virtual + clean JSON output ---
 ProductSchema.index({ createdAt: -1 });
 
 // expose a simple primaryImage virtual (useful for UI without extra logic)
@@ -149,7 +148,11 @@ ProductSchema.pre<IProduct>("save", function (next) {
 });
 
 // ================== Model ==================
-const Product: Model<IProduct> =
-  mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
+// Clear cached model to ensure schema changes are applied
+if (mongoose.models.Product) {
+  delete mongoose.models.Product;
+}
+
+const Product: Model<IProduct> = mongoose.model<IProduct>("Product", ProductSchema);
 
 export default Product;

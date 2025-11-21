@@ -23,18 +23,19 @@ import {
   Box,
   Sparkles,
   LucideImage,
+  Check,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import Image from "next/image" // Import next/image
+import Image from "next/image"
 import ExpandableText from "@/components/ExpandableText"
 
 const productSchema = z.object({
@@ -68,7 +69,7 @@ export default function StoreBuilderPage() {
   const [activeTab, setActiveTab] = useState("details")
   const [editingProduct, setEditingProduct] = useState<ProductFormValues | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pauseSave = useRef(false) // when true, skip persisting draft to localStorage
+  const pauseSave = useRef(false)
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -82,10 +83,8 @@ export default function StoreBuilderPage() {
     },
   })
 
-  // watch images so UI updates when we add/remove images
   const watchedImages = form.watch("images")
 
-  // Load draft from localStorage on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY)
@@ -98,13 +97,11 @@ export default function StoreBuilderPage() {
     } catch (err) {
       console.warn("Failed to load product draft:", err)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Persist form values to localStorage (debounced)
   useEffect(() => {
     const subscription = form.watch((values) => {
-      if (pauseSave.current) return // don't persist while we're intentionally clearing/resetting
+      if (pauseSave.current) return
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => {
         try {
@@ -123,7 +120,6 @@ export default function StoreBuilderPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch store data
         console.log("Fetching store data...")
         const storeRes = await fetch("/api/dashboard/seller/store")
 
@@ -135,7 +131,6 @@ export default function StoreBuilderPage() {
         console.log("Store data received:", store)
         setStore(store)
 
-        // Fetch product data
         console.log("Fetching product data...")
         const productRes = await fetch("/api/dashboard/seller/products")
         if (!productRes.ok) {
@@ -163,13 +158,16 @@ export default function StoreBuilderPage() {
 
   const handleEdit = (p: ProductFormValues) => {
     setEditingProduct(p)
-    form.reset(p)
-    // when editing an existing product clear any unsaved draft to avoid conflicts
+    // Ensure category is set even if it's undefined in the product
+    form.reset({
+      ...p,
+      category: p.category || "", // Default to empty string if no category
+    })
     try { localStorage.removeItem(DRAFT_KEY) } catch {}
   }
 
   const handleDelete = async (productId: string) => {
-    setIsSubmitting(true) // Indicate deletion is in progress
+    setIsSubmitting(true)
     try {
       const res = await fetch(`/api/dashboard/seller/products/${productId}`, { method: "DELETE" })
       if (!res.ok) {
@@ -178,7 +176,6 @@ export default function StoreBuilderPage() {
       }
       setProducts(products.filter((p) => (p.id || p._id) !== productId))
       toast.success("Product deleted successfully")
-      // If the deleted product was being edited, clear the form
       if ((editingProduct?.id || editingProduct?._id) === productId) {
         setEditingProduct(null)
         form.reset()
@@ -193,7 +190,6 @@ export default function StoreBuilderPage() {
   }
 
   const handleSubmit = async (data: ProductFormValues) => {
-    // prevent creating more than 10 products
     const isCreating = !(editingProduct?.id || editingProduct?._id)
     if (products.length >= 10 && isCreating) {
       toast.error("Maximum of 10 products reached. Delete an existing product to add a new one.")
@@ -206,47 +202,56 @@ export default function StoreBuilderPage() {
     setIsSubmitting(true)
     try {
       const payload = { ...data, storeId: store._id }
-      let resultProduct: ProductFormValues // Declare resultProduct with its type
+      let resultProduct: ProductFormValues
 
       const editingId = editingProduct?.id || editingProduct?._id
       if (editingId) {
+        console.log("Updating product:", editingId, "with payload:", payload)
         const res = await fetch(`/api/dashboard/seller/products/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         })
+        
+        console.log("Update response status:", res.status)
+        const responseData = await res.json()
+        console.log("Update response data:", responseData)
+        
         if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ message: "Unknown error" }))
-          throw new Error(`Failed to update product: ${errorData.message || res.statusText}`)
+          throw new Error(`Failed to update product: ${responseData.message || responseData.error || res.statusText}`)
         }
-        const { data: product } = await res.json() // Corrected: Destructure 'data' as 'product'
-        resultProduct = product
+        
+        // The API returns { success, data, message }
+        resultProduct = responseData.data
         setProducts((prev) =>
           prev.map((p) => ((p.id || p._id) === (resultProduct.id || resultProduct._id) ? resultProduct : p)),
         )
-        toast.success("Product updated successfully")
+        toast.success(responseData.message || "Product updated successfully")
       } else {
+        console.log("Creating new product with payload:", payload)
         const res = await fetch("/api/dashboard/seller/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         })
+        
+        console.log("Response status:", res.status)
+        const responseData = await res.json()
+        console.log("Response data:", responseData)
+        
         if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ message: "Unknown error" }))
-          throw new Error(`Failed to add product: ${errorData.message || res.statusText}`)
+          throw new Error(`Failed to add product: ${responseData.message || responseData.error || res.statusText}`)
         }
-        const { product } = await res.json() // Correct: Destructure 'product'
-        resultProduct = product
+        
+        // The API returns { success, product, message, stats }
+        resultProduct = responseData.product
         setProducts((prev) => [...prev, resultProduct])
-        toast.success("Product added successfully")
+        toast.success(responseData.message || "Product added successfully")
       }
 
-      // Clear draft saved in localStorage after successful save.
-      // Pause the watcher so it doesn't immediately re-save the cleared state.
       pauseSave.current = true
       try { localStorage.removeItem(DRAFT_KEY) } catch (err) { console.warn("Failed to clear draft:", err) }
 
-      // Explicitly reset the form to empty defaults so no previous values (like name) remain
       const emptyValues: ProductFormValues = {
         name: "",
         description: "",
@@ -258,15 +263,11 @@ export default function StoreBuilderPage() {
       setEditingProduct(null)
       form.reset(emptyValues)
       form.clearErrors()
-      // clear hidden file input value if any
       try {
         const uploadInput = document.getElementById("upload") as HTMLInputElement | null
         if (uploadInput) uploadInput.value = ""
-      } catch (err) {
-        /* ignore */
-      }
+      } catch (err) {}
       setActiveTab("details")
-      // small delay to allow form.reset to finish and avoid the watcher repopulating localStorage
       setTimeout(() => {
         pauseSave.current = false
       }, 400)
@@ -302,7 +303,6 @@ export default function StoreBuilderPage() {
 
       toast.success("Store published successfully!")
 
-      // Redirect based on role returned by backend
       if (data.role === "admin") {
         router.push("/dashboard/admin")
       } else {
@@ -317,15 +317,14 @@ export default function StoreBuilderPage() {
     }
   }
 
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto"></div>
+            <div className="w-20 h-20 border-4 border-muted border-t-[#c0a146] rounded-full animate-spin mx-auto"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Store className="w-8 h-8 text-primary animate-pulse" />
+              <Store className="w-8 h-8 text-[#c0a146] animate-pulse" />
             </div>
           </div>
           <div className="space-y-2">
@@ -338,31 +337,34 @@ export default function StoreBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Hero Banner Section */}
-      <div
-        className="relative w-full h-64 md:h-80 bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${store?.banner_url || "/placeholder.svg?height=320&width=1200&text=Store+Banner"})`,
-        }}
-      >
-        {/* Modern Overlay */}
+      <div className="relative w-full h-64 md:h-80 bg-cover bg-center overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src={store?.banner_url || "/placeholder.svg?height=320&width=1200&text=Store+Banner"}
+            alt="Store Banner"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
 
         {/* Navigation */}
         <div className="absolute top-6 left-0 right-0 px-4 md:px-8 flex justify-between items-center z-20">
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => router.push("/dashboard/seller")}
-            className="backdrop-blur-md bg-background/90 hover:bg-background shadow-lg border-0"
+            className="backdrop-blur-md bg-background/90 hover:bg-background shadow-lg border h-11"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
           </Button>
           <Button
             onClick={publishStore}
             disabled={isSubmitting || !products.length}
-            className="shadow-lg bg-background hover:bg-background/90"
+            className="h-11 shadow-lg bg-[#c0a146] hover:bg-[#c0a146]/90"
           >
             {isSubmitting ? (
               <>
@@ -377,30 +379,30 @@ export default function StoreBuilderPage() {
         </div>
       </div>
 
-      {/* Store Info Section (between banner and main content) */}
-      <div className="relative z-30 -mt-24 md:-mt-32 container mx-auto px-4">
+      {/* Store Info Section */}
+      <div className="relative z-30 -mt-24 md:-mt-32 container mx-auto px-4 md:px-8">
         <div className="mt-16">
-          <div className="items-start md:items-end gap-6">
+          <div className="flex flex-col items-start gap-6">
             {store?.logo_url ? (
-              <div className="relative block flex-shrink-0 max-w-28">
+              <div className="relative flex-shrink-0">
                 <Image
                   src={store.logo_url || "/placeholder.svg"}
                   alt="Store Logo"
                   width={112}
                   height={112}
-                  className="w-28 h-28 rounded-3xl object-cover border-4 border-white shadow-xl"
+                  className="w-28 h-28 rounded-3xl object-cover border-4 border-background shadow-xl"
                 />
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-foreground rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#c0a146] rounded-full border-4 border-background shadow-lg flex items-center justify-center">
+                  <Check className="w-4 h-4 text-white" />
                 </div>
               </div>
             ) : (
-              <div className="w-28 h-28 rounded-3xl bg-muted border-4 border-white shadow-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-28 h-28 rounded-3xl bg-muted border-4 border-background shadow-xl flex items-center justify-center flex-shrink-0">
                 <Store className="w-10 h-10 text-muted-foreground" />
               </div>
             )}
-            <div className="flex-1 min-w-0 pt-4 md:pt-0">
-              <h1 className="text-3xl md:text-5xl font-bold leading-tight text-foreground">
+            <div className="flex-1 min-w-0 pb-2">
+              <h1 className="text-3xl md:text-5xl font-bold leading-tight text-foreground mb-2">
                 {store?.name || "Your Store"}
               </h1>
               <div className="mt-2">
@@ -415,24 +417,24 @@ export default function StoreBuilderPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto py-12 px-6">
-        <div className="flex flex-col md:flex-row gap-8">
+      <div className="container mx-auto py-12 px-4 md:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Products Sidebar */}
-          <div className="flex-1">
-            <Card className="shadow-xl border bg-card/80 backdrop-blur-sm sticky top-8">
-              <CardHeader className="pb-4">
+          <div className="lg:col-span-4">
+            <Card className="shadow-xl border-border/50 bg-card/90 backdrop-blur-sm sticky top-8">
+              <CardHeader className="pb-4 border-b">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-3 text-xl">
-                    <div className="p-2 rounded-xl bg-muted">
-                      <Package className="w-5 h-5 text-foreground" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-[#c0a146]/10">
+                      <Package className="w-5 h-5 text-[#c0a146]" />
                     </div>
                     <div>
-                      <span>Products</span>
-                      <Badge variant="secondary" className="ml-3">
-                        {products.length}
+                      <CardTitle className="text-xl">Products</CardTitle>
+                      <Badge variant="secondary" className="mt-1">
+                        {products.length} / 10
                       </Badge>
                     </div>
-                  </CardTitle>
+                  </div>
                   <Button
                     size="sm"
                     disabled={products.length >= 10}
@@ -440,15 +442,15 @@ export default function StoreBuilderPage() {
                       setEditingProduct(null)
                       form.reset()
                       setActiveTab("details")
-                     try { localStorage.removeItem(DRAFT_KEY) } catch {}
+                      try { localStorage.removeItem(DRAFT_KEY) } catch {}
                     }}
-                    className="bg-primary text-background hover:bg-primary/90 shadow-lg"
+                    className="bg-[#c0a146] hover:bg-[#c0a146]/90 h-9"
                   >
                     <Plus className="h-4 w-4 mr-2" /> Add
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[calc(100vh-20rem)] overflow-y-auto custom-scrollbar">
+              <CardContent className="p-4 space-y-3 max-h-[calc(100vh-20rem)] overflow-y-auto">
                 <AnimatePresence>
                   {products.length === 0 ? (
                     <motion.div
@@ -477,10 +479,11 @@ export default function StoreBuilderPage() {
                           transition={{ delay: index * 0.05 }}
                         >
                           <Card
-                            className={`cursor-pointer transition-all duration-300 hover:shadow-lg border group ${isEditing
-                                ? "border-primary bg-primary/5 shadow-lg"
-                                : "border-border hover:border-border bg-background"
-                              }`}
+                            className={`cursor-pointer transition-all duration-300 hover:shadow-lg group ${
+                              isEditing
+                                ? "border-[#c0a146] bg-[#c0a146]/5 shadow-lg"
+                                : "border-border hover:border-[#c0a146]/50 bg-background"
+                            }`}
                             onClick={() => handleEdit(p)}
                           >
                             <CardContent className="p-4">
@@ -489,23 +492,24 @@ export default function StoreBuilderPage() {
                                   <div className="flex items-center gap-2 mb-3">
                                     <h3 className="font-semibold truncate">{p.name}</h3>
                                     {isEditing && (
-                                      <Badge className="bg-muted text-foreground border-border">
+                                      <Badge className="bg-[#c0a146] text-white border-0">
                                         <Edit3 className="w-3 h-3 mr-1" />
                                         Editing
                                       </Badge>
                                     )}
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                                    <span className="flex items-center gap-1 font-medium">
-                                      ₦ {p.price.toFixed(2)}
+                                    <span className="flex items-center gap-1 font-medium text-foreground">
+                                      <DollarSign className="w-3 h-3" />
+                                      ₦{p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
-                                      <Box className="w-3 h-3 text-foreground" />
+                                      <Box className="w-3 h-3" />
                                       {p.inventoryQuantity} in stock
                                     </span>
                                   </div>
                                   {p.category && (
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge variant="outline" className="text-xs border-[#c0a146]/30">
                                       <Tag className="w-2 h-2 mr-1" />
                                       {p.category}
                                     </Badge>
@@ -535,7 +539,7 @@ export default function StoreBuilderPage() {
           </div>
 
           {/* Product Form */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={editingProduct?.id || editingProduct?._id || "new"}
@@ -544,22 +548,22 @@ export default function StoreBuilderPage() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="shadow-xl border bg-card/90 backdrop-blur-sm">
+                <Card className="shadow-xl border-border/50 bg-card/90 backdrop-blur-sm">
                   <CardHeader className="pb-6 border-b">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-2xl bg-muted">
+                        <div className="p-3 rounded-2xl bg-[#c0a146]/10">
                           {editingProduct ? (
-                            <Edit3 className="w-6 h-6 text-foreground" />
+                            <Edit3 className="w-6 h-6 text-[#c0a146]" />
                           ) : (
-                            <Plus className="w-6 h-6 text-foreground" />
+                            <Plus className="w-6 h-6 text-[#c0a146]" />
                           )}
                         </div>
                         <div>
                           <CardTitle className="text-2xl">
                             {editingProduct ? "Edit Product" : "Add New Product"}
                           </CardTitle>
-                          <p className="text-muted-foreground mt-1">
+                          <p className="text-muted-foreground mt-1 text-sm">
                             {editingProduct ? "Update your product details" : "Create a new product for your store"}
                           </p>
                         </div>
@@ -572,8 +576,9 @@ export default function StoreBuilderPage() {
                             setEditingProduct(null)
                             form.reset()
                             setActiveTab("details")
-                           try { localStorage.removeItem(DRAFT_KEY) } catch {}
+                            try { localStorage.removeItem(DRAFT_KEY) } catch {}
                           }}
+                          className="h-9"
                         >
                           <X className="w-4 h-4 mr-2" />
                           Cancel
@@ -581,7 +586,7 @@ export default function StoreBuilderPage() {
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="p-8">
+                  <CardContent className="p-6 md:p-8">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
                       <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl h-12">
                         <TabsTrigger
@@ -609,42 +614,42 @@ export default function StoreBuilderPage() {
                       <Form {...form}>
                         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                           {/* Details Tab */}
-                          <TabsContent value="details" className="space-y-8 mt-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              <div className="md:col-span-2">
-                                <FormField
-                                  control={form.control}
-                                  name="name"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="text-lg font-semibold">Product Name *</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          placeholder="Enter a compelling product name"
-                                          className="h-14 text-base"
-                                          {...field}
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
+                          <TabsContent value="details" className="space-y-6 mt-8">
+                            <FormField
+                              control={form.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-base">Product Name *</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Enter a compelling product name"
+                                      className="h-12"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>Choose a clear and descriptive name</FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <FormField
                                 control={form.control}
                                 name="price"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-lg font-semibold">Price (₦) *</FormLabel>
+                                    <FormLabel className="text-base">Price (₦) *</FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground">₦</span>
+                                        <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#c0a146]" />
                                         <Input
                                           type="number"
                                           step="0.01"
                                           min="0"
                                           placeholder="0.00"
-                                          className="pl-12 h-14 text-base"
+                                          className="pl-12 h-12"
                                           {...field}
                                         />
                                       </div>
@@ -658,13 +663,13 @@ export default function StoreBuilderPage() {
                                 name="category"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-lg font-semibold">Category</FormLabel>
+                                    <FormLabel className="text-base">Category</FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground" />
+                                        <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#c0a146]" />
                                         <Input
-                                          placeholder="e.g., Electronics, Clothing, Books"
-                                          className="pl-12 h-14 text-base"
+                                          placeholder="e.g., Electronics, Clothing"
+                                          className="pl-12 h-12"
                                           {...field}
                                         />
                                       </div>
@@ -673,193 +678,227 @@ export default function StoreBuilderPage() {
                                   </FormItem>
                                 )}
                               />
-                              <div className="md:col-span-2">
-                                <FormField
-                                  control={form.control}
-                                  name="description"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className="text-lg font-semibold">Description</FormLabel>
-                                      <FormControl>
-                                        <Textarea
-                                          placeholder="Describe your product in detail. What makes it special?"
-                                          rows={5}
-                                          className="text-base resize-none"
-                                          {...field}
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
                             </div>
+
+                            <FormField
+                              control={form.control}
+                              name="description"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-base">Description</FormLabel>
+                                  <FormControl>
+                                    <Textarea
+                                      placeholder="Describe your product in detail. What makes it special?"
+                                      rows={5}
+                                      className="resize-none"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>Help customers understand your product</FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           </TabsContent>
 
                           {/* Images Tab */}
-                          <TabsContent value="images" className="space-y-8 mt-8">
-                            <div className="space-y-6">
-                              <div className="flex flex-col md:flex-row items-center justify-between w-full">
-                                <div>
-                                  <h3 className="text-xl font-semibold text-center md:text-start">Product Images</h3>
-                                  <p className="text-muted-foreground my-1 text-center md:text-start">
-                                    Add high-quality images to showcase your product
-                                  </p>
-                                </div>
-                                <label
-                                  htmlFor="upload"
-                                  className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium bg-primary text-primary-foreground rounded-xl cursor-pointer hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl w-full"
-                                >
-                                  <Upload className="mr-2 h-4 w-4" />
-                                  Upload Image
-                                </label>
-                                <input
-                                  id="upload"
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0]
-                                    if (!file) return
-                                    if (file.size > 5 * 1024 * 1024) {
-                                      toast.error("Image must be less than 5MB")
-                                      return
-                                    }
-                                    const formData = new FormData()
-                                    formData.append("file", file)
-                                    setIsSubmitting(true)
-                                    try {
-                                      const res = await fetch("/api/upload", {
-                                        method: "POST",
-                                        body: formData,
-                                      })
-                                      if (!res.ok) throw new Error("Failed to upload")
-                                      const { secure_url } = await res.json()
-                                      const existingImages = watchedImages ?? []
-                                      form.setValue(
-                                        "images",
-                                        [
-                                          ...existingImages,
-                                          {
-                                            url: secure_url,
-                                            altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
-                                          },
-                                        ],
-                                        { shouldDirty: true }
-                                      )
-                                      toast.success("Image uploaded successfully")
-                                    } catch (err) {
-                                      console.error(err)
-                                      toast.error("Image upload failed")
-                                    } finally {
-                                      setIsSubmitting(false)
-                                    }
-                                  }}
-                                />
+                          <TabsContent value="images" className="space-y-6 mt-8">
+                            <div className="flex items-center gap-3 pb-4 border-b">
+                              <div className="p-2 rounded-lg bg-[#c0a146]/10">
+                                <ImageIcon className="h-5 w-5 text-[#c0a146]" />
                               </div>
-                              <Separator />
-                              {/* Image Gallery */}
-                              {(watchedImages ?? []).length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                  {(watchedImages ?? []).map((img, idx) => (
-                                     <motion.div
-                                       key={idx}
-                                       initial={{ opacity: 0, scale: 0.8 }}
-                                       animate={{ opacity: 1, scale: 1 }}
-                                       transition={{ delay: idx * 0.1 }}
-                                       className="relative group"
-                                     >
-                                       <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-primary transition-colors shadow-lg group-hover:shadow-xl">
-                                         <Image
-                                           src={img.url || "/placeholder.svg"}
-                                           alt={img.altText || `Product image ${idx + 1}`}
-                                           fill
-                                           className="object-cover"
-                                         />
-                                       </div>
-                                       <Button
-                                         type="button"
-                                         variant="destructive"
-                                         size="sm"
-                                         className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 rounded-full shadow-lg"
-                                         onClick={() => {
-                                          const currentImages = watchedImages ?? []
-                                          form.setValue(
-                                            "images",
-                                            currentImages.filter((_, i) => i !== idx),
-                                            { shouldDirty: true }
-                                          )
-                                         }}
-                                       >
-                                         <X className="h-3 w-3" />
-                                       </Button>
-                                       {idx === 0 && (
-                                         <Badge className="absolute bottom-3 left-3 bg-primary text-primary-foreground border-0 shadow-lg">
-                                           <Sparkles className="w-3 h-3 mr-1" />
-                                           Main
-                                         </Badge>
-                                       )}
-                                     </motion.div>
-                                   ))}
-                                 </div>
-                              ) : (
-                                <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-16 text-center bg-muted/20">
-                                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
-                                    <LucideImage className="w-8 h-8 text-muted-foreground/50" />
-                                  </div>
-                                  <h3 className="text-lg font-semibold mb-2">No images yet</h3>
-                                  <p className="text-muted-foreground">
-                                    Upload your first product image to get started
-                                  </p>
-                                </div>
-                              )}
+                              <div>
+                                <h3 className="text-lg font-semibold">Product Images</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Add high-quality images to showcase your product
+                                </p>
+                              </div>
                             </div>
+
+                            <div className="flex justify-center">
+                              <label
+                                htmlFor="upload"
+                                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium bg-[#c0a146] text-white rounded-xl cursor-pointer hover:bg-[#c0a146]/90 transition-all shadow-lg hover:shadow-xl"
+                              >
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Image
+                              </label>
+                              <input
+                                id="upload"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    toast.error("Image must be less than 5MB")
+                                    return
+                                  }
+                                  const formData = new FormData()
+                                  formData.append("file", file)
+                                  setIsSubmitting(true)
+                                  try {
+                                    const res = await fetch("/api/upload", {
+                                      method: "POST",
+                                      body: formData,
+                                    })
+                                    if (!res.ok) throw new Error("Failed to upload")
+                                    const { secure_url } = await res.json()
+                                    const existingImages = watchedImages ?? []
+                                    form.setValue(
+                                      "images",
+                                      [
+                                        ...existingImages,
+                                        {
+                                          url: secure_url,
+                                          altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
+                                        },
+                                      ],
+                                      { shouldDirty: true }
+                                    )
+                                    toast.success("Image uploaded successfully")
+                                  } catch (err) {
+                                    console.error(err)
+                                    toast.error("Image upload failed")
+                                  } finally {
+                                    setIsSubmitting(false)
+                                  }
+                                }}
+                              />
+                            </div>
+
+                            <Separator />
+
+                            {/* Image Gallery */}
+                            {(watchedImages ?? []).length > 0 ? (
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                {(watchedImages ?? []).map((img, idx) => (
+                                  <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className="relative group"
+                                  >
+                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-[#c0a146] transition-colors shadow-lg group-hover:shadow-xl">
+                                      <Image
+                                        src={img.url || "/placeholder.svg"}
+                                        alt={img.altText || `Product image ${idx + 1}`}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 rounded-full shadow-lg"
+                                      onClick={() => {
+                                        const currentImages = watchedImages ?? []
+                                        form.setValue(
+                                          "images",
+                                          currentImages.filter((_, i) => i !== idx),
+                                          { shouldDirty: true }
+                                        )
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                    {idx === 0 && (
+                                      <Badge className="absolute bottom-3 left-3 bg-[#c0a146] text-white border-0 shadow-lg">
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        Main
+                                      </Badge>
+                                    )}
+                                  </motion.div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-16 text-center bg-muted/20">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
+                                  <LucideImage className="w-8 h-8 text-muted-foreground/50" />
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">No images yet</h3>
+                                <p className="text-muted-foreground text-sm">
+                                  Upload your first product image to get started
+                                </p>
+                              </div>
+                            )}
                           </TabsContent>
 
                           {/* Inventory Tab */}
-                          <TabsContent value="inventory" className="space-y-8 mt-8">
+                          <TabsContent value="inventory" className="space-y-6 mt-8">
+                            <div className="flex items-center gap-3 pb-4 border-b">
+                              <div className="p-2 rounded-lg bg-[#c0a146]/10">
+                                <Box className="h-5 w-5 text-[#c0a146]" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold">Inventory Management</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Track your product stock levels
+                                </p>
+                              </div>
+                            </div>
+
                             <div className="max-w-md">
                               <FormField
                                 control={form.control}
                                 name="inventoryQuantity"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-lg font-semibold">Stock Quantity *</FormLabel>
+                                    <FormLabel className="text-base">Stock Quantity *</FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground" />
+                                        <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#c0a146]" />
                                         <Input
                                           type="number"
                                           min="0"
                                           placeholder="0"
-                                          className="pl-12 h-14 text-base"
+                                          className="pl-12 h-12"
                                           {...field}
                                         />
                                       </div>
                                     </FormControl>
-                                    <p className="text-muted-foreground mt-2">How many units do you have in stock?</p>
+                                    <FormDescription>How many units do you have in stock?</FormDescription>
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
                             </div>
+
+                            <div className="rounded-lg bg-[#c0a146]/10 border border-[#c0a146]/20 p-4 max-w-md">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <Sparkles className="h-5 w-5 text-[#c0a146]" />
+                                </div>
+                                <div className="text-sm">
+                                  <p className="font-medium text-foreground mb-1">
+                                    Inventory Tip
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    Keep your stock levels updated to avoid overselling and maintain customer trust.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
                           </TabsContent>
 
                           {/* Action Buttons */}
-                          <div className="flex justify-end pt-8 border-t">
+                          <div className="flex justify-end pt-6 border-t">
                             <Button
                               type="submit"
-                              disabled={isSubmitting || products.length >= 10}
-                              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl px-8 h-14 text-base font-semibold text-background"
+                              disabled={isSubmitting || (products.length >= 10 && !editingProduct)}
+                              className="bg-[#c0a146] hover:bg-[#c0a146]/90 shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
                             >
                               {isSubmitting ? (
                                 <>
-                                  <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                                   {editingProduct ? "Updating..." : "Saving..."}
                                 </>
                               ) : (
                                 <>
-                                  <Save className="h-5 w-5 mr-3" />
+                                  <Save className="h-5 w-5 mr-2" />
                                   {editingProduct ? "Update Product" : "Save Product"}
                                 </>
                               )}

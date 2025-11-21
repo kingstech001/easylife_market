@@ -78,7 +78,7 @@ export default function CreateProductPage() {
   const [storeId, setStoreId] = useState<string | null>(null)
   const [isStoreLoading, setIsStoreLoading] = useState(true)
   const [storeError, setStoreError] = useState<string | null>(null)
-  const [formKey, setFormKey] = useState(0) // ← Add this to force form re-render
+  const [formKey, setFormKey] = useState(0)
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -97,11 +97,10 @@ export default function CreateProductPage() {
   const { clearStorage } = useFormPersistence({
     form,
     storageKey: "create-product-form",
-    excludeFields: ["storeId"],
+    excludeFields: ["storeId", "inventoryQuantity"], // Exclude inventoryQuantity from persistence
     debounceMs: 300,
   })
 
-  // Fetch storeId on component mount
   useEffect(() => {
     const fetchStoreId = async () => {
       setIsStoreLoading(true)
@@ -247,37 +246,41 @@ export default function CreateProductPage() {
 
     setIsSubmitting(true)
     try {
+      const cleanedData = {
+        ...data,
+        category: data.category?.trim() || undefined,
+        compareAtPrice: data.compareAtPrice || undefined,
+        description: data.description?.trim() || undefined,
+      }
+
+      console.log("Submitting product data:", cleanedData)
+
       const response = await fetch("/api/dashboard/seller/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(cleanedData),
       })
 
+      console.log("Response status:", response.status)
+
       if (!response.ok) {
-        let errorMessage = "Failed to create product."
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.message || errorMessage
-        } catch (jsonError) {
-          try {
-            const errorText = await response.text()
-            if (errorText) {
-              errorMessage = `Server error: ${errorText.substring(0, Math.min(errorText.length, 100))}...`
-            }
-          } catch {}
-        }
-        throw new Error(errorMessage)
+        const errorData = await response.json().catch(() => ({}))
+        console.error("Error response:", errorData)
+        throw new Error(errorData.message || errorData.error || "Failed to create product")
       }
 
-      // ✅ IMPROVED FORM RESET
+      const result = await response.json()
+      console.log("Success response:", result)
+
+      // Clear storage first
       clearStorage()
       
-      // Clear image previews first
+      // Clear image previews
       setImagePreviews([])
       
-      // Reset form completely
+      // Reset form with explicit values
       form.reset({
         name: "",
         description: "",
@@ -289,9 +292,15 @@ export default function CreateProductPage() {
         storeId: storeId,
       })
       
-      // Force complete form re-render by changing key
-      setFormKey(prev => prev + 1)
+      // Force re-render
+      setFormKey((prev) => prev + 1)
       setActiveTab("details")
+      
+      // Clear the file input
+      const fileInput = document.getElementById("image-upload") as HTMLInputElement
+      if (fileInput) {
+        fileInput.value = ""
+      }
 
       toast.success("Product created successfully!", {
         description: "Your product has been added to your store.",
@@ -308,10 +317,7 @@ export default function CreateProductPage() {
   }
 
   const handleClearForm = () => {
-    // Clear image previews
     setImagePreviews([])
-    
-    // Reset form
     form.reset({
       name: "",
       description: "",
@@ -322,12 +328,9 @@ export default function CreateProductPage() {
       images: [],
       storeId: storeId || "",
     })
-    
-    // Force complete form re-render by changing key
-    setFormKey(prev => prev + 1)
+    setFormKey((prev) => prev + 1)
     setActiveTab("details")
     clearStorage()
-    
     toast.info("Form cleared", {
       description: "All saved data has been removed.",
     })
@@ -537,7 +540,7 @@ export default function CreateProductPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-sm sm:text-base">Category</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value !== undefined ? field.value : ""}>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger className="bg-background text-sm sm:text-base">
                                   <SelectValue placeholder="Select a category" />
@@ -687,10 +690,10 @@ export default function CreateProductPage() {
                           <FormItem>
                             <FormLabel className="text-sm sm:text-base">Stock Quantity *</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                min="0" 
-                                className="bg-background text-sm sm:text-base" 
+                              <Input
+                                type="number"
+                                min="0"
+                                className="bg-background text-sm sm:text-base"
                                 {...field}
                                 value={field.value ?? 0}
                                 onChange={(e) => {
