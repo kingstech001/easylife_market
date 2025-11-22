@@ -54,10 +54,21 @@ export async function GET(request: NextRequest) {
       .limit(5)
       .lean<StoreDocument[]>()
 
-    // Search products - only active ones
+    // First, get all approved and published store IDs
+    const approvedStores = await Store.find({
+      isPublished: true,
+      isApproved: true,
+    })
+      .select("_id")
+      .lean<{ _id: Types.ObjectId }[]>()
+
+    const approvedStoreIds = approvedStores.map(store => store._id)
+
+    // Search products - only active ones from approved stores
     const productsPromise = Product.find({
       isActive: true,
       isDeleted: false,
+      storeId: { $in: approvedStoreIds }, // ✅ Only fetch products from approved stores
       $or: [
         { name: searchRegex },
         { description: searchRegex },

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, Store, ShoppingBag, Settings, HelpCircle, LogOut, Package } from 'lucide-react'
+import { LayoutDashboard, Store, ShoppingBag, Settings, HelpCircle, LogOut, Package, ChevronRight } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +17,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
+import { useState, useEffect } from "react"
 
 const sidebarNavItems = [
   { title: "Overview", href: "/dashboard/seller", icon: LayoutDashboard },
@@ -30,7 +33,23 @@ const sidebarNavItems = [
 export function SellerSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { toggleSidebar } = useSidebar() // ✅ sidebar control
+  const { toggleSidebar } = useSidebar()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" })
+        if (res.ok) {
+          const data = await res.json()
+          setUser(data.user)
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error)
+      }
+    }
+    fetchUser()
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -48,68 +67,109 @@ export function SellerSidebar() {
     }
   }
 
-  // ✅ Function to close sidebar only on mobile
   const handleSidebarClick = () => {
-    if (window.innerWidth < 1024) { // Tailwind 'lg' breakpoint = 1024px
+    if (window.innerWidth < 1024) {
       toggleSidebar()
     }
   }
 
+  const getUserInitials = (name?: string) => {
+    if (!name) return "U"
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
   return (
-    <Sidebar collapsible="offcanvas">
-      <SidebarHeader>
+    <Sidebar collapsible="offcanvas" className="border-r border-border/40">
+      <SidebarHeader className="border-b border-border/40 bg-gradient-to-b from-muted/30 to-transparent px-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="#" className="flex items-center space-x-2 py-4 px-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#c0a146] to-[#c0a146]/90 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="h-6 w-6 text-white font-bold text-sm" />
+            <Link href="/dashboard/seller" className="flex items-center gap-3 py-4 group">
+              <div className="relative">
+                <div className="w-9 h-9 bg-gradient-to-br from-[#c0a146] via-[#d4b55e] to-[#c0a146] rounded-xl flex items-center justify-center shadow-lg shadow-[#c0a146]/20 transition-transform group-hover:scale-105">
+                  <ShoppingBag className="h-4 w-4 text-white" strokeWidth={2.5} />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
               </div>
-              <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">EasyLife</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-base tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                  EasyLife
+                </span>
+                <span className="text-[10px] text-muted-foreground font-medium">Seller Dashboard</span>
+              </div>
             </Link>
-            <SidebarMenuButton>
-              <Store className="h-5 w-5" />
-              <span>Seller Panel</span>
-            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent >
         <SidebarGroup>
-          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+            Navigation
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    onClick={handleSidebarClick} // ✅ only close on mobile
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+            <SidebarMenu className="gap-0.5">
+              {sidebarNavItems.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      onClick={handleSidebarClick}
+                      className={`
+                        relative h-9 px-2.5 rounded-lg transition-all duration-200
+                        ${isActive 
+                          ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold shadow-sm hover:bg-[#c0a146]/15' 
+                          : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                        }
+                      `}
+                    >
+                      <Link href={item.href} className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2.5">
+                          <item.icon className="h-4 w-4 flex-shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+                          <span className="text-[13px]">{item.title}</span>
+                        </div>
+                        {isActive && (
+                          <ChevronRight className="h-3.5 w-3.5 text-[#c0a146] flex-shrink-0" strokeWidth={2.5} />
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <Separator />
+
         <SidebarGroup>
-          <SidebarGroupLabel>Support</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+            Support & Settings
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === "/dashboard/seller/support"}
                   onClick={handleSidebarClick}
+                  className={`
+                    h-9 px-2.5 rounded-lg transition-all duration-200
+                    ${pathname === "/dashboard/seller/support"
+                      ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold'
+                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }
+                  `}
                 >
-                  <Link href="/dashboard/seller/support">
-                    <HelpCircle className="h-4 w-4" />
-                    <span>Help Center</span>
+                  <Link href="/dashboard/seller/support" className="flex items-center gap-2.5">
+                    <HelpCircle className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-[13px]">Help Center</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -118,10 +178,17 @@ export function SellerSidebar() {
                   asChild
                   isActive={pathname === "/dashboard/seller/settings"}
                   onClick={handleSidebarClick}
+                  className={`
+                    h-9 px-2.5 rounded-lg transition-all duration-200
+                    ${pathname === "/dashboard/seller/settings"
+                      ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold'
+                      : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }
+                  `}
                 >
-                  <Link href="/dashboard/seller/settings">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
+                  <Link href="/dashboard/seller/settings" className="flex items-center gap-2.5">
+                    <Settings className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-[13px]">Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -130,19 +197,47 @@ export function SellerSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
+      <SidebarFooter className="border-t border-border/40 bg-gradient-to-t from-muted/30 to-transparent p-3">
+        <SidebarMenu className="gap-2">
+          {/* User Profile Section */}
           <SidebarMenuItem>
-            <div onClick={handleLogout} className="flex items-center justify-between w-full px-2 py-1">
-              <span className="text-sm font-medium text-sidebar-foreground/70">Sign out</span>
-              <LogOut className="mr-2 h-4 w-4 hover:text-red-700" />
+            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-muted/50 border border-border/40">
+              <Avatar className="h-8 w-8 border-2 border-[#c0a146]/20 flex-shrink-0">
+                <AvatarImage src={user?.avatar} alt={user?.name} />
+                <AvatarFallback className="bg-gradient-to-br from-[#c0a146] to-[#c0a146]/80 text-white text-[10px] font-semibold">
+                  {getUserInitials(user?.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-foreground truncate">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {user?.email || "user@example.com"}
+                </p>
+              </div>
             </div>
           </SidebarMenuItem>
+
+          <Separator />
+
+          {/* Theme Toggle */}
           <SidebarMenuItem>
-            <div className="flex items-center justify-between w-full px-2 py-1">
-              <span className="text-sm font-medium text-sidebar-foreground/70">Theme</span>
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-muted/50 transition-colors">
+              <span className="text-[13px] font-medium text-muted-foreground">Appearance</span>
               <ThemeToggle />
             </div>
+          </SidebarMenuItem>
+
+          {/* Logout Button */}
+          <SidebarMenuItem>
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-between w-full px-2.5 py-2 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all group"
+            >
+              <span>Sign out</span>
+              <LogOut className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

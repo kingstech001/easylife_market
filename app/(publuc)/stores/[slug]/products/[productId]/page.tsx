@@ -346,7 +346,7 @@ export default function ProductPage({
                         alt={store.name}
                         width={48}
                         height={48}
-                        className="rounded-xl object-cover"
+                        className="rounded-xl object-cover h-12"
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
