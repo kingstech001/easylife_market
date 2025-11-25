@@ -13,6 +13,14 @@ interface StoreDocument {
   sellerId: any
   isPublished: boolean
   isApproved?: boolean
+  location?: {
+    type: string
+    coordinates: [number, number]
+    address: string
+    city?: string
+    state?: string
+    country: string
+  }
   createdAt?: Date
   updatedAt?: Date
 }
@@ -27,6 +35,14 @@ interface StoreResponse {
   sellerId: string
   isPublished: boolean
   isApproved?: boolean
+  location?: {
+    type: string
+    coordinates: [number, number]
+    address: string
+    city?: string
+    state?: string
+    country: string
+  }
   createdAt: string
   updatedAt: string
   productCount?: number
@@ -40,19 +56,38 @@ interface ApiResponse {
   error?: string
 }
 
-// ✅ GET: Fetch All Published Stores
+// ✅ GET: Fetch All Published Stores (with optional location filtering)
 export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
     console.log("🔍 Fetching all stores...")
 
     await connectToDB()
 
-    // Fetch all published stores (with or without approval based on your schema)
+    // Get query parameters for location-based filtering (optional)
+    const searchParams = req.nextUrl.searchParams
+    const lat = searchParams.get("lat")
+    const lng = searchParams.get("lng")
+    const maxDistance = searchParams.get("maxDistance") // in meters (e.g., 5000 = 5km)
+
+    // Build query
     const query: any = { isPublished: true }
     
-    // Only add isApproved if your Store model has this field
-    // Comment this out if your model doesn't have isApproved
-    // query.isApproved = true
+    // Add location-based filtering if coordinates provided
+    if (lat && lng) {
+      const latitude = parseFloat(lat)
+      const longitude = parseFloat(lng)
+      const distance = maxDistance ? parseInt(maxDistance) : 10000 // Default 10km
+
+      query["location.coordinates"] = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude], // [lng, lat] order for GeoJSON
+          },
+          $maxDistance: distance,
+        },
+      }
+    }
 
     const stores = await Store.find(query)
       .sort({ createdAt: -1 })
@@ -61,15 +96,12 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
 
     console.log(`✅ Found ${stores.length} stores`)
 
-    // ✅ Add product count for each store (optional, can be removed for faster response)
+    // ✅ Add product count for each store
     const storesWithCounts: StoreResponse[] = await Promise.all(
       stores.map(async (store): Promise<StoreResponse> => {
         try {
           const productCount = await Product.countDocuments({ 
             storeId: store._id,
-            // Add these filters if your Product model has them
-            // isActive: true,
-            // isDeleted: false,
           })
           
           return {
@@ -82,13 +114,20 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
             sellerId: store.sellerId ? store.sellerId.toString() : "",
             isPublished: store.isPublished ?? false,
             isApproved: store.isApproved ?? true,
+            location: store.location ? {
+              type: store.location.type,
+              coordinates: store.location.coordinates,
+              address: store.location.address,
+              city: store.location.city,
+              state: store.location.state,
+              country: store.location.country,
+            } : undefined,
             createdAt: store.createdAt ? store.createdAt.toISOString() : new Date().toISOString(),
             updatedAt: store.updatedAt ? store.updatedAt.toISOString() : new Date().toISOString(),
             productCount,
           }
         } catch (err) {
           console.error(`Error processing store ${store._id}:`, err)
-          // Return store without product count if there's an error
           return {
             _id: store._id ? store._id.toString() : "",
             name: store.name || "",
@@ -99,6 +138,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
             sellerId: store.sellerId ? store.sellerId.toString() : "",
             isPublished: store.isPublished ?? false,
             isApproved: store.isApproved ?? true,
+            location: store.location,
             createdAt: store.createdAt ? store.createdAt.toISOString() : new Date().toISOString(),
             updatedAt: store.updatedAt ? store.updatedAt.toISOString() : new Date().toISOString(),
             productCount: 0,
@@ -123,7 +163,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
         success: false,
         message: "Failed to fetch stores",
         error: error.message || "Internal server error",
-        stores: [], // Return empty array so the page doesn't crash
+        stores: [],
         count: 0,
       },
       { status: 500 }

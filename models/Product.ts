@@ -1,34 +1,37 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+// src/models/Product.ts
+
+import mongoose, { Schema, Document, Model } from "mongoose"
 
 // ================== Interfaces ==================
 export interface IProductImage {
-  _id?: mongoose.Types.ObjectId;
-  url: string;
-  altText?: string;
+  _id?: mongoose.Types.ObjectId
+  url: string
+  altText?: string
 }
 
 export interface IProduct extends Document {
-  _id: mongoose.Types.ObjectId;
-  name: string;
-  description?: string;
-  price: number;
-  compareAtPrice?: number;
-  category?: string; // Updated to string only
-  inventoryQuantity: number;
-  images: IProductImage[];
-  storeId: mongoose.Types.ObjectId;
-  isActive: boolean;
-  isDeleted: boolean;
-  sku?: string;
-  weight?: number;
+  _id: mongoose.Types.ObjectId
+  name: string
+  description?: string
+  price: number
+  compareAtPrice?: number
+  category?: string
+  inventoryQuantity: number
+  images: IProductImage[]
+  storeId: mongoose.Types.ObjectId
+  isActive: boolean // ✅ Controls visibility based on subscription
+  isDeleted: boolean // ✅ Soft delete flag
+  deactivatedAt?: Date | null // ✅ NEW: Track when product was deactivated
+  sku?: string
+  weight?: number
   dimensions?: {
-    length?: number;
-    width?: number;
-    height?: number;
-  };
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
+    length?: number
+    width?: number
+    height?: number
+  }
+  tags: string[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 // ================== Schema ==================
@@ -55,14 +58,13 @@ const ProductSchema = new Schema<IProduct>(
       min: [0, "Compare at price cannot be negative"],
       validate: {
         validator: function (this: IProduct, value: number) {
-          // Only validate if value exists
-          return !value || value > this.price;
+          return !value || value > this.price
         },
         message: "Compare at price should be greater than regular price",
       },
     },
     category: {
-      type: String, // Changed to simple String type
+      type: String,
       required: false,
       trim: true,
     },
@@ -88,19 +90,26 @@ const ProductSchema = new Schema<IProduct>(
       type: Schema.Types.ObjectId,
       ref: "Store",
       required: [true, "Store ID is required"],
+      index: true,
     },
     isActive: {
       type: Boolean,
       default: true,
+      index: true, // ✅ Index for faster queries
     },
     isDeleted: {
       type: Boolean,
       default: false,
+      index: true, // ✅ Index for faster queries
+    },
+    deactivatedAt: {
+      type: Date,
+      default: null, // ✅ NEW: Tracks when product was deactivated due to plan limit
     },
     sku: {
       type: String,
       unique: true,
-      sparse: true, // prevents duplicate index error when null
+      sparse: true,
     },
     weight: {
       type: Number,
@@ -114,45 +123,46 @@ const ProductSchema = new Schema<IProduct>(
     tags: { type: [String], default: [] },
   },
   { timestamps: true }
-);
+)
 
 // ================== Indexes ==================
-ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 });
-ProductSchema.index({ category: 1 }); // Fixed: was categoryId, should be category
-ProductSchema.index({ name: "text", description: "text" });
-ProductSchema.index({ createdAt: -1 });
+ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 }) // ✅ Compound index for queries
+ProductSchema.index({ storeId: 1, createdAt: -1 }) // ✅ For sorting by creation date
+ProductSchema.index({ category: 1 })
+ProductSchema.index({ name: "text", description: "text" })
+ProductSchema.index({ createdAt: -1 })
 
-// expose a simple primaryImage virtual (useful for UI without extra logic)
+// ================== Virtuals ==================
 ProductSchema.virtual("primaryImage").get(function (this: IProduct) {
-  return this.images && this.images.length > 0 ? this.images[0].url : undefined;
-});
+  return this.images && this.images.length > 0 ? this.images[0].url : undefined
+})
 
-// clean up JSON output (include virtuals, map _id -> id, remove __v)
+// ================== JSON Transform ==================
 ProductSchema.set("toJSON", {
   virtuals: true,
   transform: (doc, ret) => {
-    const out: any = ret;
-    out.id = out._id;
-    delete out._id;
-    delete out.__v;
-    return out;
+    const out: any = ret
+    out.id = out._id
+    delete out._id
+    delete out.__v
+    return out
   },
-});
+})
 
 // ================== Middleware ==================
 ProductSchema.pre<IProduct>("save", function (next) {
   if (!this.sku) {
-    this.sku = `${this.storeId.toString().slice(-6)}-${Date.now()}`;
+    this.sku = `${this.storeId.toString().slice(-6)}-${Date.now()}`
   }
-  next();
-});
+  next()
+})
 
 // ================== Model ==================
 // Clear cached model to ensure schema changes are applied
 if (mongoose.models.Product) {
-  delete mongoose.models.Product;
+  delete mongoose.models.Product
 }
 
-const Product: Model<IProduct> = mongoose.model<IProduct>("Product", ProductSchema);
+const Product: Model<IProduct> = mongoose.model<IProduct>("Product", ProductSchema)
 
-export default Product;
+export default Product

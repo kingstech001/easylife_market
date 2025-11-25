@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header"
 import { ModernFooter } from "@/components/Footer"
 import { CartProvider } from "@/context/cart-context"  // 👈 import your provider
 import { AuthProvider } from "@/context/AuthContext"
+import { LocationPrompt } from "@/components/location-prompt"
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -10,7 +11,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <CartProvider>   {/* 👈 provide cart context to everything in this layout */}
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            <LocationPrompt />
+            {children}
+          </main>
           <ModernFooter />
         </div>
       </CartProvider>

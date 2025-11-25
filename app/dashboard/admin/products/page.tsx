@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { headers, cookies } from "next/headers"
-
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/dashboard/data-table"
 import { columns } from "@/components/dashboard/products-columns"
