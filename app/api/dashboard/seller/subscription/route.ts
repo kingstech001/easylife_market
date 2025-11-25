@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store from "@/models/Store"
-import enforceProductLimit from "@/lib/enforceProductLimit"
 
 const PLAN_DURATIONS: Record<string, number> = {
   free: 0,
   basic: 30,
   standard: 30,
   premium: 30,
-}
-
-// Product limits per plan (null = unlimited)
-const PRODUCT_LIMITS: Record<string, number | null> = {
-  free: 10,
-  basic: 20,
-  standard: 50,
-  premium: null, // unlimited
 }
 
 /**
@@ -93,16 +84,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 })
     }
 
-    // ✅ ENFORCE PRODUCT LIMIT AFTER PLAN CHANGE
-    try {
-      const productLimit = PRODUCT_LIMITS[plan]
-      const result = await enforceProductLimit(storeId, productLimit)
-      console.log(`✅ Enforced product limit for ${plan} plan:`, result)
-    } catch (error) {
-      console.error("❌ Failed to enforce product limit:", error)
-      // Don't fail the entire request, just log the error
-    }
-
     return NextResponse.json(
       {
         success: true,
@@ -164,16 +145,6 @@ export async function PUT(request: NextRequest) {
 
     if (!updatedStore) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 })
-    }
-
-    // ✅ ENFORCE PRODUCT LIMIT AFTER PLAN CHANGE
-    try {
-      const productLimit = PRODUCT_LIMITS[plan]
-      const result = await enforceProductLimit(storeId, productLimit)
-      console.log(`✅ Enforced product limit for ${plan} plan:`, result)
-    } catch (error) {
-      console.error("❌ Failed to enforce product limit:", error)
-      // Don't fail the entire request, just log the error
     }
 
     return NextResponse.json(

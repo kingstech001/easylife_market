@@ -1,9 +1,10 @@
+// app/api/dashboard/seller/subscription/current/route.ts
+
 import { NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store, { type IStore } from "@/models/Store"
 import { getUserFromCookies } from "@/lib/auth"
 import mongoose, { type HydratedDocument } from "mongoose"
-import enforceProductLimit from "@/lib/enforceProductLimit"
 
 // Product limits per plan (null = unlimited)
 const PRODUCT_LIMITS: Record<string, number | null> = {
@@ -90,18 +91,6 @@ export async function GET(request: NextRequest) {
       store.subscriptionEndDate = null
       await store.save()
       currentPlan = "free"
-
-      // ✅ Enforce product limit for free plan (deactivate excess products)
-      try {
-        const freeLimit = PRODUCT_LIMITS.free
-        const result = await enforceProductLimit(
-          (store._id as mongoose.Types.ObjectId).toString(),
-          freeLimit
-        )
-        console.log(`📊 Enforced free plan limit on expiration:`, result)
-      } catch (err) {
-        console.error("❌ Failed to enforce product limit on expiration:", err)
-      }
     }
 
     const response: SubscriptionResponse = {
@@ -188,18 +177,6 @@ export async function POST(request: NextRequest) {
       store.subscriptionEndDate = null
       await store.save()
       currentPlan = "free"
-
-      // ✅ Enforce product limit for free plan (deactivate excess products)
-      try {
-        const freeLimit = PRODUCT_LIMITS.free
-        const result = await enforceProductLimit(
-          (store._id as mongoose.Types.ObjectId).toString(),
-          freeLimit
-        )
-        console.log(`📊 Enforced free plan limit on expiration:`, result)
-      } catch (err) {
-        console.error("❌ Failed to enforce product limit on expiration:", err)
-      }
     }
 
     const response: SubscriptionResponse = {

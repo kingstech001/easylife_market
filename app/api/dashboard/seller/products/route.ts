@@ -3,15 +3,6 @@ import Store from "@/models/Store"
 import Product from "@/models/Product"
 import { getUserFromCookies } from "@/lib/auth"
 import { connectToDB } from "@/lib/db"
-import enforceProductLimit from "@/lib/enforceProductLimit"
-
-// Product limits per plan
-const PRODUCT_LIMITS: Record<string, number | null> = {
-  free: 10,
-  basic: 20,
-  standard: 50,
-  premium: null, // unlimited
-}
 
 export async function GET(req: Request) {
   try {
@@ -38,6 +29,7 @@ export async function GET(req: Request) {
 
     const products = await Product.find({ storeId: store._id }).sort({ createdAt: -1 })
 
+    // ✅ Convert Mongoose documents to plain objects
     const productsWithId = products.map(product => {
       const productObj = product.toObject()
       return {
@@ -126,30 +118,30 @@ export async function POST(req: Request) {
     const subscriptionPlan = store.subscriptionPlan || "free"
     console.log("📊 Subscription plan:", subscriptionPlan)
 
-    // Count only ACTIVE products (isActive: true)
-    const activeProductCount = await Product.countDocuments({ 
-      storeId: store._id, 
-      isDeleted: false,
-      isActive: true 
-    })
-    console.log("📦 Current ACTIVE product count:", activeProductCount)
+    const productCount = await Product.countDocuments({ storeId: store._id })
+    console.log("📦 Current product count:", productCount)
 
-    const productLimit = PRODUCT_LIMITS[subscriptionPlan]
-    const isUnlimited = productLimit === null
+    // Plan limits based on your subscription tiers
+    const planLimits: Record<string, number> = {
+      free: 10,      // Free: Up to 10 products
+      basic: 20,     // Basic: Up to 20 products  
+      standard: 50,  // Standard: Up to 50 products
+      premium: 999999, // Premium: Unlimited (using large number)
+    }
 
-    // Check if limit is reached
-    if (!isUnlimited && activeProductCount >= productLimit) {
-      console.error("❌ Product limit reached:", { 
-        current: activeProductCount, 
-        limit: productLimit, 
-        plan: subscriptionPlan 
-      })
+    const productLimit = planLimits[subscriptionPlan] || 10
+    const isUnlimited = productLimit >= 999999
+
+    if (productCount >= productLimit) {
+      console.error("❌ Product limit reached:", { current: productCount, limit: productLimit, plan: subscriptionPlan })
       
       return NextResponse.json(
         {
-          message: `You've reached the product limit (${productLimit}) for your ${subscriptionPlan} plan. Upgrade to add more products.`,
-          currentCount: activeProductCount,
-          limit: productLimit,
+          message: isUnlimited 
+            ? "You've reached the maximum number of products." 
+            : `You've reached the product limit (${productLimit}) for your ${subscriptionPlan} plan. Upgrade to add more products.`,
+          currentCount: productCount,
+          limit: isUnlimited ? "unlimited" : productLimit,
           plan: subscriptionPlan,
           upgradeUrl: "/dashboard/seller/subscriptions",
         },
@@ -157,9 +149,10 @@ export async function POST(req: Request) {
       )
     }
 
-    console.log(`✅ Product limit check passed: ${activeProductCount}/${isUnlimited ? '∞' : productLimit}`)
+    console.log(`✅ Product limit check passed: ${productCount}/${isUnlimited ? '∞' : productLimit}`)
 
-    // ✅ Create product (always create as active)
+
+    // ✅ Create product
     console.log("🚀 Creating product...")
     
     const productData = {
@@ -167,12 +160,11 @@ export async function POST(req: Request) {
       description,
       price,
       compareAtPrice,
-      category: category || undefined,
+      category: category || undefined, // Allow string category
       inventoryQuantity,
       images: images || [],
       storeId: store._id,
       sellerId: user.id,
-      isActive: true, // Always create as active
     }
     
     console.log("📝 Product data:", productData)
@@ -181,20 +173,8 @@ export async function POST(req: Request) {
 
     console.log("✅ Product created:", product._id)
 
-    // ✅ Enforce product limit (will deactivate oldest if needed)
-    try {
-      const result = await enforceProductLimit(storeId, productLimit)
-      console.log(`📊 Enforced product limit after creation:`, result)
-    } catch (error) {
-      console.error("❌ Failed to enforce product limit:", error)
-      // Don't fail the entire request
-    }
-
-    // Reload product to check if it's still active
-    const updatedProduct = await Product.findById(product._id)
-    
     // Convert to plain object
-    const productObj = updatedProduct!.toObject()
+    const productObj = product.toObject()
     const productWithId = {
       ...productObj,
       _id: productObj._id.toString(),
@@ -204,11 +184,9 @@ export async function POST(req: Request) {
       {
         success: true,
         product: productWithId,
-        message: updatedProduct!.isActive 
-          ? `Product created successfully!`
-          : `Product created but deactivated due to plan limit. Upgrade your plan or delete older products.`,
+        message: `Product created successfully!`,
         stats: {
-          currentCount: activeProductCount + 1,
+          currentCount: productCount + 1,
           limit: isUnlimited ? "unlimited" : productLimit,
           plan: subscriptionPlan,
         }
