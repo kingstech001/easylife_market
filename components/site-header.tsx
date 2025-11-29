@@ -374,7 +374,7 @@ export function SiteHeader() {
           {/* Mobile Menu - IMPROVED SMOOTH TRANSITION */}
           <div
             className={cn(
-              "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background/98 backdrop-blur-xl border-b md:hidden",
+              "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background backdrop-blur-xl border-b md:hidden",
               "transition-all duration-300 ease-out",
               mobileMenuOpen 
                 ? "translate-y-0 opacity-100 visible" 
@@ -385,7 +385,7 @@ export function SiteHeader() {
               className={cn(
                 "container mx-auto px-4 py-6 h-full overflow-y-auto",
                 "transition-all duration-300 delay-75",
-                mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+                mobileMenuOpen ? "translate-y-0 opacity-50" : "translate-y-2 opacity-0"
               )}
             >
               {/* Navigation Links */}

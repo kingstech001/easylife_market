@@ -150,99 +150,101 @@ export function LocationPrompt() {
     <AnimatePresence>
       {showPrompt && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - covers entire screen */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
             onClick={handleDismiss}
           />
           
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4"
-          >
-            <Card className="border-border/40 shadow-2xl">
-              <CardHeader className="relative pb-4">
-                <button
-                  onClick={handleDismiss}
-                  className="absolute right-4 top-4 p-1 rounded-lg hover:bg-muted transition-colors"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-3 rounded-xl bg-[#c0a146]/10">
-                    <MapPin className="h-6 w-6 text-[#c0a146]" />
-                  </div>
-                  <CardTitle className="text-xl">Enable Location</CardTitle>
-                </div>
-                
-                <CardDescription className="text-sm">
-                  Help us provide accurate delivery estimates and find stores near you
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {error && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-destructive">{error}</p>
-                  </div>
-                )}
-                
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <Navigation className="h-4 w-4 text-[#c0a146] mt-0.5 flex-shrink-0" />
-                    <span>Get accurate delivery time estimates</span>
-                  </div>
-                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 text-[#c0a146] mt-0.5 flex-shrink-0" />
-                    <span>Discover stores and products near you</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
-                    onClick={handleEnableLocation}
-                    disabled={isLoading}
-                    className="flex-1 bg-[#c0a146] hover:bg-[#c0a146]/90 text-white"
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="animate-spin mr-2">⌛</span>
-                        Getting Location...
-                      </>
-                    ) : (
-                      <>
-                        <MapPin className="mr-2 h-4 w-4" />
-                        Enable Location
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button
+          {/* Modal - perfectly centered with responsive sizing */}
+          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 sm:p-6 md:p-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="w-full max-w-[90%] sm:max-w-md md:max-w-lg"
+            >
+              <Card className="border-border/40 shadow-2xl">
+                <CardHeader className="relative pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
+                  <button
                     onClick={handleDismiss}
-                    variant="outline"
-                    disabled={isLoading}
-                    className="flex-1"
+                    className="absolute right-3 top-3 sm:right-4 sm:top-4 p-1.5 sm:p-2 rounded-lg hover:bg-muted transition-colors"
+                    aria-label="Close"
                   >
-                    Maybe Later
-                  </Button>
-                </div>
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                  
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2 pr-8">
+                    <div className="p-2 sm:p-3 rounded-xl bg-[#c0a146]/10 flex-shrink-0">
+                      <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-[#c0a146]" />
+                    </div>
+                    <CardTitle className="text-lg sm:text-xl">Enable Location</CardTitle>
+                  </div>
+                  
+                  <CardDescription className="text-xs sm:text-sm leading-relaxed">
+                    Help us provide accurate delivery estimates and find stores near you
+                  </CardDescription>
+                </CardHeader>
                 
-                <p className="text-xs text-center text-muted-foreground">
-                  Your location data is stored securely and never shared with third parties
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
+                  {error && (
+                    <div className="flex items-start gap-2 p-2.5 sm:p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                      <p className="text-xs sm:text-sm text-destructive leading-relaxed">{error}</p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2.5 sm:space-y-3">
+                    <div className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
+                      <Navigation className="h-4 w-4 text-[#c0a146] mt-0.5 flex-shrink-0" />
+                      <span className="leading-relaxed">Get accurate delivery time estimates</span>
+                    </div>
+                    <div className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 text-[#c0a146] mt-0.5 flex-shrink-0" />
+                      <span className="leading-relaxed">Discover stores and products near you</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2.5 sm:gap-3 pt-2">
+                    <Button
+                      onClick={handleEnableLocation}
+                      disabled={isLoading}
+                      className="w-full bg-[#c0a146] hover:bg-[#c0a146]/90 text-white h-10 sm:h-11 text-sm sm:text-base"
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="animate-spin mr-2">⌛</span>
+                          Getting Location...
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="mr-2 h-4 w-4" />
+                          Enable Location
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button
+                      onClick={handleDismiss}
+                      variant="outline"
+                      disabled={isLoading}
+                      className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                    >
+                      Maybe Later
+                    </Button>
+                  </div>
+                  
+                  <p className="text-[10px] sm:text-xs text-center text-muted-foreground leading-relaxed px-2">
+                    Your location data is stored securely and never shared with third parties
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

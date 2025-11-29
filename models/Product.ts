@@ -9,29 +9,31 @@ export interface IProductImage {
   altText?: string
 }
 
+export interface IDimensions {
+  length?: number
+  width?: number
+  height?: number
+}
+
 export interface IProduct extends Document {
   _id: mongoose.Types.ObjectId
   name: string
   description?: string
   price: number
-  compareAtPrice?: number
+  compareAtPrice?: number | null
   category?: string
   inventoryQuantity: number
   images: IProductImage[]
   storeId: mongoose.Types.ObjectId
-  isActive: boolean // ✅ Controls visibility based on subscription
-  isDeleted: boolean // ✅ Soft delete flag
-  deactivatedAt?: Date | null // ✅ NEW: Track when product was deactivated
+  isActive: boolean // Controls storefront visibility (true = visible)
+  isDeleted: boolean // Soft-delete flag
+  deactivatedAt?: Date | null // When product was deactivated due to plan limit or manual action
   sku?: string
   weight?: number
-  dimensions?: {
-    length?: number
-    width?: number
-    height?: number
-  }
+  dimensions?: IDimensions
   tags: string[]
-  createdAt: Date
-  updatedAt: Date
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 // ================== Schema ==================
@@ -41,12 +43,12 @@ const ProductSchema = new Schema<IProduct>(
       type: String,
       required: [true, "Product name is required"],
       trim: true,
-      maxLength: [200, "Product name cannot exceed 200 characters"],
+      maxlength: [200, "Product name cannot exceed 200 characters"],
     },
     description: {
       type: String,
       trim: true,
-      maxLength: [2000, "Description cannot exceed 2000 characters"],
+      maxlength: [2000, "Description cannot exceed 2000 characters"],
     },
     price: {
       type: Number,
@@ -58,15 +60,19 @@ const ProductSchema = new Schema<IProduct>(
       min: [0, "Compare at price cannot be negative"],
       validate: {
         validator: function (this: IProduct, value: number) {
-          return !value || value > this.price
+          // allow null/undefined OR a value strictly greater than price
+          if (value === null || value === undefined) return true
+          return value > this.price
         },
-        message: "Compare at price should be greater than regular price",
+        message: "Compare at price should be greater than the regular price",
       },
+      default: null,
     },
     category: {
       type: String,
       required: false,
       trim: true,
+      default: undefined,
     },
     inventoryQuantity: {
       type: Number,
@@ -74,18 +80,28 @@ const ProductSchema = new Schema<IProduct>(
       min: [0, "Inventory cannot be negative"],
       default: 0,
     },
-    images: [
-      {
-        url: {
-          type: String,
-          required: [true, "Image URL is required"],
+    images: {
+      type: [
+        {
+          url: {
+            type: String,
+            required: [true, "Image URL is required"],
+          },
+          altText: {
+            type: String,
+            default: "",
+          },
         },
-        altText: {
-          type: String,
-          default: "",
+      ],
+      default: [],
+      validate: {
+        validator: function (arr: IProductImage[]) {
+          // ensure each image has a non-empty url
+          return arr.every((img) => !!img && typeof img.url === "string" && img.url.length > 0)
         },
+        message: "Each image must have a valid URL",
       },
-    ],
+    },
     storeId: {
       type: Schema.Types.ObjectId,
       ref: "Store",
@@ -95,21 +111,22 @@ const ProductSchema = new Schema<IProduct>(
     isActive: {
       type: Boolean,
       default: true,
-      index: true, // ✅ Index for faster queries
+      index: true, // index for quicker storefront queries
     },
     isDeleted: {
       type: Boolean,
       default: false,
-      index: true, // ✅ Index for faster queries
+      index: true, // soft-delete flag
     },
     deactivatedAt: {
       type: Date,
-      default: null, // ✅ NEW: Tracks when product was deactivated due to plan limit
+      default: null,
     },
     sku: {
       type: String,
       unique: true,
-      sparse: true,
+      sparse: true, // allow multiple docs without sku
+      trim: true,
     },
     weight: {
       type: Number,
@@ -126,8 +143,8 @@ const ProductSchema = new Schema<IProduct>(
 )
 
 // ================== Indexes ==================
-ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 }) // ✅ Compound index for queries
-ProductSchema.index({ storeId: 1, createdAt: -1 }) // ✅ For sorting by creation date
+ProductSchema.index({ storeId: 1, isActive: 1, isDeleted: 1 })
+ProductSchema.index({ storeId: 1, createdAt: -1 })
 ProductSchema.index({ category: 1 })
 ProductSchema.index({ name: "text", description: "text" })
 ProductSchema.index({ createdAt: -1 })
@@ -140,7 +157,7 @@ ProductSchema.virtual("primaryImage").get(function (this: IProduct) {
 // ================== JSON Transform ==================
 ProductSchema.set("toJSON", {
   virtuals: true,
-  transform: (doc, ret) => {
+  transform: (doc: IProduct, ret: any) => {
     const out: any = ret
     out.id = out._id
     delete out._id
@@ -150,19 +167,44 @@ ProductSchema.set("toJSON", {
 })
 
 // ================== Middleware ==================
+// Generate a reasonably unique SKU when missing.
+// Format: <storeShort>-<timestampHex>-<random4>
 ProductSchema.pre<IProduct>("save", function (next) {
-  if (!this.sku) {
-    this.sku = `${this.storeId.toString().slice(-6)}-${Date.now()}`
+  try {
+    if (!this.sku) {
+      const storePart = this.storeId ? this.storeId.toString().slice(-6) : "unknown"
+      const tsHex = Date.now().toString(16)
+      const rand = Math.floor(Math.random() * 0xffff)
+        .toString(16)
+        .padStart(4, "0")
+      this.sku = `${storePart}-${tsHex}-${rand}`
+    }
+    next()
+  } catch (err) {
+    next(err as any)
+  }
+})
+
+// Optional: when a product is deactivated (isActive === false) but not deleted, set deactivatedAt
+ProductSchema.pre<IProduct>("save", function (next) {
+  if (this.isModified("isActive")) {
+    if (!this.isActive && !this.deactivatedAt) {
+      this.deactivatedAt = new Date()
+    } else if (this.isActive && this.deactivatedAt) {
+      // If re-activated, clear deactivatedAt
+      this.deactivatedAt = null
+    }
   }
   next()
 })
 
 // ================== Model ==================
-// Clear cached model to ensure schema changes are applied
-if (mongoose.models.Product) {
-  delete mongoose.models.Product
+// Clear cached model to ensure schema changes are applied during dev/hot-reload
+const MODEL_NAME = "Product"
+if (mongoose.models[MODEL_NAME]) {
+  delete mongoose.models[MODEL_NAME]
 }
 
-const Product: Model<IProduct> = mongoose.model<IProduct>("Product", ProductSchema)
+const Product: Model<IProduct> = mongoose.model<IProduct>(MODEL_NAME, ProductSchema)
 
 export default Product

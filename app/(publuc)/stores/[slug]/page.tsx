@@ -120,6 +120,7 @@ async function getStore(slug: string): Promise<StoreData | null> {
 }
 
 // ✅ Fetch products - DIRECT DATABASE ACCESS
+// ✅ Fetch products - DIRECT DATABASE ACCESS (FIXED)
 async function getStoreProducts(
   storeId: string,
   storeSlug: string
@@ -136,49 +137,62 @@ async function getStoreProducts(
 
     let products: any[] = [];
 
-    products = (await Product.find({ storeId: store._id, isPublished: true })
+    // Try 1: Fetch with isActive, isPublished, and storeId filters
+    products = (await Product.find({
+      isActive: true,
+      storeId: store._id,
+      isPublished: true
+    })
       .populate("images")
       .lean()) as any[];
 
     console.log(
-      "🔍 Try 1 (with isPublished): Found",
+      "🔍 Try 1 (with isActive & isPublished): Found",
       products.length,
       "products"
     );
 
+    // Try 2: Fetch with isActive and storeId only (without isPublished filter)
     if (!products || products.length === 0) {
-      console.log("🔍 Try 2: Fetching without isPublished filter...");
-      products = (await Product.find({ storeId: store._id })
+      console.log("🔍 Try 2: Fetching with isActive, without isPublished filter...");
+      products = (await Product.find({
+        isActive: true,
+        storeId: store._id
+      })
         .populate("images")
         .lean()) as any[];
       console.log(
-        "🔍 Try 2 (without isPublished): Found",
+        "🔍 Try 2 (with isActive, without isPublished): Found",
+        products.length,
+        "products"
+      );
+    }
+
+    // Try 3: Fetch with isActive and string storeId comparison
+    if (!products || products.length === 0) {
+      console.log("🔍 Try 3: Fetching with isActive and string storeId comparison...");
+      products = (await Product.find({
+        isActive: true,
+        storeId: store._id.toString()
+      })
+        .populate("images")
+        .lean()) as any[];
+      console.log(
+        "🔍 Try 3 (isActive + string comparison): Found",
         products.length,
         "products"
       );
     }
 
     if (!products || products.length === 0) {
-      console.log("🔍 Try 3: Fetching with string storeId comparison...");
-      products = (await Product.find({ storeId: store._id.toString() })
-        .populate("images")
-        .lean()) as any[];
       console.log(
-        "🔍 Try 3 (string comparison): Found",
-        products.length,
-        "products"
-      );
-    }
-
-    if (!products || products.length === 0) {
-      console.log(
-        "⚠️ No products found for store after all attempts:",
+        "⚠️ No active products found for store after all attempts:",
         storeSlug
       );
       return [];
     }
 
-    console.log("✅ Products fetched successfully:", products.length);
+    console.log("✅ Active products fetched successfully:", products.length);
 
     return products.map((product: any) => ({
       id: product._id?.toString() || "",

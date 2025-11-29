@@ -8,11 +8,11 @@ import {
   Users,
   ShoppingBag,
   Store,
-  Loader2,
   Package,
   TrendingUp,
   ArrowUpRight,
   Eye,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -23,12 +23,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { VisitorsChart } from "@/components/dashboard/visitors-chart";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { TopProducts } from "@/components/dashboard/top-products";
 import { LoadingSpinner } from "@/components/ui/loading";
 
-// Define a type for the dashboard statistics
 type DashboardStats = {
   totalSales: number;
   ordersCount: number;
@@ -36,13 +36,60 @@ type DashboardStats = {
   productsCount: number;
 };
 
+
 export default function SellerDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
 
   const [storeName, setStoreName] = useState<string | null>(null);
+  const [storeId, setStoreId] = useState<string | null>(null);
   const [storeError, setStoreError] = useState<string | null>(null);
+
+  const [subscriptionAlert, setSubscriptionAlert] = useState<{
+    show: boolean;
+    message: string;
+    type: "warning" | "info";
+  }>({ show: false, message: "", type: "info" });
+
+  // Check subscription status on mount
+  const checkSubscription = useCallback(async (storeId: string) => {
+    try {
+      console.log("🔍 Checking subscription status...");
+      const response = await fetch("/api/stores/check-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("✅ Subscription check complete:", data);
+
+        if (data.wasDowngraded) {
+          setSubscriptionAlert({
+            show: true,
+            message: `Your subscription has expired. You've been downgraded to the free plan. ${
+              data.enforcement?.deactivated || 0
+            } products have been deactivated.`,
+            type: "warning",
+          });
+          toast.warning("Subscription Expired", {
+            description: data.message,
+          });
+        } else if (data.enforcement?.deactivated > 0) {
+          setSubscriptionAlert({
+            show: true,
+            message: `${data.enforcement.deactivated} products have been deactivated due to your plan limit.`,
+            type: "info",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to check subscription:", error);
+    }
+  }, []);
 
   // Fetch dashboard stats
   const fetchDashboardStats = useCallback(async () => {
@@ -85,11 +132,17 @@ export default function SellerDashboardPage() {
       }
       const data = await res.json();
       setStoreName(data.store.name);
+      setStoreId(data.store._id);
+
+      // Check subscription after getting store ID
+      if (data.store._id) {
+        await checkSubscription(data.store._id);
+      }
     } catch (error: any) {
       console.error("Error fetching store:", error);
       setStoreError(error.message || "Unable to fetch store");
     }
-  }, []);
+  }, [checkSubscription]);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -140,6 +193,52 @@ export default function SellerDashboardPage() {
   return (
     <div className="min-h-screen ">
       <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* Subscription Alert - FIXED */}
+        {subscriptionAlert.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Alert
+              variant={subscriptionAlert.type === "warning" ? "destructive" : "default"}
+              className={
+                subscriptionAlert.type === "warning"
+                  ? "border-red-500 bg-red-50 dark:bg-red-950/50"
+                  : "border-orange-500 bg-orange-50 dark:bg-orange-950/50"
+              }
+            >
+              <AlertCircle 
+                className={
+                  subscriptionAlert.type === "warning"
+                    ? "h-4 w-4 text-red-600 dark:text-red-400"
+                    : "h-4 w-4 text-orange-600 dark:text-orange-400"
+                }
+              />
+              <AlertTitle
+                className={
+                  subscriptionAlert.type === "warning"
+                    ? "text-red-900 dark:text-red-100 font-semibold"
+                    : "text-orange-900 dark:text-orange-100 font-semibold"
+                }
+              >
+                {subscriptionAlert.type === "warning"
+                  ? "⚠️ Subscription Expired"
+                  : "Notice"}
+              </AlertTitle>
+              <AlertDescription
+                className={
+                  subscriptionAlert.type === "warning"
+                    ? "text-red-800 dark:text-red-200"
+                    : "text-orange-800 dark:text-orange-200"
+                }
+              >
+                {subscriptionAlert.message}
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
