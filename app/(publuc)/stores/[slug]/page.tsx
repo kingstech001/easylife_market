@@ -25,6 +25,7 @@ import ExpandableText from "@/components/ExpandableText";
 import { connectToDB } from "@/lib/db";
 import Store from "@/models/Store";
 import Product from "@/models/Product";
+import { StoreStatusBadge } from "@/components/store-status-badge";
 
 // ✅ Allow dynamic params
 export const dynamicParams = true;
@@ -120,7 +121,6 @@ async function getStore(slug: string): Promise<StoreData | null> {
 }
 
 // ✅ Fetch products - DIRECT DATABASE ACCESS
-// ✅ Fetch products - DIRECT DATABASE ACCESS (FIXED)
 async function getStoreProducts(
   storeId: string,
   storeSlug: string
@@ -137,11 +137,10 @@ async function getStoreProducts(
 
     let products: any[] = [];
 
-    // Try 1: Fetch with isActive, isPublished, and storeId filters
     products = (await Product.find({
       isActive: true,
       storeId: store._id,
-      isPublished: true
+      isPublished: true,
     })
       .populate("images")
       .lean()) as any[];
@@ -152,12 +151,13 @@ async function getStoreProducts(
       "products"
     );
 
-    // Try 2: Fetch with isActive and storeId only (without isPublished filter)
     if (!products || products.length === 0) {
-      console.log("🔍 Try 2: Fetching with isActive, without isPublished filter...");
+      console.log(
+        "🔍 Try 2: Fetching with isActive, without isPublished filter..."
+      );
       products = (await Product.find({
         isActive: true,
-        storeId: store._id
+        storeId: store._id,
       })
         .populate("images")
         .lean()) as any[];
@@ -168,12 +168,13 @@ async function getStoreProducts(
       );
     }
 
-    // Try 3: Fetch with isActive and string storeId comparison
     if (!products || products.length === 0) {
-      console.log("🔍 Try 3: Fetching with isActive and string storeId comparison...");
+      console.log(
+        "🔍 Try 3: Fetching with isActive and string storeId comparison..."
+      );
       products = (await Product.find({
         isActive: true,
-        storeId: store._id.toString()
+        storeId: store._id.toString(),
       })
         .populate("images")
         .lean()) as any[];
@@ -332,6 +333,7 @@ export default async function StorePage({ params }: StorePageProps) {
                             {store.name}
                           </h1>
                           <div className="flex items-center gap-2 flex-wrap">
+                            <StoreStatusBadge openTime={9} closeTime={21} />
                             <Badge
                               variant="default"
                               className="flex items-center gap-1.5 px-3 py-1"
@@ -342,27 +344,7 @@ export default async function StorePage({ params }: StorePageProps) {
                                 (127 reviews)
                               </span>
                             </Badge>
-                            <Badge
-                              variant="secondary"
-                              className="flex items-center gap-1.5"
-                            >
-                              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                              Open Now
-                            </Badge>
                           </div>
-                        </div>
-
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-4 text-[12px] md:text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="h-4 w-4 text-primary" />
-                          <span>9:00 AM - 9:00 PM</span>
-                        </div>
-                        <Separator orientation="vertical" className="h-4" />
-                        <div className="flex items-center gap-1.5">
-                          <Package className="h-4 w-4 text-primary" />
-                          <span>{storeProducts.length} Products</span>
                         </div>
                       </div>
                     </div>
