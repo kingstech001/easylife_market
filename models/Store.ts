@@ -42,7 +42,7 @@ export interface IStore extends Document {
 const StoreSchema = new Schema<IStore>(
   {
     name: { type: String, required: true, unique: true },
-    slug: { type: String, unique: true, index: true },
+    slug: { type: String, unique: true,},
     description: { type: String },
     logo_url: { type: String },
     banner_url: { type: String },
@@ -72,15 +72,16 @@ const StoreSchema = new Schema<IStore>(
       },
       coordinates: {
         type: [Number],
-        required: true,
+        required: false,
+        default: [0, 0],
       },
       address: {
         type: String,
         required: true,
       },
-      city: String,
-      state: String,
-      country: String,
+      city: { type: String, default: "Enugu" },
+      state: { type: String, default: "Enugu" },
+      country: { type: String, default: "Nigeria" },
     },
   },
   {

@@ -220,8 +220,8 @@ function VerifyEmailForm() {
                 <Button
                   type="submit"
                   className={cn(
-                    "w-full h-12 text-base font-medium transition-all duration-200",
-                    "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
+                    "w-full h-12 text-base text-background font-medium transition-all duration-200",
+                    "bg-gradient-to-r from-foreground to-foreground/90 hover:from-primary/90 hover:to-primary",
                     "shadow-lg hover:shadow-xl hover:shadow-primary/25",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}

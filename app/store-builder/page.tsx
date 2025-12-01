@@ -44,7 +44,7 @@ const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters."),
   description: z.string().optional(),
   price: z.coerce.number().positive("Price must be a positive number."),
-  compareAtPrice: z.coerce.number().positive().optional(),
+  compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
   category: z.string().optional(),
   inventoryQuantity: z.coerce.number().int().nonnegative("Inventory must be a non-negative integer."),
   images: z
@@ -85,6 +85,7 @@ export default function StoreBuilderPage() {
 
   const watchedImages = form.watch("images")
 
+  // Load draft on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY)
@@ -99,6 +100,7 @@ export default function StoreBuilderPage() {
     }
   }, [])
 
+  // Auto-save draft
   useEffect(() => {
     const subscription = form.watch((values) => {
       if (pauseSave.current) return
@@ -117,10 +119,10 @@ export default function StoreBuilderPage() {
     }
   }, [form])
 
+  // Fetch store and products
   useEffect(() => {
     async function fetchData() {
       try {
-        console.log("Fetching store data...")
         const storeRes = await fetch("/api/dashboard/seller/store")
 
         if (!storeRes.ok) {
@@ -128,28 +130,19 @@ export default function StoreBuilderPage() {
           throw new Error(`Failed to fetch store: ${errorData.message || storeRes.statusText}`)
         }
         const { store } = await storeRes.json()
-        console.log("Store data received:", store)
         setStore(store)
 
-        console.log("Fetching product data...")
         const productRes = await fetch("/api/dashboard/seller/products")
         if (!productRes.ok) {
           const errorData = await productRes.json().catch(() => ({ message: "Unknown error" }))
           throw new Error(`Failed to fetch products: ${errorData.message || productRes.statusText}`)
         }
         const { products } = await productRes.json()
-        console.log("Products data received:", products)
         setProducts(products || [])
-        console.log("Data fetching completed successfully.")
       } catch (error: any) {
         console.error("Error during data fetch:", error)
-        if (error.name === "AbortError") {
-          toast.error("Request timed out. Please check your network or server response time.")
-        } else {
-          toast.error(error.message || "Failed to fetch store or products. Please try again.")
-        }
+        toast.error(error.message || "Failed to fetch store or products. Please try again.")
       } finally {
-        console.log("Setting loading to false.")
         setLoading(false)
       }
     }
@@ -157,16 +150,29 @@ export default function StoreBuilderPage() {
   }, [])
 
   const handleEdit = (p: ProductFormValues) => {
+    pauseSave.current = true
     setEditingProduct(p)
-    // Ensure category is set even if it's undefined in the product
+
+    const { id, _id, ...productData } = p
     form.reset({
-      ...p,
-      category: p.category || "", // Default to empty string if no category
+      ...productData,
+      category: productData.category || "",
+      description: productData.description || "",
+      images: productData.images || [],
     })
-    try { localStorage.removeItem(DRAFT_KEY) } catch {}
+
+    try {
+      localStorage.removeItem(DRAFT_KEY)
+    } catch {}
+
+    setTimeout(() => {
+      pauseSave.current = false
+    }, 100)
   }
 
   const handleDelete = async (productId: string) => {
+    if (!productId) return
+
     setIsSubmitting(true)
     try {
       const res = await fetch(`/api/dashboard/seller/products/${productId}`, { method: "DELETE" })
@@ -176,9 +182,17 @@ export default function StoreBuilderPage() {
       }
       setProducts(products.filter((p) => (p.id || p._id) !== productId))
       toast.success("Product deleted successfully")
+
       if ((editingProduct?.id || editingProduct?._id) === productId) {
         setEditingProduct(null)
-        form.reset()
+        form.reset({
+          name: "",
+          description: "",
+          price: 0,
+          category: "",
+          inventoryQuantity: 0,
+          images: [],
+        })
         setActiveTab("details")
       }
     } catch (error: any) {
@@ -190,87 +204,103 @@ export default function StoreBuilderPage() {
   }
 
   const handleSubmit = async (data: ProductFormValues) => {
-    const isCreating = !(editingProduct?.id || editingProduct?._id)
+    const editingId = editingProduct?.id || editingProduct?._id
+    const isCreating = !editingId
+
     if (products.length >= 10 && isCreating) {
       toast.error("Maximum of 10 products reached. Delete an existing product to add a new one.")
       return
     }
+
     if (!store?._id) {
       toast.error("No store found. Please ensure your store is set up.")
       return
     }
+
     setIsSubmitting(true)
+
     try {
-      const payload = { ...data, storeId: store._id }
+      const cleanedData = {
+        name: data.name,
+        description: data.description || "",
+        price: Number(data.price),
+        category: data.category || "",
+        inventoryQuantity: Number(data.inventoryQuantity),
+        images: data.images || [],
+        storeId: store._id,
+      }
+
       let resultProduct: ProductFormValues
 
-      const editingId = editingProduct?.id || editingProduct?._id
       if (editingId) {
-        console.log("Updating product:", editingId, "with payload:", payload)
         const res = await fetch(`/api/dashboard/seller/products/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(cleanedData),
         })
-        
-        console.log("Update response status:", res.status)
+
         const responseData = await res.json()
-        console.log("Update response data:", responseData)
-        
+
         if (!res.ok) {
           throw new Error(`Failed to update product: ${responseData.message || responseData.error || res.statusText}`)
         }
-        
-        // The API returns { success, data, message }
+
         resultProduct = responseData.data
         setProducts((prev) =>
-          prev.map((p) => ((p.id || p._id) === (resultProduct.id || resultProduct._id) ? resultProduct : p)),
+          prev.map((p) => {
+            const pId = p.id || p._id
+            const rId = resultProduct.id || resultProduct._id
+            return pId === rId ? resultProduct : p
+          }),
         )
         toast.success(responseData.message || "Product updated successfully")
       } else {
-        console.log("Creating new product with payload:", payload)
         const res = await fetch("/api/dashboard/seller/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(cleanedData),
         })
-        
-        console.log("Response status:", res.status)
+
         const responseData = await res.json()
-        console.log("Response data:", responseData)
-        
+
         if (!res.ok) {
           throw new Error(`Failed to add product: ${responseData.message || responseData.error || res.statusText}`)
         }
-        
-        // The API returns { success, product, message, stats }
+
         resultProduct = responseData.product
         setProducts((prev) => [...prev, resultProduct])
         toast.success(responseData.message || "Product added successfully")
       }
 
+      // Clear form and reset state
       pauseSave.current = true
-      try { localStorage.removeItem(DRAFT_KEY) } catch (err) { console.warn("Failed to clear draft:", err) }
+      try {
+        localStorage.removeItem(DRAFT_KEY)
+      } catch (err) {
+        console.warn("Failed to clear draft:", err)
+      }
 
-      const emptyValues: ProductFormValues = {
+      setEditingProduct(null)
+
+      form.reset({
         name: "",
         description: "",
         price: 0,
         category: "",
         inventoryQuantity: 0,
         images: [],
-      }
-      setEditingProduct(null)
-      form.reset(emptyValues)
-      form.clearErrors()
+      })
+
       try {
         const uploadInput = document.getElementById("upload") as HTMLInputElement | null
         if (uploadInput) uploadInput.value = ""
       } catch (err) {}
+
       setActiveTab("details")
+
       setTimeout(() => {
         pauseSave.current = false
-      }, 400)
+      }, 500)
     } catch (error: any) {
       console.error("Save/Update error:", error)
       toast.error(error.message || "Failed to save product")
@@ -286,7 +316,6 @@ export default function StoreBuilderPage() {
     }
 
     setIsSubmitting(true)
-    console.log("Attempting to publish store with ID:", store._id)
 
     try {
       const res = await fetch("/api/dashboard/seller/store/publish", {
@@ -308,7 +337,6 @@ export default function StoreBuilderPage() {
       } else {
         router.push("/dashboard/seller/store")
       }
-
     } catch (error: any) {
       console.error("Publish error:", error)
       toast.error(error.message || "Failed to publish store")
@@ -440,9 +468,18 @@ export default function StoreBuilderPage() {
                     disabled={products.length >= 10}
                     onClick={() => {
                       setEditingProduct(null)
-                      form.reset()
+                      form.reset({
+                        name: "",
+                        description: "",
+                        price: 0,
+                        category: "",
+                        inventoryQuantity: 0,
+                        images: [],
+                      })
                       setActiveTab("details")
-                      try { localStorage.removeItem(DRAFT_KEY) } catch {}
+                      try {
+                        localStorage.removeItem(DRAFT_KEY)
+                      } catch {}
                     }}
                     className="bg-[#c0a146] hover:bg-[#c0a146]/90 h-9"
                   >
@@ -500,8 +537,7 @@ export default function StoreBuilderPage() {
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                     <span className="flex items-center gap-1 font-medium text-foreground">
-                                      <DollarSign className="w-3 h-3" />
-                                      ₦{p.price.toFixed(2)}
+                                      <DollarSign className="w-3 h-3" />₦{p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
                                       <Box className="w-3 h-3" />
@@ -574,9 +610,18 @@ export default function StoreBuilderPage() {
                           size="sm"
                           onClick={() => {
                             setEditingProduct(null)
-                            form.reset()
+                            form.reset({
+                              name: "",
+                              description: "",
+                              price: 0,
+                              category: "",
+                              inventoryQuantity: 0,
+                              images: [],
+                            })
                             setActiveTab("details")
-                            try { localStorage.removeItem(DRAFT_KEY) } catch {}
+                            try {
+                              localStorage.removeItem(DRAFT_KEY)
+                            } catch {}
                           }}
                           className="h-9"
                         >
@@ -587,32 +632,32 @@ export default function StoreBuilderPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-6 md:p-8">
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                      <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl h-12">
-                        <TabsTrigger
-                          value="details"
-                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
-                        >
-                          <Settings className="w-4 h-4 mr-2" />
-                          Details
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="images"
-                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
-                        >
-                          <ImageIcon className="w-4 h-4 mr-2" />
-                          Images
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="inventory"
-                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
-                        >
-                          <Box className="w-4 h-4 mr-2" />
-                          Inventory
-                        </TabsTrigger>
-                      </TabsList>
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+                          <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl h-12">
+                            <TabsTrigger
+                              value="details"
+                              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
+                            >
+                              <Settings className="w-4 h-4 mr-2" />
+                              Details
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="images"
+                              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
+                            >
+                              <ImageIcon className="w-4 h-4 mr-2" />
+                              Images
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="inventory"
+                              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
+                            >
+                              <Box className="w-4 h-4 mr-2" />
+                              Inventory
+                            </TabsTrigger>
+                          </TabsList>
                           {/* Details Tab */}
                           <TabsContent value="details" className="space-y-6 mt-8">
                             <FormField
@@ -622,11 +667,7 @@ export default function StoreBuilderPage() {
                                 <FormItem>
                                   <FormLabel className="text-base">Product Name *</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      placeholder="Enter a compelling product name"
-                                      className="h-12"
-                                      {...field}
-                                    />
+                                    <Input placeholder="Enter a compelling product name" className="h-12" {...field} />
                                   </FormControl>
                                   <FormDescription>Choose a clear and descriptive name</FormDescription>
                                   <FormMessage />
@@ -755,7 +796,7 @@ export default function StoreBuilderPage() {
                                           altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
                                         },
                                       ],
-                                      { shouldDirty: true }
+                                      { shouldDirty: true },
                                     )
                                     toast.success("Image uploaded successfully")
                                   } catch (err) {
@@ -799,7 +840,7 @@ export default function StoreBuilderPage() {
                                         form.setValue(
                                           "images",
                                           currentImages.filter((_, i) => i !== idx),
-                                          { shouldDirty: true }
+                                          { shouldDirty: true },
                                         )
                                       }}
                                     >
@@ -835,9 +876,7 @@ export default function StoreBuilderPage() {
                               </div>
                               <div>
                                 <h3 className="text-lg font-semibold">Inventory Management</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  Track your product stock levels
-                                </p>
+                                <p className="text-sm text-muted-foreground">Track your product stock levels</p>
                               </div>
                             </div>
 
@@ -873,9 +912,7 @@ export default function StoreBuilderPage() {
                                   <Sparkles className="h-5 w-5 text-[#c0a146]" />
                                 </div>
                                 <div className="text-sm">
-                                  <p className="font-medium text-foreground mb-1">
-                                    Inventory Tip
-                                  </p>
+                                  <p className="font-medium text-foreground mb-1">Inventory Tip</p>
                                   <p className="text-muted-foreground">
                                     Keep your stock levels updated to avoid overselling and maintain customer trust.
                                   </p>
@@ -883,30 +920,29 @@ export default function StoreBuilderPage() {
                               </div>
                             </div>
                           </TabsContent>
+                        </Tabs>
 
-                          {/* Action Buttons */}
-                          <div className="flex justify-end pt-6 border-t">
-                            <Button
-                              type="submit"
-                              disabled={isSubmitting || (products.length >= 10 && !editingProduct)}
-                              className="bg-[#c0a146] hover:bg-[#c0a146]/90 shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
-                            >
-                              {isSubmitting ? (
-                                <>
-                                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                                  {editingProduct ? "Updating..." : "Saving..."}
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="h-5 w-5 mr-2" />
-                                  {editingProduct ? "Update Product" : "Save Product"}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </form>
-                      </Form>
-                    </Tabs>
+                        <div className="flex justify-end pt-6 border-t">
+                          <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-[#c0a146] hover:bg-[#c0a146]/90 text-white shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                {editingProduct ? "Updating..." : "Saving..."}
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-5 w-5 mr-2" />
+                                {editingProduct ? "Update Product" : "Save Product"}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
                   </CardContent>
                 </Card>
               </motion.div>

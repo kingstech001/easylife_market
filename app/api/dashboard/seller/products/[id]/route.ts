@@ -129,7 +129,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     product.description = updates.description ?? product.description
     product.price = updates.price ?? product.price
     product.compareAtPrice = updates.compareAtPrice ?? product.compareAtPrice
-    product.category = updates.categoryId ?? product.category
+    product.category = updates.category ?? product.category
     product.inventoryQuantity = updates.inventoryQuantity ?? product.inventoryQuantity
     product.images = updates.images ?? product.images
     product.updatedAt = new Date()

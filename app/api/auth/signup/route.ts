@@ -9,24 +9,8 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { firstName, lastName, email, password, role } = body
 
-    // Debug logging
-    console.log("Registration request received:", {
-      firstName,
-      lastName,
-      email,
-      role,
-      passwordLength: password ? password.length : 0,
-    })
-
     // Validate required fields
     if (!firstName || !lastName || !email || !password || !role) {
-      console.log("Missing required fields:", {
-        firstName: !!firstName,
-        lastName: !!lastName,
-        email: !!email,
-        password: !!password,
-        role: !!role,
-      })
       return NextResponse.json({ message: "All fields are required" }, { status: 400 })
     }
 
@@ -34,7 +18,6 @@ export async function POST(req: Request) {
     const normalizedEmail = email.trim().toLowerCase()
 
     await connectToDB()
-    console.log("Database connected successfully")
 
     // Check for existing user
     const existingUser = await User.findOne({ email: normalizedEmail })
@@ -43,27 +26,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Email already in use" }, { status: 400 })
     }
 
-
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Generate verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString()
+    const verificationTokenExpires = new Date(Date.now() + 10 * 60 * 1000) // 15 minutes
 
-    // Create user
+    // Create user with CORRECT field names
     const userData = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
       password: hashedPassword,
       role,
-      verificationCode,
-      codeExpires: new Date(Date.now() + 10 * 60 * 1000), // expires in 10 mins
-      verified: false,
+      verificationToken, // Changed from verificationCode
+      verificationTokenExpires, // Changed from codeExpires
+      isVerified: false, // Changed from verified
       createdAt: new Date(),
     }
 
+    console.log("Creating user with verification token:", {
+      email: normalizedEmail,
+      hasToken: !!verificationToken,
+      expires: verificationTokenExpires
+    })
+
     const user = await User.create(userData)
+
+    console.log("User created successfully:", {
+      id: user._id,
+      email: user.email,
+      hasToken: !!user.verificationToken,
+      tokenExpires: user.verificationTokenExpires
+    })
 
     // Send verification email
     try {
@@ -74,8 +70,6 @@ export async function POST(req: Request) {
           pass: process.env.EMAIL_PASS,
         },
       })
-
-      console.log("Email transporter created, sending email to:", normalizedEmail)
 
       const mailOptions = {
         from: `"Easylife Market" <${process.env.EMAIL_USER}>`,
@@ -90,8 +84,8 @@ export async function POST(req: Request) {
             
             <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center; margin: 20px 0;">
               <h2 style="color: #333; margin-bottom: 15px;">Your Verification Code</h2>
-              <div style="background-color: #fff; padding: 20px; border-radius: 8px; border: 2px dashed #007bff; margin: 15px 0;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #007bff;">${verificationCode}</span>
+              <div style="background-color: #fff; padding: 20px; border-radius: 8px; border: 2px dashed #c0a146; margin: 15px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #c0a146;">${verificationToken}</span>
               </div>
               <p style="color: #666; margin-top: 15px;">This code will expire in <strong>10 minutes</strong></p>
             </div>
@@ -109,38 +103,35 @@ export async function POST(req: Request) {
             </div>
           </div>
         `,
-        text: `Welcome to Easylife Market, ${firstName}! Your verification code is ${verificationCode}. This code will expire in 10 minutes. If you didn't create an account with us, please ignore this email.`,
+        text: `Welcome to Easylife Market, ${firstName}! Your verification code is ${verificationToken}. This code will expire in 10 minutes. If you didn't create an account with us, please ignore this email.`,
       }
 
       await transporter.sendMail(mailOptions)
-      console.log("Verification email sent successfully to:", normalizedEmail)
+      console.log("✅ Verification email sent successfully to:", normalizedEmail)
     } catch (emailError) {
-      console.error("Failed to send verification email:", emailError)
+      console.error("❌ Failed to send verification email:", emailError)
 
       // Delete the user if email sending fails
-      try {
-        await User.findByIdAndDelete(user._id)
-        console.log("User deleted due to email sending failure")
-      } catch (deleteError) {
-        console.error("Failed to delete user after email error:", deleteError)
-      }
+      await User.findByIdAndDelete(user._id)
 
-      return NextResponse.json({ message: "Failed to send verification email. Please try again." }, { status: 500 })
+      return NextResponse.json(
+        { message: "Failed to send verification email. Please try again." },
+        { status: 500 }
+      )
     }
-
-    console.log("Registration completed successfully for:", normalizedEmail)
 
     return NextResponse.json(
       {
         message: "Registration successful! Please check your email for verification code.",
         email: normalizedEmail,
       },
-      { status: 201 },
+      { status: 201 }
     )
   } catch (error) {
-    console.error("Registration error:", error)
-    console.error("Error stack:", (error as any).stack)
-
-    return NextResponse.json({ message: "Server error occurred during registration" }, { status: 500 })
+    console.error("❌ Registration error:", error)
+    return NextResponse.json(
+      { message: "Server error occurred during registration" },
+      { status: 500 }
+    )
   }
 }

@@ -9,10 +9,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Loader2,
   StoreIcon,
-  Building,
+  Building2,
   ImageIcon,
   Upload,
   Check,
+  RotateCcw,
+  MapPin,
+  Link2,
+  FileText,
+  Sparkles,
+  Tag,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,10 +34,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
 import { AnimatedContainer } from "@/components/ui/animated-container";
-import { FormSection } from "@/components/ui/form-section";
 
 const storeFormSchema = z.object({
   name: z
@@ -45,7 +51,7 @@ const storeFormSchema = z.object({
   description: z.string().optional(),
   logo_url: z.string().optional(),
   banner_url: z.string().optional(),
-  categories: z.string().optional(), // <-- Add this (comma-separated string)
+  categories: z.string().optional(),
   location: z
     .string()
     .min(5, { message: "Please provide a valid address for your store." }),
@@ -53,13 +59,16 @@ const storeFormSchema = z.object({
 
 type StoreFormValues = z.infer<typeof storeFormSchema>;
 
+const STORAGE_KEY = "create_store_draft";
+const PREVIEW_STORAGE_KEY = "create_store_previews";
+
 export default function CreateStorePage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
 
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
@@ -69,10 +78,61 @@ export default function CreateStorePage() {
       description: "",
       logo_url: "",
       banner_url: "",
-      categories: "", // <-- Add this
+      categories: "",
       location: "",
     },
   });
+
+  // Load saved draft on mount
+  useEffect(() => {
+    const loadDraft = () => {
+      try {
+        const savedDraft = localStorage.getItem(STORAGE_KEY);
+        const savedPreviews = localStorage.getItem(PREVIEW_STORAGE_KEY);
+
+        if (savedDraft) {
+          const draftData = JSON.parse(savedDraft);
+          
+          Object.keys(draftData).forEach((key) => {
+            form.setValue(key as keyof StoreFormValues, draftData[key]);
+          });
+
+          setHasDraft(true);
+          console.log("✅ Draft loaded");
+        }
+
+        if (savedPreviews) {
+          const previewData = JSON.parse(savedPreviews);
+          if (previewData.logo) setLogoPreview(previewData.logo);
+          if (previewData.banner) setBannerPreview(previewData.banner);
+        }
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      }
+    };
+
+    loadDraft();
+  }, [form]);
+
+  // Auto-save form data
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+        localStorage.setItem(
+          PREVIEW_STORAGE_KEY,
+          JSON.stringify({
+            logo: logoPreview,
+            banner: bannerPreview,
+          })
+        );
+      } catch (error) {
+        console.error("Failed to save draft:", error);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, logoPreview, bannerPreview]);
 
   // Auto-generate slug
   useEffect(() => {
@@ -84,7 +144,7 @@ export default function CreateStorePage() {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  // Get user from JWT via API
+  // Get user authentication
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -93,30 +153,43 @@ export default function CreateStorePage() {
         if (res.ok && data?.user?._id) {
           setOwnerId(data.user._id);
         } else {
-          toast("User not authenticated. Please log in to create a store.");
-          // Optionally redirect to login page
+          toast.error("Authentication required", {
+            description: "Please log in to create a store.",
+          });
           router.push("/auth/login");
         }
       } catch (err) {
-        toast("Failed to fetch user data. Please try again.");
+        toast.error("Failed to fetch user data", {
+          description: "Please try again later.",
+        });
       }
     };
     fetchUser();
-  }, [toast]);
+  }, [router]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File too large", {
+          description: "Logo must be less than 5MB",
+        });
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = (e) => setLogoPreview(e.target?.result as string);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setLogoPreview(result);
+        localStorage.setItem(
+          PREVIEW_STORAGE_KEY,
+          JSON.stringify({ logo: result, banner: bannerPreview })
+        );
+        toast.success("Logo uploaded successfully");
+      };
       reader.readAsDataURL(file);
       form.setValue("logo_url", "placeholder-url-for-upload", {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    } else {
-      setLogoPreview(null);
-      form.setValue("logo_url", "", {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -126,30 +199,60 @@ export default function CreateStorePage() {
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File too large", {
+          description: "Banner must be less than 5MB",
+        });
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = (e) => setBannerPreview(e.target?.result as string);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setBannerPreview(result);
+        localStorage.setItem(
+          PREVIEW_STORAGE_KEY,
+          JSON.stringify({ logo: logoPreview, banner: result })
+        );
+        toast.success("Banner uploaded successfully");
+      };
       reader.readAsDataURL(file);
       form.setValue("banner_url", "placeholder-url-for-upload", {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    } else {
-      setBannerPreview(null);
-      form.setValue("banner_url", "", {
         shouldDirty: true,
         shouldValidate: true,
       });
     }
   };
 
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PREVIEW_STORAGE_KEY);
+      form.reset();
+      setLogoPreview(null);
+      setBannerPreview(null);
+      setHasDraft(false);
+      toast.success("Draft cleared", {
+        description: "All saved data has been removed.",
+      });
+    } catch (error) {
+      console.error("Failed to clear draft:", error);
+      toast.error("Failed to clear draft");
+    }
+  };
+
   async function onSubmit(data: StoreFormValues) {
     if (!ownerId) {
-      toast("Please log in to create a store.");
+      toast.error("Authentication required", {
+        description: "Please log in to create a store.",
+      });
       return;
     }
+
     setIsSubmitting(true);
+    
     try {
-      // Convert comma-separated categories to array
       const categoriesArray = data.categories
         ? data.categories
             .split(",")
@@ -165,188 +268,301 @@ export default function CreateStorePage() {
           ...data,
           logo_url: logoPreview,
           banner_url: bannerPreview,
-          categories: categoriesArray, // <-- Send as array
+          categories: categoriesArray,
         }),
       });
 
+      const result = await res.json();
+
       if (!res.ok) {
-        toast("An unexpected error occurred while creating your store.");
+        toast.error("Failed to create store", {
+          description: result.message || "Unable to create your store. Please try again.",
+        });
         return;
       }
 
-      toast("Your store has been successfully set up.");
+      // Clear draft after successful submission
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PREVIEW_STORAGE_KEY);
+
+      toast.success("Store created successfully!", {
+        description: "Your store is now live and ready to use.",
+      });
+
+      // Redirect to store builder
       router.push("/store-builder");
     } catch (error) {
-      toast("Could not create store. Please try again.");
+      console.error("Store creation error:", error);
+      toast.error("An unexpected error occurred", {
+        description: "Please try again later.",
+      });
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen py-12 sm:px-6 lg:px-8 ">
-      <div className="max-w-full bg-background/90 backdrop-blur-sm rounded-xl shadow-lg p-4 dark:bg-background/80">
-        <AnimatedContainer animation="fadeIn" className="mb-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className=" hidden md:flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary shadow-sm">
-              <StoreIcon className="h-7 w-7 " />
-            </div>
-            <div>
-              <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
-                Create Your Store
-              </h1>
-              <p className="text-lg text-muted-foreground mt-1">
-                Launch your online presence in minutes
-              </p>
-            </div>
-          </div>
-        </AnimatedContainer>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
-            <AnimatedContainer animation="slideUp" delay={0.1}>
-              <FormSection
-                title="Store Information"
-                description="Basic details about your store"
-                icon={Building}
-              >
-                <div className="grid gap-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Store Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="My Awesome Store" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          This is the name customers will see.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Store Address</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. No. 12 amufie Road Ogrute, Enugu, Nigeria"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Enter your store's physical address or business
-                          location.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+    <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Background decoration */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#c0a146]/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 right-1/4 w-80 h-80 bg-[#c0a146]/5 rounded-full blur-3xl" />
+      </div>
 
-                  <FormField
-                    control={form.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Store URL</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center">
-                            <div className="flex h-10 items-center rounded-l-md border border-r-0 bg-muted px-3 text-sm text-muted-foreground">
-                              shopbuilder.com/stores/
-                            </div>
-                            <Input className="rounded-l-none" {...field} />
-                          </div>
-                        </FormControl>
-                        <FormDescription>
-                          This will be your store’s public URL.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Store Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Tell customers what your store is about..."
-                            className="resize-none min-h-[120px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          A short description of your store and what you sell.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="categories"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Categories</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. Electronics, Phones, Accessories"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Separate categories with commas.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+      <div className="relative max-w-5xl mx-auto">
+        {/* Header Section */}
+        <AnimatedContainer animation="fadeIn" className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#c0a146] to-[#d4b55e] flex items-center justify-center shadow-xl">
+                  <StoreIcon className="h-8 w-8 text-white" />
                 </div>
-              </FormSection>
+                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-emerald-500 rounded-full border-4 border-background" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  Create Your Store
+                </h1>
+                <p className="text-muted-foreground mt-1 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#c0a146]" />
+                  Build your online presence in minutes
+                </p>
+              </div>
+            </div>
+            
+            {hasDraft && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearDraft}
+                className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Clear Draft
+              </Button>
+            )}
+          </div>
+
+          {hasDraft && (
+            <Card className="border-[#c0a146]/30 bg-gradient-to-r from-[#c0a146]/5 to-transparent">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-[#c0a146]/20 flex items-center justify-center">
+                    <Check className="h-5 w-5 text-[#c0a146]" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Draft Saved</p>
+                    <p className="text-xs text-muted-foreground">Your progress is automatically saved</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </AnimatedContainer>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Store Information Card */}
+            <AnimatedContainer animation="slideUp" delay={0.1}>
+              <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
+                <CardContent className="p-6 sm:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Building2 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold">Store Information</h2>
+                      <p className="text-sm text-muted-foreground">Essential details about your business</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Store Name</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <StoreIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                placeholder="e.g., Fashion Hub, Tech Store" 
+                                className="pl-11 h-12 text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>Choose a memorable name for your customers</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="slug"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Store URL</FormLabel>
+                          <FormControl>
+                            <div className="flex items-stretch overflow-hidden rounded-lg border border-border/50 focus-within:border-[#c0a146] focus-within:ring-2 focus-within:ring-[#c0a146]/20 transition-all">
+                              <div className="flex items-center px-4 bg-muted/50 border-r">
+                                <Link2 className="h-4 w-4 text-muted-foreground mr-2" />
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                  shopbuilder.com/stores/
+                                </span>
+                              </div>
+                              <Input 
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-12 text-base"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>Your unique store address</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Store Address</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <MapPin className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                              <Input
+                                placeholder="123 Main Street, City, Country"
+                                className="pl-11 h-12 text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>Your physical business location</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Store Description</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <FileText className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                              <Textarea
+                                placeholder="Tell your customers what makes your store special..."
+                                className="pl-11 min-h-[140px] text-base border-border/50 focus:border-[#c0a146] transition-colors resize-none"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            A compelling description helps customers understand your brand
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="categories"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Product Categories</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input
+                                placeholder="Electronics, Fashion, Home & Garden"
+                                className="pl-11 h-12 text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Separate multiple categories with commas
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </AnimatedContainer>
 
+            {/* Store Branding Card */}
             <AnimatedContainer animation="slideUp" delay={0.2}>
-              <FormSection
-                title="Store Branding"
-                description="Upload your store logo and banner"
-                icon={ImageIcon}
-              >
-                <div className="grid gap-6">
-                  <FormField
-                    control={form.control}
-                    name="logo_url"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Store Logo</FormLabel>
-                        <div className="flex items-center gap-4">
-                          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border bg-muted overflow-hidden">
-                            {logoPreview ? (
-                              <img
-                                src={logoPreview || "/placeholder.svg"}
-                                alt="Logo preview"
-                                className="h-full w-full rounded-full object-cover"
-                              />
-                            ) : (
-                              <StoreIcon className="h-10 w-10 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div className="flex-1">
+              <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
+                <CardContent className="p-6 sm:p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold">Visual Identity</h2>
+                      <p className="text-sm text-muted-foreground">Make your store recognizable</p>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Logo Upload */}
+                    <FormField
+                      control={form.control}
+                      name="logo_url"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Store Logo</FormLabel>
+                          <div className="space-y-4">
+                            <div className="relative group">
+                              <div className="h-40 w-40 mx-auto rounded-2xl border-2 border-dashed border-border/50 bg-muted/30 overflow-hidden flex items-center justify-center transition-all group-hover:border-[#c0a146]/50">
+                                {logoPreview ? (
+                                  <>
+                                    <img
+                                      src={logoPreview}
+                                      alt="Logo preview"
+                                      className="h-full w-full object-cover"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="destructive"
+                                      className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => {
+                                        setLogoPreview(null);
+                                        form.setValue("logo_url", "");
+                                        toast.success("Logo removed");
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <div className="text-center p-4">
+                                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="text-xs text-muted-foreground">Click to upload</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                             <Button
                               variant="outline"
                               type="button"
-                              className="w-full bg-transparent"
-                              onClick={() =>
-                                document.getElementById("logo-upload")?.click()
-                              }
+                              className="w-full h-11 border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 transition-colors"
+                              onClick={() => document.getElementById("logo-upload")?.click()}
                             >
                               <Upload className="mr-2 h-4 w-4" />
-                              Upload Logo
+                              {logoPreview ? "Change Logo" : "Upload Logo"}
                             </Button>
                             <input
                               id="logo-upload"
@@ -355,84 +571,109 @@ export default function CreateStorePage() {
                               className="hidden"
                               onChange={handleLogoUpload}
                             />
-                            <FormDescription>
-                              Recommended: square image, min 200×200px
-                            </FormDescription>
+                            <p className="text-xs text-muted-foreground text-center">
+                              Recommended: 200×200px, PNG or JPG (Max 5MB)
+                            </p>
                           </div>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="banner_url"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Store Banner</FormLabel>
-                        <div className="flex flex-col gap-4">
-                          <div className="relative aspect-[3/1] w-full overflow-hidden rounded-lg border bg-muted">
-                            {bannerPreview ? (
-                              <img
-                                src={bannerPreview || "/placeholder.svg"}
-                                alt="Banner preview"
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Banner Upload */}
+                    <FormField
+                      control={form.control}
+                      name="banner_url"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel className="text-base font-medium">Store Banner</FormLabel>
+                          <div className="space-y-4">
+                            <div className="relative group">
+                              <div className="aspect-[2/1] w-full rounded-xl border-2 border-dashed border-border/50 bg-muted/30 overflow-hidden flex items-center justify-center transition-all group-hover:border-[#c0a146]/50">
+                                {bannerPreview ? (
+                                  <>
+                                    <img
+                                      src={bannerPreview}
+                                      alt="Banner preview"
+                                      className="h-full w-full object-cover"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="destructive"
+                                      className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => {
+                                        setBannerPreview(null);
+                                        form.setValue("banner_url", "");
+                                        toast.success("Banner removed");
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <div className="text-center p-4">
+                                    <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="text-xs text-muted-foreground">Click to upload</p>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            </div>
+                            <Button
+                              variant="outline"
+                              type="button"
+                              className="w-full h-11 border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 transition-colors"
+                              onClick={() => document.getElementById("banner-upload")?.click()}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              {bannerPreview ? "Change Banner" : "Upload Banner"}
+                            </Button>
+                            <input
+                              id="banner-upload"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleBannerUpload}
+                            />
+                            <p className="text-xs text-muted-foreground text-center">
+                              Recommended: 1200×600px, PNG or JPG (Max 5MB)
+                            </p>
                           </div>
-                          <Button
-                            variant="outline"
-                            type="button"
-                            className="w-full bg-transparent"
-                            onClick={() =>
-                              document.getElementById("banner-upload")?.click()
-                            }
-                          >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Banner
-                          </Button>
-                          <input
-                            id="banner-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleBannerUpload}
-                          />
-                          <FormDescription>
-                            Recommended: 1200×400px
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </FormSection>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </AnimatedContainer>
 
+            {/* Submit Section */}
             <AnimatedContainer animation="fadeIn" delay={0.3}>
-              <Card className="border-primary/20 shadow-md dark:border-primary/10">
+              <Card className="border-[#c0a146]/30 shadow-xl backdrop-blur-sm bg-gradient-to-br from-card/95 to-card/80">
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Check className="h-5 w-5 text-green-600" />
-                      <span>Your store is almost ready!</span>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center">
+                        <Check className="h-6 w-6 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Ready to Launch</p>
+                        <p className="text-sm text-muted-foreground">Your store setup is complete</p>
+                      </div>
                     </div>
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full sm:w-auto"
+                      size="lg"
+                      className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] text-white shadow-lg hover:shadow-xl transition-all duration-300"
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating...
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Creating Store...
                         </>
                       ) : (
                         <>
-                          <StoreIcon className="mr-2 h-4 w-4" />
+                          <StoreIcon className="mr-2 h-5 w-5" />
                           Create Store
                         </>
                       )}
