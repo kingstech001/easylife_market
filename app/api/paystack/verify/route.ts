@@ -63,10 +63,6 @@ async function createMainOrder(
       throw new Error("Invalid orders data");
     }
 
-    console.log(
-      `[v0] Creating main order for user ${userId} with ${orders.length} sub-orders`
-    );
-    console.log(`[v0] Payment method used: ${actualPaymentMethod}`);
 
     // Step 1: Create sub-orders (Order documents)
     const createdSubOrders = [];
@@ -122,7 +118,6 @@ async function createMainOrder(
 
       createdSubOrders.push(subOrder);
       calculatedTotalAmount += totalPrice;
-      console.log(`✅ Sub-order created for store ${storeId}:`, subOrder._id);
     }
 
     // Step 2: Generate order number
@@ -132,7 +127,6 @@ async function createMainOrder(
       .padStart(3, "0");
     const orderNumber = `ORD-${timestamp}${random}`;
 
-    console.log(`[v0] Generated order number: ${orderNumber}`);
 
     // Step 3: Create MainOrder
     const mainOrder = await MainOrder.create({
@@ -155,7 +149,6 @@ async function createMainOrder(
       status: "pending",
     });
 
-    console.log(`✅ MainOrder created:`, mainOrder._id);
 
     return {
       success: true,
@@ -175,7 +168,6 @@ async function getUserIdFromToken(token: string) {
     const jwt = await import("jsonwebtoken");
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 
-    console.log("[v0] Decoded token:", decoded);
 
     const userId = decoded.userId || decoded.id || decoded._id;
 
@@ -197,7 +189,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { reference, orderData } = body;
 
-    console.log("[v0] POST /api/paystack/verify - Reference:", reference);
 
     if (!reference) {
       return NextResponse.json(
@@ -208,7 +199,7 @@ export async function POST(request: NextRequest) {
 
     const token = request.cookies.get("token")?.value;
     if (!token) {
-      console.error("[v0] No authentication token found");
+      console.error("No authentication token found");
       return NextResponse.json(
         { error: "Unauthorized - No authentication token" },
         { status: 401 }
@@ -218,7 +209,7 @@ export async function POST(request: NextRequest) {
     // Get user ID from token
     const userId = await getUserIdFromToken(token);
     if (!userId) {
-      console.error("[v0] Failed to get user ID from token");
+      console.error("[Failed to get user ID from token");
       return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
@@ -234,7 +225,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[v0] Verifying Paystack payment with reference:", reference);
 
     // Call Paystack API to verify transaction
     const verifyResponse = await fetch(
@@ -257,10 +247,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[v0] Paystack payment verified successfully");
-    console.log("[v0] Payment amount:", verifyData.data.amount / 100, "NGN");
-    console.log("[v0] Payment status:", verifyData.data.status);
-    console.log("[v0] Payment channel:", verifyData.data.channel);
 
     if (verifyData.data.status === "success") {
       const paystackMetadata = verifyData.data.metadata ?? {};
@@ -297,13 +283,9 @@ export async function POST(request: NextRequest) {
           actualPaymentMethod = "card"; // Default to card
       }
 
-      console.log(
-        `[v0] Mapped payment method: ${paystackChannel} → ${actualPaymentMethod}`
-      );
 
       // HANDLE SUBSCRIPTION PAYMENT
       if (paystackMetadata.type === "subscription") {
-        console.log("[v0] Processing subscription payment...");
 
         const { plan, storeId } = paystackMetadata;
         if (!plan || !storeId) {
@@ -321,7 +303,6 @@ export async function POST(request: NextRequest) {
             reference
           );
 
-          console.log("[v0] Subscription updated successfully");
 
           return NextResponse.json({
             status: "success",
@@ -340,8 +321,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // HANDLE REGULAR CHECKOUT PAYMENT
-      console.log("[v0] Processing checkout payment...");
 
       const merged = {
         ...paystackMetadata,
@@ -350,7 +329,7 @@ export async function POST(request: NextRequest) {
 
       const orders = merged.orders;
       if (!orders || !Array.isArray(orders) || orders.length === 0) {
-        console.error("[v0] Invalid orders data:", {
+        console.error("Invalid orders data:", {
           hasOrders: !!orders,
           isArray: Array.isArray(orders),
           length: orders?.length,
@@ -363,8 +342,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log("[v0] Creating main order for user:", userId);
-      console.log("[v0] Number of stores:", orders.length);
 
       // CREATE MAIN ORDER WITH SUB-ORDERS
       try {
@@ -375,12 +352,6 @@ export async function POST(request: NextRequest) {
           actualPaymentMethod
         );
 
-        console.log("[v0] ✅ MainOrder created successfully!");
-        console.log("[v0] Order Number:", orderResult.mainOrder.orderNumber);
-        console.log(
-          "[v0] SubOrder IDs:",
-          orderResult.subOrders.map((o) => o._id)
-        );
 
         return NextResponse.json({
           status: "success",
@@ -396,8 +367,8 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (error: any) {
-        console.error("[v0] ❌ Failed to create main order:", error);
-        console.error("[v0] Error details:", {
+        console.error("❌ Failed to create main order:", error);
+        console.error("Error details:", {
           message: error.message,
           name: error.name,
           errors: error.errors,
@@ -412,13 +383,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log("[v0] Payment was not successful:", verifyData.data.status);
+    console.log(" Payment was not successful:", verifyData.data.status);
     return NextResponse.json(
       { error: "Payment was not successful" },
       { status: 400 }
     );
   } catch (error: any) {
-    console.error("[v0] ❌ Payment verification error:", error);
+    console.error(" ❌ Payment verification error:", error);
     return NextResponse.json(
       {
         error: "Failed to verify payment",
@@ -433,7 +404,6 @@ export async function GET(request: NextRequest) {
   try {
     const reference = request.nextUrl.searchParams.get("reference");
 
-    console.log("[v0] GET /api/paystack/verify - Reference:", reference);
 
     if (!reference) {
       return NextResponse.json(
@@ -452,17 +422,13 @@ export async function GET(request: NextRequest) {
 
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecretKey) {
-      console.error("[v0] PAYSTACK_SECRET_KEY is not set");
+      console.error(" PAYSTACK_SECRET_KEY is not set");
       return NextResponse.json(
         { error: "Payment service not configured" },
         { status: 500 }
       );
     }
 
-    console.log(
-      "[v0] GET: Verifying Paystack payment with reference:",
-      reference
-    );
 
     const verifyResponse = await fetch(
       `https://api.paystack.co/transaction/verify/${reference}`,
@@ -477,21 +443,19 @@ export async function GET(request: NextRequest) {
     const verifyData = await verifyResponse.json();
 
     if (!verifyResponse.ok) {
-      console.error("[v0] Paystack verification error:", verifyData);
+      console.error(" Paystack verification error:", verifyData);
       return NextResponse.json(
         { error: verifyData.message || "Failed to verify payment" },
         { status: verifyResponse.status }
       );
     }
 
-    console.log("[v0] Paystack payment verified");
 
     if (verifyData.data.status === "success") {
       const metadata = verifyData.data.metadata ?? {};
 
       // HANDLE SUBSCRIPTION FOR GET REQUEST
       if (metadata.type === "subscription") {
-        console.log("[v0] GET: Processing subscription payment...");
 
         const { plan, storeId } = metadata;
         if (!plan || !storeId) {
@@ -509,7 +473,6 @@ export async function GET(request: NextRequest) {
             reference
           );
 
-          console.log("[v0] Subscription updated successfully");
 
           return NextResponse.json({
             status: "success",
@@ -524,7 +487,7 @@ export async function GET(request: NextRequest) {
             },
           });
         } catch (error: any) {
-          console.error("[v0] Failed to update subscription:", error);
+          console.error("Failed to update subscription:", error);
           return NextResponse.json(
             {
               error: "Payment verified but failed to update subscription",
@@ -553,7 +516,7 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     );
   } catch (error: any) {
-    console.error("[v0] Payment verification error:", error);
+    console.error("Payment verification error:", error);
     return NextResponse.json(
       {
         error: "Failed to verify payment",

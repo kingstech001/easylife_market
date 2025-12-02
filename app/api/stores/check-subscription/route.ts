@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`🔍 Checking subscription for store: ${storeId}`)
 
     const store = await Store.findById(storeId)
     if (!store) {
@@ -35,10 +34,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`👤 Store: ${store.name}`)
-    console.log(`📋 Current plan: ${store.subscriptionPlan}`)
-    console.log(`📅 Expires at: ${store.subscriptionEndDate || 'Never (free plan)'}`)
-
     const now = new Date()
     let action = "checked"
     let wasDowngraded = false
@@ -47,7 +42,6 @@ export async function POST(request: NextRequest) {
     const hasExpired = store.subscriptionEndDate && new Date(store.subscriptionEndDate) < now
 
     if (hasExpired && store.subscriptionPlan !== "free") {
-      console.log(`⚠️  Subscription expired! Downgrading from ${store.subscriptionPlan} to free`)
 
       // Downgrade to free plan
       store.subscriptionPlan = "free"
@@ -59,7 +53,6 @@ export async function POST(request: NextRequest) {
       action = "downgraded"
       wasDowngraded = true
 
-      console.log(`✅ Store downgraded to free plan`)
     }
 
     // Enforce product limit (whether downgraded or not)

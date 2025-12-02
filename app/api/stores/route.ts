@@ -59,7 +59,6 @@ interface ApiResponse {
 // ✅ GET: Fetch All Published Stores (with optional location filtering)
 export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
-    console.log("🔍 Fetching all stores...")
 
     await connectToDB()
 
@@ -70,7 +69,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
     const maxDistance = searchParams.get("maxDistance") // in meters (e.g., 5000 = 5km)
 
     // Build query
-    const query: any = { isPublished: true }
+    const query: any = { isPublished: true, isApproved: true  }
     
     // Add location-based filtering if coordinates provided
     if (lat && lng) {
@@ -94,7 +93,6 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
       .lean<StoreDocument[]>()
       .exec()
 
-    console.log(`✅ Found ${stores.length} stores`)
 
     // ✅ Add product count for each store
     const storesWithCounts: StoreResponse[] = await Promise.all(

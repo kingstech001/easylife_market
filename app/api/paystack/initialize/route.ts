@@ -31,14 +31,6 @@ export async function POST(request: NextRequest) {
       type,
     } = body
 
-    console.log("[Paystack Initialize] Request body:", {
-      type,
-      email,
-      amount,
-      hasPlan: !!plan,
-      hasStoreId: !!storeId,
-      hasOrders: !!orders,
-    })
 
     // ✅ Validate common payment fields
     if (!email || !amount) {
@@ -69,7 +61,6 @@ export async function POST(request: NextRequest) {
 
     // ✅ Get base URL (works in all environments)
     const baseUrl = getBaseUrl()
-    console.log("[Paystack Initialize] Using base URL:", baseUrl)
 
     // ✅ Setup Paystack callback + metadata based on payment type
     let callback_url = ""
@@ -78,7 +69,6 @@ export async function POST(request: NextRequest) {
     if (type === "subscription") {
       // 💳 Handle Seller Subscription Payments
       if (!plan || !storeId) {
-        console.error("[Paystack Initialize] Missing subscription details:", { plan, storeId })
         return NextResponse.json(
           { error: "Missing subscription details (plan or storeId)" },
           { status: 400 }
@@ -94,15 +84,9 @@ export async function POST(request: NextRequest) {
         callback_url: `${baseUrl}/dashboard/seller/subscriptions/success` // Store for reference
       }
       
-      console.log("[Paystack Initialize] Subscription payment initialized:", { plan, storeId })
     } else if (type === "checkout") {
       // 🛒 Handle Regular Checkout Payments
       if (!orders || !Array.isArray(orders) || orders.length === 0) {
-        console.error("[Paystack Initialize] Invalid orders:", {
-          hasOrders: !!orders,
-          isArray: Array.isArray(orders),
-          length: orders?.length,
-        })
         return NextResponse.json(
           { error: "Invalid orders data. At least one order is required." },
           { status: 400 }
@@ -110,7 +94,6 @@ export async function POST(request: NextRequest) {
       }
 
       if (!shippingInfo) {
-        console.error("[Paystack Initialize] Missing shipping info")
         return NextResponse.json(
           { error: "Shipping information is required" },
           { status: 400 }
@@ -126,10 +109,6 @@ export async function POST(request: NextRequest) {
         type: "checkout",
       }
       
-      console.log("[Paystack Initialize] Checkout payment initialized:", { 
-        orderCount: orders.length,
-        deliveryFee 
-      })
     }
 
     // ✅ Convert Naira to Kobo (Paystack uses smallest currency unit)
@@ -142,12 +121,6 @@ export async function POST(request: NextRequest) {
       metadata,
     }
 
-    console.log("[Paystack Initialize] Payload:", {
-      email,
-      amount: amountInKobo,
-      callback_url,
-      metadataKeys: Object.keys(metadata),
-    })
 
     // 🚀 Initialize payment with Paystack
     const paystackResponse = await fetch(
@@ -179,10 +152,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("[Paystack Initialize] ✅ Success:", {
-      reference: paystackData.data.reference,
-      access_code: paystackData.data.access_code,
-    })
 
     return NextResponse.json({
       success: true,

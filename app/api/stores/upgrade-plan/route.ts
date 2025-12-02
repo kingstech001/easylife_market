@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`🔄 Upgrading store ${storeId} to plan: ${plan}`)
 
     const result = await setStorePlanAndEnforce(
       storeId,

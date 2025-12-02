@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { z } from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
   Loader2,
@@ -24,19 +24,27 @@ import {
   Sparkles,
   LucideImage,
   Check,
-} from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import Image from "next/image"
-import ExpandableText from "@/components/ExpandableText"
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
+import ExpandableText from "@/components/ExpandableText";
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -46,30 +54,34 @@ const productSchema = z.object({
   price: z.coerce.number().positive("Price must be a positive number."),
   compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
   category: z.string().optional(),
-  inventoryQuantity: z.coerce.number().int().nonnegative("Inventory must be a non-negative integer."),
+  inventoryQuantity: z.coerce
+    .number()
+    .int()
+    .nonnegative("Inventory must be a non-negative integer."),
   images: z
     .array(
       z.object({
         url: z.string().url("Invalid image URL."),
         altText: z.string().optional(),
-      }),
+      })
     )
     .optional(),
-})
+});
 
-type ProductFormValues = z.infer<typeof productSchema>
+type ProductFormValues = z.infer<typeof productSchema>;
 
 export default function StoreBuilderPage() {
-  const router = useRouter()
-  const [store, setStore] = useState<any>(null)
-  const [products, setProducts] = useState<ProductFormValues[]>([])
-  const DRAFT_KEY = "store-builder:product-draft-v1"
-  const [loading, setLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [activeTab, setActiveTab] = useState("details")
-  const [editingProduct, setEditingProduct] = useState<ProductFormValues | null>(null)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pauseSave = useRef(false)
+  const router = useRouter();
+  const [store, setStore] = useState<any>(null);
+  const [products, setProducts] = useState<ProductFormValues[]>([]);
+  const DRAFT_KEY = "store-builder:product-draft-v1";
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
+  const [editingProduct, setEditingProduct] =
+    useState<ProductFormValues | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pauseSave = useRef(false);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -81,110 +93,132 @@ export default function StoreBuilderPage() {
       inventoryQuantity: 0,
       images: [],
     },
-  })
+  });
 
-  const watchedImages = form.watch("images")
+  const watchedImages = form.watch("images");
 
   // Load draft on mount
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(DRAFT_KEY)
+      const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw)
+        const parsed = JSON.parse(raw);
         if (parsed?.values) {
-          form.reset(parsed.values)
+          form.reset(parsed.values);
         }
       }
     } catch (err) {
-      console.warn("Failed to load product draft:", err)
+      console.warn("Failed to load product draft:", err);
     }
-  }, [])
+  }, []);
 
   // Auto-save draft
   useEffect(() => {
     const subscription = form.watch((values) => {
-      if (pauseSave.current) return
-      if (saveTimer.current) clearTimeout(saveTimer.current)
+      if (pauseSave.current) return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         try {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify({ values, updatedAt: Date.now() }))
+          localStorage.setItem(
+            DRAFT_KEY,
+            JSON.stringify({ values, updatedAt: Date.now() })
+          );
         } catch (err) {
-          console.warn("Failed to save product draft:", err)
+          console.warn("Failed to save product draft:", err);
         }
-      }, 400)
-    })
+      }, 400);
+    });
     return () => {
-      subscription.unsubscribe()
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-    }
-  }, [form])
+      subscription.unsubscribe();
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [form]);
 
   // Fetch store and products
   useEffect(() => {
     async function fetchData() {
       try {
-        const storeRes = await fetch("/api/dashboard/seller/store")
+        const storeRes = await fetch("/api/dashboard/seller/store");
 
         if (!storeRes.ok) {
-          const errorData = await storeRes.json().catch(() => ({ message: "Unknown error" }))
-          throw new Error(`Failed to fetch store: ${errorData.message || storeRes.statusText}`)
+          const errorData = await storeRes
+            .json()
+            .catch(() => ({ message: "Unknown error" }));
+          throw new Error(
+            `Failed to fetch store: ${errorData.message || storeRes.statusText}`
+          );
         }
-        const { store } = await storeRes.json()
-        setStore(store)
+        const { store } = await storeRes.json();
+        setStore(store);
 
-        const productRes = await fetch("/api/dashboard/seller/products")
+        const productRes = await fetch("/api/dashboard/seller/products");
         if (!productRes.ok) {
-          const errorData = await productRes.json().catch(() => ({ message: "Unknown error" }))
-          throw new Error(`Failed to fetch products: ${errorData.message || productRes.statusText}`)
+          const errorData = await productRes
+            .json()
+            .catch(() => ({ message: "Unknown error" }));
+          throw new Error(
+            `Failed to fetch products: ${
+              errorData.message || productRes.statusText
+            }`
+          );
         }
-        const { products } = await productRes.json()
-        setProducts(products || [])
+        const { products } = await productRes.json();
+        setProducts(products || []);
       } catch (error: any) {
-        console.error("Error during data fetch:", error)
-        toast.error(error.message || "Failed to fetch store or products. Please try again.")
+        console.error("Error during data fetch:", error);
+        toast.error(
+          error.message ||
+            "Failed to fetch store or products. Please try again."
+        );
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const handleEdit = (p: ProductFormValues) => {
-    pauseSave.current = true
-    setEditingProduct(p)
+    pauseSave.current = true;
+    setEditingProduct(p);
 
-    const { id, _id, ...productData } = p
+    const { id, _id, ...productData } = p;
     form.reset({
       ...productData,
       category: productData.category || "",
       description: productData.description || "",
       images: productData.images || [],
-    })
+    });
 
     try {
-      localStorage.removeItem(DRAFT_KEY)
+      localStorage.removeItem(DRAFT_KEY);
     } catch {}
 
     setTimeout(() => {
-      pauseSave.current = false
-    }, 100)
-  }
+      pauseSave.current = false;
+    }, 100);
+  };
 
   const handleDelete = async (productId: string) => {
-    if (!productId) return
+    if (!productId) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/dashboard/seller/products/${productId}`, { method: "DELETE" })
+      const res = await fetch(`/api/dashboard/seller/products/${productId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: "Unknown error" }))
-        throw new Error(`Failed to delete product: ${errorData.message || res.statusText}`)
+        const errorData = await res
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
+        throw new Error(
+          `Failed to delete product: ${errorData.message || res.statusText}`
+        );
       }
-      setProducts(products.filter((p) => (p.id || p._id) !== productId))
-      toast.success("Product deleted successfully")
+      setProducts(products.filter((p) => (p.id || p._id) !== productId));
+      toast.success("Product deleted successfully");
 
       if ((editingProduct?.id || editingProduct?._id) === productId) {
-        setEditingProduct(null)
+        setEditingProduct(null);
         form.reset({
           name: "",
           description: "",
@@ -192,32 +226,34 @@ export default function StoreBuilderPage() {
           category: "",
           inventoryQuantity: 0,
           images: [],
-        })
-        setActiveTab("details")
+        });
+        setActiveTab("details");
       }
     } catch (error: any) {
-      console.error("Delete error:", error)
-      toast.error(error.message || "Failed to delete product")
+      console.error("Delete error:", error);
+      toast.error(error.message || "Failed to delete product");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleSubmit = async (data: ProductFormValues) => {
-    const editingId = editingProduct?.id || editingProduct?._id
-    const isCreating = !editingId
+    const editingId = editingProduct?.id || editingProduct?._id;
+    const isCreating = !editingId;
 
     if (products.length >= 10 && isCreating) {
-      toast.error("Maximum of 10 products reached. Delete an existing product to add a new one.")
-      return
+      toast.error(
+        "Maximum of 10 products reached. Delete an existing product to add a new one."
+      );
+      return;
     }
 
     if (!store?._id) {
-      toast.error("No store found. Please ensure your store is set up.")
-      return
+      toast.error("No store found. Please ensure your store is set up.");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const cleanedData = {
@@ -228,59 +264,67 @@ export default function StoreBuilderPage() {
         inventoryQuantity: Number(data.inventoryQuantity),
         images: data.images || [],
         storeId: store._id,
-      }
+      };
 
-      let resultProduct: ProductFormValues
+      let resultProduct: ProductFormValues;
 
       if (editingId) {
         const res = await fetch(`/api/dashboard/seller/products/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cleanedData),
-        })
+        });
 
-        const responseData = await res.json()
+        const responseData = await res.json();
 
         if (!res.ok) {
-          throw new Error(`Failed to update product: ${responseData.message || responseData.error || res.statusText}`)
+          throw new Error(
+            `Failed to update product: ${
+              responseData.message || responseData.error || res.statusText
+            }`
+          );
         }
 
-        resultProduct = responseData.data
+        resultProduct = responseData.data;
         setProducts((prev) =>
           prev.map((p) => {
-            const pId = p.id || p._id
-            const rId = resultProduct.id || resultProduct._id
-            return pId === rId ? resultProduct : p
-          }),
-        )
-        toast.success(responseData.message || "Product updated successfully")
+            const pId = p.id || p._id;
+            const rId = resultProduct.id || resultProduct._id;
+            return pId === rId ? resultProduct : p;
+          })
+        );
+        toast.success(responseData.message || "Product updated successfully");
       } else {
         const res = await fetch("/api/dashboard/seller/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cleanedData),
-        })
+        });
 
-        const responseData = await res.json()
+        const responseData = await res.json();
 
         if (!res.ok) {
-          throw new Error(`Failed to add product: ${responseData.message || responseData.error || res.statusText}`)
+          throw new Error(
+            `Failed to add product: ${
+              responseData.message || responseData.error || res.statusText
+            }`
+          );
         }
 
-        resultProduct = responseData.product
-        setProducts((prev) => [...prev, resultProduct])
-        toast.success(responseData.message || "Product added successfully")
+        resultProduct = responseData.product;
+        setProducts((prev) => [...prev, resultProduct]);
+        toast.success(responseData.message || "Product added successfully");
       }
 
       // Clear form and reset state
-      pauseSave.current = true
+      pauseSave.current = true;
       try {
-        localStorage.removeItem(DRAFT_KEY)
+        localStorage.removeItem(DRAFT_KEY);
       } catch (err) {
-        console.warn("Failed to clear draft:", err)
+        console.warn("Failed to clear draft:", err);
       }
 
-      setEditingProduct(null)
+      setEditingProduct(null);
 
       form.reset({
         name: "",
@@ -289,61 +333,67 @@ export default function StoreBuilderPage() {
         category: "",
         inventoryQuantity: 0,
         images: [],
-      })
+      });
 
       try {
-        const uploadInput = document.getElementById("upload") as HTMLInputElement | null
-        if (uploadInput) uploadInput.value = ""
+        const uploadInput = document.getElementById(
+          "upload"
+        ) as HTMLInputElement | null;
+        if (uploadInput) uploadInput.value = "";
       } catch (err) {}
 
-      setActiveTab("details")
+      setActiveTab("details");
 
       setTimeout(() => {
-        pauseSave.current = false
-      }, 500)
+        pauseSave.current = false;
+      }, 500);
     } catch (error: any) {
-      console.error("Save/Update error:", error)
-      toast.error(error.message || "Failed to save product")
+      console.error("Save/Update error:", error);
+      toast.error(error.message || "Failed to save product");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const publishStore = async () => {
     if (!store?._id) {
-      toast.error("No store found to publish.")
-      return
+      toast.error("No store found to publish.");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/dashboard/seller/store/publish", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storeId: store._id }),
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || data.error || `Failed to publish store: ${res.statusText}`)
+        throw new Error(
+          data.message ||
+            data.error ||
+            `Failed to publish store: ${res.statusText}`
+        );
       }
 
-      toast.success("Store published successfully!")
+      toast.success("Store published successfully!");
 
       if (data.role === "admin") {
-        router.push("/dashboard/admin")
+        router.push("/dashboard/admin");
       } else {
-        router.push("/dashboard/seller/store")
+        router.push("/dashboard/seller/store");
       }
     } catch (error: any) {
-      console.error("Publish error:", error)
-      toast.error(error.message || "Failed to publish store")
+      console.error("Publish error:", error);
+      toast.error(error.message || "Failed to publish store");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -357,11 +407,13 @@ export default function StoreBuilderPage() {
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold">Loading your store</h3>
-            <p className="text-muted-foreground">Setting up your workspace...</p>
+            <p className="text-muted-foreground">
+              Setting up your workspace...
+            </p>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -370,7 +422,10 @@ export default function StoreBuilderPage() {
       <div className="relative w-full h-64 md:h-80 bg-cover bg-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src={store?.banner_url || "/placeholder.svg?height=320&width=1200&text=Store+Banner"}
+            src={
+              store?.banner_url ||
+              "/placeholder.svg?height=320&width=1200&text=Store+Banner"
+            }
             alt="Store Banner"
             fill
             className="object-cover"
@@ -435,7 +490,10 @@ export default function StoreBuilderPage() {
               </h1>
               <div className="mt-2">
                 <ExpandableText
-                  text={store?.description ?? "Add a description to tell customers about your store"}
+                  text={
+                    store?.description ??
+                    "Add a description to tell customers about your store"
+                  }
                   limit={120}
                 />
               </div>
@@ -467,7 +525,7 @@ export default function StoreBuilderPage() {
                     size="sm"
                     disabled={products.length >= 10}
                     onClick={() => {
-                      setEditingProduct(null)
+                      setEditingProduct(null);
                       form.reset({
                         name: "",
                         description: "",
@@ -475,10 +533,10 @@ export default function StoreBuilderPage() {
                         category: "",
                         inventoryQuantity: 0,
                         images: [],
-                      })
-                      setActiveTab("details")
+                      });
+                      setActiveTab("details");
                       try {
-                        localStorage.removeItem(DRAFT_KEY)
+                        localStorage.removeItem(DRAFT_KEY);
                       } catch {}
                     }}
                     className="bg-[#c0a146] hover:bg-[#c0a146]/90 h-9"
@@ -499,14 +557,17 @@ export default function StoreBuilderPage() {
                         <Package className="w-8 h-8 text-muted-foreground/50" />
                       </div>
                       <h3 className="font-semibold mb-2">No products yet</h3>
-                      <p className="text-sm">Add your first product to get started</p>
+                      <p className="text-sm">
+                        Add your first product to get started
+                      </p>
                     </motion.div>
                   ) : (
                     products.map((p, index) => {
-                      const uniqueKey = p.id || p._id || `product-${index}`
-                      const productId = p.id || p._id
-                      const editingId = editingProduct?.id || editingProduct?._id
-                      const isEditing = editingId === productId
+                      const uniqueKey = p.id || p._id || `product-${index}`;
+                      const productId = p.id || p._id;
+                      const editingId =
+                        editingProduct?.id || editingProduct?._id;
+                      const isEditing = editingId === productId;
                       return (
                         <motion.div
                           key={uniqueKey}
@@ -527,7 +588,9 @@ export default function StoreBuilderPage() {
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-3">
-                                    <h3 className="font-semibold truncate">{p.name}</h3>
+                                    <h3 className="font-semibold truncate">
+                                      {p.name}
+                                    </h3>
                                     {isEditing && (
                                       <Badge className="bg-[#c0a146] text-white border-0">
                                         <Edit3 className="w-3 h-3 mr-1" />
@@ -537,7 +600,8 @@ export default function StoreBuilderPage() {
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                     <span className="flex items-center gap-1 font-medium text-foreground">
-                                      <DollarSign className="w-3 h-3" />₦{p.price.toFixed(2)}
+                                      <DollarSign className="w-3 h-3" />₦
+                                      {p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
                                       <Box className="w-3 h-3" />
@@ -545,7 +609,10 @@ export default function StoreBuilderPage() {
                                     </span>
                                   </div>
                                   {p.category && (
-                                    <Badge variant="outline" className="text-xs border-[#c0a146]/30">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs border-[#c0a146]/30"
+                                    >
                                       <Tag className="w-2 h-2 mr-1" />
                                       {p.category}
                                     </Badge>
@@ -555,8 +622,8 @@ export default function StoreBuilderPage() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (productId) handleDelete(productId)
+                                    e.stopPropagation();
+                                    if (productId) handleDelete(productId);
                                   }}
                                   className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                                 >
@@ -566,7 +633,7 @@ export default function StoreBuilderPage() {
                             </CardContent>
                           </Card>
                         </motion.div>
-                      )
+                      );
                     })
                   )}
                 </AnimatePresence>
@@ -597,10 +664,14 @@ export default function StoreBuilderPage() {
                         </div>
                         <div>
                           <CardTitle className="text-2xl">
-                            {editingProduct ? "Edit Product" : "Add New Product"}
+                            {editingProduct
+                              ? "Edit Product"
+                              : "Add New Product"}
                           </CardTitle>
                           <p className="text-muted-foreground mt-1 text-sm">
-                            {editingProduct ? "Update your product details" : "Create a new product for your store"}
+                            {editingProduct
+                              ? "Update your product details"
+                              : "Create a new product for your store"}
                           </p>
                         </div>
                       </div>
@@ -609,7 +680,7 @@ export default function StoreBuilderPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setEditingProduct(null)
+                            setEditingProduct(null);
                             form.reset({
                               name: "",
                               description: "",
@@ -617,10 +688,10 @@ export default function StoreBuilderPage() {
                               category: "",
                               inventoryQuantity: 0,
                               images: [],
-                            })
-                            setActiveTab("details")
+                            });
+                            setActiveTab("details");
                             try {
-                              localStorage.removeItem(DRAFT_KEY)
+                              localStorage.removeItem(DRAFT_KEY);
                             } catch {}
                           }}
                           className="h-9"
@@ -633,8 +704,15 @@ export default function StoreBuilderPage() {
                   </CardHeader>
                   <CardContent className="p-6 md:p-8">
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+                      <form
+                        onSubmit={form.handleSubmit(handleSubmit)}
+                        className="space-y-6"
+                      >
+                        <Tabs
+                          value={activeTab}
+                          onValueChange={setActiveTab}
+                          className="space-y-8"
+                        >
                           <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl h-12">
                             <TabsTrigger
                               value="details"
@@ -659,17 +737,28 @@ export default function StoreBuilderPage() {
                             </TabsTrigger>
                           </TabsList>
                           {/* Details Tab */}
-                          <TabsContent value="details" className="space-y-6 mt-8">
+                          <TabsContent
+                            value="details"
+                            className="space-y-6 mt-8"
+                          >
                             <FormField
                               control={form.control}
                               name="name"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-base">Product Name *</FormLabel>
+                                  <FormLabel className="text-base">
+                                    Product Name *
+                                  </FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Enter a compelling product name" className="h-12" {...field} />
+                                    <Input
+                                      placeholder="Enter a compelling product name"
+                                      className="h-12"
+                                      {...field}
+                                    />
                                   </FormControl>
-                                  <FormDescription>Choose a clear and descriptive name</FormDescription>
+                                  <FormDescription>
+                                    Choose a clear and descriptive name
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -681,7 +770,9 @@ export default function StoreBuilderPage() {
                                 name="price"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-base">Price (₦) *</FormLabel>
+                                    <FormLabel className="text-base">
+                                      Price (₦) *
+                                    </FormLabel>
                                     <FormControl>
                                       <div className="relative">
                                         <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#c0a146]" />
@@ -704,7 +795,9 @@ export default function StoreBuilderPage() {
                                 name="category"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-base">Category</FormLabel>
+                                    <FormLabel className="text-base">
+                                      Category
+                                    </FormLabel>
                                     <FormControl>
                                       <div className="relative">
                                         <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#c0a146]" />
@@ -726,7 +819,9 @@ export default function StoreBuilderPage() {
                               name="description"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-base">Description</FormLabel>
+                                  <FormLabel className="text-base">
+                                    Description
+                                  </FormLabel>
                                   <FormControl>
                                     <Textarea
                                       placeholder="Describe your product in detail. What makes it special?"
@@ -735,7 +830,9 @@ export default function StoreBuilderPage() {
                                       {...field}
                                     />
                                   </FormControl>
-                                  <FormDescription>Help customers understand your product</FormDescription>
+                                  <FormDescription>
+                                    Help customers understand your product
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -743,15 +840,21 @@ export default function StoreBuilderPage() {
                           </TabsContent>
 
                           {/* Images Tab */}
-                          <TabsContent value="images" className="space-y-6 mt-8">
+                          <TabsContent
+                            value="images"
+                            className="space-y-6 mt-8"
+                          >
                             <div className="flex items-center gap-3 pb-4 border-b">
                               <div className="p-2 rounded-lg bg-[#c0a146]/10">
                                 <ImageIcon className="h-5 w-5 text-[#c0a146]" />
                               </div>
                               <div>
-                                <h3 className="text-lg font-semibold">Product Images</h3>
+                                <h3 className="text-lg font-semibold">
+                                  Product Images
+                                </h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Add high-quality images to showcase your product
+                                  Add high-quality images to showcase your
+                                  product
                                 </p>
                               </div>
                             </div>
@@ -770,40 +873,45 @@ export default function StoreBuilderPage() {
                                 accept="image/*"
                                 className="hidden"
                                 onChange={async (e) => {
-                                  const file = e.target.files?.[0]
-                                  if (!file) return
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
                                   if (file.size > 5 * 1024 * 1024) {
-                                    toast.error("Image must be less than 5MB")
-                                    return
+                                    toast.error("Image must be less than 5MB");
+                                    return;
                                   }
-                                  const formData = new FormData()
-                                  formData.append("file", file)
-                                  setIsSubmitting(true)
+                                  const formData = new FormData();
+                                  formData.append("file", file);
+                                  setIsSubmitting(true);
                                   try {
                                     const res = await fetch("/api/upload", {
                                       method: "POST",
                                       body: formData,
-                                    })
-                                    if (!res.ok) throw new Error("Failed to upload")
-                                    const { secure_url } = await res.json()
-                                    const existingImages = watchedImages ?? []
+                                    });
+                                    if (!res.ok)
+                                      throw new Error("Failed to upload");
+                                    const { secure_url } = await res.json();
+                                    const existingImages = watchedImages ?? [];
                                     form.setValue(
                                       "images",
                                       [
                                         ...existingImages,
                                         {
                                           url: secure_url,
-                                          altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
+                                          altText: `${
+                                            form.getValues("name") || "Product"
+                                          } image ${existingImages.length + 1}`,
                                         },
                                       ],
-                                      { shouldDirty: true },
-                                    )
-                                    toast.success("Image uploaded successfully")
+                                      { shouldDirty: true }
+                                    );
+                                    toast.success(
+                                      "Image uploaded successfully"
+                                    );
                                   } catch (err) {
-                                    console.error(err)
-                                    toast.error("Image upload failed")
+                                    console.error(err);
+                                    toast.error("Image upload failed");
                                   } finally {
-                                    setIsSubmitting(false)
+                                    setIsSubmitting(false);
                                   }
                                 }}
                               />
@@ -825,7 +933,10 @@ export default function StoreBuilderPage() {
                                     <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-[#c0a146] transition-colors shadow-lg group-hover:shadow-xl">
                                       <Image
                                         src={img.url || "/placeholder.svg"}
-                                        alt={img.altText || `Product image ${idx + 1}`}
+                                        alt={
+                                          img.altText ||
+                                          `Product image ${idx + 1}`
+                                        }
                                         fill
                                         className="object-cover"
                                       />
@@ -836,12 +947,15 @@ export default function StoreBuilderPage() {
                                       size="sm"
                                       className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 rounded-full shadow-lg"
                                       onClick={() => {
-                                        const currentImages = watchedImages ?? []
+                                        const currentImages =
+                                          watchedImages ?? [];
                                         form.setValue(
                                           "images",
-                                          currentImages.filter((_, i) => i !== idx),
-                                          { shouldDirty: true },
-                                        )
+                                          currentImages.filter(
+                                            (_, i) => i !== idx
+                                          ),
+                                          { shouldDirty: true }
+                                        );
                                       }}
                                     >
                                       <X className="h-3 w-3" />
@@ -860,7 +974,9 @@ export default function StoreBuilderPage() {
                                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
                                   <LucideImage className="w-8 h-8 text-muted-foreground/50" />
                                 </div>
-                                <h3 className="text-lg font-semibold mb-2">No images yet</h3>
+                                <h3 className="text-lg font-semibold mb-2">
+                                  No images yet
+                                </h3>
                                 <p className="text-muted-foreground text-sm">
                                   Upload your first product image to get started
                                 </p>
@@ -869,14 +985,21 @@ export default function StoreBuilderPage() {
                           </TabsContent>
 
                           {/* Inventory Tab */}
-                          <TabsContent value="inventory" className="space-y-6 mt-8">
+                          <TabsContent
+                            value="inventory"
+                            className="space-y-6 mt-8"
+                          >
                             <div className="flex items-center gap-3 pb-4 border-b">
                               <div className="p-2 rounded-lg bg-[#c0a146]/10">
                                 <Box className="h-5 w-5 text-[#c0a146]" />
                               </div>
                               <div>
-                                <h3 className="text-lg font-semibold">Inventory Management</h3>
-                                <p className="text-sm text-muted-foreground">Track your product stock levels</p>
+                                <h3 className="text-lg font-semibold">
+                                  Inventory Management
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Track your product stock levels
+                                </p>
                               </div>
                             </div>
 
@@ -886,7 +1009,9 @@ export default function StoreBuilderPage() {
                                 name="inventoryQuantity"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-base">Stock Quantity *</FormLabel>
+                                    <FormLabel className="text-base">
+                                      Stock Quantity *
+                                    </FormLabel>
                                     <FormControl>
                                       <div className="relative">
                                         <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#c0a146]" />
@@ -899,7 +1024,9 @@ export default function StoreBuilderPage() {
                                         />
                                       </div>
                                     </FormControl>
-                                    <FormDescription>How many units do you have in stock?</FormDescription>
+                                    <FormDescription>
+                                      How many units do you have in stock?
+                                    </FormDescription>
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -912,9 +1039,12 @@ export default function StoreBuilderPage() {
                                   <Sparkles className="h-5 w-5 text-[#c0a146]" />
                                 </div>
                                 <div className="text-sm">
-                                  <p className="font-medium text-foreground mb-1">Inventory Tip</p>
+                                  <p className="font-medium text-foreground mb-1">
+                                    Inventory Tip
+                                  </p>
                                   <p className="text-muted-foreground">
-                                    Keep your stock levels updated to avoid overselling and maintain customer trust.
+                                    Keep your stock levels updated to avoid
+                                    overselling and maintain customer trust.
                                   </p>
                                 </div>
                               </div>
@@ -925,7 +1055,10 @@ export default function StoreBuilderPage() {
                         <div className="flex justify-end pt-6 border-t">
                           <Button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={
+                              isSubmitting ||
+                              (products.length >= 10 && !editingProduct)
+                            }
                             className="bg-[#c0a146] hover:bg-[#c0a146]/90 text-white shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
                           >
                             {isSubmitting ? (
@@ -936,7 +1069,9 @@ export default function StoreBuilderPage() {
                             ) : (
                               <>
                                 <Save className="h-5 w-5 mr-2" />
-                                {editingProduct ? "Update Product" : "Save Product"}
+                                {editingProduct
+                                  ? "Update Product"
+                                  : "Save Product"}
                               </>
                             )}
                           </Button>
@@ -951,5 +1086,5 @@ export default function StoreBuilderPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

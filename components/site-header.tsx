@@ -1,132 +1,150 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
-import { ShoppingCart, User, Menu, X, Heart, LogOut, LogIn, LayoutDashboard, Search, Bell, Store, Package } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { MainNav } from "@/components/main-nav"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useCart } from "@/context/cart-context"
-import { useWishlist } from "@/context/wishlist-context"
-import CartOverlay from "./CartOverlay"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Card } from "@/components/ui/card"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  Heart,
+  LogOut,
+  LogIn,
+  LayoutDashboard,
+  Search,
+  Bell,
+  Store,
+  Package,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { MainNav } from "@/components/main-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useCart } from "@/context/cart-context";
+import { useWishlist } from "@/context/wishlist-context";
+import CartOverlay from "./CartOverlay";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
 
 export function SiteHeader() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [cartOpen, setCartOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<{stores: any[], products: any[]}>({ stores: [], products: [] })
-  const [isSearching, setIsSearching] = useState(false)
-  const [authenticated, setAuthenticated] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [dashboardLink, setDashboardLink] = useState("/dashboard")
-  const { state } = useCart()
-  const { state: wishlistState } = useWishlist()
+  const router = useRouter();
+  const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{
+    stores: any[];
+    products: any[];
+  }>({ stores: [], products: [] });
+  const [isSearching, setIsSearching] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [dashboardLink, setDashboardLink] = useState("/dashboard");
+  const { state } = useCart();
+  const { state: wishlistState } = useWishlist();
 
-  const itemCount = state.items.reduce((sum, item) => sum + item.quantity, 0)
-  const wishlistCount = wishlistState.wishlist.length
+  const itemCount = state.items.reduce((sum, item) => sum + item.quantity, 0);
+  const wishlistCount = wishlistState.wishlist.length;
 
   // Don't show cart and wishlist for sellers
-  const showShoppingFeatures = userRole !== "seller"
+  const showShoppingFeatures = userRole !== "seller";
 
   useEffect(() => {
     async function checkAuth() {
-      const res = await fetch("/api/me", { cache: "no-store" })
-      const data = await res.json()
+      const res = await fetch("/api/me", { cache: "no-store" });
+      const data = await res.json();
       if (data?.user) {
-        setAuthenticated(true)
-        const role = data.user.role
-        setUserRole(role)
-        if (role === "buyer") setDashboardLink("/dashboard/buyer")
-        else if (role === "seller") setDashboardLink("/dashboard/seller")
-        else if (role === "admin") setDashboardLink("/dashboard/admin")
+        setAuthenticated(true);
+        const role = data.user.role;
+        setUserRole(role);
+        if (role === "buyer") setDashboardLink("/dashboard/buyer");
+        else if (role === "seller") setDashboardLink("/dashboard/seller");
+        else if (role === "admin") setDashboardLink("/dashboard/admin");
       } else {
-        setAuthenticated(false)
-        setUserRole(null)
+        setAuthenticated(false);
+        setUserRole(null);
       }
     }
-    checkAuth()
-  }, [pathname])
+    checkAuth();
+  }, [pathname]);
 
   // Search functionality
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.trim().length > 2) {
-        setIsSearching(true)
+        setIsSearching(true);
         try {
-          const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(searchQuery)}`
+          );
           if (response.ok) {
-            const data = await response.json()
-            setSearchResults(data)
+            const data = await response.json();
+            setSearchResults(data);
           }
         } catch (error) {
-          console.error("Search error:", error)
+          console.error("Search error:", error);
         } finally {
-          setIsSearching(false)
+          setIsSearching(false);
         }
       } else {
-        setSearchResults({ stores: [], products: [] })
+        setSearchResults({ stores: [], products: [] });
       }
-    }, 300)
+    }, 300);
 
-    return () => clearTimeout(delayDebounceFn)
-  }, [searchQuery])
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   // Close search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (searchOpen && !target.closest('.search-container')) {
-        setSearchOpen(false)
+      const target = event.target as HTMLElement;
+      if (searchOpen && !target.closest(".search-container")) {
+        setSearchOpen(false);
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [searchOpen])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchOpen]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [mobileMenuOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileMenuOpen]);
 
   async function handleLogout() {
     const res = await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
-    })
+    });
     if (res.ok) {
-      toast.success("Logged out")
-      setAuthenticated(false)
-      setUserRole(null)
-      router.push("/")
-      router.refresh()
+      toast.success("Logged out");
+      setAuthenticated(false);
+      setUserRole(null);
+      router.push("/");
+      router.refresh();
     } else {
-      toast.error("Logout failed")
+      toast.error("Logout failed");
     }
   }
 
   const handleSearchResultClick = () => {
-    setSearchOpen(false)
-    setSearchQuery("")
-    setSearchResults({ stores: [], products: [] })
-  }
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults({ stores: [], products: [] });
+  };
 
   return (
     <>
@@ -142,9 +160,9 @@ export function SiteHeader() {
             <div className="hidden md:flex items-center space-x-2">
               <nav className="flex items-center space-x-1">
                 {/* Search Button */}
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-9 w-9 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
                   onClick={() => setSearchOpen(!searchOpen)}
                 >
@@ -158,7 +176,11 @@ export function SiteHeader() {
                     {/* Wishlist */}
                     <div className="relative">
                       <Link href="/wishlist">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 relative hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 relative hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
+                        >
                           <Heart className="h-4 w-4" />
                           <span className="sr-only">Wishlist</span>
                           {wishlistCount > 0 && (
@@ -200,7 +222,11 @@ export function SiteHeader() {
 
                 {/* Notifications - Only for authenticated users */}
                 {authenticated && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
+                  >
                     <Bell className="h-4 w-4" />
                     <span className="sr-only">Notifications</span>
                   </Button>
@@ -210,7 +236,11 @@ export function SiteHeader() {
                 {authenticated ? (
                   <div className="flex items-center space-x-1">
                     <Link href={dashboardLink}>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
+                      >
                         <LayoutDashboard className="h-4 w-4" />
                         <span className="sr-only">Dashboard</span>
                       </Button>
@@ -219,13 +249,20 @@ export function SiteHeader() {
                 ) : (
                   <div className="flex items-center space-x-1">
                     <Link href="/auth/login">
-                      <Button variant="ghost" size="sm" className="h-9 px-3 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-3 hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
+                      >
                         <LogIn className="mr-2 h-4 w-4" />
                         Login
                       </Button>
                     </Link>
                     <Link href="/auth/register">
-                      <Button size="sm" className="h-9 px-3 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300">
+                      <Button
+                        size="sm"
+                        className="h-9 px-3 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300"
+                      >
                         Sign Up
                       </Button>
                     </Link>
@@ -238,14 +275,30 @@ export function SiteHeader() {
             </div>
 
             {/* Mobile Toggle */}
-            <div className="md:hidden">
+            <div className="flex md:hidden">
+              {/* mobile Search */}
               <Button
+                aria-label="search"
+                className="w-full justify-start bg-transparent hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] p-0"
+                onClick={() => {
+                  setSearchOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Search className=" h-4 w-4" />
+              </Button>
+              <Button
+                aria-label="menu"
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                {mobileMenuOpen ? (
+                  <X className="h-4 w-4" />
+                ) : (
+                  <Menu className="h-4 w-4" />
+                )}
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </div>
@@ -274,8 +327,8 @@ export function SiteHeader() {
                   size="icon"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:text-[#c0a146]"
                   onClick={() => {
-                    setSearchQuery("")
-                    setSearchResults({ stores: [], products: [] })
+                    setSearchQuery("");
+                    setSearchResults({ stores: [], products: [] });
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -291,7 +344,8 @@ export function SiteHeader() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#c0a146] mx-auto"></div>
                     <p className="mt-2">Searching...</p>
                   </div>
-                ) : searchResults.stores.length === 0 && searchResults.products.length === 0 ? (
+                ) : searchResults.stores.length === 0 &&
+                  searchResults.products.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
                     <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p>No results found for "{searchQuery}"</p>
@@ -301,7 +355,9 @@ export function SiteHeader() {
                     {/* Stores Results */}
                     {searchResults.stores.length > 0 && (
                       <div className="p-3">
-                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">Stores</h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
+                          Stores
+                        </h3>
                         <div className="space-y-1">
                           {searchResults.stores.map((store: any) => (
                             <Link
@@ -322,7 +378,9 @@ export function SiteHeader() {
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{store.businessName}</p>
+                                <p className="font-medium truncate">
+                                  {store.businessName}
+                                </p>
                                 <p className="text-sm text-muted-foreground truncate line-clamp-1">
                                   {store.description || store.location}
                                 </p>
@@ -336,7 +394,9 @@ export function SiteHeader() {
                     {/* Products Results */}
                     {searchResults.products.length > 0 && (
                       <div className="p-3">
-                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">Products</h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
+                          Products
+                        </h3>
                         <div className="space-y-1">
                           {searchResults.products.map((product: any) => (
                             <Link
@@ -357,8 +417,12 @@ export function SiteHeader() {
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{product.name}</p>
-                                <p className="text-sm text-[#c0a146] font-semibold">₦{product.price?.toLocaleString()}</p>
+                                <p className="font-medium truncate">
+                                  {product.name}
+                                </p>
+                                <p className="text-sm text-[#c0a146] font-semibold">
+                                  ₦{product.price?.toLocaleString()}
+                                </p>
                               </div>
                             </Link>
                           ))}
@@ -376,16 +440,18 @@ export function SiteHeader() {
             className={cn(
               "fixed inset-x-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background backdrop-blur-xl border-b md:hidden",
               "transition-all duration-300 ease-out",
-              mobileMenuOpen 
-                ? "translate-y-0 opacity-100 visible" 
+              mobileMenuOpen
+                ? "translate-y-0 opacity-100 visible"
                 : "-translate-y-4 opacity-0 invisible"
             )}
           >
-            <div 
+            <div
               className={cn(
                 "container mx-auto px-4 py-6 h-full overflow-y-auto",
                 "transition-all duration-300 delay-75",
-                mobileMenuOpen ? "translate-y-0 opacity-50" : "translate-y-2 opacity-0"
+                mobileMenuOpen
+                  ? "translate-y-0 opacity-50"
+                  : "translate-y-2 opacity-0"
               )}
             >
               {/* Navigation Links */}
@@ -417,24 +483,17 @@ export function SiteHeader() {
 
               {/* Action Buttons */}
               <div className="space-y-4">
-                {/* Search */}
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
-                  onClick={() => {
-                    setSearchOpen(true)
-                    setMobileMenuOpen(false)
-                  }}
-                >
-                  <Search className="mr-3 h-4 w-4" />
-                  Search
-                </Button>
-
                 {/* Shopping Features - Only for non-sellers */}
                 {showShoppingFeatures && (
                   <div className="grid grid-cols-2 gap-3">
-                    <Link href="/wishlist" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start h-11 relative bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]">
+                    <Link
+                      href="/wishlist"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start h-11 relative bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
+                      >
                         <Heart className="mr-3 h-4 w-4" />
                         Wishlist
                         {wishlistCount > 0 && (
@@ -451,8 +510,8 @@ export function SiteHeader() {
                       variant="outline"
                       className="w-full justify-start h-11 relative bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
                       onClick={() => {
-                        setCartOpen(true)
-                        setMobileMenuOpen(false)
+                        setCartOpen(true);
+                        setMobileMenuOpen(false);
                       }}
                     >
                       <ShoppingCart className="mr-3 h-4 w-4" />
@@ -482,8 +541,14 @@ export function SiteHeader() {
                         Notifications
                       </Button>
                     )}
-                    <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]">
+                    <Link
+                      href={dashboardLink}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
+                      >
                         <LayoutDashboard className="mr-3 h-4 w-4" />
                         Dashboard
                       </Button>
@@ -492,8 +557,8 @@ export function SiteHeader() {
                       variant="destructive"
                       className="w-full justify-start h-11 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
                       onClick={() => {
-                        setMobileMenuOpen(false)
-                        handleLogout()
+                        setMobileMenuOpen(false);
+                        handleLogout();
                       }}
                     >
                       <LogOut className="mr-3 h-4 w-4" />
@@ -502,13 +567,22 @@ export function SiteHeader() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]">
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
+                      >
                         <LogIn className="mr-3 h-4 w-4" />
                         Login
                       </Button>
                     </Link>
-                    <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
+                    <Link
+                      href="/auth/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       <Button className="w-full justify-start h-11 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146]">
                         <User className="mr-3 h-4 w-4" />
                         Sign Up
@@ -537,12 +611,10 @@ export function SiteHeader() {
       <div
         className={cn(
           "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden transition-all duration-300 ease-out",
-          mobileMenuOpen 
-            ? "opacity-100 visible" 
-            : "opacity-0 invisible"
+          mobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
         )}
         onClick={() => setMobileMenuOpen(false)}
       />
     </>
-  )
+  );
 }

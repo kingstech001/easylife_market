@@ -9,11 +9,6 @@ import {
   ArrowRight,
   Store,
   AlertCircle,
-  Search,
-  Filter,
-  TrendingUp,
-  Users,
-  Zap,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

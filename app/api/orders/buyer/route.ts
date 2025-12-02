@@ -28,10 +28,6 @@ function getTokenFromRequest(request: NextRequest): string | null {
     console.log("✅ Token found in Authorization header")
     return authHeader.slice(7)
   }
-
-  // Debug: Log all cookies to see what's available
-  console.log("❌ No token found. Available cookies:", 
-    Array.from(request.cookies.getAll()).map(c => c.name).join(", "))
   
   return null
 }
@@ -70,21 +66,16 @@ export async function POST(request: NextRequest) {
     }
 
     const requestData = await request.json()
-    console.log("[v0] Request data received:", JSON.stringify(requestData, null, 2))
 
     const { orders: ordersData, deliveryFee, shippingInfo, paymentMethod, receiptUrl } = requestData
 
     if (!ordersData || !Array.isArray(ordersData) || ordersData.length === 0) {
-      console.log("[v0] Invalid orders data:", {
-        ordersData,
-        isArray: Array.isArray(ordersData),
-      })
       return NextResponse.json({ error: "At least one order must be provided" }, { status: 400 })
     }
 
     for (const orderData of ordersData) {
       if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
-        console.log("[v0] Invalid items in order:", orderData)
+        console.log(" Invalid items in order:", orderData)
         return NextResponse.json({ error: "Each order must contain at least one item" }, { status: 400 })
       }
       if (!orderData.storeId) {
@@ -166,7 +157,6 @@ export async function POST(request: NextRequest) {
 // ================== GET - Fetch Main Orders with Sub-Orders ==================
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔍 GET /api/orders/buyer - Request received")
     
     const token = getTokenFromRequest(request)
     if (!token) {
@@ -183,7 +173,6 @@ export async function GET(request: NextRequest) {
     let payload
     try {
       payload = await verifyToken(token)
-      console.log("✅ Token verified for user:", payload.id || payload._id)
     } catch (error) {
       console.error("❌ GET /api/orders/buyer - Invalid token:", error)
       return NextResponse.json(
@@ -201,7 +190,6 @@ export async function GET(request: NextRequest) {
     }
 
     await connectToDB()
-    console.log("✅ Database connected")
 
     const mainOrders = await MainOrder.find({
       userId: payload.id || payload._id,
@@ -224,7 +212,6 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean()
 
-    console.log("✅ Found", mainOrders.length, "orders for user")
 
     mainOrders.forEach((order: any) => {
       order.subOrders.forEach((subOrder: any) => {

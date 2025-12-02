@@ -26,7 +26,6 @@ export async function GET(
     // ✅ Await params (Next.js 15 requirement)
     const { slug } = await params
 
-    console.log("🔍 Fetching store with slug:", slug)
 
     // Validate slug
     if (!slug || typeof slug !== "string") {
@@ -48,7 +47,6 @@ export async function GET(
     }).lean<StoreDocument>()
 
     if (!store) {
-      console.log("❌ Store not found:", slug)
       return NextResponse.json(
         {
           success: false,
@@ -57,8 +55,6 @@ export async function GET(
         { status: 404 }
       )
     }
-
-    console.log("✅ Store found:", store.name)
 
     // Transform store data
     const storeData = {

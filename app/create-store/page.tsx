@@ -635,7 +635,7 @@ export default function CreateStorePage() {
                               onChange={handleBannerUpload}
                             />
                             <p className="text-xs text-muted-foreground text-center">
-                              Recommended: 1200×600px, PNG or JPG (Max 5MB)
+                              Recommended: 1200x600px, PNG or JPG (Max 5MB)
                             </p>
                           </div>
                         </FormItem>

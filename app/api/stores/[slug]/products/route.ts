@@ -40,14 +40,12 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       return NextResponse.json(errorResponse, { status: 404 })
     }
 
-    console.log('✅ Store found:', store.name, 'ID:', store._id)
 
     // First, check what products exist for this store
     const allStoreProducts = await Product.find({
       storeId: store._id,
     }).lean()
 
-    console.log('📦 Total products found for store:', allStoreProducts.length)
 
     // Build filter carefully
     const filter: any = {
@@ -65,14 +63,12 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       }
     }
 
-    console.log('🔍 Using filter:', filter)
 
     // Fetch products - don't populate categoryId since it might not exist or be a string
     const products: IProduct[] = await Product.find(filter)
       .sort({ createdAt: -1 })
       .lean()
 
-    console.log('✅ Products after filtering:', products.length)
 
     // Transform the products safely
     const transformedProducts: ProductResponse[] = products.map((product) => {
@@ -117,7 +113,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       }
     })
 
-    console.log('✅ Successfully transformed products:', transformedProducts.length)
 
     const successResponse: ProductsApiResponse = {
       success: true,

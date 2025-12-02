@@ -36,7 +36,6 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
     const sortBy = searchParams.get("sortBy") || "createdAt"
     const sortOrder = searchParams.get("sortOrder") || "desc"
 
-    console.log("API: Searching products for store slug:", slug, "with query:", query)
 
     // Validate slug
     if (!slug) {
@@ -63,7 +62,6 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
       return NextResponse.json(errorResponse, { status: 404 })
     }
 
-    console.log("Store found for search:", store.name)
 
     // Build search filter using the store's ObjectId
     const filter: SearchFilters = {
@@ -108,14 +106,12 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
     // Execute query with pagination
     const skip = Math.max(0, (page - 1) * limit)
 
-    console.log("Executing search with filter:", JSON.stringify(filter, null, 2))
 
     const [products, totalCount]: [IProduct[], number] = await Promise.all([
       Product.find(filter).populate("categoryId", "name").sort(sort).skip(skip).limit(limit).lean(),
       Product.countDocuments(filter),
     ])
 
-    console.log("Search results:", products.length, "of", totalCount, "total")
 
     // Transform products
     const transformedProducts: ProductResponse[] = products.map((product) => ({
@@ -124,7 +120,7 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
       description: product.description || null,
       price: product.price,
       compare_at_price: product.compareAtPrice || null,
-      category_id: product.categoryId?.toString() || null,
+      category_id: product.category?.toString() || null,
       inventory_quantity: product.inventoryQuantity,
       images:
         product.images?.map((img) => ({
@@ -133,8 +129,8 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
           alt_text: img.altText || null,
         })) || [],
       store_id: product.storeId.toString(),
-      created_at: product.createdAt,
-      updated_at: product.updatedAt,
+      created_at: product.createdAt || new Date(),
+      updated_at: product.updatedAt || new Date(),
     }))
 
     const pagination: PaginationResponse = {

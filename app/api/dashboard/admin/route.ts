@@ -19,7 +19,6 @@ export async function GET() {
       );
     }
 
-    console.log("✅ Admin user authenticated:", user.email);
 
     // ✅ 2. Fetch dashboard data
     const totalStores = await Store.countDocuments();
