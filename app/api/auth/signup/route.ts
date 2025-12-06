@@ -78,6 +78,7 @@ export async function POST(req: Request) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
+            <img src="/logo.png" alt="Easylife Market" width="100" />
               <h1 style="color: #333; margin-bottom: 10px;">Welcome to Easylife Market!</h1>
               <p style="color: #666; font-size: 16px;">Thank you for registering, ${firstName}!</p>
             </div>

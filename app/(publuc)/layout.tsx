@@ -1,15 +1,15 @@
-import type { ReactNode } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { ModernFooter } from "@/components/Footer"
-import { CartProvider } from "@/context/cart-context"  // 👈 import your provider
+import { CartProvider } from "@/context/cart-context"
 import { AuthProvider } from "@/context/AuthContext"
 import { LocationPrompt } from "@/components/location-prompt"
 
-export default function PublicLayout({ children }: { children: ReactNode }) {
+
+export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <CartProvider>   {/* 👈 provide cart context to everything in this layout */}
-        <div className="relative flex min-h-screen flex-col">
+      <CartProvider>
+        <div className="relative min-h-screen flex flex-col">
           <SiteHeader />
           <main className="flex-1">
             <LocationPrompt />

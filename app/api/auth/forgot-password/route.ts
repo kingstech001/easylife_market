@@ -77,9 +77,7 @@ export async function POST(req: NextRequest) {
                     <!-- Header with Logo -->
                     <tr>
                       <td style="background-color: #ffffff; padding: 30px 40px; border-bottom: 3px solid #c0a146;">
-                        <h1 style="margin: 0; color: #2c3e50; font-size: 26px; font-weight: normal; letter-spacing: 1px;">
-                          EASYLIFE
-                        </h1>
+                        <img src="/logo.png" alt="EasyLife" width="120" style="display: block; margin: 0 auto;">
                       </td>
                     </tr>
                     
