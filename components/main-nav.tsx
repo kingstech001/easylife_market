@@ -3,8 +3,6 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ShoppingBag } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 
 import { cn } from "@/lib/utils"
 import Image from "next/image"

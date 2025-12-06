@@ -8,7 +8,6 @@ import {
   Mail,
   Heart,
   ArrowUp,
-  ShoppingBag,
   Send,
   MapPin,
   Clock,
