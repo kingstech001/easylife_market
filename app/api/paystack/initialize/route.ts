@@ -16,6 +16,13 @@ function getBaseUrl() {
   return "http://localhost:3000"
 }
 
+// Generate unique payment reference
+function generateReference() {
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2, 11)
+  return `REF_${timestamp}_${random}`.toUpperCase()
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -29,8 +36,8 @@ export async function POST(request: NextRequest) {
       paymentMethod,
       deliveryFee,
       type,
+      reference, // Allow custom reference or generate one
     } = body
-
 
     // ✅ Validate common payment fields
     if (!email || !amount) {
@@ -59,6 +66,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ✅ Generate or use provided reference
+    const paymentReference = reference || generateReference()
+    console.log("[Paystack Initialize] Using reference:", paymentReference)
+
     // ✅ Get base URL (works in all environments)
     const baseUrl = getBaseUrl()
 
@@ -75,13 +86,13 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Paystack will append reference, but we can add it as a placeholder
       callback_url = `${baseUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
       metadata = { 
         plan, 
         storeId, 
         type: "subscription",
-        callback_url: `${baseUrl}/dashboard/seller/subscriptions/success` // Store for reference
+        reference: paymentReference, // ✅ Include reference in metadata
+        callback_url: `${baseUrl}/dashboard/seller/subscriptions/success`
       }
       
     } else if (type === "checkout") {
@@ -107,8 +118,8 @@ export async function POST(request: NextRequest) {
         paymentMethod: paymentMethod || "card",
         deliveryFee: deliveryFee || 0,
         type: "checkout",
+        reference: paymentReference, // ✅ Include reference in metadata
       }
-      
     }
 
     // ✅ Convert Naira to Kobo (Paystack uses smallest currency unit)
@@ -117,10 +128,18 @@ export async function POST(request: NextRequest) {
     const paystackPayload = {
       email,
       amount: amountInKobo,
+      reference: paymentReference, // ✅ Set custom reference
       callback_url,
       metadata,
     }
 
+    console.log("[Paystack Initialize] Payload:", {
+      email,
+      amount: amountInKobo,
+      reference: paymentReference,
+      type,
+      callback_url,
+    })
 
     // 🚀 Initialize payment with Paystack
     const paystackResponse = await fetch(
@@ -152,12 +171,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("[Paystack Initialize] ✅ Success:", {
+      reference: paystackData.data.reference,
+      authorization_url: paystackData.data.authorization_url,
+    })
 
     return NextResponse.json({
       success: true,
       authorization_url: paystackData.data.authorization_url,
       access_code: paystackData.data.access_code,
-      reference: paystackData.data.reference,
+      reference: paystackData.data.reference, // This will be our custom reference
+      type,
     })
   } catch (error: any) {
     console.error("[Paystack Initialize] ❌ Unexpected error:", error)

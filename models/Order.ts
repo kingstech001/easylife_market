@@ -1,21 +1,31 @@
 import mongoose, { Schema, Document, Model } from "mongoose"
 
-// Define an interface for each item in the order
 interface IOrderItem {
   productName: string
-  productId: mongoose.Types.ObjectId // reference to Product
+  productId: mongoose.Types.ObjectId
   quantity: number
   priceAtPurchase: number
 }
 
-// Define the full order interface
+interface IPaymentDetails {
+  transactionId?: string
+  amount?: number
+  currency?: string
+  channel?: string
+  fees?: number
+  paidAt?: Date
+}
+
 export interface IOrder extends Document {
   storeId: mongoose.Types.ObjectId
   userId: mongoose.Types.ObjectId
   totalPrice: number
   status: string
+  paymentStatus: string
+  reference: string
   items: IOrderItem[]
   paymentMethod?: string
+  paymentDetails?: IPaymentDetails
   receiptUrl?: string
   shippingInfo?: {
     firstName: string
@@ -26,11 +36,11 @@ export interface IOrder extends Document {
     phone: string
     area: string
   }
+  paidAt?: Date
   createdAt: Date
   updatedAt: Date
 }
 
-// Create the schema
 const OrderItemSchema = new Schema({
   productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
   productName: { type: String, required: true },
@@ -38,23 +48,53 @@ const OrderItemSchema = new Schema({
   priceAtPurchase: { type: Number, required: true },
 })
 
+const PaymentDetailsSchema = new Schema({
+  transactionId: { type: String },
+  amount: { type: Number },
+  currency: { type: String },
+  channel: { type: String },
+  fees: { type: Number },
+  paidAt: { type: Date },
+}, { _id: false })
+
 const OrderSchema = new Schema<IOrder>(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     totalPrice: { type: Number, required: true },
+    
     status: { 
       type: String, 
       enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
       default: "pending", 
       index: true 
     },
+    
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+      required: true,
+      index: true
+    },
+    
+    reference: {
+      type: String,
+      required: true,
+      index: true
+    },
+    
     items: [OrderItemSchema],
+    
     paymentMethod: { 
       type: String,
       enum: ["card", "transfer", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
     },
+    
+    paymentDetails: PaymentDetailsSchema,
+    
     receiptUrl: { type: String },
+    
     shippingInfo: {
       firstName: String,
       lastName: String,
@@ -64,28 +104,45 @@ const OrderSchema = new Schema<IOrder>(
       phone: String,
       area: String,
     },
+    
+    paidAt: { type: Date },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 )
 
-// Add indexes to speed common queries and aggregations
 OrderSchema.index({ createdAt: 1 })
 OrderSchema.index({ createdAt: 1, status: 1 })
+OrderSchema.index({ createdAt: 1, paymentStatus: 1 })
 OrderSchema.index({ "items.productId": 1 })
 OrderSchema.index({ storeId: 1 })
 OrderSchema.index({ userId: 1 })
-OrderSchema.index({ storeId: 1, createdAt: -1 }) // common for store recent orders
+OrderSchema.index({ storeId: 1, createdAt: -1 })
+OrderSchema.index({ reference: 1 })
+OrderSchema.index({ paymentStatus: 1, status: 1 })
 
-// Optional: remove __v when converting to JSON
+OrderSchema.virtual('isPaid').get(function() {
+  return this.paymentStatus === 'paid'
+})
+
+OrderSchema.virtual('canBeCancelled').get(function() {
+  return ['pending', 'confirmed'].includes(this.status) && this.paymentStatus !== 'paid'
+})
+
 OrderSchema.set("toJSON", {
   transform: function (doc, ret) {
-    const out = ret as any; // cast to any so `delete` is allowed
-    delete out.__v;
-    return out;
+    const out = ret as any
+    delete out.__v
+    return out
   },
 })
 
-// ✅ Prevent recompilation issues in Next.js
+OrderSchema.pre('save', function(next) {
+  if (this.isModified('paymentStatus') && this.paymentStatus === 'paid' && this.status === 'pending') {
+    this.status = 'processing'
+  }
+  next()
+})
+
 const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema)
 
