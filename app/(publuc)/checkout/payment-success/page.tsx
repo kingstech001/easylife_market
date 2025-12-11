@@ -46,9 +46,8 @@ function PaymentSuccessContent() {
       return
     }
 
-    let pollInterval: NodeJS.Timeout
-    let countdownInterval: NodeJS.Timeout
-
+    let pollInterval: NodeJS.Timeout | undefined
+    
     const verifyPayment = async () => {
       try {
         const response = await fetch(
@@ -71,6 +70,7 @@ function PaymentSuccessContent() {
         if (data.data.type === "subscription") {
           if (data.data.subscriptionUpdated) {
             setVerificationState("success")
+            clearInterval(pollInterval)
             // Redirect to store dashboard after 3 seconds
             setTimeout(() => {
               router.push("/seller/dashboard")
@@ -81,6 +81,7 @@ function PaymentSuccessContent() {
               setVerificationState("polling")
               setPollAttempts((prev) => prev + 1)
             } else {
+              clearInterval(pollInterval)
               setError("Subscription update is taking longer than expected. Please check your store dashboard.")
               setVerificationState("error")
             }
@@ -93,7 +94,6 @@ function PaymentSuccessContent() {
           // Order successfully created
           setVerificationState("success")
           clearInterval(pollInterval)
-          clearInterval(countdownInterval)
 
           // Redirect to order confirmation after 3 seconds
           setTimeout(() => {
@@ -106,6 +106,7 @@ function PaymentSuccessContent() {
             setPollAttempts((prev) => prev + 1)
           } else {
             // Max attempts reached
+            clearInterval(pollInterval)
             setError(
               "Order creation is taking longer than expected. Your payment was successful. Please check your orders page or contact support with the reference below."
             )
@@ -117,7 +118,6 @@ function PaymentSuccessContent() {
         setError(err.message || "Failed to verify payment")
         setVerificationState("error")
         clearInterval(pollInterval)
-        clearInterval(countdownInterval)
       }
     }
 
@@ -126,19 +126,25 @@ function PaymentSuccessContent() {
 
     // Set up polling interval (every 2 seconds)
     pollInterval = setInterval(() => {
-      if (pollAttempts < MAX_POLL_ATTEMPTS) {
+      if (pollAttempts < MAX_POLL_ATTEMPTS && verificationState === "polling") {
         verifyPayment()
-      } else {
-        clearInterval(pollInterval)
       }
     }, 2000)
 
-    // Countdown for redirect
+    return () => {
+      if (pollInterval) clearInterval(pollInterval)
+    }
+  }, [reference, router])
+
+  // Separate countdown effect for error state
+  useEffect(() => {
+    let countdownInterval: NodeJS.Timeout | undefined
+    
     if (verificationState === "error") {
       countdownInterval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
-            clearInterval(countdownInterval)
+            if (countdownInterval) clearInterval(countdownInterval)
             router.push("/checkout")
             return 0
           }
@@ -148,10 +154,9 @@ function PaymentSuccessContent() {
     }
 
     return () => {
-      clearInterval(pollInterval)
-      clearInterval(countdownInterval)
+      if (countdownInterval) clearInterval(countdownInterval)
     }
-  }, [reference, pollAttempts, router, verificationState])
+  }, [verificationState, router])
 
   if (!reference) {
     return (
@@ -319,6 +324,8 @@ function PaymentSuccessContent() {
     </div>
   )
 }
+
+// Main component with Suspense wrapper
 export default function PaymentSuccessPage() {
   return (
     <Suspense
