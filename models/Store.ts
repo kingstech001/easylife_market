@@ -24,9 +24,15 @@ export interface IStore extends Document {
   categories?: string[];
   isPublished: boolean;
   subscriptionPlan: "free" | "basic" | "standard" | "premium";
+  subscriptionStatus?: "active" | "inactive" | "expired" | "cancelled";
+  subscriptionExpiryDate?: Date;
   productLimit?: number | null;
   subscriptionStartDate?: Date | null;
   subscriptionEndDate?: Date | null;
+  // Payment tracking fields
+  lastPaymentAmount?: number;
+  lastPaymentReference?: string;
+  lastPaymentDate?: Date;
   location: {
     type: "Point";
     coordinates: [number, number];
@@ -56,6 +62,14 @@ const StoreSchema = new Schema<IStore>(
       enum: ["free", "basic", "standard", "premium"],
       default: "free",
     },
+    subscriptionStatus: {
+      type: String,
+      enum: ["active", "inactive", "expired", "cancelled"],
+      default: "inactive",
+    },
+    subscriptionExpiryDate: {
+      type: Date,
+    },
     // productLimit mirrors subscriptionPlan; kept for quick queries
     productLimit: {
       type: Number,
@@ -64,6 +78,17 @@ const StoreSchema = new Schema<IStore>(
     },
     subscriptionStartDate: { type: Date, default: null },
     subscriptionEndDate: { type: Date, default: null },
+    // Payment tracking fields
+    lastPaymentAmount: {
+      type: Number,
+    },
+    lastPaymentReference: {
+      type: String,
+      index: true,
+    },
+    lastPaymentDate: {
+      type: Date,
+    },
     location: {
       type: {
         type: String,
@@ -164,6 +189,7 @@ StoreSchema.index({ "location.coordinates": "2dsphere" });
 StoreSchema.index({ sellerId: 1 });
 StoreSchema.index({ slug: 1 });
 StoreSchema.index({ isPublished: 1, isApproved: 1 });
+StoreSchema.index({ lastPaymentReference: 1 });
 
 // Type-safe model
 const Store: Model<IStore> =
