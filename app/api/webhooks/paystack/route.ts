@@ -575,13 +575,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Token may be missing when user is redirected back from Paystack.
+    // Allow unauthenticated polling so the frontend can poll for order creation,
+    // but avoid returning sensitive main order details to anonymous callers.
     const token = request.cookies.get("token")?.value
-    if (!token) {
-      return NextResponse.json(
-        { error: "Unauthorized - No authentication token" },
-        { status: 401 }
-      )
-    }
+    const isAuthenticated = !!token
 
     // Verify payment with Paystack
     const verifyData = await verifyPaystackTransaction(reference)
@@ -651,6 +649,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Get main order details
+    // If unauthenticated, return minimal info (orderExists = true) so the
+    // frontend can tell the user their order is ready. Do not expose
+    // orderNumber or detailed order info without authentication.
+    if (!isAuthenticated) {
+      return NextResponse.json({
+        status: "success",
+        message: "Payment verified and order created",
+        data: {
+          reference,
+          paymentStatus: "success",
+          amount: paidAmount,
+          orderExists: true,
+          subOrderCount: existingOrders.length,
+        },
+      })
+    }
+
+    // Authenticated: include main order details so we can redirect to the
+    // specific order page.
     const mainOrder = await MainOrder.findOne({
       subOrders: { $in: existingOrders.map((o) => o._id) },
     })
