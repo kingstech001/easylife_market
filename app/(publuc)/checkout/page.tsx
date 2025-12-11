@@ -546,9 +546,10 @@ export default function CheckoutPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between space-x-2 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4 transition-all duration-200">
                           <div className="flex items-center space-x-4">
-                            <div className="h-12 w-16 rounded-lg bg-gradient-to-r from-[#0052CC] to-[#00A3E0] flex items-center justify-center">
+                            {/* <div className="h-12 w-16 rounded-lg bg-gradient-to-r from-[#0052CC] to-[#00A3E0] flex items-center justify-center">
                               <span className="text-white font-bold text-xs">PAY</span>
-                            </div>
+                            </div> */}
+                            <Image src={"/paystack.jpeg"} alt="paystack-logo" width={50} height={50}></Image>
                             <div>
                               <p className="text-[12px] font-semibold md:text-base">Paystack Payment</p>
                               <p className="text-[10px] md:text-sm text-muted-foreground">

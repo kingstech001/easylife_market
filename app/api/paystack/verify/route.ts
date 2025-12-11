@@ -5,34 +5,8 @@ import Order from "@/models/Order"
 import MainOrder from "@/models/MainOrder"
 import Product from "@/models/Product"
 import mongoose from "mongoose"
-import crypto from "crypto"
 import { PaymentLogger } from "@/lib/paymentLogger"
-
-// Rate limiting store (in production, use Redis)
-const verificationAttempts = new Map<string, { count: number; resetTime: number }>()
-
-function checkRateLimit(reference: string): boolean {
-  const now = Date.now()
-  const attempt = verificationAttempts.get(reference)
-  
-  if (!attempt || now > attempt.resetTime) {
-    verificationAttempts.set(reference, { count: 1, resetTime: now + 60000 }) // 1 minute window
-    return true
-  }
-  
-  if (attempt.count >= 5) { // Max 5 attempts per minute
-    // Log rate limit hit
-    PaymentLogger.log({
-      reference,
-      event: "rate_limit_hit",
-      metadata: { attemptCount: attempt.count },
-    }).catch(console.error)
-    return false
-  }
-  
-  attempt.count++
-  return true
-}
+import { checkCombinedRateLimit } from "@/lib/rateLimit"
 
 async function updateSubscription(
   storeId: string,
@@ -320,11 +294,31 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent") || undefined,
     })
 
-    // Rate limiting
-    if (!checkRateLimit(reference)) {
+    // Rate limiting with Redis (production-ready)
+    const rateLimitResult = await checkCombinedRateLimit(reference, ipAddress)
+    
+    if (!rateLimitResult.allowed) {
+      await PaymentLogger.log({
+        reference,
+        event: "rate_limit_hit",
+        ipAddress,
+        metadata: { 
+          reason: rateLimitResult.reason,
+          resetTime: rateLimitResult.resetTime 
+        },
+      })
+      
       return NextResponse.json(
-        { error: "Too many verification attempts. Please try again later." },
-        { status: 429 }
+        { 
+          error: rateLimitResult.reason || "Too many verification attempts. Please try again later.",
+          retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString(),
+          }
+        }
       )
     }
 
