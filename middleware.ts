@@ -3,7 +3,7 @@ import { jwtVerify } from "jose";
 
 // ===== Rate Limiting Store =====
 // 5 requests per 10 seconds per IP
-const RATE_LIMIT_WINDOW = 10 * 1000; 
+const RATE_LIMIT_WINDOW = 10 * 1000;
 const RATE_LIMIT_MAX = 5;
 
 const ipHits: Record<string, { count: number; time: number }> = {};
@@ -14,7 +14,9 @@ export async function middleware(req: NextRequest) {
 
   // ====== IP DETECTION (Correct for Next.js Middleware) ======
   const forwarded = req.headers.get("x-forwarded-for");
-  const realIp = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip");
+  const realIp = forwarded
+    ? forwarded.split(",")[0].trim()
+    : req.headers.get("x-real-ip");
   const ip = realIp || "unknown";
 
   // ====== RATE LIMITING ======
@@ -46,9 +48,14 @@ export async function middleware(req: NextRequest) {
   }
   // ====== END RATE LIMITING ======
 
-
   // ===== PUBLIC ROUTES =====
-  const publicPaths = ["/", "/auth/login", "/auth/signup"];
+  const publicPaths = [
+    "/",
+    "/auth/login",
+    "/auth/signup",
+    "/checkout/payment-success", // Allow Paystack callback
+    "/dashboard/seller/subscriptions/success", // Allow subscription callback
+  ];
   const isPublic = publicPaths.some((p) => path === p);
 
   if (!token) {
@@ -112,10 +119,10 @@ export async function middleware(req: NextRequest) {
 // ===== ROUTE MATCHER =====
 export const config = {
   matcher: [
-    "/",                     // home
-    "/dashboard/:path*",     // all dashboards
-    "/profile/:path*",       // profile pages
-    "/orders/:path*",        // orders
-    "/checkout/:path*",      // checkout
+    "/", // home
+    "/dashboard/:path*", // all dashboards
+    "/profile/:path*", // profile pages
+    "/orders/:path*", // orders
+    "/checkout/:path*", // checkout
   ],
 };
