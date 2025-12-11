@@ -1,7 +1,7 @@
 // app/checkout/payment-success/page.tsx
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle, XCircle, Loader2, Clock } from "lucide-react"
 
@@ -37,6 +37,8 @@ function PaymentSuccessContent() {
   const [countdown, setCountdown] = useState(5)
 
   const MAX_POLL_ATTEMPTS = 20 // Poll for up to 40 seconds (20 attempts × 2s)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const attemptCountRef = useRef(0)
 
   // Verify payment and poll for order creation
   useEffect(() => {
@@ -46,10 +48,10 @@ function PaymentSuccessContent() {
       return
     }
 
-    let pollInterval: NodeJS.Timeout | undefined
-    
     const verifyPayment = async () => {
       try {
+        console.log(`[Poll Attempt ${attemptCountRef.current + 1}] Verifying payment...`)
+        
         const response = await fetch(
           `/api/webhooks/paystack?reference=${reference}`,
           {
@@ -64,75 +66,101 @@ function PaymentSuccessContent() {
         }
 
         const data: VerificationResult = await response.json()
+        console.log("[Verification Response]", data)
         setResult(data)
 
         // Handle subscription payments
         if (data.data.type === "subscription") {
           if (data.data.subscriptionUpdated) {
+            console.log("✅ Subscription updated successfully")
             setVerificationState("success")
-            clearInterval(pollInterval)
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current)
+              pollIntervalRef.current = null
+            }
             // Redirect to store dashboard after 3 seconds
             setTimeout(() => {
               router.push("/seller/dashboard")
             }, 3000)
+            return true // Stop polling
           } else {
-            // Keep polling for subscription update
-            if (pollAttempts < MAX_POLL_ATTEMPTS) {
-              setVerificationState("polling")
-              setPollAttempts((prev) => prev + 1)
-            } else {
-              clearInterval(pollInterval)
-              setError("Subscription update is taking longer than expected. Please check your store dashboard.")
-              setVerificationState("error")
-            }
+            console.log("⏳ Subscription not yet updated, continuing to poll...")
+            setVerificationState("polling")
+            return false // Continue polling
           }
-          return
         }
 
         // Handle order payments
         if (data.data.orderExists && data.data.orderNumber) {
-          // Order successfully created
+          console.log("✅ Order created successfully:", data.data.orderNumber)
           setVerificationState("success")
-          clearInterval(pollInterval)
-
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+            pollIntervalRef.current = null
+          }
           // Redirect to order confirmation after 3 seconds
           setTimeout(() => {
             router.push(`/orders/${data.data.orderNumber}`)
           }, 3000)
+          return true // Stop polling
         } else {
-          // Order not yet created, continue polling
-          if (pollAttempts < MAX_POLL_ATTEMPTS) {
-            setVerificationState("polling")
-            setPollAttempts((prev) => prev + 1)
-          } else {
-            // Max attempts reached
-            clearInterval(pollInterval)
-            setError(
-              "Order creation is taking longer than expected. Your payment was successful. Please check your orders page or contact support with the reference below."
-            )
-            setVerificationState("error")
-          }
+          console.log("⏳ Order not yet created, continuing to poll...")
+          setVerificationState("polling")
+          return false // Continue polling
         }
       } catch (err: any) {
-        console.error("Verification error:", err)
+        console.error("❌ Verification error:", err)
         setError(err.message || "Failed to verify payment")
         setVerificationState("error")
-        clearInterval(pollInterval)
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+        return true // Stop polling on error
       }
     }
 
-    // Initial verification
-    verifyPayment()
+    const startPolling = async () => {
+      // Initial verification
+      const shouldStop = await verifyPayment()
+      if (shouldStop) return
 
-    // Set up polling interval (every 2 seconds)
-    pollInterval = setInterval(() => {
-      if (pollAttempts < MAX_POLL_ATTEMPTS && verificationState === "polling") {
-        verifyPayment()
-      }
-    }, 2000)
+      attemptCountRef.current = 1
+      setPollAttempts(1)
+
+      // Set up polling interval (every 2 seconds)
+      pollIntervalRef.current = setInterval(async () => {
+        attemptCountRef.current += 1
+        setPollAttempts(attemptCountRef.current)
+
+        if (attemptCountRef.current >= MAX_POLL_ATTEMPTS) {
+          console.log("⚠️ Max polling attempts reached")
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+            pollIntervalRef.current = null
+          }
+          setError(
+            "Order creation is taking longer than expected. Your payment was successful. Please check your orders page or contact support with the reference below."
+          )
+          setVerificationState("error")
+          return
+        }
+
+        const shouldStop = await verifyPayment()
+        if (shouldStop && pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+      }, 2000)
+    }
+
+    startPolling()
 
     return () => {
-      if (pollInterval) clearInterval(pollInterval)
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
     }
   }, [reference, router])
 
@@ -199,8 +227,11 @@ function PaymentSuccessContent() {
           <p className="text-gray-600 mb-4">
             Creating your {result?.data.type === "subscription" ? "subscription" : "order"}...
           </p>
-          <p className="text-sm text-gray-500">
-            This may take a few moments... ({pollAttempts}/{MAX_POLL_ATTEMPTS})
+          <p className="text-sm text-gray-500 mb-2">
+            This may take a few moments...
+          </p>
+          <p className="text-xs text-gray-400">
+            Attempt {pollAttempts} of {MAX_POLL_ATTEMPTS}
           </p>
           <div className="mt-6">
             <div className="w-full bg-gray-200 rounded-full h-2">
