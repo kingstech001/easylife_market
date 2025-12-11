@@ -1,171 +1,188 @@
-import { NextRequest, NextResponse } from "next/server"
+// app/api/webhooks/paystack/route.ts
+import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { connectToDB } from "@/lib/db"
 import Order from "@/models/Order"
-import MainOrder from "@/models/MainOrder" // ✅ ADD THIS
+import MainOrder from "@/models/MainOrder"
 
-export const runtime = "nodejs"
+/**
+ * Paystack Webhook Handler
+ * This endpoint receives direct notifications from Paystack when payments are successful
+ * More secure than relying solely on client-side verification
+ */
 
-export async function POST(req: NextRequest) {
+function verifyPaystackSignature(body: string, signature: string | null): boolean {
+  if (!signature) {
+    return false
+  }
+
+  const secret = process.env.PAYSTACK_SECRET_KEY
+  if (!secret) {
+    throw new Error("PAYSTACK_SECRET_KEY not configured")
+  }
+
+  const hash = crypto
+    .createHmac("sha512", secret)
+    .update(body)
+    .digest("hex")
+
+  return hash === signature
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const bodyText = await req.text()
-    
-    const signature = req.headers.get("x-paystack-signature")
-    const secret = process.env.PAYSTACK_SECRET_KEY
-    
-    if (!secret) {
-      console.error("❌ PAYSTACK_SECRET_KEY not set")
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+    // Get raw body for signature verification
+    const body = await request.text()
+    const signature = request.headers.get("x-paystack-signature")
+
+    // Verify webhook signature
+    if (!verifyPaystackSignature(body, signature)) {
+      console.error("❌ Invalid Paystack webhook signature")
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 401 }
+      )
     }
 
-    if (!signature) {
-      console.error("❌ No signature header found")
-      return NextResponse.json({ error: "Missing signature" }, { status: 400 })
-    }
+    // Parse the verified body
+    const event = JSON.parse(body)
 
-    const hash = crypto.createHmac("sha512", secret).update(bodyText).digest("hex")
-    
-    if (hash !== signature) {
-      console.error("❌ Invalid Paystack signature")
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
-    }
+    console.log(`📨 Webhook received: ${event.event}`)
 
-    console.log("✅ Signature verified successfully")
-
-    const event = JSON.parse(bodyText)
-    
-    console.log("📦 Webhook event received:", {
-      event: event.event,
-      reference: event.data?.reference,
-      status: event.data?.status,
-    })
-
-    await connectToDB()
-
+    // Handle different webhook events
     switch (event.event) {
-      case "charge.success": {
-        const { reference, amount, customer, paid_at } = event.data
-        
-        console.log("✅ Payment successful:", {
-          reference,
-          amount: amount / 100,
-          customer: customer.email,
-          paidAt: paid_at,
-        })
-
-        // Update all sub-orders
-        const orders = await Order.find({ reference })
-        
-        if (orders.length === 0) {
-          console.error("❌ Orders not found for reference:", reference)
-          return NextResponse.json({ 
-            status: "ok", 
-            message: "Orders not found" 
-          }, { status: 200 })
-        }
-
-        for (const order of orders) {
-          order.paymentStatus = "paid"
-          order.status = "processing"
-          order.paidAt = new Date(paid_at)
-          order.paymentDetails = {
-            transactionId: event.data.id,
-            amount: amount / 100,
-            currency: event.data.currency,
-            channel: event.data.channel,
-            fees: event.data.fees / 100,
-            paidAt: new Date(paid_at),
-          }
-          
-          await order.save()
-          console.log("✅ Order updated successfully:", order._id)
-        }
-
-        // ✅ UPDATE MAINORDER TOO
-        const mainOrder = await MainOrder.findOne({ reference })
-        if (mainOrder) {
-          mainOrder.paymentStatus = "paid"
-          mainOrder.status = "processing"
-          mainOrder.paidAt = new Date(paid_at)
-          mainOrder.paymentDetails = {
-            transactionId: event.data.id,
-            amount: amount / 100,
-            currency: event.data.currency,
-            channel: event.data.channel,
-            fees: event.data.fees / 100,
-            paidAt: new Date(paid_at),
-          }
-          await mainOrder.save()
-          console.log("✅ MainOrder updated successfully:", mainOrder._id)
-        }
-        
+      case "charge.success":
+        await handleSuccessfulCharge(event.data)
         break
-      }
 
       case "charge.failed":
-      case "invoice.payment_failed": {
-        const { reference, customer } = event.data
-        
-        console.log("❌ Payment failed:", {
-          reference,
-          customer: customer?.email,
-        })
-
-        // Update sub-orders
-        const orders = await Order.find({ reference })
-        
-        for (const order of orders) {
-          order.paymentStatus = "failed"
-          order.status = "cancelled"
-          await order.save()
-          
-          console.log("✅ Order marked as failed:", order._id)
-        }
-
-        // ✅ UPDATE MAINORDER TOO
-        const mainOrder = await MainOrder.findOne({ reference })
-        if (mainOrder) {
-          mainOrder.paymentStatus = "failed"
-          mainOrder.status = "cancelled"
-          await mainOrder.save()
-          console.log("✅ MainOrder marked as failed:", mainOrder._id)
-        }
-        
+        await handleFailedCharge(event.data)
         break
-      }
 
-      case "transfer.success": {
+      case "transfer.success":
         console.log("✅ Transfer successful:", event.data.reference)
         break
-      }
 
-      case "transfer.failed": {
+      case "transfer.failed":
         console.log("❌ Transfer failed:", event.data.reference)
         break
-      }
 
       default:
-        console.log("ℹ️ Unhandled event type:", event.event)
+        console.log(`ℹ️ Unhandled event type: ${event.event}`)
     }
 
-    return NextResponse.json({ 
-      status: "success",
-      message: "Webhook processed" 
-    }, { status: 200 })
-
-  } catch (err: any) {
-    console.error("❌ Webhook error:", err)
-    
-    return NextResponse.json({ 
-      status: "error", 
-      message: "Webhook processing failed" 
-    }, { status: 200 })
+    // Always return 200 to acknowledge receipt
+    return NextResponse.json({ status: "success" })
+  } catch (error: any) {
+    console.error("❌ Webhook processing error:", error)
+    // Still return 200 to prevent Paystack from retrying
+    return NextResponse.json({ status: "error", message: error.message })
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ 
-    message: "Paystack webhook endpoint is active",
-    timestamp: new Date().toISOString(),
-  })
+async function handleSuccessfulCharge(data: any) {
+  try {
+    const reference = data.reference
+    const amount = data.amount / 100 // Convert from kobo
+    const metadata = data.metadata || {}
+
+    console.log(`✅ Processing successful charge: ${reference}`)
+
+    await connectToDB()
+
+    // Check if this is a subscription payment
+    if (metadata.type === "subscription") {
+      console.log(`📦 Subscription payment detected for store: ${metadata.storeId}`)
+      // Subscription is handled by the main verification endpoint
+      return
+    }
+
+    // Check if orders already exist for this reference
+    const existingOrders = await Order.find({ reference }).lean()
+
+    if (existingOrders.length > 0) {
+      console.log(`ℹ️ Orders already exist for reference: ${reference}`)
+      
+      // Update payment status if not already paid
+      await Order.updateMany(
+        { reference, paymentStatus: { $ne: "paid" } },
+        {
+          $set: {
+            paymentStatus: "paid",
+            status: "processing",
+            paidAt: new Date(data.paid_at || data.transaction_date),
+          },
+        }
+      )
+
+      await MainOrder.updateOne(
+        { reference, paymentStatus: { $ne: "paid" } },
+        {
+          $set: {
+            paymentStatus: "paid",
+            status: "processing",
+            paidAt: new Date(data.paid_at || data.transaction_date),
+          },
+        }
+      )
+
+      console.log(`✅ Updated payment status for reference: ${reference}`)
+    } else {
+      console.log(`ℹ️ No orders found for reference: ${reference} - will be created via API`)
+    }
+
+    // Log the webhook for audit trail
+    console.log({
+      event: "charge.success",
+      reference,
+      amount,
+      channel: data.channel,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error: any) {
+    console.error("❌ Error handling successful charge:", error)
+    throw error
+  }
+}
+
+async function handleFailedCharge(data: any) {
+  try {
+    const reference = data.reference
+    console.log(`❌ Payment failed for reference: ${reference}`)
+
+    await connectToDB()
+
+    // Update any existing orders to failed status
+    await Order.updateMany(
+      { reference },
+      {
+        $set: {
+          paymentStatus: "failed",
+          status: "cancelled",
+        },
+      }
+    )
+
+    await MainOrder.updateOne(
+      { reference },
+      {
+        $set: {
+          paymentStatus: "failed",
+          status: "cancelled",
+        },
+      }
+    )
+
+    console.log(`✅ Updated failed payment status for reference: ${reference}`)
+  } catch (error: any) {
+    console.error("❌ Error handling failed charge:", error)
+    throw error
+  }
+}
+
+// Disable body parsing to get raw body for signature verification
+export const config = {
+  api: {
+    bodyParser: false,
+  },
 }

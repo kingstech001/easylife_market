@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      callback_url = `${baseUrl}/payment-success`
+      callback_url = `${baseUrl}/checkout/payment-success`
       metadata = {
         orders,
         shippingInfo,

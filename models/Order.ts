@@ -1,149 +1,173 @@
-import mongoose, { Schema, Document, Model } from "mongoose"
-
-interface IOrderItem {
-  productName: string
-  productId: mongoose.Types.ObjectId
-  quantity: number
-  priceAtPurchase: number
-}
-
-interface IPaymentDetails {
-  transactionId?: string
-  amount?: number
-  currency?: string
-  channel?: string
-  fees?: number
-  paidAt?: Date
-}
+// models/Order.ts
+import mongoose, { Schema, Document } from "mongoose"
 
 export interface IOrder extends Document {
   storeId: mongoose.Types.ObjectId
   userId: mongoose.Types.ObjectId
-  totalPrice: number
-  status: string
-  paymentStatus: string
   reference: string
-  items: IOrderItem[]
-  paymentMethod?: string
-  paymentDetails?: IPaymentDetails
-  receiptUrl?: string
-  shippingInfo?: {
+  totalPrice: number
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
+  paymentStatus: "pending" | "paid" | "failed" | "refunded"
+  paymentMethod: string
+  paidAt?: Date
+  paymentDetails?: {
+    transactionId?: string
+    amount?: number
+    currency?: string
+    channel?: string
+    fees?: number
+    paidAt?: Date
+  }
+  items: Array<{
+    productId: mongoose.Types.ObjectId
+    productName: string
+    quantity: number
+    priceAtPurchase: number
+  }>
+  shippingInfo: {
     firstName: string
     lastName: string
     email: string
+    phone: string
     address: string
     state: string
-    phone: string
     area: string
   }
-  paidAt?: Date
+  trackingNumber?: string
+  cancelledAt?: Date
+  cancellationReason?: string
   createdAt: Date
   updatedAt: Date
 }
 
-const OrderItemSchema = new Schema({
-  productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-  productName: { type: String, required: true },
-  quantity: { type: Number, required: true },
-  priceAtPurchase: { type: Number, required: true },
-})
-
-const PaymentDetailsSchema = new Schema({
-  transactionId: { type: String },
-  amount: { type: Number },
-  currency: { type: String },
-  channel: { type: String },
-  fees: { type: Number },
-  paidAt: { type: Date },
-}, { _id: false })
-
 const OrderSchema = new Schema<IOrder>(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    totalPrice: { type: Number, required: true },
-    
-    status: { 
-      type: String, 
-      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
-      default: "pending", 
-      index: true 
+    storeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+      index: true,
     },
-    
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    reference: {
+      type: String,
+      required: true,
+      // SECURITY: Compound unique index to prevent duplicate orders
+      // Each reference can appear multiple times (one per store), but only once per store
+      index: true,
+    },
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+      default: "pending",
+      index: true,
+    },
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-      required: true,
-      index: true
+      index: true,
     },
-    
-    reference: {
+    paymentMethod: {
       type: String,
       required: true,
-      index: true
     },
-    
-    items: [OrderItemSchema],
-    
-    paymentMethod: { 
-      type: String,
-      enum: ["card", "transfer", "bank", "ussd", "qr", "mobile_money", "bank_transfer"],
+    paidAt: {
+      type: Date,
     },
-    
-    paymentDetails: PaymentDetailsSchema,
-    
-    receiptUrl: { type: String },
-    
+    paymentDetails: {
+      transactionId: String,
+      amount: Number,
+      currency: String,
+      channel: String,
+      fees: Number,
+      paidAt: Date,
+    },
+    items: [
+      {
+        productId: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        productName: {
+          type: String,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        priceAtPurchase: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+      },
+    ],
     shippingInfo: {
-      firstName: String,
-      lastName: String,
-      email: String,
-      address: String,
-      state: String,
-      phone: String,
-      area: String,
+      firstName: {
+        type: String,
+        required: true,
+      },
+      lastName: {
+        type: String,
+        required: true,
+      },
+      email: {
+        type: String,
+        required: true,
+      },
+      phone: {
+        type: String,
+      },
+      address: {
+        type: String,
+        required: true,
+      },
+      state: {
+        type: String,
+        required: true,
+      },
+      area: {
+        type: String,
+        required: true,
+      },
     },
-    
-    paidAt: { type: Date },
+    trackingNumber: {
+      type: String,
+    },
+    cancelledAt: {
+      type: Date,
+    },
+    cancellationReason: {
+      type: String,
+    },
   },
-  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
+  {
+    timestamps: true,
+  }
 )
 
-OrderSchema.index({ createdAt: 1 })
-OrderSchema.index({ createdAt: 1, status: 1 })
-OrderSchema.index({ createdAt: 1, paymentStatus: 1 })
-OrderSchema.index({ "items.productId": 1 })
-OrderSchema.index({ storeId: 1 })
-OrderSchema.index({ userId: 1 })
+// SECURITY: Compound index to prevent duplicate orders for same store+reference
+OrderSchema.index({ storeId: 1, reference: 1 }, { unique: true })
+
+// Index for common queries
+OrderSchema.index({ userId: 1, createdAt: -1 })
 OrderSchema.index({ storeId: 1, createdAt: -1 })
-OrderSchema.index({ reference: 1 })
-OrderSchema.index({ paymentStatus: 1, status: 1 })
+OrderSchema.index({ status: 1, createdAt: -1 })
 
-OrderSchema.virtual('isPaid').get(function() {
-  return this.paymentStatus === 'paid'
-})
-
-OrderSchema.virtual('canBeCancelled').get(function() {
-  return ['pending', 'confirmed'].includes(this.status) && this.paymentStatus !== 'paid'
-})
-
-OrderSchema.set("toJSON", {
-  transform: function (doc, ret) {
-    const out = ret as any
-    delete out.__v
-    return out
-  },
-})
-
-OrderSchema.pre('save', function(next) {
-  if (this.isModified('paymentStatus') && this.paymentStatus === 'paid' && this.status === 'pending') {
-    this.status = 'processing'
-  }
-  next()
-})
-
-const Order: Model<IOrder> =
-  mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema)
+const Order = mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema)
 
 export default Order
