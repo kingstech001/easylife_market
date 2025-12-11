@@ -1,218 +1,321 @@
+// app/checkout/payment-success/page.tsx
 "use client"
 
-import { useSearchParams, useRouter } from "next/navigation"
-import { useEffect, useState, Suspense } from "react"
-import { Loader2, CheckCircle, AlertCircle, Clock } from "lucide-react"
-import { toast } from "sonner"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { CheckCircle, XCircle, Loader2, Clock } from "lucide-react"
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic"
-
-/**
- * Poll for order creation after webhook processes payment
- * The webhook processes the payment asynchronously, so we need to wait
- * Uses the existing /api/paystack/verify endpoint which checks for orders
- */
-async function pollForOrder(reference: string, maxAttempts = 15): Promise<any> {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const res = await fetch(`/api/paystack/verify?reference=${reference}`, {
-        method: "GET",
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        
-        // Check if order exists in the response
-        if (data.data?.orderExists && data.data?.orderNumber) {
-          return {
-            orderNumber: data.data.orderNumber,
-            reference: data.data.reference,
-            status: data.data.status,
-            paymentStatus: data.data.paymentStatus,
-            grandTotal: data.data.amount,
-          }
-        }
-      }
-
-      // Wait before next attempt (exponential backoff)
-      const delay = Math.min(1000 * Math.pow(1.3, attempt), 5000)
-      await new Promise((resolve) => setTimeout(resolve, delay))
-    } catch (error) {
-      console.error(`Poll attempt ${attempt} failed:`, error)
-    }
+interface VerificationResult {
+  status: string
+  message: string
+  data: {
+    reference: string
+    paymentStatus: string
+    amount: number
+    orderExists: boolean
+    orderNumber?: string
+    status?: string
+    grandTotal?: number
+    subOrderCount?: number
+    type?: string
+    plan?: string
+    subscriptionUpdated?: boolean
   }
-
-  throw new Error("Order not found after payment verification")
 }
 
-function PaymentSuccessContent() {
+export default function PaymentSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
-  // Get reference from query params (Paystack redirects with these)
   const reference = searchParams.get("reference") || searchParams.get("trxref")
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [message, setMessage] = useState<string>("Verifying your payment...")
-  const [orderNumber, setOrderNumber] = useState<string | null>(null)
+  const [verificationState, setVerificationState] = useState<
+    "verifying" | "polling" | "success" | "error"
+  >("verifying")
+  const [result, setResult] = useState<VerificationResult | null>(null)
+  const [error, setError] = useState<string>("")
+  const [pollAttempts, setPollAttempts] = useState(0)
+  const [countdown, setCountdown] = useState(5)
 
+  const MAX_POLL_ATTEMPTS = 20 // Poll for up to 40 seconds (20 attempts × 2s)
+
+  // Verify payment and poll for order creation
   useEffect(() => {
     if (!reference) {
-      toast.error("Missing payment reference")
-      setStatus("error")
-      setMessage("Payment reference not found. Please contact support.")
-      
-      setTimeout(() => {
-        router.push("/checkout")
-      }, 3000)
+      setError("No payment reference found")
+      setVerificationState("error")
       return
     }
 
-    const verifyPaymentAndOrder = async () => {
+    let pollInterval: NodeJS.Timeout
+    let countdownInterval: NodeJS.Timeout
+
+    const verifyPayment = async () => {
       try {
-        console.log("[PaymentSuccess] Checking payment for reference:", reference)
+        const response = await fetch(
+          `/api/webhooks/paystack?reference=${reference}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        )
 
-        // Step 1: Check if payment was successful via GET endpoint
-        // This doesn't process anything, just checks Paystack status
-        const checkRes = await fetch(`/api/paystack/verify?reference=${reference}`, {
-          method: "GET",
-        })
-
-        if (!checkRes.ok) {
-          const errorData = await checkRes.json()
+        if (!response.ok) {
+          const errorData = await response.json()
           throw new Error(errorData.error || "Payment verification failed")
         }
 
-        const checkData = await checkRes.json()
-        console.log("[PaymentSuccess] Payment status:", checkData)
+        const data: VerificationResult = await response.json()
+        setResult(data)
 
-        if (checkData.data?.paymentStatus !== "success") {
-          throw new Error("Payment was not successful")
+        // Handle subscription payments
+        if (data.data.type === "subscription") {
+          if (data.data.subscriptionUpdated) {
+            setVerificationState("success")
+            // Redirect to store dashboard after 3 seconds
+            setTimeout(() => {
+              router.push("/seller/dashboard")
+            }, 3000)
+          } else {
+            // Keep polling for subscription update
+            if (pollAttempts < MAX_POLL_ATTEMPTS) {
+              setVerificationState("polling")
+              setPollAttempts((prev) => prev + 1)
+            } else {
+              setError("Subscription update is taking longer than expected. Please check your store dashboard.")
+              setVerificationState("error")
+            }
+          }
+          return
         }
 
-        // Step 2: Wait for webhook to process and create order
-        // The webhook runs asynchronously, so we poll for the order
-        setMessage("Payment verified! Creating your order...")
-        
-        console.log("[PaymentSuccess] Polling for order creation...")
-        const order = await pollForOrder(reference)
+        // Handle order payments
+        if (data.data.orderExists && data.data.orderNumber) {
+          // Order successfully created
+          setVerificationState("success")
+          clearInterval(pollInterval)
+          clearInterval(countdownInterval)
 
-        console.log("[PaymentSuccess] Order found:", order)
-
-        // Step 3: Success! Show confirmation
-        setStatus("success")
-        setOrderNumber(order.orderNumber)
-        setMessage("Your order has been placed successfully!")
-
-        toast.success("Order placed successfully!")
-
-        // Redirect to order confirmation page
-        setTimeout(() => {
-          router.push(`/orders/${order.orderNumber}`)
-        }, 2000)
-      } catch (error: any) {
-        console.error("[PaymentSuccess] Error:", error)
-        
-        setStatus("error")
-        setMessage(
-          error.message || 
-          "Failed to verify payment. Please contact support with your payment reference."
-        )
-
-        toast.error(error.message || "Payment verification failed")
-
-        // Redirect to checkout after delay
-        setTimeout(() => {
-          router.push("/checkout")
-        }, 5000)
+          // Redirect to order confirmation after 3 seconds
+          setTimeout(() => {
+            router.push(`/orders/${data.data.orderNumber}`)
+          }, 3000)
+        } else {
+          // Order not yet created, continue polling
+          if (pollAttempts < MAX_POLL_ATTEMPTS) {
+            setVerificationState("polling")
+            setPollAttempts((prev) => prev + 1)
+          } else {
+            // Max attempts reached
+            setError(
+              "Order creation is taking longer than expected. Your payment was successful. Please check your orders page or contact support with the reference below."
+            )
+            setVerificationState("error")
+          }
+        }
+      } catch (err: any) {
+        console.error("Verification error:", err)
+        setError(err.message || "Failed to verify payment")
+        setVerificationState("error")
+        clearInterval(pollInterval)
+        clearInterval(countdownInterval)
       }
     }
 
-    verifyPaymentAndOrder()
-  }, [reference, router])
+    // Initial verification
+    verifyPayment()
 
-  // Loading state
-  if (status === "loading") {
+    // Set up polling interval (every 2 seconds)
+    pollInterval = setInterval(() => {
+      if (pollAttempts < MAX_POLL_ATTEMPTS) {
+        verifyPayment()
+      } else {
+        clearInterval(pollInterval)
+      }
+    }, 2000)
+
+    // Countdown for redirect
+    if (verificationState === "error") {
+      countdownInterval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval)
+            router.push("/checkout")
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+
+    return () => {
+      clearInterval(pollInterval)
+      clearInterval(countdownInterval)
+    }
+  }, [reference, pollAttempts, router, verificationState])
+
+  if (!reference) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Processing Payment</h2>
-        <p className="text-muted-foreground max-w-md">{message}</p>
-        <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>This may take a few moments...</span>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Request</h1>
+          <p className="text-gray-600 mb-6">No payment reference found.</p>
+          <button
+            onClick={() => router.push("/checkout")}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+          >
+            Return to Checkout
+          </button>
         </div>
       </div>
     )
   }
 
-  // Error state
-  if (status === "error") {
+  if (verificationState === "verifying") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <AlertCircle className="h-16 w-16 text-destructive mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Payment Verification Failed</h2>
-        <p className="text-muted-foreground max-w-md mb-4">{message}</p>
-        {reference && (
-          <div className="bg-muted p-4 rounded-lg max-w-md mb-4">
-            <p className="text-sm font-medium mb-1">Payment Reference:</p>
-            <p className="text-xs font-mono break-all">{reference}</p>
-            <p className="text-xs text-muted-foreground mt-2">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <Loader2 className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-spin" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Processing Payment</h1>
+          <p className="text-gray-600">
+            Verifying your payment with Paystack...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (verificationState === "polling") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <Clock className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Verified!</h1>
+          <p className="text-gray-600 mb-4">
+            Creating your {result?.data.type === "subscription" ? "subscription" : "order"}...
+          </p>
+          <p className="text-sm text-gray-500">
+            This may take a few moments... ({pollAttempts}/{MAX_POLL_ATTEMPTS})
+          </p>
+          <div className="mt-6">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(pollAttempts / MAX_POLL_ATTEMPTS) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (verificationState === "error") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {result?.data.paymentStatus === "success" 
+              ? "Payment Verification Delayed" 
+              : "Payment Verification Failed"}
+          </h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+            <p className="text-sm font-semibold text-gray-700 mb-2">
+              Payment Reference:
+            </p>
+            <p className="text-sm text-gray-900 font-mono bg-white px-3 py-2 rounded border break-all">
+              {reference}
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
               Save this reference for support inquiries
             </p>
           </div>
-        )}
-        <p className="text-sm text-muted-foreground">
-          Redirecting to checkout in 5 seconds...
-        </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push("/orders")}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+            >
+              Check My Orders
+            </button>
+            <button
+              onClick={() => router.push("/checkout")}
+              className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition"
+            >
+              Return to Checkout
+            </button>
+          </div>
+
+          <p className="text-sm text-gray-500 mt-4">
+            Redirecting to checkout in {countdown} seconds...
+          </p>
+        </div>
       </div>
     )
   }
 
   // Success state
-  if (status === "success") {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Payment Successful!</h2>
-        <p className="text-muted-foreground max-w-md mb-4">{message}</p>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          {result?.data.type === "subscription" 
+            ? "Subscription Activated!" 
+            : "Order Confirmed!"}
+        </h1>
         
-        {orderNumber && (
-          <div className="bg-green-50 border border-green-200 p-4 rounded-lg max-w-md mb-4">
-            <p className="text-sm font-medium text-green-900 mb-1">Order Number:</p>
-            <p className="text-lg font-bold text-green-700">{orderNumber}</p>
+        {result?.data.type === "subscription" ? (
+          <div>
+            <p className="text-gray-600 mb-4">
+              Your {result.data.plan} subscription has been activated successfully.
+            </p>
+            <div className="bg-green-50 rounded-lg p-4 mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-1">Plan</p>
+              <p className="text-lg font-bold text-green-600 capitalize">
+                {result.data.plan}
+              </p>
+            </div>
+            <p className="text-sm text-gray-500">
+              Redirecting to your store dashboard...
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-gray-600 mb-4">
+              Your order has been successfully placed and payment confirmed.
+            </p>
+            <div className="bg-green-50 rounded-lg p-4 mb-6 space-y-2">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-1">
+                  Order Number
+                </p>
+                <p className="text-lg font-bold text-green-600">
+                  {result?.data.orderNumber}
+                </p>
+              </div>
+              <div className="flex justify-between text-sm border-t pt-2">
+                <span className="text-gray-600">Total Amount:</span>
+                <span className="font-semibold">
+                  ₦{result?.data.grandTotal?.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Items:</span>
+                <span className="font-semibold">
+                  {result?.data.subOrderCount} store(s)
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">
+              Redirecting to order details...
+            </p>
           </div>
         )}
-
-        <p className="text-sm text-muted-foreground">
-          You will receive a confirmation email shortly.
-        </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          Redirecting to your order...
-        </p>
       </div>
-    )
-  }
-
-  return null
-}
-
-// Loading fallback
-function PaymentSuccessLoading() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
     </div>
-  )
-}
-
-// Main component with Suspense boundary
-export default function PaymentSuccessPage() {
-  return (
-    <Suspense fallback={<PaymentSuccessLoading />}>
-      <PaymentSuccessContent />
-    </Suspense>
   )
 }
