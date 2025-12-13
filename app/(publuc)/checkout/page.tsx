@@ -118,6 +118,30 @@ export default function CheckoutPage() {
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
+      // ✅ STEP 1: Get userId from authentication
+      const userResponse = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      
+      if (!userResponse.ok) {
+        toast.error('Please log in to complete your purchase')
+        router.push('/login?redirect=/checkout')
+        setIsInitializing(false)
+        return
+      }
+      
+      const userData = await userResponse.json()
+      const userId = userData.user?.id || userData.user?._id || userData.id || userData._id
+      
+      if (!userId) {
+        toast.error('User ID not found. Please log in again.')
+        router.push('/login?redirect=/checkout')
+        setIsInitializing(false)
+        return
+      }
+
+      console.log('✅ User authenticated:', userId)
+
       // Group items by store
       const groupedByStore: Record<string, typeof cartItems> = {}
       cartItems.forEach((item) => {
@@ -132,9 +156,10 @@ export default function CheckoutPage() {
         items: storeItems.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          // ✅ NOT sending price - server will fetch from DB
         })),
       }))
+
+      console.log('📦 Prepared orders:', orders)
 
       // Initialize payment
       const initResponse = await fetch("/api/paystack/initialize", {
@@ -158,6 +183,7 @@ export default function CheckoutPage() {
           },
           deliveryFee: shipping,
           paymentMethod: "card",
+          userId, // ✅ CRITICAL: Include userId in metadata
         }),
       })
 
@@ -167,6 +193,8 @@ export default function CheckoutPage() {
         throw new Error(initData.error || "Failed to initialize payment")
       }
 
+      console.log('✅ Payment initialized:', initData.reference)
+
       // Store reference for verification after payment
       sessionStorage.setItem("pending_payment_reference", initData.reference)
 
@@ -174,6 +202,7 @@ export default function CheckoutPage() {
       window.location.href = initData.authorization_url
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to initialize payment"
+      console.error('❌ Payment initialization error:', errorMessage)
       toast.error(errorMessage)
       setIsInitializing(false)
     }
@@ -222,7 +251,7 @@ export default function CheckoutPage() {
       toast.success("Payment successful! Your order has been placed.")
 
       // Redirect to confirmation
-      router.push(`/checkout/confirmation?reference=${reference}`)
+      router.push(`/checkout/payment-success?reference=${reference}`)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
       toast.error(errorMessage)
