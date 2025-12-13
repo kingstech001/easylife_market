@@ -42,6 +42,7 @@ export default function CheckoutPage() {
     area: "",
   })
 
+  // Load saved checkout data on mount
   useEffect(() => {
     try {
       const savedData = localStorage.getItem(CHECKOUT_STORAGE_KEY)
@@ -68,6 +69,34 @@ export default function CheckoutPage() {
     setIsHydrated(true)
   }, [])
 
+  // Restore checkout state after login redirect
+  useEffect(() => {
+    if (!isHydrated) return
+
+    try {
+      const savedRedirectData = localStorage.getItem('checkout_redirect_data')
+      if (savedRedirectData) {
+        const data = JSON.parse(savedRedirectData)
+        
+        // Check if data is recent (within last 30 minutes)
+        const age = Date.now() - data.timestamp
+        if (age < 30 * 60 * 1000) {
+          setInfo(data.info || info)
+          setShipping(data.shipping || 0)
+          setActiveStep(data.activeStep || 'information')
+          
+          toast.success('Welcome back! Your checkout is ready.')
+          
+          // Clean up
+          localStorage.removeItem('checkout_redirect_data')
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore checkout data:', error)
+    }
+  }, [isHydrated])
+
+  // Auto-save checkout data
   useEffect(() => {
     if (!isHydrated) return
 
@@ -114,33 +143,59 @@ export default function CheckoutPage() {
   const subtotal = getTotalPrice()
   const total = subtotal + shipping
 
-  // SECURE: Initialize payment with server validation
+  // ✅ Initialize payment with authentication check
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
-      // ✅ STEP 1: Get userId from authentication
-      const userResponse = await fetch('/api/auth/me', {
-        credentials: 'include'
+      // ✅ STEP 1: Check authentication using your /api/me endpoint
+      const userResponse = await fetch('/api/me', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
       
-      if (!userResponse.ok) {
+      // Parse response
+      const userData = await userResponse.json()
+      
+      // Check if user is authenticated
+      // Your API returns { user: null } when not authenticated
+      if (!userResponse.ok || !userData.user) {
+        console.error('Authentication check failed:', userResponse.status, userData)
+        
+        // Save current checkout state before redirecting
+        try {
+          localStorage.setItem('checkout_redirect_data', JSON.stringify({
+            info,
+            shipping,
+            activeStep,
+            timestamp: Date.now()
+          }))
+        } catch (e) {
+          console.error('Failed to save checkout state:', e)
+        }
+        
         toast.error('Please log in to complete your purchase')
-        router.push('/login?redirect=/checkout')
+        
+        // Redirect to login (adjust this path to match your login route)
+        router.push('/auth/login?redirect=/checkout')
         setIsInitializing(false)
         return
       }
       
-      const userData = await userResponse.json()
-      const userId = userData.user?.id || userData.user?._id || userData.id || userData._id
+      // Extract user ID - your API returns user._id
+      const userId = userData.user._id || userData.user.id
       
       if (!userId) {
+        console.error('User ID not found in response:', userData)
         toast.error('User ID not found. Please log in again.')
-        router.push('/login?redirect=/checkout')
+        router.push('/auth/login?redirect=/checkout')
         setIsInitializing(false)
         return
       }
 
       console.log('✅ User authenticated:', userId)
+      console.log('User data:', userData.user)
 
       // Group items by store
       const groupedByStore: Record<string, typeof cartItems> = {}
@@ -167,6 +222,7 @@ export default function CheckoutPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // Include cookies
         body: JSON.stringify({
           email: info.email,
           amount: total, // For display/validation only - server recalculates
@@ -183,7 +239,7 @@ export default function CheckoutPage() {
           },
           deliveryFee: shipping,
           paymentMethod: "card",
-          userId, // ✅ CRITICAL: Include userId in metadata
+          userId, // ✅ CRITICAL: Include userId for webhook
         }),
       })
 
@@ -197,6 +253,9 @@ export default function CheckoutPage() {
 
       // Store reference for verification after payment
       sessionStorage.setItem("pending_payment_reference", initData.reference)
+
+      // Clear checkout form data since we're proceeding
+      localStorage.removeItem('checkout_redirect_data')
 
       // Redirect to Paystack
       window.location.href = initData.authorization_url
@@ -231,6 +290,7 @@ export default function CheckoutPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify({
           reference, // ✅ Only reference - no orderData!
         }),
@@ -575,9 +635,6 @@ export default function CheckoutPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between space-x-2 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4 transition-all duration-200">
                           <div className="flex items-center space-x-4">
-                            {/* <div className="h-12 w-16 rounded-lg bg-gradient-to-r from-[#0052CC] to-[#00A3E0] flex items-center justify-center">
-                              <span className="text-white font-bold text-xs">PAY</span>
-                            </div> */}
                             <Image src={"/paystack.jpeg"} alt="paystack-logo" width={50} height={50}></Image>
                             <div>
                               <p className="text-[12px] font-semibold md:text-base">Paystack Payment</p>
