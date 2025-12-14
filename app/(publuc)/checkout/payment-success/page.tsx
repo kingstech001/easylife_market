@@ -4,6 +4,8 @@
 import { Suspense, useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle, XCircle, Loader2, Clock, ArrowRight, Sparkles, Package, CreditCard } from "lucide-react"
+import { useCart } from "@/context/cart-context"
+import { toast } from "sonner"
 
 interface VerificationResult {
   status: string
@@ -27,6 +29,7 @@ function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const reference = searchParams.get("reference") || searchParams.get("trxref")
+  const { clearCart } = useCart() // ✅ Get clearCart from context
 
   const [verificationState, setVerificationState] = useState<
     "verifying" | "polling" | "success" | "error"
@@ -39,6 +42,7 @@ function PaymentSuccessContent() {
   const MAX_POLL_ATTEMPTS = 20
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const attemptCountRef = useRef(0)
+  const cartClearedRef = useRef(false) // ✅ Track if cart was already cleared
 
   // Verify payment and poll for order creation
   useEffect(() => {
@@ -78,6 +82,14 @@ function PaymentSuccessContent() {
               clearInterval(pollIntervalRef.current)
               pollIntervalRef.current = null
             }
+            
+            // ✅ Clear cart for subscription payments (silently)
+            if (!cartClearedRef.current) {
+              clearCart(true)
+              cartClearedRef.current = true
+              console.log("🗑️ Cart cleared after subscription payment")
+            }
+            
             setTimeout(() => {
               router.push("/seller/dashboard")
             }, 3000)
@@ -97,6 +109,15 @@ function PaymentSuccessContent() {
             clearInterval(pollIntervalRef.current)
             pollIntervalRef.current = null
           }
+          
+          // ✅ Clear cart after successful order creation (silently)
+          if (!cartClearedRef.current) {
+            clearCart(true)
+            cartClearedRef.current = true
+            console.log("🗑️ Cart cleared after order creation")
+            toast.success("Payment successful! Your order has been placed.")
+          }
+          
           setTimeout(() => {
             router.push(`/dashboard/buyer/orders`)
           }, 3000)
@@ -224,7 +245,7 @@ function PaymentSuccessContent() {
           <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
             <Loader2 className="w-12 h-12 text-[#c0a146] animate-spin" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+          <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Processing Payment
           </h1>
           <p className="text-muted-foreground text-lg">
@@ -255,7 +276,7 @@ function PaymentSuccessContent() {
           </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <CheckCircle className="w-6 h-6 text-emerald-500" />
-            <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+            <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               Payment Verified!
             </h1>
           </div>
@@ -453,7 +474,7 @@ export default function PaymentSuccessPage() {
             <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <Loader2 className="w-12 h-12 text-[#c0a146] animate-spin" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+            <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               Loading...
             </h1>
             <p className="text-muted-foreground text-lg">
