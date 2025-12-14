@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { CheckCircle, XCircle, Loader2, Clock } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, Clock, ArrowRight, Sparkles, Package, CreditCard } from "lucide-react"
 
 interface VerificationResult {
   status: string
@@ -36,7 +36,7 @@ function PaymentSuccessContent() {
   const [pollAttempts, setPollAttempts] = useState(0)
   const [countdown, setCountdown] = useState(5)
 
-  const MAX_POLL_ATTEMPTS = 20 // Poll for up to 40 seconds (20 attempts × 2s)
+  const MAX_POLL_ATTEMPTS = 20
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const attemptCountRef = useRef(0)
 
@@ -78,15 +78,14 @@ function PaymentSuccessContent() {
               clearInterval(pollIntervalRef.current)
               pollIntervalRef.current = null
             }
-            // Redirect to store dashboard after 3 seconds
             setTimeout(() => {
               router.push("/seller/dashboard")
             }, 3000)
-            return true // Stop polling
+            return true
           } else {
             console.log("⏳ Subscription not yet updated, continuing to poll...")
             setVerificationState("polling")
-            return false // Continue polling
+            return false
           }
         }
 
@@ -98,15 +97,14 @@ function PaymentSuccessContent() {
             clearInterval(pollIntervalRef.current)
             pollIntervalRef.current = null
           }
-          // Redirect to order confirmation after 3 seconds
           setTimeout(() => {
-            router.push(`/orders/${data.data.orderNumber}`)
+            router.push(`/dashboard/buyer/orders`)
           }, 3000)
-          return true // Stop polling
+          return true
         } else {
           console.log("⏳ Order not yet created, continuing to poll...")
           setVerificationState("polling")
-          return false // Continue polling
+          return false
         }
       } catch (err: any) {
         console.error("❌ Verification error:", err)
@@ -116,19 +114,17 @@ function PaymentSuccessContent() {
           clearInterval(pollIntervalRef.current)
           pollIntervalRef.current = null
         }
-        return true // Stop polling on error
+        return true
       }
     }
 
     const startPolling = async () => {
-      // Initial verification
       const shouldStop = await verifyPayment()
       if (shouldStop) return
 
       attemptCountRef.current = 1
       setPollAttempts(1)
 
-      // Set up polling interval (every 2 seconds)
       pollIntervalRef.current = setInterval(async () => {
         attemptCountRef.current += 1
         setPollAttempts(attemptCountRef.current)
@@ -188,16 +184,27 @@ function PaymentSuccessContent() {
 
   if (!reference) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Request</h1>
-          <p className="text-gray-600 mb-6">No payment reference found.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-red-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
+          <div className="p-4 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <XCircle className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            Invalid Request
+          </h1>
+          <p className="text-muted-foreground mb-8 text-lg">No payment reference found.</p>
           <button
             onClick={() => router.push("/checkout")}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+            className="w-full bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#c0a146]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
           >
             Return to Checkout
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -206,13 +213,28 @@ function PaymentSuccessContent() {
 
   if (verificationState === "verifying") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <Loader2 className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-spin" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Processing Payment</h1>
-          <p className="text-gray-600">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
+          <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <Loader2 className="w-12 h-12 text-[#c0a146] animate-spin" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+            Processing Payment
+          </h1>
+          <p className="text-muted-foreground text-lg">
             Verifying your payment with Paystack...
           </p>
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-[#c0a146] rounded-full animate-bounce" />
+            <div className="w-2 h-2 bg-[#c0a146] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="w-2 h-2 bg-[#c0a146] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+          </div>
         </div>
       </div>
     )
@@ -220,26 +242,48 @@ function PaymentSuccessContent() {
 
   if (verificationState === "polling") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <Clock className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-pulse" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Verified!</h1>
-          <p className="text-gray-600 mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
+          <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <Clock className="w-12 h-12 text-[#c0a146] animate-pulse" />
+          </div>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <CheckCircle className="w-6 h-6 text-emerald-500" />
+            <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+              Payment Verified!
+            </h1>
+          </div>
+          <p className="text-muted-foreground mb-2 text-lg">
             Creating your {result?.data.type === "subscription" ? "subscription" : "order"}...
           </p>
-          <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm text-muted-foreground/70 mb-6">
             This may take a few moments...
           </p>
-          <p className="text-xs text-gray-400">
-            Attempt {pollAttempts} of {MAX_POLL_ATTEMPTS}
-          </p>
-          <div className="mt-6">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+          
+          <div className="bg-muted/30 rounded-xl p-4 mb-6 border border-border/30">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-muted-foreground">Progress</span>
+              <span className="text-sm font-semibold text-[#c0a146]">
+                {pollAttempts} / {MAX_POLL_ATTEMPTS}
+              </span>
+            </div>
+            <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-[#c0a146] to-[#d4b55e] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(pollAttempts / MAX_POLL_ATTEMPTS) * 100}%` }}
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Sparkles className="w-4 h-4 text-[#c0a146]" />
+            <span>Setting up your order details...</span>
           </div>
         </div>
       </div>
@@ -248,24 +292,36 @@ function PaymentSuccessContent() {
 
   if (verificationState === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-red-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
+          <div className="p-4 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <XCircle className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-3">
             {result?.data.paymentStatus === "success" 
               ? "Payment Verification Delayed" 
               : "Payment Verification Failed"}
           </h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-muted-foreground mb-6 text-lg">{error}</p>
           
-          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-            <p className="text-sm font-semibold text-gray-700 mb-2">
-              Payment Reference:
-            </p>
-            <p className="text-sm text-gray-900 font-mono bg-white px-3 py-2 rounded border break-all">
+          <div className="bg-muted/30 rounded-xl p-5 mb-6 text-left border border-border/30">
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard className="w-5 h-5 text-[#c0a146]" />
+              <p className="text-sm font-semibold text-foreground">
+                Payment Reference
+              </p>
+            </div>
+            <p className="text-sm text-foreground font-mono bg-muted/50 px-4 py-3 rounded-lg border border-border/30 break-all">
               {reference}
             </p>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
               Save this reference for support inquiries
             </p>
           </div>
@@ -273,21 +329,25 @@ function PaymentSuccessContent() {
           <div className="space-y-3">
             <button
               onClick={() => router.push("/orders")}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+              className="w-full bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#c0a146]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             >
+              <Package className="w-5 h-5" />
               Check My Orders
             </button>
             <button
               onClick={() => router.push("/checkout")}
-              className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition"
+              className="w-full bg-muted/50 text-foreground font-semibold py-4 rounded-xl hover:bg-muted/70 border border-border/50 hover:border-[#c0a146]/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             >
               Return to Checkout
+              <ArrowRight className="w-5 h-5" />
             </button>
           </div>
 
-          <p className="text-sm text-gray-500 mt-4">
-            Redirecting to checkout in {countdown} seconds...
-          </p>
+          <div className="mt-6 p-4 bg-muted/20 rounded-lg border border-border/30">
+            <p className="text-sm text-muted-foreground">
+              Redirecting to checkout in <span className="font-bold text-[#c0a146]">{countdown}</span> seconds...
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -295,10 +355,23 @@ function PaymentSuccessContent() {
 
   // Success state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
+        {/* Success icon with animation */}
+        <div className="relative mb-6">
+          <div className="p-4 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 w-20 h-20 mx-auto flex items-center justify-center">
+            <CheckCircle className="w-12 h-12 text-emerald-500" />
+          </div>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 animate-ping" />
+        </div>
+
+        <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
           {result?.data.type === "subscription" 
             ? "Subscription Activated!" 
             : "Order Confirmed!"}
@@ -306,49 +379,59 @@ function PaymentSuccessContent() {
         
         {result?.data.type === "subscription" ? (
           <div>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-6 text-lg">
               Your {result.data.plan} subscription has been activated successfully.
             </p>
-            <div className="bg-green-50 rounded-lg p-4 mb-6">
-              <p className="text-sm font-semibold text-gray-700 mb-1">Plan</p>
-              <p className="text-lg font-bold text-green-600 capitalize">
+            <div className="bg-gradient-to-br from-[#c0a146]/10 to-primary/10 rounded-xl p-6 mb-6 border border-[#c0a146]/30">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-[#c0a146]" />
+                <p className="text-sm font-semibold text-muted-foreground">Your Plan</p>
+              </div>
+              <p className="text-2xl font-bold bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent capitalize">
                 {result.data.plan}
               </p>
             </div>
-            <p className="text-sm text-gray-500">
-              Redirecting to your store dashboard...
-            </p>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
+              <Loader2 className="w-4 h-4 animate-spin text-[#c0a146]" />
+              <span>Redirecting to your store dashboard...</span>
+            </div>
           </div>
         ) : (
           <div>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-6 text-lg">
               Your order has been successfully placed and payment confirmed.
             </p>
-            <div className="bg-green-50 rounded-lg p-4 mb-6 space-y-2">
+            <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded-xl p-6 mb-6 space-y-4 border border-emerald-500/30">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">
-                  Order Number
-                </p>
-                <p className="text-lg font-bold text-green-600">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Package className="w-5 h-5 text-emerald-500" />
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    Order Number
+                  </p>
+                </div>
+                <p className="text-2xl font-bold text-emerald-600">
                   {result?.data.orderNumber}
                 </p>
               </div>
-              <div className="flex justify-between text-sm border-t pt-2">
-                <span className="text-gray-600">Total Amount:</span>
-                <span className="font-semibold">
-                  ₦{result?.data.grandTotal?.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Items:</span>
-                <span className="font-semibold">
-                  {result?.data.subOrderCount} store(s)
-                </span>
+              <div className="border-t border-border/30 pt-4 space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Total Amount:</span>
+                  <span className="font-bold text-lg bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
+                    ₦{result?.data.grandTotal?.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Items:</span>
+                  <span className="font-semibold text-foreground">
+                    {result?.data.subOrderCount} store(s)
+                  </span>
+                </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500">
-              Redirecting to order details...
-            </p>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin text-[#c0a146]" />
+              <span>Redirecting to order details...</span>
+            </div>
           </div>
         )}
       </div>
@@ -361,11 +444,19 @@ export default function PaymentSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-            <Loader2 className="w-16 h-16 text-blue-600 mx-auto mb-4 animate-spin" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
-            <p className="text-gray-600">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+          <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
+            <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <Loader2 className="w-12 h-12 text-[#c0a146] animate-spin" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text ">
+              Loading...
+            </h1>
+            <p className="text-muted-foreground text-lg">
               Please wait while we verify your payment...
             </p>
           </div>

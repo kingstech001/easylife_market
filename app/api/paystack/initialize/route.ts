@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getUserFromCookies } from "@/lib/auth"
+
 
 // Helper to get the correct base URL for all environments
 function getBaseUrl() {
@@ -25,6 +27,16 @@ function generateReference() {
 
 export async function POST(request: NextRequest) {
   try {
+    // ✅ Get authenticated user from JWT cookie
+    const user = await getUserFromCookies()
+    if (!user) {
+      console.error("[Paystack Initialize] Unauthorized: No valid user session")
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in to continue." },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const {
       email,
@@ -89,7 +101,9 @@ export async function POST(request: NextRequest) {
       callback_url = `${baseUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
       metadata = { 
         plan, 
-        storeId, 
+        storeId,
+        userId: user.id, // ✅ Include authenticated user ID
+        userEmail: user.email, // ✅ Include user email for verification
         type: "subscription",
         reference: paymentReference, // ✅ Include reference in metadata
         callback_url: `${baseUrl}/dashboard/seller/subscriptions/success`
@@ -117,6 +131,8 @@ export async function POST(request: NextRequest) {
         shippingInfo,
         paymentMethod: paymentMethod || "card",
         deliveryFee: deliveryFee || 0,
+        userId: user.id, // ✅ Include authenticated user ID
+        userEmail: user.email, // ✅ Include user email for verification
         type: "checkout",
         reference: paymentReference, // ✅ Include reference in metadata
       }
@@ -137,6 +153,7 @@ export async function POST(request: NextRequest) {
       email,
       amount: amountInKobo,
       reference: paymentReference,
+      userId: user.id,
       type,
       callback_url,
     })
@@ -174,6 +191,7 @@ export async function POST(request: NextRequest) {
     console.log("[Paystack Initialize] ✅ Success:", {
       reference: paystackData.data.reference,
       authorization_url: paystackData.data.authorization_url,
+      userId: user.id,
     })
 
     return NextResponse.json({

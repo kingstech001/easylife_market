@@ -73,6 +73,7 @@ function cartReducer(state: CartState, action: Action): CartState {
         items: action.payload,
       }
     case "CLEAR_CART":
+      console.log('🗑️ Cart cleared - all items removed')
       return {
         ...state,
         items: [],
@@ -89,7 +90,7 @@ type CartContextType = {
   addToCart: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void
   removeFromCart: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
-  clearCart: () => void
+  clearCart: (silent?: boolean) => void
   getTotalItems: () => number
   getTotalPrice: () => number
 }
@@ -108,14 +109,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!stored) return
       const parsed = JSON.parse(stored)
       if (Array.isArray(parsed)) {
-        // basic shape validation (optional)
         dispatch({ type: "SET_CART", payload: parsed })
+        console.log('📦 Cart loaded from localStorage:', parsed.length, 'items')
       }
     } catch (err) {
-      // ignore parsing errors and avoid throwing in SSR
-      // optionally remove corrupted key:
-      // localStorage.removeItem(CART_STORAGE_KEY)
       console.warn("Failed to restore cart from localStorage:", err)
+      // Remove corrupted data
+      try {
+        localStorage.removeItem(CART_STORAGE_KEY)
+      } catch (e) {
+        // Ignore if can't remove
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -131,6 +135,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       saveTimeout.current = window.setTimeout(() => {
         try {
           localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items))
+          console.log('💾 Cart saved to localStorage:', state.items.length, 'items')
         } catch (e) {
           console.warn("Failed to save cart to localStorage:", e)
         }
@@ -179,9 +184,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
   }
 
-  const clearCart = () => {
+  const clearCart = (silent = false) => {
+    console.log('🧹 clearCart() called - dispatching CLEAR_CART action')
     dispatch({ type: "CLEAR_CART" })
-    toast.success("Cart cleared")
+    
+    // Immediately clear from localStorage
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY)
+      console.log('✅ Cart cleared from localStorage')
+    } catch (e) {
+      console.warn("Failed to clear cart from localStorage:", e)
+    }
+    
+    // Only show toast if not silent (e.g., manual clear vs. after payment)
+    if (!silent) {
+      toast.success("Cart cleared")
+    }
   }
 
   const getTotalItems = () => {

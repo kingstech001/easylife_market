@@ -124,6 +124,7 @@ async function updateSubscription(
 /**
  * Verify order amounts against database prices
  * CRITICAL: Never trust client-provided prices
+ * FIXED: Proper number addition instead of string concatenation
  */
 async function verifyAndCalculateOrderAmount(
   orders: any[],
@@ -166,37 +167,53 @@ async function verifyAndCalculateOrderAmount(
         )
       }
 
-      // Use database price, not client price
-      const actualPrice = product.price
-      const itemTotal = actualPrice * item.quantity
+      // ✅ CRITICAL FIX: Ensure values are numbers, not strings
+      const actualPrice = Number(product.price)
+      const quantity = Number(item.quantity)
+      const itemTotal = actualPrice * quantity
 
       verifiedItems.push({
         productId: product._id,
         productName: product.name,
-        quantity: item.quantity,
+        quantity: quantity,
         priceAtPurchase: actualPrice,
         itemTotal,
       })
 
-      storeTotal += itemTotal
+      // ✅ CRITICAL FIX: Use Number() to ensure numeric addition
+      storeTotal = Number(storeTotal) + Number(itemTotal)
     }
 
     verifiedOrders.push({
       storeId,
       items: verifiedItems,
-      totalPrice: storeTotal,
+      totalPrice: Number(storeTotal),
     })
 
-    calculatedTotal += storeTotal
+    // ✅ CRITICAL FIX: Use Number() to ensure numeric addition
+    calculatedTotal = Number(calculatedTotal) + Number(storeTotal)
   }
 
-  const grandTotal = calculatedTotal + deliveryFee
+  // ✅ CRITICAL FIX: Ensure deliveryFee is a number before adding
+  const numericDeliveryFee = Number(deliveryFee) || 0
+  const grandTotal = Number(calculatedTotal) + numericDeliveryFee
+
+  console.log('💰 Amount Calculation:', {
+    subtotal: calculatedTotal,
+    deliveryFee: numericDeliveryFee,
+    grandTotal,
+    types: {
+      subtotal: typeof calculatedTotal,
+      deliveryFee: typeof numericDeliveryFee,
+      grandTotal: typeof grandTotal
+    }
+  })
 
   return {
     verifiedOrders,
-    subtotal: calculatedTotal,
-    deliveryFee,
-    grandTotal,
+    subtotal: Number(calculatedTotal),
+    deliveryFee: numericDeliveryFee,
+    grandTotal: Number(grandTotal),
   }
 }
 
@@ -306,6 +323,8 @@ async function createOrdersFromWebhook(
 
 /**
  * Handle successful charge webhook event
+ * FIXED: Transaction management to prevent double abort
+ * FIXED: Amount calculation to prevent string concatenation
  */
 async function handleSuccessfulCharge(data: any, ipAddress: string) {
   const reference = data.reference
@@ -360,6 +379,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
   }
 
   const session = await mongoose.startSession()
+  let transactionCommitted = false // ✅ Track if transaction was committed
 
   try {
     await connectToDB()
@@ -378,6 +398,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       if (store?.lastPaymentReference === reference) {
         console.log(`ℹ️ Subscription already processed: ${reference}`)
         await session.abortTransaction()
+        transactionCommitted = true // ✅ Mark as handled
         return
       }
 
@@ -391,6 +412,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       })
 
       await session.commitTransaction()
+      transactionCommitted = true // ✅ Mark as committed
       console.log(`✅ Subscription webhook completed: ${reference}`)
       return
     }
@@ -428,6 +450,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       )
 
       await session.commitTransaction()
+      transactionCommitted = true // ✅ Mark as committed
 
       await PaymentLogger.log({
         reference,
@@ -453,30 +476,55 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       throw new Error("Missing userId in webhook metadata")
     }
 
+    // ✅ DEBUG: Log the deliveryFee from metadata
+    console.log('📦 Metadata deliveryFee:', {
+      value: deliveryFee,
+      type: typeof deliveryFee,
+      asNumber: Number(deliveryFee)
+    })
+
     // Verify and recalculate amounts from database
+    // ✅ CRITICAL FIX: Pass deliveryFee as a number
     const verifiedOrderData = await verifyAndCalculateOrderAmount(
       orders,
-      deliveryFee,
+      Number(deliveryFee), // ✅ Ensure it's a number
       session
     )
 
+    // ✅ DEBUG: Log both amounts for comparison
+    console.log('💰 Amount Comparison:', {
+      paidAmount,
+      paidAmountType: typeof paidAmount,
+      calculatedGrandTotal: verifiedOrderData.grandTotal,
+      calculatedGrandTotalType: typeof verifiedOrderData.grandTotal,
+      subtotal: verifiedOrderData.subtotal,
+      deliveryFee: verifiedOrderData.deliveryFee,
+      difference: Math.abs(Number(paidAmount) - Number(verifiedOrderData.grandTotal))
+    })
+
     // CRITICAL: Verify paid amount matches calculated total
-    const amountDifference = Math.abs(paidAmount - verifiedOrderData.grandTotal)
+    // ✅ CRITICAL FIX: Ensure both values are numbers before comparison
+    const amountDifference = Math.abs(Number(paidAmount) - Number(verifiedOrderData.grandTotal))
     if (amountDifference > 0.01) {
       // Allow 1 kobo rounding difference
-      await session.abortTransaction()
-
+      // ✅ Log BEFORE throwing to ensure the log is saved
       await PaymentLogger.log({
         reference,
         userId,
         event: "webhook_amount_mismatch",
-        amount: paidAmount,
-        expectedAmount: verifiedOrderData.grandTotal,
-        metadata: { difference: amountDifference },
+        amount: Number(paidAmount),
+        expectedAmount: Number(verifiedOrderData.grandTotal),
+        metadata: { 
+          difference: amountDifference,
+          subtotal: verifiedOrderData.subtotal,
+          deliveryFee: verifiedOrderData.deliveryFee,
+          paidAmountType: typeof paidAmount,
+          expectedAmountType: typeof verifiedOrderData.grandTotal
+        },
       })
 
       throw new Error(
-        `Amount mismatch: Paid ${paidAmount}, Expected ${verifiedOrderData.grandTotal}`
+        `Amount mismatch: Paid ₦${paidAmount}, Expected ₦${verifiedOrderData.grandTotal} (Difference: ₦${amountDifference})`
       )
     }
 
@@ -502,6 +550,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     )
 
     await session.commitTransaction()
+    transactionCommitted = true // ✅ Mark as committed
 
     await PaymentLogger.log({
       reference,
@@ -516,18 +565,29 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
 
     console.log(`✅ Checkout webhook completed: ${orderResult.orderNumber}`)
   } catch (error: any) {
-    await session.abortTransaction()
+    // ✅ CRITICAL FIX: Only abort if transaction hasn't been committed
+    if (!transactionCommitted) {
+      await session.abortTransaction()
+    }
+    
     console.error(`❌ Webhook transaction failed for ${reference}:`, error)
+
+    // Determine the appropriate event type based on error
+    let eventType = "webhook_processing_failed"
+    if (error.message.includes("Amount mismatch")) {
+      eventType = "webhook_amount_mismatch"
+    }
 
     await PaymentLogger.log({
       reference,
-      event: "webhook_processing_failed",
+      event: eventType,
       error: error.message,
       metadata: { stack: error.stack },
     })
 
     throw error
   } finally {
+    // ✅ Always end session - this is safe to call multiple times
     session.endSession()
   }
 }

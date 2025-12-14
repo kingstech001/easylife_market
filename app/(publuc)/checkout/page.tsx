@@ -303,10 +303,14 @@ export default function CheckoutPage() {
 
       const verifyData = await verifyResponse.json()
 
-      // Clear saved data
-      localStorage.removeItem(CHECKOUT_STORAGE_KEY)
-      sessionStorage.removeItem("pending_payment_reference")
+      // ✅ Clear cart immediately after successful payment verification
+      console.log('✅ Payment verified successfully, clearing cart...')
       clearCart()
+      
+      // Clear saved checkout data
+      localStorage.removeItem(CHECKOUT_STORAGE_KEY)
+      localStorage.removeItem('checkout_redirect_data')
+      sessionStorage.removeItem("pending_payment_reference")
 
       toast.success("Payment successful! Your order has been placed.")
 
@@ -314,6 +318,7 @@ export default function CheckoutPage() {
       router.push(`/checkout/payment-success?reference=${reference}`)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
+      console.error('❌ Payment verification error:', errorMessage)
       toast.error(errorMessage)
       // Clean up URL
       router.replace("/checkout")

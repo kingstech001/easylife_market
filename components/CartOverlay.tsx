@@ -16,8 +16,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useFormatAmount } from "@/hooks/useFormatAmount";
 
 type CartOverlayProps = {
@@ -43,6 +41,18 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
       document.body.style.overflow = "unset";
     };
   }, []);
+
+  // Auto-close overlay when cart becomes empty
+  useEffect(() => {
+    if (isMounted && state.items.length === 0 && itemCount === 0) {
+      // Small delay to allow user to see the empty state briefly
+      const timer = setTimeout(() => {
+        handleClose();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [state.items.length, itemCount, isMounted]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -120,7 +130,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {state.items.map((item, index) => (
+              {state.items.map((item) => (
                 <Card
                   key={item.id}
                   className="border-2 hover:border-primary/50 transition-all overflow-hidden"

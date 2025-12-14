@@ -99,14 +99,16 @@ export function LocationPrompt() {
             console.log("Location not saved to server (user may not be logged in)")
           }
           
+          // Show success toast
           toast.success("Location enabled!", {
             description: locationData.city 
               ? `Delivering to ${locationData.city}, ${locationData.state}`
               : "Location saved successfully",
           })
           
-          setShowPrompt(false)
+          // Close the modal immediately after success
           setIsLoading(false)
+          setShowPrompt(false)
         },
         (error) => {
           setIsLoading(false)
