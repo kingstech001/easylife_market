@@ -6,39 +6,37 @@ import {
   Package,
   Search,
   Filter,
-  MoreHorizontal,
-  Eye,
   CheckCircle,
   XCircle,
   Clock,
   Truck,
-  ArrowLeft,
   Download,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import Link from "next/link"
 import { LoadingSpinner } from "@/components/ui/loading"
 
 // Define types for orders
-type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled"
+type OrderStatus = "pending" | "processing" | "confirmed" | "shipped" | "delivered" | "cancelled" | "paid"
 
 type OrderItem = {
-  productId: string // Updated to match API response format
+  productId: string
   productName: string
   quantity: number
   price: number
+  priceAtPurchase?: number
+  itemTotal?: number
   image?: string
 }
 
 type Order = {
-  _id: string // Updated to match MongoDB _id format
+  _id: string
   id?: string
   orderNumber?: string
   customerName?: string
@@ -46,20 +44,31 @@ type Order = {
   items: OrderItem[]
   status: OrderStatus
   total: number
-  totalPrice?: number // Added totalPrice field from database
+  totalPrice?: number
   createdAt: string
   shippingAddress?: string
-  shippingInfo?: any // Added shippingInfo object from database
+  shippingInfo?: any
   userId?: string
   storeId?: string
-  paymentMethod?: string // Added paymentMethod from database
-  receiptUrl?: string // Added receiptUrl from database
+  paymentMethod?: string
+  paymentStatus?: string
+  receiptUrl?: string
 }
 
-const statusConfig = {
+// ✅ Extended status config to handle all possible database statuses
+const statusConfig: Record<string, {
+  label: string
+  color: string
+  icon: any
+}> = {
   pending: {
     label: "Pending",
     color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+    icon: Clock,
+  },
+  processing: {
+    label: "Processing",
+    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
     icon: Clock,
   },
   confirmed: {
@@ -82,6 +91,23 @@ const statusConfig = {
     color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
     icon: XCircle,
   },
+  paid: {
+    label: "Paid",
+    color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+    icon: CheckCircle,
+  },
+  // Default fallback for unknown statuses
+  unknown: {
+    label: "Unknown",
+    color: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
+    icon: AlertCircle,
+  },
+}
+
+// ✅ Helper function to safely get status config
+const getStatusConfig = (status: string) => {
+  const normalizedStatus = status?.toLowerCase() || 'unknown'
+  return statusConfig[normalizedStatus] || statusConfig.unknown
 }
 
 export default function SellerOrdersPage() {
@@ -114,6 +140,7 @@ export default function SellerOrdersPage() {
               .replace(/^,\s*|,\s*$/g, "") || "No address provided"
           : "No address provided",
         total: order.total || order.totalPrice || 0,
+        status: (order.status || 'unknown').toLowerCase(), // ✅ Normalize status
       }))
 
       setOrders(transformedOrders)
@@ -134,11 +161,8 @@ export default function SellerOrdersPage() {
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false ||
       order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false ||
-      order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false
+      order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -161,7 +185,7 @@ export default function SellerOrdersPage() {
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-8">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex space-x-4">
               <div className="h-12 w-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
                 <Package className="h-6 w-6 text-indigo-600" />
@@ -211,10 +235,12 @@ export default function SellerOrdersPage() {
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
                       <SelectItem value="confirmed">Confirmed</SelectItem>
                       <SelectItem value="shipped">Shipped</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -224,7 +250,9 @@ export default function SellerOrdersPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          {isLoading ? <LoadingSpinner text="Please wait..." /> : filteredOrders.length === 0 ? (
+          {isLoading ? (
+            <LoadingSpinner text="Please wait..." />
+          ) : filteredOrders.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -239,7 +267,10 @@ export default function SellerOrdersPage() {
           ) : (
             <div className="space-y-4">
               {filteredOrders.map((order) => {
-                const StatusIcon = statusConfig[order.status].icon
+                // ✅ Safely get status config with fallback
+                const statusInfo = getStatusConfig(order.status)
+                const StatusIcon = statusInfo.icon
+
                 return (
                   <Card key={order._id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
@@ -247,13 +278,14 @@ export default function SellerOrdersPage() {
                         <div className="flex items-center space-x-4">
                           <div>
                             <h3 className="font-semibold text-lg">{order.orderNumber}</h3>
+                            <p className="text-sm text-muted-foreground">{order.customerName}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-3">
-                          <Badge className={statusConfig[order.status].color}>
+                          <Badge className={statusInfo.color}>
                             <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusConfig[order.status].label}
+                            {statusInfo.label}
                           </Badge>
                         </div>
                       </div>
@@ -276,13 +308,29 @@ export default function SellerOrdersPage() {
                         </div>
 
                         <div>
-                          <p className="text-muted-foreground mb-1">item Price</p>
-                           {order.items.map((item, index) => (
+                          <p className="text-muted-foreground mb-1">Item Price</p>
+                          <div className="space-y-1">
+                            {order.items.map((item, index) => (
                               <p key={item.productId || index} className="font-medium">
-                                {formatCurrency(item.price)}
+                                {formatCurrency(item.priceAtPurchase || item.price || 0)}
                               </p>
                             ))}
+                          </div>
                         </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total</p>
+                          <p className="text-lg font-bold">{formatCurrency(order.total)}</p>
+                        </div>
+                        
+                        {order.paymentMethod && (
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground">Payment Method</p>
+                            <p className="text-sm font-medium capitalize">{order.paymentMethod.replace('_', ' ')}</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

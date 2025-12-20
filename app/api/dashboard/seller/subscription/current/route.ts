@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const expired = isPlanExpired(store.subscriptionEndDate)
+    const expired = isPlanExpired(store.subscriptionExpiryDate)
     let currentPlan = store.subscriptionPlan || "free"
 
     // ✅ Auto downgrade if plan expired
@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
       console.log(`⚠️  Plan expired for store ${store._id}, downgrading to free`)
 
       store.subscriptionPlan = "free"
-      store.subscriptionStartDate = null
-      store.subscriptionEndDate = null
+      store.subscriptionStartDate = undefined
+      store.subscriptionExpiryDate = undefined
       await store.save()
       currentPlan = "free"
     }
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
       email: store.email || user.email,
       plan: currentPlan,
       startDate: store.subscriptionStartDate || null,
-      endDate: store.subscriptionEndDate || null,
+      endDate: store.subscriptionExpiryDate || null,
       expired,
     }
 
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const expired = isPlanExpired(store.subscriptionEndDate)
+    const expired = isPlanExpired(store.subscriptionExpiryDate)
     let currentPlan = store.subscriptionPlan || "free"
 
     // ✅ Auto downgrade if plan expired
@@ -173,8 +173,8 @@ export async function POST(request: NextRequest) {
       console.log(`⚠️  Plan expired for store ${store._id}, downgrading to free`)
 
       store.subscriptionPlan = "free"
-      store.subscriptionStartDate = null
-      store.subscriptionEndDate = null
+      store.subscriptionStartDate = undefined
+      store.subscriptionExpiryDate = undefined
       await store.save()
       currentPlan = "free"
     }
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
       email: store.email || user.email,
       plan: currentPlan,
       startDate: store.subscriptionStartDate || null,
-      endDate: store.subscriptionEndDate || null,
+      endDate: store.subscriptionExpiryDate || null,
       expired,
     }
 

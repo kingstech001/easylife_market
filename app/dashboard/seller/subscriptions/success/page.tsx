@@ -86,7 +86,7 @@ function SubscriptionSuccessContent() {
 
   const handleContinue = () => {
     if (status === "success") {
-      router.push("/dashboard/seller")
+      router.push("/dashboard/seller/subscriptions")
     } else {
       router.push("/dashboard/seller/subscriptions")
     }

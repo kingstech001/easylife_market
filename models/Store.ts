@@ -23,13 +23,11 @@ export interface IStore extends Document {
   isApproved: boolean;
   categories?: string[];
   isPublished: boolean;
+  productLimit?: number | null;
   subscriptionPlan: "free" | "basic" | "standard" | "premium";
   subscriptionStatus?: "active" | "inactive" | "expired" | "cancelled";
   subscriptionExpiryDate?: Date;
-  productLimit?: number | null;
   subscriptionStartDate?: Date | null;
-  subscriptionEndDate?: Date | null;
-  // Payment tracking fields
   lastPaymentAmount?: number;
   lastPaymentReference?: string;
   lastPaymentDate?: Date;
@@ -57,6 +55,10 @@ const StoreSchema = new Schema<IStore>(
     isPublished: { type: Boolean, default: false },
     isApproved: { type: Boolean, default: false },
     categories: [{ type: String }],
+    productLimit: {
+      type: Number,
+      default: PLAN_PRODUCT_LIMIT["free"],
+    },
     subscriptionPlan: {
       type: String,
       enum: ["free", "basic", "standard", "premium"],
@@ -70,15 +72,7 @@ const StoreSchema = new Schema<IStore>(
     subscriptionExpiryDate: {
       type: Date,
     },
-    // productLimit mirrors subscriptionPlan; kept for quick queries
-    productLimit: {
-      type: Number,
-      default: PLAN_PRODUCT_LIMIT["free"],
-      // null indicates unlimited
-    },
     subscriptionStartDate: { type: Date, default: null },
-    subscriptionEndDate: { type: Date, default: null },
-    // Payment tracking fields
     lastPaymentAmount: {
       type: Number,
     },
@@ -114,7 +108,8 @@ const StoreSchema = new Schema<IStore>(
   }
 );
 
-// Pre-save hook with proper typing
+// ✅ Pre-save hook - ONLY handles slug and geocoding
+// productLimit is ONLY managed by webhook
 StoreSchema.pre<IStore>("save", async function (next) {
   try {
     // Generate slug if name changed
@@ -122,15 +117,11 @@ StoreSchema.pre<IStore>("save", async function (next) {
       this.slug = slugify(this.name, { lower: true, strict: true });
     }
 
-    // Ensure productLimit follows subscriptionPlan if subscriptionPlan changed
-    if (
-      this.isModified("subscriptionPlan") ||
-      this.productLimit === undefined
-    ) {
-      this.productLimit = PLAN_PRODUCT_LIMIT[this.subscriptionPlan] ?? null;
-    }
+    // ✅ REMOVED: productLimit auto-sync logic
+    // The webhook now has FULL control over productLimit
+    // This prevents any conflicts between webhook updates and model hooks
 
-    // Geocode location if it's being modified and doesn't have valid coordinates
+    // Geocode location if needed
     const needsGeocoding =
       this.isModified("location") &&
       (!this.location.coordinates ||

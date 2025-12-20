@@ -1,13 +1,13 @@
 // app/api/webhooks/paystack/route.ts
-import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import mongoose from "mongoose"
-import { connectToDB } from "@/lib/db"
-import Store from "@/models/Store"
 import Order from "@/models/Order"
-import MainOrder from "@/models/MainOrder"
+import Store from "@/models/Store"
 import Product from "@/models/Product"
+import { connectToDB } from "@/lib/db"
+import MainOrder from "@/models/MainOrder"
 import { PaymentLogger } from "@/lib/paymentLogger"
+import { type NextRequest, NextResponse } from "next/server"
 
 // Force Node.js runtime for raw body access
 export const runtime = "nodejs"
@@ -67,18 +67,17 @@ function verifyPaystackSignature(body: string, signature: string | null): boolea
 
 /**
  * Rate limiting check for webhook calls
- * Prevents spam and duplicate processing
  */
 function checkWebhookRateLimit(reference: string): boolean {
   const now = Date.now()
   const attempt = webhookAttempts.get(reference)
   
   if (!attempt || now > attempt.resetTime) {
-    webhookAttempts.set(reference, { count: 1, resetTime: now + 60000 }) // 1 min window
+    webhookAttempts.set(reference, { count: 1, resetTime: now + 60000 })
     return true
   }
   
-  if (attempt.count >= 10) { // Max 10 webhook calls per minute per reference
+  if (attempt.count >= 10) {
     console.warn(`⚠️ Rate limit hit for reference: ${reference}`)
     return false
   }
@@ -88,43 +87,61 @@ function checkWebhookRateLimit(reference: string): boolean {
 }
 
 /**
- * Update store subscription after successful payment
+ * Update store subscription by calling the subscription API
+ * ✅ CLEAN SEPARATION: Webhook verifies payment, API handles subscription logic
  */
 async function updateSubscription(
   storeId: string,
-  plan: string,
+  plan: "free" | "basic" | "standard" | "premium",
   amount: number,
-  reference: string,
-  session: mongoose.ClientSession
+  reference: string
 ) {
-  const expiryDate = new Date()
-  expiryDate.setMonth(expiryDate.getMonth() + 1)
+  console.log(`\n${"=".repeat(60)}`)
+  console.log(`🔄 CALLING SUBSCRIPTION API`)
+  console.log(`${"=".repeat(60)}`)
+  console.log(`📋 Plan: ${plan}`)
+  console.log(`💰 Amount: ₦${amount}`)
+  console.log(`🔖 Reference: ${reference}`)
 
-  const updatedStore = await Store.findByIdAndUpdate(
-    storeId,
-    {
-      subscriptionPlan: plan,
-      subscriptionStatus: "active",
-      subscriptionExpiryDate: expiryDate,
-      lastPaymentAmount: amount,
-      lastPaymentReference: reference,
-      lastPaymentDate: new Date(),
-    },
-    { new: true, session }
-  ).lean()
+  try {
+    // ✅ Call the subscription API endpoint
+    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const response = await fetch(`${apiUrl}/api/subscriptions`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        storeId,
+        plan,
+        amount,
+        reference,
+      }),
+    })
 
-  if (!updatedStore) {
-    throw new Error(`Store ${storeId} not found`)
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(`Subscription API failed: ${errorData.error || response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    console.log(`✅ Subscription API response:`, data)
+    console.log(`${"=".repeat(60)}\n`)
+
+    return {
+      success: data.success,
+      data: data.data,
+      needsProductUpdate: false, // API already handled product enforcement
+    }
+  } catch (error) {
+    console.error(`❌ Failed to call subscription API:`, error)
+    throw error
   }
-
-  console.log(`✅ Subscription updated for store ${storeId}: ${plan}`)
-  return updatedStore
 }
 
 /**
  * Verify order amounts against database prices
- * CRITICAL: Never trust client-provided prices
- * FIXED: Proper number addition instead of string concatenation
  */
 async function verifyAndCalculateOrderAmount(
   orders: any[],
@@ -145,7 +162,6 @@ async function verifyAndCalculateOrderAmount(
     const verifiedItems = []
 
     for (const item of items) {
-      // Fetch actual product from database
       const product = await Product.findById(item.productId).session(session).lean()
       
       if (!product) {
@@ -160,14 +176,12 @@ async function verifyAndCalculateOrderAmount(
         throw new Error(`Product "${product.name}" is currently unavailable`)
       }
 
-      // Check inventory
       if (product.inventoryQuantity < item.quantity) {
         throw new Error(
           `Insufficient stock for "${product.name}". Available: ${product.inventoryQuantity}`
         )
       }
 
-      // ✅ CRITICAL FIX: Ensure values are numbers, not strings
       const actualPrice = Number(product.price)
       const quantity = Number(item.quantity)
       const itemTotal = actualPrice * quantity
@@ -180,7 +194,6 @@ async function verifyAndCalculateOrderAmount(
         itemTotal,
       })
 
-      // ✅ CRITICAL FIX: Use Number() to ensure numeric addition
       storeTotal = Number(storeTotal) + Number(itemTotal)
     }
 
@@ -190,11 +203,9 @@ async function verifyAndCalculateOrderAmount(
       totalPrice: Number(storeTotal),
     })
 
-    // ✅ CRITICAL FIX: Use Number() to ensure numeric addition
     calculatedTotal = Number(calculatedTotal) + Number(storeTotal)
   }
 
-  // ✅ CRITICAL FIX: Ensure deliveryFee is a number before adding
   const numericDeliveryFee = Number(deliveryFee) || 0
   const grandTotal = Number(calculatedTotal) + numericDeliveryFee
 
@@ -202,11 +213,6 @@ async function verifyAndCalculateOrderAmount(
     subtotal: calculatedTotal,
     deliveryFee: numericDeliveryFee,
     grandTotal,
-    types: {
-      subtotal: typeof calculatedTotal,
-      deliveryFee: typeof numericDeliveryFee,
-      grandTotal: typeof grandTotal
-    }
   })
 
   return {
@@ -232,7 +238,6 @@ async function createOrdersFromWebhook(
   const { verifiedOrders, subtotal, deliveryFee, grandTotal } = verifiedOrderData
   const createdSubOrders = []
 
-  // Create sub-orders for each store
   for (const orderGroup of verifiedOrders) {
     const { storeId, items, totalPrice } = orderGroup
 
@@ -265,7 +270,6 @@ async function createOrdersFromWebhook(
 
     createdSubOrders.push(subOrder[0])
 
-    // Deduct inventory atomically
     for (const item of items) {
       await Product.findByIdAndUpdate(
         item.productId,
@@ -275,14 +279,12 @@ async function createOrdersFromWebhook(
     }
   }
 
-  // Generate unique order number
   const timestamp = Date.now().toString().slice(-6)
   const random = Math.floor(Math.random() * 1000)
     .toString()
     .padStart(3, "0")
   const orderNumber = `ORD-${timestamp}${random}`
 
-  // Create main order
   const mainOrder = await MainOrder.create(
     [
       {
@@ -323,18 +325,15 @@ async function createOrdersFromWebhook(
 
 /**
  * Handle successful charge webhook event
- * FIXED: Transaction management to prevent double abort
- * FIXED: Amount calculation to prevent string concatenation
  */
 async function handleSuccessfulCharge(data: any, ipAddress: string) {
   const reference = data.reference
   const metadata = data.metadata ?? {}
-  const paidAmount = data.amount / 100 // Convert kobo to naira
+  const paidAmount = data.amount / 100
   const channel = data.channel || "card"
 
   console.log(`✅ Processing charge.success: ${reference}`)
 
-  // Log webhook receipt
   await PaymentLogger.log({
     reference,
     event: "webhook_charge_success",
@@ -343,7 +342,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     metadata: { channel, status: data.status },
   })
 
-  // Rate limiting
   if (!checkWebhookRateLimit(reference)) {
     await PaymentLogger.log({
       reference,
@@ -352,7 +350,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     return
   }
 
-  // Map payment channel
   let paymentMethod: string
   switch (channel.toLowerCase()) {
     case "card":
@@ -379,7 +376,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
   }
 
   const session = await mongoose.startSession()
-  let transactionCommitted = false // ✅ Track if transaction was committed
+  let transactionCommitted = false
 
   try {
     await connectToDB()
@@ -393,38 +390,51 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
         throw new Error("Invalid subscription metadata")
       }
 
-      // Check if already processed
+      const validPlans = ["free", "basic", "standard", "premium"]
+      if (!validPlans.includes(plan)) {
+        throw new Error(`Invalid subscription plan: ${plan}`)
+      }
+
       const store = await Store.findById(storeId).session(session).lean()
       if (store?.lastPaymentReference === reference) {
         console.log(`ℹ️ Subscription already processed: ${reference}`)
         await session.abortTransaction()
-        transactionCommitted = true // ✅ Mark as handled
+        transactionCommitted = true
         return
       }
 
-      await updateSubscription(storeId, plan, paidAmount, reference, session)
+      // ✅ Call subscription API (no session needed)
+      const updateResult = await updateSubscription(storeId, plan, paidAmount, reference)
+
+      if (!updateResult.success) {
+        throw new Error('Subscription API update failed')
+      }
 
       await PaymentLogger.log({
         reference,
         event: "subscription_updated",
         amount: paidAmount,
-        metadata: { plan, storeId },
+        metadata: { 
+          plan, 
+          storeId, 
+          productLimit: updateResult.data?.productLimit 
+        },
       })
 
+      // ✅ Commit transaction
       await session.commitTransaction()
-      transactionCommitted = true // ✅ Mark as committed
+      transactionCommitted = true
+
       console.log(`✅ Subscription webhook completed: ${reference}`)
       return
     }
 
     // HANDLE CHECKOUT/ORDER PAYMENTS
-    // Check for duplicate orders
     const existingOrders = await Order.find({ reference }).session(session).lean()
 
     if (existingOrders.length > 0) {
       console.log(`ℹ️ Orders already exist for ${reference}, updating status`)
 
-      // Update status if not already paid
       await Order.updateMany(
         { reference, paymentStatus: { $ne: "paid" } },
         {
@@ -450,7 +460,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       )
 
       await session.commitTransaction()
-      transactionCommitted = true // ✅ Mark as committed
+      transactionCommitted = true
 
       await PaymentLogger.log({
         reference,
@@ -461,7 +471,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       return
     }
 
-    // Extract order data from metadata
     const { orders, shippingInfo, deliveryFee = 0, userId } = metadata
 
     if (!orders || !Array.isArray(orders) || orders.length === 0) {
@@ -476,38 +485,14 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       throw new Error("Missing userId in webhook metadata")
     }
 
-    // ✅ DEBUG: Log the deliveryFee from metadata
-    console.log('📦 Metadata deliveryFee:', {
-      value: deliveryFee,
-      type: typeof deliveryFee,
-      asNumber: Number(deliveryFee)
-    })
-
-    // Verify and recalculate amounts from database
-    // ✅ CRITICAL FIX: Pass deliveryFee as a number
     const verifiedOrderData = await verifyAndCalculateOrderAmount(
       orders,
-      Number(deliveryFee), // ✅ Ensure it's a number
+      Number(deliveryFee),
       session
     )
 
-    // ✅ DEBUG: Log both amounts for comparison
-    console.log('💰 Amount Comparison:', {
-      paidAmount,
-      paidAmountType: typeof paidAmount,
-      calculatedGrandTotal: verifiedOrderData.grandTotal,
-      calculatedGrandTotalType: typeof verifiedOrderData.grandTotal,
-      subtotal: verifiedOrderData.subtotal,
-      deliveryFee: verifiedOrderData.deliveryFee,
-      difference: Math.abs(Number(paidAmount) - Number(verifiedOrderData.grandTotal))
-    })
-
-    // CRITICAL: Verify paid amount matches calculated total
-    // ✅ CRITICAL FIX: Ensure both values are numbers before comparison
     const amountDifference = Math.abs(Number(paidAmount) - Number(verifiedOrderData.grandTotal))
     if (amountDifference > 0.01) {
-      // Allow 1 kobo rounding difference
-      // ✅ Log BEFORE throwing to ensure the log is saved
       await PaymentLogger.log({
         reference,
         userId,
@@ -518,17 +503,14 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
           difference: amountDifference,
           subtotal: verifiedOrderData.subtotal,
           deliveryFee: verifiedOrderData.deliveryFee,
-          paidAmountType: typeof paidAmount,
-          expectedAmountType: typeof verifiedOrderData.grandTotal
         },
       })
 
       throw new Error(
-        `Amount mismatch: Paid ₦${paidAmount}, Expected ₦${verifiedOrderData.grandTotal} (Difference: ₦${amountDifference})`
+        `Amount mismatch: Paid ₦${paidAmount}, Expected ₦${verifiedOrderData.grandTotal}`
       )
     }
 
-    // Create payment info
     const paymentInfo = {
       transactionId: data.id,
       amount: paidAmount,
@@ -538,7 +520,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       paidAt: new Date(data.paid_at || data.transaction_date),
     }
 
-    // Create orders atomically
     const orderResult = await createOrdersFromWebhook(
       verifiedOrderData,
       reference,
@@ -550,7 +531,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     )
 
     await session.commitTransaction()
-    transactionCommitted = true // ✅ Mark as committed
+    transactionCommitted = true
 
     await PaymentLogger.log({
       reference,
@@ -565,14 +546,12 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
 
     console.log(`✅ Checkout webhook completed: ${orderResult.orderNumber}`)
   } catch (error: any) {
-    // ✅ CRITICAL FIX: Only abort if transaction hasn't been committed
     if (!transactionCommitted) {
       await session.abortTransaction()
     }
     
     console.error(`❌ Webhook transaction failed for ${reference}:`, error)
 
-    // Determine the appropriate event type based on error
     let eventType = "webhook_processing_failed"
     if (error.message.includes("Amount mismatch")) {
       eventType = "webhook_amount_mismatch"
@@ -587,7 +566,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
 
     throw error
   } finally {
-    // ✅ Always end session - this is safe to call multiple times
     session.endSession()
   }
 }
@@ -608,7 +586,6 @@ async function handleFailedCharge(data: any, ipAddress: string) {
 
   await connectToDB()
 
-  // Update any existing orders to failed status
   await Order.updateMany(
     { reference },
     { $set: { paymentStatus: "failed", status: "cancelled" } }
@@ -622,7 +599,6 @@ async function handleFailedCharge(data: any, ipAddress: string) {
 
 /**
  * GET endpoint - Check payment and order status
- * Used by frontend to verify payment and poll for order creation
  */
 export async function GET(request: NextRequest) {
   try {
@@ -635,13 +611,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Token may be missing when user is redirected back from Paystack.
-    // Allow unauthenticated polling so the frontend can poll for order creation,
-    // but avoid returning sensitive main order details to anonymous callers.
     const token = request.cookies.get("token")?.value
     const isAuthenticated = !!token
 
-    // Verify payment with Paystack
     const verifyData = await verifyPaystackTransaction(reference)
 
     if (verifyData.data.status !== "success") {
@@ -654,10 +626,8 @@ export async function GET(request: NextRequest) {
     const metadata = verifyData.data.metadata ?? {}
     const paidAmount = verifyData.data.amount / 100
 
-    // Check if orders exist
     await connectToDB()
     
-    // Handle subscription verification
     if (metadata.type === "subscription") {
       const { plan, storeId } = metadata
       
@@ -668,9 +638,8 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // Check if subscription was updated
       const store = await Store.findById(storeId)
-        .select("subscriptionPlan subscriptionStatus lastPaymentReference")
+        .select("subscriptionPlan subscriptionStatus lastPaymentReference productLimit")
         .lean()
 
       return NextResponse.json({
@@ -684,17 +653,16 @@ export async function GET(request: NextRequest) {
           amount: paidAmount,
           paymentStatus: "success",
           subscriptionUpdated: store?.lastPaymentReference === reference,
+          productLimit: store?.productLimit,
         },
       })
     }
 
-    // Check if order exists (for checkout payments)
     const existingOrders = await Order.find({ reference })
       .select("_id reference status paymentStatus")
       .lean()
     
     if (existingOrders.length === 0) {
-      // Order not created yet (webhook still processing)
       return NextResponse.json({
         status: "success",
         message: "Payment verified, order being processed",
@@ -708,10 +676,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Get main order details
-    // If unauthenticated, return minimal info (orderExists = true) so the
-    // frontend can tell the user their order is ready. Do not expose
-    // orderNumber or detailed order info without authentication.
     if (!isAuthenticated) {
       return NextResponse.json({
         status: "success",
@@ -726,8 +690,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Authenticated: include main order details so we can redirect to the
-    // specific order page.
     const mainOrder = await MainOrder.findOne({
       subOrders: { $in: existingOrders.map((o) => o._id) },
     })
@@ -768,16 +730,13 @@ export async function POST(request: NextRequest) {
   let parsedEvent: any = null
 
   try {
-    // Get raw body for signature verification
     const body = await request.text()
     const signature = request.headers.get("x-paystack-signature")
 
-    // Get IP address for logging
     const forwardedFor = request.headers.get("x-forwarded-for")
     const realIp = request.headers.get("x-real-ip")
     const ipAddress = forwardedFor?.split(",")[0] || realIp || "unknown"
 
-    // Verify webhook signature
     if (!verifyPaystackSignature(body, signature)) {
       console.error("❌ Invalid Paystack webhook signature")
       await PaymentLogger.log({
@@ -788,11 +747,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
     }
 
-    // Parse event
     parsedEvent = JSON.parse(body)
     console.log(`📨 Webhook received: ${parsedEvent.event}`)
 
-    // Handle different event types
     switch (parsedEvent.event) {
       case "charge.success":
         await handleSuccessfulCharge(parsedEvent.data, ipAddress)
@@ -812,12 +769,10 @@ export async function POST(request: NextRequest) {
         console.log(`ℹ️ Unhandled webhook event: ${parsedEvent.event}`)
     }
 
-    // Always return 200 to Paystack to prevent retries
     return NextResponse.json({ status: "success" })
   } catch (error: any) {
     console.error("❌ Webhook processing error:", error)
 
-    // Log critical errors
     await PaymentLogger.log({
       reference: parsedEvent?.data?.reference || "unknown",
       event: "webhook_critical_error",
@@ -825,8 +780,6 @@ export async function POST(request: NextRequest) {
       metadata: { stack: error.stack },
     }).catch(console.error)
 
-    // Still return 200 to prevent Paystack retries
-    // Log the error internally but don't expose details
     return NextResponse.json({ status: "error_logged" })
   }
 }
