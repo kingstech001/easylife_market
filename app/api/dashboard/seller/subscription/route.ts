@@ -172,13 +172,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { storeId, plan, amount, reference } = body;
 
-    console.log(`\n${"=".repeat(60)}`);
-    console.log(`📞 SUBSCRIPTION API CALLED BY WEBHOOK`);
-    console.log(`${"=".repeat(60)}`);
-    console.log(`   Store ID: ${storeId}`);
-    console.log(`   Plan: ${plan}`);
-    console.log(`   Amount: ₦${amount}`);
-    console.log(`   Reference: ${reference}`);
 
     if (!storeId) {
       return NextResponse.json(
@@ -202,21 +195,6 @@ export async function PUT(request: NextRequest) {
       endDate.setDate(startDate.getDate() + durationDays);
     }
 
-    // ✅ CRITICAL DEBUG: Get the correct product limit with EXTENSIVE logging
-    console.log(`\n🔍 DETAILED PLAN_LIMITS INSPECTION:`);
-    console.log(`   PLAN_LIMITS object:`, JSON.stringify(PLAN_LIMITS, null, 2));
-    console.log(`   Keys in PLAN_LIMITS:`, Object.keys(PLAN_LIMITS));
-
-    console.log(`\n📊 Product Limit Calculation:`);
-    console.log(`   Received plan: "${plan}"`);
-    console.log(`   Plan type: ${typeof plan}`);
-    console.log(`   Plan trimmed: "${plan.trim()}"`);
-    console.log(`   Plan in PLAN_LIMITS: ${plan in PLAN_LIMITS}`);
-    console.log(`   Direct access PLAN_LIMITS["${plan}"]:`, PLAN_LIMITS[plan]);
-    console.log(
-      `   Using bracket notation:`,
-      PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS]
-    );
 
     // Try multiple ways to get the value
     const directLookup = PLAN_LIMITS[plan];
@@ -224,40 +202,10 @@ export async function PUT(request: NextRequest) {
       PLAN_LIMITS[plan] !== undefined ? PLAN_LIMITS[plan] : 10;
     const withNullishCoalescing = PLAN_LIMITS[plan] ?? 10;
 
-    console.log(`\n🧪 Different lookup methods:`);
-    console.log(
-      `   directLookup:`,
-      directLookup,
-      `(type: ${typeof directLookup})`
-    );
-    console.log(
-      `   withUndefinedCheck:`,
-      withUndefinedCheck,
-      `(type: ${typeof withUndefinedCheck})`
-    );
-    console.log(
-      `   withNullishCoalescing:`,
-      withNullishCoalescing,
-      `(type: ${typeof withNullishCoalescing})`
-    );
-
     // Use the most explicit method
     const productLimit =
       PLAN_LIMITS[plan] !== undefined ? PLAN_LIMITS[plan] : 10;
 
-    console.log(`\n✅ Final productLimit value:`);
-    console.log(`   Value: ${productLimit}`);
-    console.log(`   Type: ${typeof productLimit}`);
-    console.log(`   Is null: ${productLimit === null}`);
-    console.log(`   Is undefined: ${productLimit === undefined}`);
-    console.log(`   Is number: ${typeof productLimit === "number"}`);
-    console.log(
-      `   Display: ${productLimit === null ? "UNLIMITED" : productLimit}`
-    );
-
-    // Update store subscription
-    console.log(`\n🔄 Updating store in database...`);
-    console.log(`   About to save with productLimit:`, productLimit);
 
     const updatedStore = await Store.findByIdAndUpdate(
       storeId,
@@ -267,7 +215,7 @@ export async function PUT(request: NextRequest) {
           subscriptionStatus: "active",
           subscriptionStartDate: startDate,
           subscriptionExpiryDate: endDate,
-          productLimit: productLimit, // NEVER undefined
+          productLimit: productLimit,
           lastPaymentReference: reference ?? null,
           lastPaymentAmount: amount ?? 0,
           lastPaymentDate: new Date(),
@@ -281,18 +229,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    console.log(`💾 Store updated successfully`);
-
-    // ✅ CRITICAL: Verify immediately after update
-    console.log(`\n🔍 Immediate verification (from returned document):`);
-    console.log(`   Plan: ${updatedStore.subscriptionPlan}`);
-    console.log(`   Product Limit: ${updatedStore.productLimit}`);
-    console.log(`   Status: ${updatedStore.subscriptionStatus}`);
-    console.log(
-      `   Match: ${
-        updatedStore.productLimit === productLimit ? "✅ CORRECT" : "❌ WRONG!"
-      }`
-    );
 
     // ✅ Double-check with fresh database read
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -300,24 +236,9 @@ export async function PUT(request: NextRequest) {
       "subscriptionPlan productLimit subscriptionStatus"
     );
 
-    console.log(`\n🔍 Fresh database read verification:`);
-    console.log(`   Plan: ${freshStore?.subscriptionPlan}`);
-    console.log(`   Product Limit: ${freshStore?.productLimit}`);
-    console.log(`   Status: ${freshStore?.subscriptionStatus}`);
-    console.log(
-      `   Match: ${
-        freshStore?.productLimit === productLimit ? "✅ CORRECT" : "❌ WRONG!"
-      }`
-    );
 
     // ✅ If STILL wrong, force fix with direct MongoDB update
     if (freshStore?.productLimit !== productLimit) {
-      console.error(
-        `\n❌ CRITICAL: Product limit is STILL wrong after update!`
-      );
-      console.error(`   Expected: ${productLimit}`);
-      console.error(`   Got: ${freshStore?.productLimit}`);
-      console.error(`   Applying emergency direct MongoDB update...`);
 
       const mongoose = (await import("mongoose")).default;
       await mongoose.connection.collection("stores").updateOne(
@@ -331,28 +252,17 @@ export async function PUT(request: NextRequest) {
         }
       );
 
-      console.log(`🔧 Applied direct MongoDB update`);
+      // console.log(`🔧 Applied direct MongoDB update`);
 
       // Final check
       const finalCheck = await Store.findById(storeId).select(
         "productLimit subscriptionPlan"
       );
-      console.log(
-        `   Final check - Limit: ${finalCheck?.productLimit}, Plan: ${finalCheck?.subscriptionPlan}`
-      );
     }
 
     // Enforce product limit
-    console.log(`\n🔧 Enforcing product limit...`);
     const productResult = await enforceProductLimitForStore(storeId);
 
-    console.log(`\n✅ Product limit enforced:`);
-    console.log(`   Activated: ${productResult.activated}`);
-    console.log(`   Deactivated: ${productResult.deactivated}`);
-    console.log(
-      `   Visible: ${productResult.visibleCount}/${productResult.total}`
-    );
-    console.log(`${"=".repeat(60)}\n`);
 
     return NextResponse.json(
       {

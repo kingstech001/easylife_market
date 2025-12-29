@@ -25,9 +25,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`\n${"=".repeat(60)}`)
-    console.log(`🔍 CHECKING SUBSCRIPTION FOR STORE: ${storeId}`)
-    console.log(`${"=".repeat(60)}`)
 
     // ✅ Use find-then-save pattern for reliable updates (NO .lean())
     const store = await Store.findById(storeId)
@@ -39,11 +36,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`\n📦 Current Store State:`)
-    console.log(`   Plan: ${store.subscriptionPlan}`)
-    console.log(`   Status: ${store.subscriptionStatus}`)
-    console.log(`   Product Limit: ${store.productLimit}`)
-    console.log(`   Expiry Date: ${store.subscriptionExpiryDate}`)
 
     const now = new Date()
     let action: "checked" | "downgraded" = "checked"
@@ -62,17 +54,11 @@ export async function POST(request: NextRequest) {
       !!store.subscriptionExpiryDate &&
       store.subscriptionExpiryDate < now
 
-    console.log(`\n⏰ Expiry Check:`)
-    console.log(`   Has expiry date: ${!!store.subscriptionExpiryDate}`)
-    console.log(`   Expiry date: ${store.subscriptionExpiryDate}`)
-    console.log(`   Current time: ${now}`)
-    console.log(`   Is expired: ${hasExpired}`)
 
     // =====================================
     // DOWNGRADE IF EXPIRED
     // =====================================
     if (hasExpired && store.subscriptionPlan !== "free") {
-      console.log(`\n⚠️  Subscription expired! Downgrading to free plan...`)
       
       // ✅ Update all fields via direct assignment
       store.subscriptionPlan = "free"
@@ -81,11 +67,6 @@ export async function POST(request: NextRequest) {
       store.productLimit = PLAN_LIMITS.free  // ✅ Manually set productLimit
       store.lastPaymentReference = undefined
 
-      console.log(`\n✏️  New Store State (before save):`)
-      console.log(`   New Plan: ${store.subscriptionPlan}`)
-      console.log(`   New Status: ${store.subscriptionStatus}`)
-      console.log(`   New Limit: ${store.productLimit}`)
-      console.log(`   New Expiry: ${store.subscriptionExpiryDate}`)
 
       // ✅ CRITICAL: Mark fields as modified
       store.markModified('subscriptionPlan')
@@ -97,24 +78,15 @@ export async function POST(request: NextRequest) {
       // Save the changes
       await store.save()
 
-      console.log(`💾 Store downgraded and saved`)
-
       // Small delay to ensure DB write completes
       await new Promise(resolve => setTimeout(resolve, 100))
 
       // Verify the update persisted (without .lean())
       const verification = await Store.findById(storeId).lean()
       
-      console.log(`\n🔍 Database Verification:`)
-      console.log(`   Verified Plan: ${verification?.subscriptionPlan}`)
-      console.log(`   Verified Limit: ${verification?.productLimit}`)
-      console.log(`   Verified Status: ${verification?.subscriptionStatus}`)
 
       // Safety check
       if (verification?.productLimit !== PLAN_LIMITS.free) {
-        console.error(`\n❌ WARNING: Product limit mismatch after downgrade!`)
-        console.error(`   Expected: ${PLAN_LIMITS.free}`)
-        console.error(`   Got: ${verification?.productLimit}`)
         
         // Force update
         await Store.findByIdAndUpdate(
@@ -129,7 +101,6 @@ export async function POST(request: NextRequest) {
           { new: true }
         )
         
-        console.log(`🔧 Applied force update`)
       }
 
       action = "downgraded"
@@ -141,14 +112,7 @@ export async function POST(request: NextRequest) {
     // =====================================
     // ENFORCE PRODUCT LIMIT
     // =====================================
-    console.log(`\n🔧 Enforcing product limit...`)
     const enforcementResult = await enforceProductLimitForStore(store._id)
-
-    console.log(`\n✅ Product enforcement complete:`)
-    console.log(`   Activated: ${enforcementResult.activated}`)
-    console.log(`   Deactivated: ${enforcementResult.deactivated}`)
-    console.log(`   Visible: ${enforcementResult.visibleCount}/${enforcementResult.total}`)
-    console.log(`${"=".repeat(60)}\n`)
 
     return NextResponse.json(
       {

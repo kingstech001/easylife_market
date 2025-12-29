@@ -27,6 +27,7 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    // turbo: false,
 
     // ❌ Removed because it only works on Next.js canary
     // nodeMiddleware: true,

@@ -96,17 +96,11 @@ async function updateSubscription(
   amount: number,
   reference: string
 ) {
-  console.log(`\n${"=".repeat(60)}`)
-  console.log(`🔄 CALLING SUBSCRIPTION API`)
-  console.log(`${"=".repeat(60)}`)
-  console.log(`📋 Plan: ${plan}`)
-  console.log(`💰 Amount: ₦${amount}`)
-  console.log(`🔖 Reference: ${reference}`)
 
   try {
     // ✅ Call the subscription API endpoint
     const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const response = await fetch(`${apiUrl}/api/subscriptions`, {
+    const response = await fetch(`${apiUrl}/api/dashboard/seller/subscription`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -125,9 +119,6 @@ async function updateSubscription(
     }
 
     const data = await response.json()
-
-    console.log(`✅ Subscription API response:`, data)
-    console.log(`${"=".repeat(60)}\n`)
 
     return {
       success: data.success,
@@ -209,11 +200,6 @@ async function verifyAndCalculateOrderAmount(
   const numericDeliveryFee = Number(deliveryFee) || 0
   const grandTotal = Number(calculatedTotal) + numericDeliveryFee
 
-  console.log('💰 Amount Calculation:', {
-    subtotal: calculatedTotal,
-    deliveryFee: numericDeliveryFee,
-    grandTotal,
-  })
 
   return {
     verifiedOrders,
@@ -314,7 +300,6 @@ async function createOrdersFromWebhook(
     { session }
   )
 
-  console.log(`✅ Order ${orderNumber} created with ${createdSubOrders.length} sub-order(s)`)
 
   return {
     mainOrder: mainOrder[0],
@@ -332,7 +317,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
   const paidAmount = data.amount / 100
   const channel = data.channel || "card"
 
-  console.log(`✅ Processing charge.success: ${reference}`)
 
   await PaymentLogger.log({
     reference,
@@ -397,7 +381,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
 
       const store = await Store.findById(storeId).session(session).lean()
       if (store?.lastPaymentReference === reference) {
-        console.log(`ℹ️ Subscription already processed: ${reference}`)
         await session.abortTransaction()
         transactionCommitted = true
         return
@@ -425,7 +408,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       await session.commitTransaction()
       transactionCommitted = true
 
-      console.log(`✅ Subscription webhook completed: ${reference}`)
       return
     }
 
@@ -433,7 +415,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     const existingOrders = await Order.find({ reference }).session(session).lean()
 
     if (existingOrders.length > 0) {
-      console.log(`ℹ️ Orders already exist for ${reference}, updating status`)
 
       await Order.updateMany(
         { reference, paymentStatus: { $ne: "paid" } },
@@ -544,7 +525,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       },
     })
 
-    console.log(`✅ Checkout webhook completed: ${orderResult.orderNumber}`)
   } catch (error: any) {
     if (!transactionCommitted) {
       await session.abortTransaction()
@@ -748,7 +728,6 @@ export async function POST(request: NextRequest) {
     }
 
     parsedEvent = JSON.parse(body)
-    console.log(`📨 Webhook received: ${parsedEvent.event}`)
 
     switch (parsedEvent.event) {
       case "charge.success":
