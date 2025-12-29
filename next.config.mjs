@@ -1,55 +1,55 @@
-let userConfig = undefined;
-
-try {
-  // Try to import ESM config first
-  userConfig = await import("./v0-user-next.config.mjs");
-} catch (e) {
-  try {
-    // Fallback to CommonJS config
-    userConfig = await import("./v0-user-next.config");
-  } catch (innerError) {
-    // Ignore if no user config exists
-  }
-}
+import { existsSync } from "fs";
+import { pathToFileURL } from "url";
 
 /** @type {import('next').NextConfig} */
+let userConfig = {};
+
+// Safely load optional user config
+try {
+  if (existsSync("./v0-user-next.config.mjs")) {
+    const mod = await import(
+      pathToFileURL("./v0-user-next.config.mjs").href
+    );
+    userConfig = mod.default || mod;
+  } else if (existsSync("./v0-user-next.config.js")) {
+    const mod = await import(
+      pathToFileURL("./v0-user-next.config.js").href
+    );
+    userConfig = mod.default || mod;
+  }
+} catch (err) {
+  console.warn("⚠️ Failed to load user Next config:", err.message);
+}
+
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
   },
+
   experimental: {
+    // These are VALID in Next 16+
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
-    // turbo: false,
-
-    // ❌ Removed because it only works on Next.js canary
-    // nodeMiddleware: true,
   },
 };
 
-if (userConfig) {
-  // Handle both ESM default exports and CJS
-  const config = userConfig.default || userConfig;
+// Merge user config safely
+for (const key in userConfig) {
+  const base = nextConfig[key];
+  const override = userConfig[key];
 
-  for (const key in config) {
-    if (
-      typeof nextConfig[key] === "object" &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
-        ...config[key],
-      };
-    } else {
-      nextConfig[key] = config[key];
-    }
+  if (
+    typeof base === "object" &&
+    base !== null &&
+    !Array.isArray(base)
+  ) {
+    nextConfig[key] = {
+      ...base,
+      ...override,
+    };
+  } else {
+    nextConfig[key] = override;
   }
 }
 
