@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { z } from "zod"
-import { useForm, type SubmitHandler } from "react-hook-form"
+import { useForm, type SubmitHandler, Controller, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   ArrowLeft,
@@ -79,8 +79,9 @@ export default function CreateProductPage() {
   const [storeError, setStoreError] = useState<string | null>(null)
   const [formKey, setFormKey] = useState(0)
 
+  // Fix: Explicitly type the useForm hook with ProductFormValues
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(productFormSchema) as Resolver<ProductFormValues>,
     defaultValues: {
       name: "",
       description: "",
@@ -91,12 +92,13 @@ export default function CreateProductPage() {
       images: [],
       storeId: "",
     },
+    mode: "onChange",
   })
 
-  const { clearStorage } = useFormPersistence({
+  const { clearStorage } = useFormPersistence<ProductFormValues>({
     form,
     storageKey: "create-product-form",
-    excludeFields: ["storeId", "inventoryQuantity"], // Exclude inventoryQuantity from persistence
+    excludeFields: ["storeId", "inventoryQuantity"],
     debounceMs: 300,
   })
 
@@ -273,13 +275,9 @@ export default function CreateProductPage() {
       const result = await response.json()
       console.log("Success response:", result)
 
-      // Clear storage first
       clearStorage()
-      
-      // Clear image previews
       setImagePreviews([])
       
-      // Reset form with explicit values
       form.reset({
         name: "",
         description: "",
@@ -291,11 +289,9 @@ export default function CreateProductPage() {
         storeId: storeId,
       })
       
-      // Force re-render
       setFormKey((prev) => prev + 1)
       setActiveTab("details")
       
-      // Clear the file input
       const fileInput = document.getElementById("image-upload") as HTMLInputElement
       if (fileInput) {
         fileInput.value = ""

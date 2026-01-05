@@ -2,15 +2,16 @@
 
 import type React from "react"
 
-import { motion, type MotionProps } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
-interface AnimatedContainerProps extends React.HTMLAttributes<HTMLDivElement> {
+type MotionDivProps = React.ComponentPropsWithoutRef<typeof motion.div>
+
+interface AnimatedContainerProps extends Omit<MotionDivProps, "children"> {
   children: React.ReactNode
   delay?: number
   duration?: number
   animation?: "fadeIn" | "slideUp" | "slideIn" | "scale" | "none"
-  motionProps?: MotionProps
 }
 
 export function AnimatedContainer({
@@ -19,7 +20,6 @@ export function AnimatedContainer({
   duration = 0.5,
   animation = "fadeIn",
   className,
-  motionProps,
   ...props
 }: AnimatedContainerProps) {
   const animations = {
@@ -49,7 +49,7 @@ export function AnimatedContainer({
   const selectedAnimation = animations[animation]
 
   return (
-    <motion.div className={cn(className)} {...selectedAnimation} {...motionProps} {...props}>
+    <motion.div className={cn(className)} {...selectedAnimation} {...(props as MotionDivProps)}>
       {children}
     </motion.div>
   )

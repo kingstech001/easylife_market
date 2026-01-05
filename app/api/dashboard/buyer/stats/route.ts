@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import User from "@/models/User"
-import mainOrder from "@/models/MainOrder"
+import MainOrder from "@/models/MainOrder"
+import Order from "@/models/Order"
+import mongoose from "mongoose"
 
 export async function GET(req: Request) {
   try {
@@ -20,28 +22,46 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 })
     }
 
-    // Get orders statistics
-    const orders = await mainOrder.find({ userId }).sort({ createdAt: -1 })
-    const totalOrders = orders.length
-    const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+    // Get main orders with populated sub-orders
+    const mainOrders = await MainOrder.find({ userId })
+      .populate('subOrders')
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const totalOrders = mainOrders.length
+    const totalSpent = mainOrders.reduce((sum, order) => sum + (order.grandTotal || 0), 0)
 
     // Get recent orders (last 3)
-    const recentOrders = orders.slice(0, 3).map((order) => ({
-      id: order._id,
-      orderId: order.orderId || `ORD-${order._id.toString().slice(-6)}`,
-      date: order.createdAt.toISOString().split("T")[0],
-      status: order.status || "Processing",
-      total: `₦${order.totalAmount ?.toFixed(2) || "0.00"}`,
-      items: order.items?.length || 0,
-    }))
+    const recentOrders = mainOrders.slice(0, 3).map((order: any) => {
+      const orderId = order._id instanceof mongoose.Types.ObjectId 
+        ? order._id.toString() 
+        : String(order._id)
+      
+      // Calculate total items from all sub-orders
+      const totalItems = Array.isArray(order.subOrders) 
+        ? order.subOrders.reduce((sum: number, subOrder: any) => {
+            return sum + (Array.isArray(subOrder.items) ? subOrder.items.length : 0)
+          }, 0)
+        : 0
+      
+      return {
+        id: orderId,
+        orderId: order.orderNumber || `ORD-${orderId.slice(-6).toUpperCase()}`,
+        date: new Date(order.createdAt).toISOString().split("T")[0],
+        status: order.status || "pending",
+        total: `₦${order.grandTotal?.toFixed(2) || "0.00"}`,
+        items: totalItems,
+        paymentStatus: order.paymentStatus || "pending",
+      }
+    })
 
     // Calculate monthly growth (compare with previous month)
     const currentMonth = new Date()
     const lastMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-    const currentMonthOrders = orders.filter(
-      (order) => new Date(order.createdAt) >= new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
+    const currentMonthOrders = mainOrders.filter(
+      (order: any) => new Date(order.createdAt) >= new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
     )
-    const lastMonthOrders = orders.filter((order) => {
+    const lastMonthOrders = mainOrders.filter((order: any) => {
       const orderDate = new Date(order.createdAt)
       return orderDate >= lastMonth && orderDate < new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
     })
@@ -51,8 +71,8 @@ export async function GET(req: Request) {
         ? (((currentMonthOrders.length - lastMonthOrders.length) / lastMonthOrders.length) * 100).toFixed(1)
         : "0"
 
-    const lastMonthSpent = lastMonthOrders.reduce((sum, order) => sum + (order.total || 0), 0)
-    const currentMonthSpent = currentMonthOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+    const lastMonthSpent = lastMonthOrders.reduce((sum: number, order: any) => sum + (order.grandTotal || 0), 0)
+    const currentMonthSpent = currentMonthOrders.reduce((sum: number, order: any) => sum + (order.grandTotal || 0), 0)
     const spentGrowthPercent =
       lastMonthSpent > 0 ? (((currentMonthSpent - lastMonthSpent) / lastMonthSpent) * 100).toFixed(1) : "0"
 

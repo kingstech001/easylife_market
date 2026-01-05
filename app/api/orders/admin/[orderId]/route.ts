@@ -3,12 +3,14 @@ import { connectToDB } from "@/lib/db"
 import Order from "@/models/Order"
 
 // ✅ PATCH — update order status
-export async function PATCH(req: Request, { params }: { params: { orderId: string } }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
   try {
-    // Await params destructuring (important for dynamic routes)
     const { orderId } = await params
 
-    const { status } = await req.json()
+    const { status } = await request.json()
 
     if (!status) {
       return NextResponse.json({ success: false, message: "Status is required" }, { status: 400 })

@@ -37,10 +37,10 @@ const productFormSchema = z.object({
     message: "Product name must be at least 3 characters.",
   }),
   description: z.string().optional(),
-  price: z.coerce.number().positive({ message: "Price must be a positive number." }),
-  compareAtPrice: z.coerce.number().positive().optional(),
+  price: z.number().positive({ message: "Price must be a positive number." }),
+  compareAtPrice: z.number().positive().optional().or(z.literal(0)).optional(),
   category: z.string().optional(),
-  inventoryQuantity: z.coerce.number().int().nonnegative(),
+  inventoryQuantity: z.number().int().nonnegative(),
   images: z
     .array(
       z.object({
@@ -456,7 +456,13 @@ export default function EditProductPage() {
                             <FormItem>
                               <FormLabel>Price</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  placeholder="0.00" 
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                />
                               </FormControl>
                               <FormDescription>Regular selling price</FormDescription>
                               <FormMessage />
@@ -471,7 +477,14 @@ export default function EditProductPage() {
                             <FormItem>
                               <FormLabel>Compare at Price (Optional)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  placeholder="0.00" 
+                                  {...field}
+                                  value={field.value || ""}
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                />
                               </FormControl>
                               <FormDescription>Original price (for discounts)</FormDescription>
                               <FormMessage />
@@ -516,7 +529,12 @@ export default function EditProductPage() {
                           <FormItem>
                             <FormLabel>Stock Quantity</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="0" {...field} />
+                              <Input 
+                                type="number" 
+                                placeholder="0" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
                             </FormControl>
                             <FormDescription>Number of items available for sale</FormDescription>
                             <FormMessage />
@@ -583,7 +601,7 @@ export default function EditProductPage() {
                   </div>
 
                   {imagePreviews.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
                       {imagePreviews.map((preview, index) => (
                         <motion.div
                           key={`image-${index}`}

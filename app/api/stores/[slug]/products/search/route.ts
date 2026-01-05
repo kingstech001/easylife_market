@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
-import Product, { type IProduct } from "@/models/Product"
+import Product from "@/models/Product"
 import Store from "@/models/Store"
 import type { SearchProductsApiResponse, ProductResponse, PaginationResponse, ApiErrorResponse } from "@/app/types/api"
 import mongoose from "mongoose"
@@ -36,7 +36,6 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
     const sortBy = searchParams.get("sortBy") || "createdAt"
     const sortOrder = searchParams.get("sortOrder") || "desc"
 
-
     // Validate slug
     if (!slug) {
       const errorResponse: ApiErrorResponse = {
@@ -61,7 +60,6 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
       }
       return NextResponse.json(errorResponse, { status: 404 })
     }
-
 
     // Build search filter using the store's ObjectId
     const filter: SearchFilters = {
@@ -106,25 +104,24 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
     // Execute query with pagination
     const skip = Math.max(0, (page - 1) * limit)
 
-
-    const [products, totalCount]: [IProduct[], number] = await Promise.all([
+    // Use any[] type for lean() results since they're flattened MongoDB documents
+    const [products, totalCount]: [any[], number] = await Promise.all([
       Product.find(filter).populate("categoryId", "name").sort(sort).skip(skip).limit(limit).lean(),
       Product.countDocuments(filter),
     ])
 
-
-    // Transform products
-    const transformedProducts: ProductResponse[] = products.map((product) => ({
+    // Transform products with safe property access
+    const transformedProducts: ProductResponse[] = products.map((product: any) => ({
       id: product._id.toString(),
       name: product.name,
       description: product.description || null,
       price: product.price,
       compare_at_price: product.compareAtPrice || null,
-      category_id: product.category?.toString() || null,
+      category_id: product.categoryId?._id?.toString() || product.categoryId?.toString() || null,
       inventory_quantity: product.inventoryQuantity,
       images:
-        product.images?.map((img) => ({
-          id: img._id?.toString() || Math.random().toString(),
+        product.images?.map((img: any, index: number) => ({
+          id: img._id?.toString() || `img-${index}`,
           url: img.url,
           alt_text: img.altText || null,
         })) || [],

@@ -15,7 +15,7 @@ function bufferToStream(buffer: Buffer): Readable {
   return readable;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const data = await req.formData();
   const file = data.get("file") as File;
 
@@ -26,13 +26,13 @@ export async function POST(req: NextRequest) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  return new Promise((resolve, reject) => {
+  return new Promise<NextResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: "store-images" },
       (error, result) => {
         if (error) {
           console.error(error);
-          return reject(
+          return resolve(
             NextResponse.json({ error: "Upload failed" }, { status: 500 })
           );
         }

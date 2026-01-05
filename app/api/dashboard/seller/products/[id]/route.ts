@@ -5,7 +5,10 @@ import Store from "@/models/Store"
 import { connectToDB } from "@/lib/db"
 import mongoose from "mongoose"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   await connectToDB()
   console.log("DB connected for GET product.")
 
@@ -31,7 +34,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     console.log(`✅ GET Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
 
-    const { id } = await Promise.resolve(params)
+    const { id } = await params
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ GET Product: Invalid product ID format: ${id}.`)
@@ -66,7 +69,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   await connectToDB()
   console.log("DB connected for PUT product.")
 
@@ -99,7 +105,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     console.log(`✅ PUT Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
 
-    const { id } = await Promise.resolve(params)
+    const { id } = await params
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ PUT Product: Invalid product ID format: ${id}.`)
@@ -151,7 +157,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   await connectToDB()
   console.log("DB connected for DELETE product.")
 
@@ -185,7 +194,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     console.log(`✅ DELETE Product: Store found for seller ID ${user.id}: ${userStore.name} (${userStore._id}).`)
 
-    const { id } = await Promise.resolve(params)
+    const { id } = await params
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.log(`❌ DELETE Product: Invalid product ID format: ${id}.`)

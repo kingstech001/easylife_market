@@ -47,12 +47,12 @@ const productFormSchema = z.object({
     message: "Product name must be at least 3 characters.",
   }),
   description: z.string().optional(),
-  price: z.coerce.number().positive({
+  price: z.number().positive({
     message: "Price must be a positive number.",
   }),
-  compare_at_price: z.coerce.number().positive().optional(),
+  compare_at_price: z.number().positive().optional().or(z.literal(undefined)),
   category_id: z.string().optional(),
-  inventory_quantity: z.coerce.number().int().nonnegative(),
+  inventory_quantity: z.number().int().nonnegative(),
   is_published: z.boolean(),
   images: z
     .array(
@@ -110,10 +110,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         form.reset({
           name: productData.name,
           description: productData.description || "",
-          price: productData.price,
-          compare_at_price: productData.compare_at_price || undefined,
+          price: Number(productData.price),
+          compare_at_price: productData.compare_at_price ? Number(productData.compare_at_price) : undefined,
           category_id: productData.category_id || "",
-          inventory_quantity: productData.inventory_quantity,
+          inventory_quantity: Number(productData.inventory_quantity),
           is_published: productData.is_published,
           images: productData.images || [],
         })
@@ -256,7 +256,12 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         <FormItem>
                           <FormLabel>Price</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -269,7 +274,12 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         <FormItem>
                           <FormLabel>Compare at Price</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -362,7 +372,11 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                       <FormItem>
                         <FormLabel>Quantity</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

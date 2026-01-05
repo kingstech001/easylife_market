@@ -29,7 +29,7 @@ const registerSchema = z
       .refine((val) => /[^\w\s]/.test(val), { message: "Password must contain at least one special character." }),
     confirmPassword: z.string(),
     role: z.enum(["buyer", "seller"], {
-      required_error: "Please select a role.",
+      message: "Please select a role.",
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {

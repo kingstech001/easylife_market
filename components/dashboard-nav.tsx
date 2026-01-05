@@ -27,10 +27,7 @@ export function DashboardNav({ className, ...props }: DashboardNavProps) {
     // Remove the authentication cookie
     document.cookie = "authenticated=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
 
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    })
+    toast.success("You have been signed out successfully.")
 
     router.push("/")
     router.refresh()

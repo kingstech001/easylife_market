@@ -59,6 +59,8 @@ export default function WishlistPage() {
       price: item.price,
       quantity: 1,
       image: item.image,
+      storeId: item.storeSlug,
+      productId: item.id,
     })
     toast.success(`${item.name} added to cart!`)
   }
@@ -74,6 +76,8 @@ export default function WishlistPage() {
         price: item.price,
         quantity: 1,
         image: item.image,
+        storeId: item.storeSlug,
+        productId: item.id,
       })
     })
 

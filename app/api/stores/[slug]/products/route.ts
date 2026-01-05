@@ -1,18 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
-import Product, { type IProduct } from "@/models/Product"
-import Store from "@/models/Store"
-import type { ProductsApiResponse, ProductResponse, ApiErrorResponse } from "@/app/types/api"
+import Product from "@/models/Product"
+import type { SearchProductsApiResponse, ProductResponse, ApiErrorResponse } from "@/app/types/api"
 
 interface RouteParams {
   params: Promise<{ slug: string }>
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse<ProductsApiResponse>> {
+export async function GET(
+  request: NextRequest, 
+  { params }: RouteParams
+): Promise<NextResponse<SearchProductsApiResponse>> {
   try {
     const { slug } = await params
 
-    console.log('🔍 Fetching products for store slug:', slug)
+    console.log('🔍 Searching products for store slug:', slug)
 
     // Validate slug
     if (!slug) {
@@ -25,7 +27,18 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 
     await connectToDB()
 
+    // Get query parameters
+    const searchParams = request.nextUrl.searchParams
+    const query = searchParams.get('q') || ''
+    const category = searchParams.get('category')
+    const minPrice = searchParams.get('minPrice')
+    const maxPrice = searchParams.get('maxPrice')
+    const sortBy = searchParams.get('sortBy') || 'newest'
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
+
     // Find store by slug first
+    const Store = (await import("@/models/Store")).default
     const store = await Store.findOne({
       slug: slug,
       isPublished: true,
@@ -40,38 +53,65 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       return NextResponse.json(errorResponse, { status: 404 })
     }
 
-
-    // First, check what products exist for this store
-    const allStoreProducts = await Product.find({
-      storeId: store._id,
-    }).lean()
-
-
-    // Build filter carefully
+    // Build filter
     const filter: any = {
       storeId: store._id,
+      isActive: true,
+      isDeleted: false,
     }
 
-    // Only add filters if the fields exist in the schema
-    if (allStoreProducts.length > 0) {
-      const sampleProduct = allStoreProducts[0]
-      if ("isActive" in sampleProduct) {
-        filter.isActive = true
-      }
-      if ("isDeleted" in sampleProduct) {
-        filter.isDeleted = false
-      }
+    // Add search query if provided
+    if (query) {
+      filter.$or = [
+        { name: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
+      ]
     }
 
+    // Add category filter
+    if (category) {
+      filter.categoryId = category
+    }
 
-    // Fetch products - don't populate categoryId since it might not exist or be a string
-    const products: IProduct[] = await Product.find(filter)
-      .sort({ createdAt: -1 })
-      .lean()
+    // Add price range filter
+    if (minPrice || maxPrice) {
+      filter.price = {}
+      if (minPrice) filter.price.$gte = parseFloat(minPrice)
+      if (maxPrice) filter.price.$lte = parseFloat(maxPrice)
+    }
 
+    // Determine sort order
+    const sort: any = {}
+    switch (sortBy) {
+      case 'price-asc':
+        sort.price = 1
+        break
+      case 'price-desc':
+        sort.price = -1
+        break
+      case 'name-asc':
+        sort.name = 1
+        break
+      case 'name-desc':
+        sort.name = -1
+        break
+      case 'newest':
+      default:
+        sort.createdAt = -1
+        break
+    }
 
-    // Transform the products safely
-    const transformedProducts: ProductResponse[] = products.map((product) => {
+    // Calculate pagination
+    const skip = (page - 1) * limit
+
+    // Fetch products and total count - use any type for lean() results
+    const [products, totalCount]: [any[], number] = await Promise.all([
+      Product.find(filter).populate("categoryId", "name").sort(sort).skip(skip).limit(limit).lean(),
+      Product.countDocuments(filter),
+    ])
+
+    // Transform the products
+    const transformedProducts: ProductResponse[] = products.map((product: any) => {
       try {
         return {
           id: product._id.toString(),
@@ -79,10 +119,8 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
           description: product.description || null,
           price: product.price || 0,
           compare_at_price: product.compareAtPrice || null,
-          // Handle category - it might be a string or ObjectId
-          category_id: product.category ? product.category.toString() : null,
+          category_id: product.categoryId?._id?.toString() || product.categoryId?.toString() || null,
           inventory_quantity: product.inventoryQuantity || 0,
-          // Safely transform images
           images: Array.isArray(product.images)
             ? product.images.map((img: any, index: number) => ({
                 id: img._id?.toString() || `img-${index}`,
@@ -96,7 +134,6 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
         }
       } catch (transformError) {
         console.error('❌ Error transforming product:', product._id, transformError)
-        // Return a basic product structure to avoid breaking the entire response
         return {
           id: product._id?.toString() || "unknown",
           name: product.name || "Error loading product",
@@ -113,18 +150,26 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
       }
     })
 
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limit)
 
-    const successResponse: ProductsApiResponse = {
+    const successResponse: SearchProductsApiResponse = {
       success: true,
       products: transformedProducts,
-      count: transformedProducts.length,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalCount: totalCount,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     }
 
     return NextResponse.json(successResponse, { status: 200 })
   } catch (error: unknown) {
-    console.error('❌ Error in GET /api/stores/[slug]/products:', error)
+    console.error('❌ Error in GET /api/stores/[slug]/products/search:', error)
     
-    const errorMessage = error instanceof Error ? error.message : "Failed to fetch products"
+    const errorMessage = error instanceof Error ? error.message : "Failed to search products"
     const errorStack = error instanceof Error ? error.stack : undefined
     
     console.error('Error message:', errorMessage)

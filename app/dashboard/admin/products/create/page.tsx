@@ -19,10 +19,10 @@ import { useToast } from "@/components/ui/use-toast"
 const productFormSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
   description: z.string().optional(),
-  price: z.coerce.number().positive({ message: "Price must be a positive number." }),
-  compare_at_price: z.coerce.number().positive().optional(),
+  price: z.number().positive({ message: "Price must be a positive number." }),
+  compare_at_price: z.number().positive().optional().or(z.literal(undefined)),
   category_id: z.string().optional(),
-  inventory_quantity: z.coerce.number().int().nonnegative(),
+  inventory_quantity: z.number().int().nonnegative(),
   is_published: z.boolean(),
   store_id: z.string(),
   images: z
@@ -90,7 +90,7 @@ export default function CreateProductPage() {
         }
       } catch (err) {
         console.error("Failed to load stores/categories:", err)
-        toast("Could not load stores or categories. Try again later.")
+        toast( "Could not load stores or categories. Try again later." )
       } finally {
         if (mounted) setLoadingMeta(false)
       }
@@ -264,7 +264,13 @@ export default function CreateProductPage() {
                           <FormControl>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                              <Input className="pl-6" {...field} />
+                              <Input 
+                                type="number" 
+                                step="0.01"
+                                className="pl-6" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -282,12 +288,14 @@ export default function CreateProductPage() {
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                               <Input
+                                type="number"
+                                step="0.01"
                                 className="pl-6"
                                 {...field}
                                 value={value === undefined ? "" : value}
                                 onChange={(e) => {
                                   const val = e.target.value
-                                  onChange(val === "" ? undefined : Number(val))
+                                  onChange(val === "" ? undefined : parseFloat(val))
                                 }}
                               />
                             </div>
@@ -345,7 +353,38 @@ export default function CreateProductPage() {
               </Card>
             </TabsContent>
 
-            {/* ... existing code for other tabs ... */}
+            <TabsContent value="inventory" className="space-y-6 mt-0">
+              <Card>
+                <CardContent className="p-6 space-y-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Layers className="h-5 w-5 text-primary" />
+                    <div>
+                      <h3 className="text-lg font-semibold">Inventory Management</h3>
+                      <p className="text-sm text-muted-foreground">Track your product stock</p>
+                    </div>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="inventory_quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormDescription>Number of units available in stock.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <Card>
               <CardContent className="p-6">

@@ -5,10 +5,11 @@ import { getUserFromCookies } from "@/lib/auth"
 
 // GET STORE BY ID
 export async function GET(
-  context: { params: { id: string } } // 👈 second arg
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params // ✅ Now works
+    const { id } = await context.params
     await connectToDB()
     const user = await getUserFromCookies()
 
@@ -30,9 +31,12 @@ export async function GET(
 }
 
 // UPDATE STORE BY ID
-export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = await context.params  // ✅ unwrap params
+    const { id } = await context.params
     await connectToDB()
     const user = await getUserFromCookies()
 
@@ -40,7 +44,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const body = await req.json()
+    const body = await request.json()
     const allowedFields = ["name", "slug", "description", "isPublished"]
     const updates: Record<string, any> = {}
 
