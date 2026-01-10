@@ -496,16 +496,16 @@ export default function ProductsPage() {
                 </div>
 
                 {/* Bottom Ad Space */}
-                <div className="mt-8 border-0 shadow-lg rounded-2xl p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 text-center">
+                <div className="mt-8 border-0 shadow-lg rounded-2xl p-3 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 text-center">
                   <h3 className="text-2xl font-bold mb-2 text-green-900 dark:text-green-100">Join Our Newsletter</h3>
                   <p className="mb-4 text-green-700 dark:text-green-300">Get exclusive deals and updates delivered to your inbox</p>
                   <div className="max-w-md mx-auto flex gap-2">
                     <input
                       type="email"
                       placeholder="Enter your email"
-                      className="flex-1 px-4 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                      className="flex-1 pl-2 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
                     />
-                    <button className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg">
+                    <button className="bg-primary text-primary-foreground px-2 py-3 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg">
                       Subscribe
                     </button>
                   </div>

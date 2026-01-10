@@ -559,7 +559,7 @@ export default function StoresPage() {
                 </div>
 
                 {/* Bottom Newsletter Ad */}
-                <div className="mt-8 border-0 shadow-lg rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20 text-center">
+                <div className="mt-8 border-0 shadow-lg rounded-2xl p-3 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20 text-center">
                   <h3 className="text-2xl font-bold mb-2 text-purple-900 dark:text-purple-100">
                     Stay Updated
                   </h3>
@@ -570,9 +570,9 @@ export default function StoresPage() {
                     <input
                       type="email"
                       placeholder="Enter your email"
-                      className="flex-1 px-4 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-[#c0a146] bg-background"
+                      className="flex-1 px-2 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-[#c0a146] bg-background"
                     />
-                    <button className="bg-[#c0a146] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#c0a146]/90 transition shadow-lg">
+                    <button className="bg-[#c0a146] text-white px-2 py-3 rounded-xl font-bold hover:bg-[#c0a146]/90 transition shadow-lg">
                       Subscribe
                     </button>
                   </div>
