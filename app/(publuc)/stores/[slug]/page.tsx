@@ -8,12 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  MapPin,
-  Clock,
   Star,
   Package,
-  MessageCircle,
-  Share2,
   ChevronRight,
   Store as StoreIcon,
   TrendingUp,

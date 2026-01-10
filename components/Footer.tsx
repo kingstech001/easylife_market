@@ -295,60 +295,75 @@ export function ModernFooter() {
 
         {/* Bottom section */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
-            <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-              <p className="flex items-center gap-2">
-                © {currentYear} EasyLife. All rights reserved.
-              </p>
-              <div className="hidden md:block w-1 h-1 bg-muted-foreground/50 rounded-full" />
-              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                Built with{" "}
-                <Heart className="h-3 w-3 text-red-500 fill-current animate-pulse" />{" "}
-                using{" "}
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 border-border/50"
-                >
-                  Next.js
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 border-border/50"
-                >
-                  MongoDB
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 border-border/50"
-                >
-                  Tailwind
-                </Badge>
-              </div>
-            </div>
+  <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+    <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+      <p className="flex items-center gap-2">
+        © {currentYear} EasyLife. All rights reserved.
+      </p>
+      <div className="hidden md:block w-1 h-1 bg-muted-foreground/50 rounded-full" />
+      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+        Built with{" "}
+        <Heart className="h-3 w-3 text-red-500 fill-current animate-pulse" />{" "}
+        using{" "}
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0 border-border/50"
+        >
+          Next.js
+        </Badge>
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0 border-border/50"
+        >
+          MongoDB
+        </Badge>
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0 border-border/50"
+        >
+          Tailwind
+        </Badge>
+      </div>
+      <div className="hidden md:block w-1 h-1 bg-muted-foreground/50 rounded-full" />
+      <a
+        href="https://unsplash.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+      >
+        Photos by{" "}
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0 border-border/50 hover:border-[#c0a146]/50 transition-colors"
+        >
+          Unsplash
+        </Badge>
+      </a>
+    </div>
 
-            {/* Scroll to top button */}
-            <AnimatePresence>
-              {showScrollTop && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={scrollToTop}
-                    className="bg-background/80 backdrop-blur-sm border-border/50 hover:border-[#c0a146]/50 hover:bg-background transition-all duration-300 hover:scale-105 group"
-                  >
-                    <ArrowUp className="h-4 w-4 mr-2 group-hover:-translate-y-0.5 transition-transform" />
-                    Back to top
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+    {/* Scroll to top button */}
+    <AnimatePresence>
+      {showScrollTop && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scrollToTop}
+            className="bg-background/80 backdrop-blur-sm border-border/50 hover:border-[#c0a146]/50 hover:bg-background transition-all duration-300 hover:scale-105 group"
+          >
+            <ArrowUp className="h-4 w-4 mr-2 group-hover:-translate-y-0.5 transition-transform" />
+            Back to top
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+</div>
 
         {/* Decorative bottom line */}
         <div className="h-1 bg-gradient-to-r from-transparent via-[#c0a146] to-transparent opacity-50" />

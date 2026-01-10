@@ -87,14 +87,6 @@ export default function LoginPage() {
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
           <div className="mx-auto">
-            {/* <div className="relative inline-block">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#c0a146] to-[#d4b55e] rounded-xl flex items-center justify-center shadow-lg">
-                <ShoppingBag className="h-8 w-8 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1">
-                <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
-              </div>
-            </div> */}
           <Image src={'/logo.png'} alt="logo" width={50} height={50} />
           </div>
 

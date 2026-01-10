@@ -275,7 +275,7 @@ export function SiteHeader() {
             </div>
 
             {/* Mobile Toggle */}
-            <div className="flex items-start md:hidden">
+            <div className="flex items-start md:hidden justify-center space-x-2">
               {/* mobile Search */}
               <Button
                 aria-label="search"
@@ -285,19 +285,37 @@ export function SiteHeader() {
                   setMobileMenuOpen(false);
                 }}
               >
-                <Search className=" h-4 w-4" />
+                <Search className=" !h-6 !w-6" />
+              </Button>
+              <Button
+                aria-label="cart"
+                className="relative w-full justify-start bg-transparent hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] p-0"
+                onClick={() => {
+                  setCartOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <ShoppingCart className=" !h-6 !w-6" />
+                {itemCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute bottom-5 left-3 ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-gradient-to-br from-[#c0a146] to-[#d4b55e]"
+                  >
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </Badge>
+                )}
               </Button>
               <Button
                 aria-label="menu"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
+                className="h-9 w-9 flex items-center justify-center hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? (
-                  <X className="h-4 w-4" />
+                  <X className="!h-6 !w-6" />
                 ) : (
-                  <Menu className="h-4 w-4" />
+                  <Menu className="!h-6 !w-6" />
                 )}
                 <span className="sr-only">Toggle menu</span>
               </Button>
@@ -471,6 +489,13 @@ export function SiteHeader() {
                   Stores
                 </Link>
                 <Link
+                  href="/allStoreProducts"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
+                >
+                  Products
+                </Link>
+                <Link
                   href="/about"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
@@ -506,25 +531,6 @@ export function SiteHeader() {
                         )}
                       </Button>
                     </Link>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start h-11 relative bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
-                      onClick={() => {
-                        setCartOpen(true);
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      <ShoppingCart className="mr-3 h-4 w-4" />
-                      Cart
-                      {itemCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-gradient-to-br from-[#c0a146] to-[#d4b55e] border-0"
-                        >
-                          {itemCount > 99 ? "99+" : itemCount}
-                        </Badge>
-                      )}
-                    </Button>
                   </div>
                 )}
 
@@ -573,7 +579,7 @@ export function SiteHeader() {
                     >
                       <Button
                         variant="outline"
-                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146]"
+                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500"
                       >
                         <LogIn className="mr-3 h-4 w-4" />
                         Login
