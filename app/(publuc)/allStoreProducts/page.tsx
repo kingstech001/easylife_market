@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Search, SlidersHorizontal, Grid3x3, LayoutGrid, TrendingUp, Award, ShieldCheck, Star, Package, Heart, ShoppingCart } from "lucide-react"
+import { SlidersHorizontal, Grid3x3, LayoutGrid, TrendingUp, Award, ShieldCheck, Star, Package, Heart, ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { useWishlist } from "@/context/wishlist-context"
 import { toast } from "sonner"

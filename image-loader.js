@@ -1,24 +1,24 @@
 export default function customImageLoader({ src, width, quality }) {
-  // Handle Unsplash images
-  if (src.includes('unsplash.com')) {
+  // Handle Unsplash images - add width, quality, and format parameters
+  if (src.includes("unsplash.com")) {
     return `${src}?w=${width}&q=${quality || 75}&fm=webp&fit=crop`
   }
-  
-  // Handle Cloudinary images
-  if (src.includes('cloudinary.com')) {
+
+  // Handle Cloudinary images - Cloudinary handles optimization server-side
+  if (src.includes("cloudinary.com")) {
     return src
   }
-  
-  // Handle Instagram CDN
-  if (src.includes('cdninstagram.com')) {
+
+  // Handle Instagram CDN - return as-is
+  if (src.includes("cdninstagram.com")) {
     return src
   }
-  
-  // Handle local/relative images
-  if (src.startsWith('/')) {
+
+  // Handle local/relative images - Next.js will optimize these
+  if (src.startsWith("/")) {
     return src
   }
-  
-  // Default: return as is
+
+  // Default: return URL as-is for any other external sources
   return src
 }
