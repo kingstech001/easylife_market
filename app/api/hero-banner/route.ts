@@ -2,12 +2,15 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
+    const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY || process.env.UNSPLASH_KEY
 
-    console.log('UNSPLASH_ACCESS_KEY present:', !!unsplashAccessKey)
-    console.log('UNSPLASH_ACCESS_KEY length:', unsplashAccessKey?.length)
-    console.log('UNSPLASH_ACCESS_KEY starts with:', unsplashAccessKey?.substring(0, 10))
+    console.log('UNSPLASH_ACCESS_KEY present:', !!process.env.UNSPLASH_ACCESS_KEY)
+    console.log('UNSPLASH_ACCESS_KEY length:', process.env.UNSPLASH_ACCESS_KEY?.length)
+    console.log('UNSPLASH_ACCESS_KEY starts with:', process.env.UNSPLASH_ACCESS_KEY?.substring(0, 10))
+    console.log('UNSPLASH_KEY present:', !!process.env.UNSPLASH_KEY)
+    console.log('UNSPLASH_KEY length:', process.env.UNSPLASH_KEY?.length)
     console.log('NODE_ENV:', process.env.NODE_ENV)
+    console.log('All env vars with UNSPLASH:', Object.keys(process.env).filter(key => key.includes('UNSPLASH')))
 
     if (!unsplashAccessKey) {
       console.error("Unsplash Access Key not configured")
