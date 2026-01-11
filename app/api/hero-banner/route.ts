@@ -4,6 +4,11 @@ export async function GET() {
   try {
     const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
 
+    console.log('UNSPLASH_ACCESS_KEY present:', !!unsplashAccessKey)
+    console.log('UNSPLASH_ACCESS_KEY length:', unsplashAccessKey?.length)
+    console.log('UNSPLASH_ACCESS_KEY starts with:', unsplashAccessKey?.substring(0, 10))
+    console.log('NODE_ENV:', process.env.NODE_ENV)
+
     if (!unsplashAccessKey) {
       console.error("Unsplash Access Key not configured")
       return NextResponse.json({ success: false, message: "Banner service not configured" }, { status: 500 })
