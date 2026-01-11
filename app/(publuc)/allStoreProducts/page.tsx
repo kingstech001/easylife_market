@@ -444,7 +444,7 @@ export default function ProductsPage() {
                           {typeof product.storeId === 'object' && product.storeId?.name && (
                             <Link 
                               href={`/stores/${product.storeId.slug}`}
-                              className="text-xs sm:text-xs font-semibold text-primary mb-2 uppercase tracking-wide hover:underline inline-block"
+                              className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-wide hover:underline inline-block"
                             >
                               {product.storeId.name}
                             </Link>
