@@ -18,6 +18,11 @@ try {
 
 const nextConfig = {
   images: {
+    // Use custom loader to handle Unsplash and other external images
+    loader: 'custom',
+    loaderFile: './image-loader.js',
+    
+    // Keep remote patterns for security
     remotePatterns: [
       // Unsplash - Multiple domains
       {
@@ -37,7 +42,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.unsplash.com", // Wildcard for all Unsplash subdomains
+        hostname: "*.unsplash.com",
         pathname: "/**",
       },
       // Instagram
@@ -52,18 +57,23 @@ const nextConfig = {
         hostname: "res.cloudinary.com",
         pathname: "/**",
       },
-      // Add your domain if using local uploads
+      // Vercel deployments
       {
         protocol: "https",
         hostname: "*.vercel.app",
         pathname: "/**",
       },
     ],
-    // Increase the allowed image sizes
+    
+    // Device sizes for responsive images
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Add formats
+    
+    // Supported formats
     formats: ['image/webp', 'image/avif'],
+    
+    // Allow unoptimized for development
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 
   experimental: {
