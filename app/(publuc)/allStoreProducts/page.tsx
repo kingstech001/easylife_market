@@ -389,7 +389,7 @@ export default function ProductsPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {products.map((product) => {
                     const imageUrl = 
                       product.images?.[0]?.url || 
@@ -452,13 +452,13 @@ export default function ProductsPage() {
 
                           {/* Product Name */}
                           <Link href={productUrl}>
-                            <h2 className="font-bold text-xs sm:text-lg  line-clamp-2 group-hover:text-primary transition cursor-pointer">
+                            <h2 className="font-bold text-xs sm:text-lg mb-2 line-clamp-2 group-hover:text-primary transition cursor-pointer">
                               {product.name}
                             </h2>
                           </Link>
 
                           {/* Rating */}
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 mb-3">
                             {[...Array(5)].map((_, i) => (
                               <Star key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-yellow-400" />
                             ))}
@@ -472,7 +472,7 @@ export default function ProductsPage() {
                             </p>
                             
                             {/* Action Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex gap-2">
                               <button 
                                 onClick={() => handleAddToCart(product)}
                                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shadow-lg flex items-center justify-center gap-2 group/cart"
@@ -496,16 +496,16 @@ export default function ProductsPage() {
                 </div>
 
                 {/* Bottom Ad Space */}
-                <div className="mt-8 border-0 shadow-lg rounded-2xl p-3 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 text-center">
+                <div className="mt-8 border-0 shadow-lg rounded-2xl p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 text-center">
                   <h3 className="text-2xl font-bold mb-2 text-green-900 dark:text-green-100">Join Our Newsletter</h3>
                   <p className="mb-4 text-green-700 dark:text-green-300">Get exclusive deals and updates delivered to your inbox</p>
                   <div className="max-w-md mx-auto flex gap-2">
                     <input
                       type="email"
                       placeholder="Enter your email"
-                      className="flex-1 pl-2 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                      className="flex-1 px-4 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
                     />
-                    <button className="bg-primary text-primary-foreground px-2 py-3 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg">
+                    <button className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg">
                       Subscribe
                     </button>
                   </div>
