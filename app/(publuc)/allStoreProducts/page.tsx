@@ -223,41 +223,7 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* Trust Badges */}
-      <div className="border-b bg-background/50 backdrop-blur-sm">
-        <div className="container px-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
-              <div className="bg-green-100 dark:bg-green-900/30 rounded-xl p-2">
-                <ShieldCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-green-900 dark:text-green-100">Secure Shopping</p>
-                <p className="text-xs text-green-700 dark:text-green-300">100% Protected</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-xl p-2">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-blue-900 dark:text-blue-100">Best Prices</p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">Competitive Rates</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20">
-              <div className="bg-purple-100 dark:bg-purple-900/30 rounded-xl p-2">
-                <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-purple-900 dark:text-purple-100">Quality Assured</p>
-                <p className="text-xs text-purple-700 dark:text-purple-300">Verified Sellers</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 lg:px-8" id="products">
         <div className="flex gap-6">
@@ -265,50 +231,7 @@ export default function ProductsPage() {
           <aside className="hidden lg:block w-72 flex-shrink-0">
             <div className="sticky top-8 space-y-6">
               {/* Filters */}
-              <div className="border-2 rounded-2xl shadow-sm p-6 bg-card">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold text-lg">Filters</h3>
-                  <SlidersHorizontal className="h-5 w-5 text-muted-foreground" />
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Price Range
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        placeholder="Min"
-                        className="w-full px-3 py-2 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Max"
-                        className="w-full px-3 py-2 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-3">
-                      Categories
-                    </label>
-                    <div className="space-y-2">
-                      {['Electronics', 'Fashion', 'Home & Garden', 'Sports'].map((cat) => (
-                        <label key={cat} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-muted/50">
-                          <input type="checkbox" className="rounded border-2 text-primary focus:ring-primary" />
-                          <span className="text-sm">{cat}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <button className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 rounded-xl font-semibold shadow-lg transition">
-                  Apply Filters
-                </button>
-              </div>
+              
 
               {/* Ad Space 1 */}
               <div className="border-0 shadow-sm rounded-2xl p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
@@ -334,34 +257,6 @@ export default function ProductsPage() {
 
           {/* Products Grid */}
           <main className="flex-1 min-w-0">
-            {/* Top Bar */}
-            <div className="border-2 shadow-sm rounded-2xl p-4 mb-6 bg-card">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{products.length}</span> Products Found
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <select className="px-4 py-2 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background">
-                    <option>Sort by: Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                    <option>Newest First</option>
-                  </select>
-                  
-                  <div className="hidden md:flex gap-1 border-2 rounded-xl p-1">
-                    <button className="p-2 rounded-lg bg-primary/10 text-primary">
-                      <Grid3x3 className="h-4 w-4" />
-                    </button>
-                    <button className="p-2 rounded-lg text-muted-foreground hover:bg-muted">
-                      <LayoutGrid className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Banner Ad Space */}
             <div className="border-0 shadow-lg rounded-2xl p-6 md:p-8 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
