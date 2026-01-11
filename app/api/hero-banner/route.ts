@@ -16,7 +16,6 @@ export async function GET() {
         headers: {
           Authorization: `Client-ID ${unsplashAccessKey}`,
         },
-        next: { revalidate: 3600 }, // Cache for 1 hour
       },
     )
 

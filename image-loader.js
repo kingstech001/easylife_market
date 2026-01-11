@@ -1,8 +1,7 @@
 export default function customImageLoader({ src, width, quality }) {
-  // Handle Unsplash images - add width, quality, and format parameters
+  // Handle Unsplash images - return as-is since they're already optimized
   if (src.includes("unsplash.com")) {
-    const separator = src.includes('?') ? '&' : '?';
-    return `${src}${separator}w=${width}&q=${quality || 75}&fm=webp&fit=crop`
+    return src
   }
 
   // Handle Cloudinary images - Cloudinary handles optimization server-side
