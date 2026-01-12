@@ -284,7 +284,7 @@ export default function ProductsPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                <div className=" grid grid-cols-auto-fill gap-1">
                   {products.map((product) => {
                     const imageUrl = 
                       product.images?.[0]?.url || 
@@ -304,7 +304,7 @@ export default function ProductsPage() {
                         className="group border-2 shadow-sm rounded-2xl overflow-hidden hover:shadow-xl hover:border-primary/50 transition-all duration-300 bg-card"
                       >
                         {/* Product Image */}
-                        <Link href={productUrl} className="block relative w-full h-64 bg-muted overflow-hidden">
+                        <Link href={productUrl} className="block relative w-full h-56 bg-muted overflow-hidden">
                           <Image
                             src={imageUrl}
                             alt={product.images?.[0]?.alt_text || product.name}
@@ -334,31 +334,15 @@ export default function ProductsPage() {
                         </Link>
 
                         {/* Product Details */}
-                        <div className="p-2 sm:p-5">
-                          {/* Store Name */}
-                          {typeof product.storeId === 'object' && product.storeId?.name && (
-                            <Link 
-                              href={`/stores/${product.storeId.slug}`}
-                              className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-wide hover:underline inline-block"
-                            >
-                              {product.storeId.name}
-                            </Link>
-                          )}
+                        <div className="p-2 sm:p-2">
 
                           {/* Product Name */}
                           <Link href={productUrl}>
-                            <h2 className="font-bold text-xs sm:text-lg  line-clamp-2 group-hover:text-primary transition cursor-pointer">
+                            <h2 className="text-xs sm:text-lg  line-clamp-2 group-hover:text-primary transition cursor-pointer">
                               {product.name}
                             </h2>
                           </Link>
 
-                          {/* Rating */}
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-yellow-400" />
-                            ))}
-                            <span className="text-sm text-muted-foreground ml-1">(24)</span>
-                          </div>
 
                           {/* Price and Actions */}
                           <div className="space-y-3">
@@ -376,12 +360,7 @@ export default function ProductsPage() {
                                 Add to Cart
                               </button>
                               
-                              <Link 
-                                href={productUrl}
-                                className="bg-background hover:bg-muted border-2 border-primary/50 hover:border-primary text-foreground px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shadow-lg flex items-center justify-center"
-                              >
-                                View
-                              </Link>
+                              
                             </div>
                           </div>
                         </div>
