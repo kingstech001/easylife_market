@@ -67,23 +67,6 @@ export function StoreCard({ store }: StoreCardProps) {
           </CardDescription>
         </CardHeader>
 
-        {/* Store Stats */}
-        <CardContent className="p-4 pt-0">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              <span>Online</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-              <span>4.5</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Package className="w-4 h-4" />
-              <span>{store.productCount ?? 0} Products</span>
-            </div>
-          </div>
-        </CardContent>
       </Card>
     </Link>
   )

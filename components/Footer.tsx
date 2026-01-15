@@ -70,7 +70,7 @@ export function ModernFooter() {
       label: "LinkedIn",
       color: "hover:text-[#0A66C2]",
     },
-    { icon: Mail, href: "#", label: "Email", color: "hover:text-[#c0a146]" },
+    { icon: Mail, href: "#", label: "Email", color: "hover:text-[#e1a200]" },
   ];
 
   return (
@@ -80,7 +80,7 @@ export function ModernFooter() {
 
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[10%] left-[10%] w-48 h-48 sm:w-64 sm:h-64 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-[10%] left-[10%] w-48 h-48 sm:w-64 sm:h-64 bg-[#e1a200]/5 rounded-full blur-3xl animate-pulse" />
         <div
           className="absolute bottom-[10%] right-[10%] w-56 h-56 sm:w-72 sm:h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
@@ -100,7 +100,7 @@ export function ModernFooter() {
                 <Link href="/" className="inline-flex items-center group">
                   <Image alt="" src={"/logo.png"} width={40} height={40} />
                   <div className="">
-                    <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-clip-text text-transparent">
+                    <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
                       EasyLife
                     </span>
                   </div>
@@ -121,7 +121,7 @@ export function ModernFooter() {
                         key={i}
                         className="w-8 h-8 rounded-full border-2 border-background bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center"
                       >
-                        <Star className="w-3 h-3 fill-[#c0a146] text-[#c0a146]" />
+                        <Star className="w-3 h-3 fill-[#e1a200] text-[#e1a200]" />
                       </div>
                     ))}
                   </div>
@@ -130,7 +130,7 @@ export function ModernFooter() {
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star
                           key={i}
-                          className="w-2.5 h-2.5 fill-[#c0a146] text-[#c0a146]"
+                          className="w-2.5 h-2.5 fill-[#e1a200] text-[#e1a200]"
                         />
                       ))}
                     </div>
@@ -152,7 +152,7 @@ export function ModernFooter() {
                       key={social.label}
                       variant="outline"
                       size="icon"
-                      className={`h-9 w-9 sm:h-10 sm:w-10 border-border/50 hover:border-[#c0a146]/50 transition-all duration-300 hover:scale-110 ${social.color}`}
+                      className={`h-9 w-9 sm:h-10 sm:w-10 border-border/50 hover:border-[#e1a200]/50 transition-all duration-300 hover:scale-110 ${social.color}`}
                       asChild
                     >
                       <Link href={social.href}>
@@ -168,7 +168,7 @@ export function ModernFooter() {
             {/* Quick Links - 2 columns */}
             <div className="lg:col-span-2 space-y-5">
               <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-gradient-to-b from-[#c0a146] to-primary rounded-full" />
+                <div className="w-1 h-4 bg-gradient-to-b from-[#e1a200] to-primary rounded-full" />
                 Quick Links
               </h3>
               <ul className="space-y-3">
@@ -182,9 +182,9 @@ export function ModernFooter() {
                   <li key={link.name}>
                     <Link
                       href={link.href}
-                      className="group flex items-center gap-2 text-sm sm:text-base text-muted-foreground hover:text-[#c0a146] transition-all duration-200"
+                      className="group flex items-center gap-2 text-sm sm:text-base text-muted-foreground hover:text-[#e1a200] transition-all duration-200"
                     >
-                      <span className="w-0 h-px bg-[#c0a146] group-hover:w-4 transition-all duration-300" />
+                      <span className="w-0 h-px bg-[#e1a200] group-hover:w-4 transition-all duration-300" />
                       <span className="group-hover:translate-x-1 transition-transform duration-200">
                         {link.name}
                       </span>
@@ -197,7 +197,7 @@ export function ModernFooter() {
             {/* Support - 2 columns */}
             <div className="lg:col-span-2 space-y-5">
               <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-gradient-to-b from-primary to-[#c0a146] rounded-full" />
+                <div className="w-1 h-4 bg-gradient-to-b from-primary to-[#e1a200] rounded-full" />
                 Support
               </h3>
               <ul className="space-y-3">
@@ -211,9 +211,9 @@ export function ModernFooter() {
                   <li key={link.name}>
                     <Link
                       href={link.href}
-                      className="group flex items-center gap-2 text-sm sm:text-base text-muted-foreground hover:text-[#c0a146] transition-all duration-200"
+                      className="group flex items-center gap-2 text-sm sm:text-base text-muted-foreground hover:text-[#e1a200] transition-all duration-200"
                     >
-                      <span className="w-0 h-px bg-[#c0a146] group-hover:w-4 transition-all duration-300" />
+                      <span className="w-0 h-px bg-[#e1a200] group-hover:w-4 transition-all duration-300" />
                       <span className="group-hover:translate-x-1 transition-transform duration-200">
                         {link.name}
                       </span>
@@ -227,7 +227,7 @@ export function ModernFooter() {
             <div className="lg:col-span-4 space-y-5">
               <div className="space-y-3">
                 <h3 className="font-bold text-sm sm:text-base uppercase tracking-wider text-foreground flex items-center gap-2">
-                  <div className="w-1 h-4 bg-gradient-to-b from-[#c0a146] to-primary rounded-full" />
+                  <div className="w-1 h-4 bg-gradient-to-b from-[#e1a200] to-primary rounded-full" />
                   Stay Updated
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -243,13 +243,13 @@ export function ModernFooter() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className="w-full px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-background/50 backdrop-blur-sm border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c0a146]/20 focus:border-[#c0a146]/50 transition-all duration-300 group-hover:border-border pr-24"
+                    className="w-full px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-background/50 backdrop-blur-sm border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e1a200]/20 focus:border-[#e1a200]/50 transition-all duration-300 group-hover:border-border pr-24"
                   />
                   <Button
                     size="sm"
                     disabled={isSubmitting}
                     onClick={handleNewsletterSubmit}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 sm:h-9 px-4 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 sm:h-9 px-4 bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] transition-all duration-300"
                   >
                     {isSubmitting ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -105,9 +105,9 @@ export default function FeaturesSection() {
 
         {/* Animated background elements - Responsive */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-[20%] -left-[10%] sm:top-1/3 sm:-left-1/4 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-[20%] -left-[10%] sm:top-1/3 sm:-left-1/4 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-[#e1a200]/5 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-[20%] -right-[10%] sm:bottom-1/3 sm:-right-1/4 w-56 h-56 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] lg:w-[1000px] h-[500px] sm:h-[700px] lg:h-[1000px] bg-gradient-to-r from-[#c0a146]/3 via-transparent to-primary/3 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] lg:w-[1000px] h-[500px] sm:h-[700px] lg:h-[1000px] bg-gradient-to-r from-[#e1a200]/3 via-transparent to-primary/3 rounded-full blur-3xl" />
         </div>
 
         {/* Geometric pattern overlay - Responsive */}
@@ -119,9 +119,9 @@ export default function FeaturesSection() {
             {/* Badge */}
             <Badge
               variant="secondary"
-              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
             >
-              <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#c0a146]" />
+              <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#e1a200]" />
               Powerful Features
             </Badge>
 
@@ -131,7 +131,7 @@ export default function FeaturesSection() {
                 <span className="block sm:inline bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                   Everything You Need to{" "}
                 </span>
-                <span className="block sm:inline mt-1 sm:mt-0 bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-primary bg-clip-text text-transparent">
+                <span className="block sm:inline mt-1 sm:mt-0 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
                   Succeed Online
                 </span>
               </h2>
@@ -146,10 +146,10 @@ export default function FeaturesSection() {
               {stats.map((stat, index) => (
                 <div 
                   key={index}
-                  className="flex flex-col sm:flex-row items-center justify-center gap-2 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50 hover:border-[#c0a146]/30 hover:bg-muted/70 transition-all duration-300 hover:scale-105"
+                  className="flex flex-col sm:flex-row items-center justify-center gap-2 p-3 sm:p-4 rounded-xl bg-muted/50 border border-border/50 hover:border-[#e1a200]/30 hover:bg-muted/70 transition-all duration-300 hover:scale-105"
                 >
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#c0a146]/20 to-primary/20">
-                    <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#c0a146]" />
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#e1a200]/20 to-primary/20">
+                    <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#e1a200]" />
                   </div>
                   <div className="text-center sm:text-left">
                     <p className="text-xs sm:text-sm font-semibold text-foreground">{stat.label}</p>
@@ -169,7 +169,7 @@ export default function FeaturesSection() {
                   "group relative overflow-hidden transition-all duration-500",
                   "bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm",
                   "border border-border/50 hover:border-border",
-                  "hover:shadow-2xl hover:shadow-[#c0a146]/10",
+                  "hover:shadow-2xl hover:shadow-[#e1a200]/10",
                   "hover:scale-[1.02] sm:hover:scale-105",
                 )}
               >
@@ -212,18 +212,18 @@ export default function FeaturesSection() {
                       />
 
                       {/* Orbiting dot */}
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-[#c0a146] to-primary rounded-full opacity-0 group-hover:opacity-100 animate-ping" />
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-[#e1a200] to-primary rounded-full opacity-0 group-hover:opacity-100 animate-ping" />
                     </div>
 
                     {/* Hover arrow */}
                     <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-2 group-hover:translate-x-0">
-                      <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-[#c0a146]" />
+                      <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-[#e1a200]" />
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-lg sm:text-xl font-bold group-hover:text-[#c0a146] transition-colors duration-300">
+                    <h3 className="text-lg sm:text-xl font-bold group-hover:text-[#e1a200] transition-colors duration-300">
                       {feature.title}
                     </h3>
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -249,7 +249,7 @@ export default function FeaturesSection() {
                   </div>
 
                   {/* Bottom accent line */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#c0a146] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#e1a200] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </CardContent>
               </Card>
             ))}
@@ -260,7 +260,7 @@ export default function FeaturesSection() {
             <div className="text-center space-y-2 sm:space-y-3">
               <Badge 
                 variant="outline" 
-                className="mb-2 border-[#c0a146]/30 text-[#c0a146] hover:bg-[#c0a146]/10"
+                className="mb-2 border-[#e1a200]/30 text-[#e1a200] hover:bg-[#e1a200]/10"
               >
                 <Rocket className="w-3 h-3 mr-1.5" />
                 More Features
@@ -281,7 +281,7 @@ export default function FeaturesSection() {
                   className={cn(
                     "group relative p-5 sm:p-6 rounded-xl sm:rounded-2xl border border-border/50 bg-card/30 backdrop-blur-sm",
                     "hover:bg-card/60 hover:border-border transition-all duration-300",
-                    "hover:scale-105 hover:shadow-lg hover:shadow-[#c0a146]/5",
+                    "hover:scale-105 hover:shadow-lg hover:shadow-[#e1a200]/5",
                   )}
                 >
                   {/* Background glow on hover */}
@@ -299,7 +299,7 @@ export default function FeaturesSection() {
                       <feature.icon className={cn("h-6 w-6 sm:h-7 sm:w-7", feature.color)} />
                     </div>
                     <div className="space-y-1 sm:space-y-2">
-                      <h4 className="font-semibold text-sm sm:text-base group-hover:text-[#c0a146] transition-colors">
+                      <h4 className="font-semibold text-sm sm:text-base group-hover:text-[#e1a200] transition-colors">
                         {feature.title}
                       </h4>
                       <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -317,14 +317,14 @@ export default function FeaturesSection() {
             {/* Decorative elements */}
             <div className="flex items-center gap-4 w-full max-w-md">
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-border" />
-              <div className="p-2 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#c0a146]" />
+              <div className="p-2 rounded-full bg-gradient-to-br from-[#e1a200]/20 to-primary/20">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#e1a200]" />
               </div>
               <div className="flex-1 h-px bg-gradient-to-r from-border via-border to-transparent" />
             </div>
 
             <div className="text-center space-y-3 sm:space-y-4 max-w-2xl px-4">
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground via-[#c0a146] to-foreground bg-clip-text text-transparent">
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground via-[#e1a200] to-foreground bg-clip-text text-transparent">
                 Ready to Get Started?
               </h3>
               <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-md mx-auto">
@@ -353,8 +353,8 @@ export default function FeaturesSection() {
                     size="lg"
                     className={cn(
                       "group w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                      "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
                       "hover:scale-105 active:scale-95",
                       "relative overflow-hidden"
                     )}
@@ -371,8 +371,8 @@ export default function FeaturesSection() {
                     size="lg"
                     className={cn(
                       "group w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#c0a146]/50",
-                      "hover:bg-muted/50 hover:shadow-lg hover:shadow-[#c0a146]/10",
+                      "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50",
+                      "hover:bg-muted/50 hover:shadow-lg hover:shadow-[#e1a200]/10",
                       "hover:scale-105 active:scale-95"
                     )}
                   >

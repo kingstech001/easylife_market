@@ -88,7 +88,6 @@ function checkWebhookRateLimit(reference: string): boolean {
 
 /**
  * Update store subscription by calling the subscription API
- * ✅ CLEAN SEPARATION: Webhook verifies payment, API handles subscription logic
  */
 async function updateSubscription(
   storeId: string,
@@ -96,9 +95,7 @@ async function updateSubscription(
   amount: number,
   reference: string
 ) {
-
   try {
-    // ✅ Call the subscription API endpoint
     const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const response = await fetch(`${apiUrl}/api/dashboard/seller/subscription`, {
       method: 'PUT',
@@ -123,7 +120,7 @@ async function updateSubscription(
     return {
       success: data.success,
       data: data.data,
-      needsProductUpdate: false, // API already handled product enforcement
+      needsProductUpdate: false,
     }
   } catch (error) {
     console.error(`❌ Failed to call subscription API:`, error)
@@ -200,7 +197,6 @@ async function verifyAndCalculateOrderAmount(
   const numericDeliveryFee = Number(deliveryFee) || 0
   const grandTotal = Number(calculatedTotal) + numericDeliveryFee
 
-
   return {
     verifiedOrders,
     subtotal: Number(calculatedTotal),
@@ -210,7 +206,7 @@ async function verifyAndCalculateOrderAmount(
 }
 
 /**
- * Create main order and sub-orders atomically
+ * ✅ ENHANCED: Create main order and sub-orders atomically with detailed inventory tracking
  */
 async function createOrdersFromWebhook(
   verifiedOrderData: any,
@@ -223,10 +219,12 @@ async function createOrdersFromWebhook(
 ) {
   const { verifiedOrders, subtotal, deliveryFee, grandTotal } = verifiedOrderData
   const createdSubOrders = []
+  const inventoryUpdates = [] // Track all inventory changes
 
   for (const orderGroup of verifiedOrders) {
     const { storeId, items, totalPrice } = orderGroup
 
+    // Create the sub-order
     const subOrder = await Order.create(
       [
         {
@@ -256,21 +254,130 @@ async function createOrdersFromWebhook(
 
     createdSubOrders.push(subOrder[0])
 
+    // ✅ ENHANCED: Deduct inventory with detailed logging and error handling
     for (const item of items) {
-      await Product.findByIdAndUpdate(
-        item.productId,
-        { $inc: { inventoryQuantity: -item.quantity } },
-        { session }
-      )
+      try {
+        // Find the product first to log the change
+        const productBefore = await Product.findById(item.productId)
+          .session(session)
+          .lean()
+
+        if (!productBefore) {
+          throw new Error(`Product ${item.productId} not found during inventory deduction`)
+        }
+
+        // Perform the inventory deduction
+        const updatedProduct = await Product.findByIdAndUpdate(
+          item.productId,
+          { 
+            $inc: { inventoryQuantity: -item.quantity }
+          },
+          { 
+            session,
+            new: true, // Return updated document
+          }
+        )
+
+        if (!updatedProduct) {
+          throw new Error(`Failed to update inventory for product ${item.productId}`)
+        }
+
+        // Track the inventory change
+        const inventoryChange = {
+          productId: item.productId.toString(),
+          productName: item.productName,
+          quantityDeducted: item.quantity,
+          previousQuantity: productBefore.inventoryQuantity,
+          newQuantity: updatedProduct.inventoryQuantity,
+          orderId: subOrder[0]._id.toString(),
+        }
+
+        inventoryUpdates.push(inventoryChange)
+
+        // Log successful inventory deduction
+        console.log(
+          `✅ Inventory deducted: ${item.productName} | ` +
+          `${productBefore.inventoryQuantity} → ${updatedProduct.inventoryQuantity} | ` +
+          `Deducted: ${item.quantity}`
+        )
+
+        // ⚠️ Check for low inventory and log warning
+        if (updatedProduct.inventoryQuantity <= 5) {
+          console.warn(
+            `⚠️ LOW INVENTORY ALERT: ${item.productName} | ` +
+            `Only ${updatedProduct.inventoryQuantity} units remaining`
+          )
+
+          await PaymentLogger.log({
+            reference,
+            event: "low_inventory_warning",
+            metadata: {
+              productId: item.productId.toString(),
+              productName: item.productName,
+              remainingQuantity: updatedProduct.inventoryQuantity,
+            },
+          })
+        }
+
+        // 🚨 Check for out of stock
+        if (updatedProduct.inventoryQuantity <= 0) {
+          console.error(
+            `🚨 OUT OF STOCK: ${item.productName} | ` +
+            `Inventory: ${updatedProduct.inventoryQuantity}`
+          )
+
+          await PaymentLogger.log({
+            reference,
+            event: "product_out_of_stock",
+            metadata: {
+              productId: item.productId.toString(),
+              productName: item.productName,
+              inventoryQuantity: updatedProduct.inventoryQuantity,
+            },
+          })
+
+          // Optionally auto-deactivate the product
+          // await Product.findByIdAndUpdate(
+          //   item.productId,
+          //   { isActive: false, deactivatedAt: new Date() },
+          //   { session }
+          // )
+        }
+
+      } catch (inventoryError: any) {
+        // Log the error but don't fail the entire transaction
+        console.error(
+          `❌ Error deducting inventory for ${item.productName}:`,
+          inventoryError
+        )
+
+        await PaymentLogger.log({
+          reference,
+          event: "inventory_deduction_error",
+          error: inventoryError.message,
+          metadata: {
+            productId: item.productId.toString(),
+            productName: item.productName,
+            quantityAttempted: item.quantity,
+          },
+        })
+
+        // Re-throw to rollback the transaction
+        throw new Error(
+          `Failed to deduct inventory for ${item.productName}: ${inventoryError.message}`
+        )
+      }
     }
   }
 
+  // Generate unique order number
   const timestamp = Date.now().toString().slice(-6)
   const random = Math.floor(Math.random() * 1000)
     .toString()
     .padStart(3, "0")
   const orderNumber = `ORD-${timestamp}${random}`
 
+  // Create main order
   const mainOrder = await MainOrder.create(
     [
       {
@@ -300,11 +407,33 @@ async function createOrdersFromWebhook(
     { session }
   )
 
+  // ✅ Log comprehensive inventory summary
+  console.log(
+    `📊 Inventory Summary for Order ${orderNumber}:\n` +
+    `   - Products updated: ${inventoryUpdates.length}\n` +
+    `   - Total quantity deducted: ${inventoryUpdates.reduce((sum, u) => sum + u.quantityDeducted, 0)}\n` +
+    `   - Sub-orders created: ${createdSubOrders.length}`
+  )
+
+  await PaymentLogger.log({
+    reference,
+    event: "inventory_deducted_successfully",
+    metadata: {
+      orderNumber,
+      inventoryUpdates: inventoryUpdates.map(u => ({
+        productName: u.productName,
+        deducted: u.quantityDeducted,
+        remaining: u.newQuantity,
+      })),
+      totalItemsUpdated: inventoryUpdates.length,
+    },
+  })
 
   return {
     mainOrder: mainOrder[0],
     subOrders: createdSubOrders,
     orderNumber,
+    inventoryUpdates, // Return inventory changes for reference
   }
 }
 
@@ -316,7 +445,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
   const metadata = data.metadata ?? {}
   const paidAmount = data.amount / 100
   const channel = data.channel || "card"
-
 
   await PaymentLogger.log({
     reference,
@@ -386,7 +514,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
         return
       }
 
-      // ✅ Call subscription API (no session needed)
       const updateResult = await updateSubscription(storeId, plan, paidAmount, reference)
 
       if (!updateResult.success) {
@@ -404,7 +531,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
         },
       })
 
-      // ✅ Commit transaction
       await session.commitTransaction()
       transactionCommitted = true
 
@@ -415,7 +541,6 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     const existingOrders = await Order.find({ reference }).session(session).lean()
 
     if (existingOrders.length > 0) {
-
       await Order.updateMany(
         { reference, paymentStatus: { $ne: "paid" } },
         {
@@ -522,6 +647,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       metadata: {
         orderNumber: orderResult.orderNumber,
         subOrderCount: orderResult.subOrders.length,
+        inventoryDeducted: orderResult.inventoryUpdates.length,
       },
     })
 

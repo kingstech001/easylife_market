@@ -133,9 +133,9 @@ export default function StoresPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-[#c0a146] rounded-full animate-spin mx-auto"></div>
+            <div className="w-20 h-20 border-4 border-muted border-t-[#e1a200] rounded-full animate-spin mx-auto"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Store className="w-8 h-8 text-[#c0a146] animate-pulse" />
+              <Store className="w-8 h-8 text-[#e1a200] animate-pulse" />
             </div>
           </div>
           <div className="space-y-2">
@@ -166,7 +166,7 @@ export default function StoresPage() {
             <Button
               onClick={() => window.location.reload()}
               variant="default"
-              className="bg-[#c0a146] hover:bg-[#c0a146]/90"
+              className="bg-[#e1a200] hover:bg-[#e1a200]/90"
             >
               Try Again
             </Button>
@@ -207,9 +207,9 @@ export default function StoresPage() {
                 {/* Badge */}
                 <Badge
                   variant="secondary"
-                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
+                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
                 >
-                  <Sparkles className="w-4 h-4 mr-2 text-[#c0a146]" />
+                  <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
                   Explore Our Marketplace
                 </Badge>
 
@@ -219,7 +219,7 @@ export default function StoresPage() {
                     <span className="block text-3xl md:text-4xl lg:text-6xl font-bold mb-3 tracking-tight drop-shadow-lg">
                       Discover Premium
                     </span>
-                    <span className="block mt-2 bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-clip-text text-transparent">
+                    <span className="block mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
                       Online Stores
                     </span>
                   </h1>
@@ -235,9 +235,9 @@ export default function StoresPage() {
         ) : (
           // Fallback gradient design
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#c0a146]/30 via-[#c0a146]/10 to-primary/5">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#e1a200]/30 via-[#e1a200]/10 to-primary/5">
               <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-[#c0a146] rounded-full blur-3xl" />
+                <div className="absolute top-10 left-10 w-32 h-32 bg-[#e1a200] rounded-full blur-3xl" />
                 <div className="absolute bottom-10 right-10 w-40 h-40 bg-primary rounded-full blur-3xl" />
               </div>
             </div>
@@ -246,9 +246,9 @@ export default function StoresPage() {
               {/* Badge */}
               <Badge
                 variant="secondary"
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
+                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
               >
-                <Sparkles className="w-4 h-4 mr-2 text-[#c0a146]" />
+                <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
                 Explore Our Marketplace
               </Badge>
 
@@ -258,7 +258,7 @@ export default function StoresPage() {
                   <span className="block bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                     Discover Premium
                   </span>
-                  <span className="block mt-2 bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-clip-text text-transparent">
+                  <span className="block mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
                     Online Stores
                   </span>
                 </h1>
@@ -273,52 +273,6 @@ export default function StoresPage() {
         )}
       </div>
 
-      {/* Trust Badges */}
-      {/* <div className="border-b bg-background/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
-              <div className="bg-green-100 dark:bg-green-900/30 rounded-xl p-2">
-                <ShieldCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-green-900 dark:text-green-100">
-                  Verified Sellers
-                </p>
-                <p className="text-xs text-green-700 dark:text-green-300">
-                  100% Trusted
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-xl p-2">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-blue-900 dark:text-blue-100">
-                  Growing Fast
-                </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  New Stores Daily
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20">
-              <div className="bg-purple-100 dark:bg-purple-900/30 rounded-xl p-2">
-                <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-purple-900 dark:text-purple-100">
-                  Top Quality
-                </p>
-                <p className="text-xs text-purple-700 dark:text-purple-300">
-                  Curated Selection
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 lg:px-8" id="stores">
@@ -326,65 +280,7 @@ export default function StoresPage() {
           {/* Sidebar - Filters & Ads */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
             <div className="sticky top-8 space-y-6">
-              {/* Filters */}
-              {/* <div className="border-2 rounded-2xl shadow-sm p-6 bg-card">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold text-lg">Filter Stores</h3>
-                  <SlidersHorizontal className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-3">
-                      Store Type
-                    </label>
-                    <div className="space-y-2">
-                      {[
-                        "Electronics",
-                        "Fashion",
-                        "Home & Garden",
-                        "Food & Beverage",
-                        "Beauty",
-                      ].map((cat) => (
-                        <label
-                          key={cat}
-                          className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-muted/50"
-                        >
-                          <input
-                            type="checkbox"
-                            className="rounded border-2 text-[#c0a146] focus:ring-[#c0a146]"
-                          />
-                          <span className="text-sm">{cat}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-3">
-                      Rating
-                    </label>
-                    <div className="space-y-2">
-                      {["5 Stars", "4+ Stars", "3+ Stars"].map((rating) => (
-                        <label
-                          key={rating}
-                          className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-muted/50"
-                        >
-                          <input
-                            type="checkbox"
-                            className="rounded border-2 text-[#c0a146] focus:ring-[#c0a146]"
-                          />
-                          <span className="text-sm">{rating}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <button className="w-full mt-6 bg-[#c0a146] hover:bg-[#c0a146]/90 text-white py-2.5 rounded-xl font-semibold shadow-lg transition">
-                  Apply Filters
-                </button>
-              </div> */}
+              
 
               {/* Ad Space 1 */}
               <div className="border-0 shadow-sm rounded-2xl p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
@@ -402,7 +298,7 @@ export default function StoresPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <button className="bg-[#c0a146] text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#c0a146]/90 transition shadow-lg w-full">
+                  <button className="bg-[#e1a200] text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#e1a200]/90 transition shadow-lg w-full">
                     Get Started
                   </button>
                 </Link>
@@ -420,7 +316,7 @@ export default function StoresPage() {
                   Start your online store today
                 </p>
                 <Link href="/auth/register">
-                  <button className="bg-[#c0a146] text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#c0a146]/90 transition shadow-lg w-full">
+                  <button className="bg-[#e1a200] text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#e1a200]/90 transition shadow-lg w-full">
                     Join Now
                   </button>
                 </Link>
@@ -430,28 +326,6 @@ export default function StoresPage() {
 
           {/* Stores Grid */}
           <main className="flex-1 min-w-0">
-            {/* Top Bar */}
-            <div className="border-2 shadow-sm rounded-2xl p-4 mb-6 bg-card">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">
-                      {stores.length}
-                    </span>{" "}
-                    Stores Available
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <select className="px-4 py-2 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#c0a146] bg-background">
-                    <option>Sort by: Featured</option>
-                    <option>Newest First</option>
-                    <option>Most Popular</option>
-                    <option>A-Z</option>
-                  </select>
-                </div>
-              </div>
-            </div>
 
             {/* Banner Ad Space */}
             <div className="border-0 shadow-lg rounded-2xl p-6 md:p-8 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
@@ -471,7 +345,7 @@ export default function StoresPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <button className="bg-[#c0a146] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#c0a146]/90 transition shadow-lg">
+                    <button className="bg-[#e1a200] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#e1a200]/90 transition shadow-lg">
                       Contact Us
                     </button>
                   </Link>
@@ -501,8 +375,8 @@ export default function StoresPage() {
                     size="lg"
                     className={cn(
                       "group h-12 px-8 text-base font-semibold transition-all duration-300",
-                      "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                      "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
                       "hover:scale-105 active:scale-95"
                     )}
                   >
@@ -523,8 +397,8 @@ export default function StoresPage() {
                       className="group relative transition-all duration-300 hover:scale-[1.02]"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#c0a146]/20 via-transparent to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="relative bg-card border-2 border-border rounded-xl overflow-hidden transition-all duration-300 group-hover:border-[#c0a146]/50 group-hover:shadow-xl group-hover:shadow-[#c0a146]/10">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="relative bg-card border-2 border-border rounded-xl overflow-hidden transition-all duration-300 group-hover:border-[#e1a200]/50 group-hover:shadow-xl group-hover:shadow-[#e1a200]/10">
                         <StoreCard store={store} />
                       </div>
                     </div>
@@ -549,7 +423,7 @@ export default function StoresPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <button className="bg-[#c0a146] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#c0a146]/90 transition shadow-lg">
+                        <button className="bg-[#e1a200] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#e1a200]/90 transition shadow-lg">
                           Upgrade Now
                         </button>
                       </Link>
@@ -570,9 +444,9 @@ export default function StoresPage() {
                     <input
                       type="email"
                       placeholder="Enter your email"
-                      className="flex-1 px-2 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-[#c0a146] bg-background"
+                      className="flex-1 px-2 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-[#e1a200] bg-background"
                     />
-                    <button className="bg-[#c0a146] text-white px-2 py-3 rounded-xl font-bold hover:bg-[#c0a146]/90 transition shadow-lg">
+                    <button className="bg-[#e1a200] text-white px-2 py-3 rounded-xl font-bold hover:bg-[#e1a200]/90 transition shadow-lg">
                       Subscribe
                     </button>
                   </div>
@@ -580,11 +454,11 @@ export default function StoresPage() {
 
                 {/* Call to Action Section */}
                 <div className="relative mt-12">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#c0a146]/5 via-primary/5 to-[#c0a146]/5 rounded-3xl blur-3xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#e1a200]/5 via-primary/5 to-[#e1a200]/5 rounded-3xl blur-3xl" />
                   <div className="relative bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 rounded-2xl p-8 md:p-12">
                     <div className="flex flex-col items-center text-center space-y-6 max-w-2xl mx-auto">
-                      <div className="inline-flex p-3 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20">
-                        <Store className="w-8 h-8 text-[#c0a146]" />
+                      <div className="inline-flex p-3 rounded-full bg-gradient-to-br from-[#e1a200]/20 to-primary/20">
+                        <Store className="w-8 h-8 text-[#e1a200]" />
                       </div>
 
                       <div className="space-y-3">
@@ -606,8 +480,8 @@ export default function StoresPage() {
                             size="lg"
                             className={cn(
                               "group w-full sm:w-auto h-12 px-8 text-base font-semibold transition-all duration-300",
-                              "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                              "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                              "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                              "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
                               "hover:scale-105 active:scale-95"
                             )}
                           >
@@ -628,7 +502,7 @@ export default function StoresPage() {
                             size="lg"
                             className={cn(
                               "group w-full sm:w-auto h-12 px-8 text-base font-semibold transition-all duration-300",
-                              "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#c0a146]/50",
+                              "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50",
                               "hover:bg-muted/50 hover:shadow-lg",
                               "hover:scale-105 active:scale-95"
                             )}

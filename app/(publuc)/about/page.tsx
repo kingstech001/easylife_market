@@ -50,7 +50,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#c0a146]/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#e1a200]/10 via-transparent to-transparent" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -58,9 +58,9 @@ export default function AboutPage() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#c0a146]/10 border border-[#c0a146]/20 mb-6">
-              <Sparkles className="h-4 w-4 text-[#c0a146]" />
-              <span className="text-sm font-medium text-[#c0a146]">About EasyLife Market</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e1a200]/10 border border-[#e1a200]/20 mb-6">
+              <Sparkles className="h-4 w-4 text-[#e1a200]" />
+              <span className="text-sm font-medium text-[#e1a200]">About EasyLife Market</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -68,7 +68,7 @@ export default function AboutPage() {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Welcome to <span className="font-semibold text-[#c0a146]">EasyLife Market</span> — a modern online marketplace 
+              Welcome to <span className="font-semibold text-[#e1a200]">EasyLife Market</span> — a modern online marketplace 
               built to make buying and selling simpler, faster, and more accessible for everyone.
             </p>
           </motion.div>
@@ -91,7 +91,7 @@ export default function AboutPage() {
                 variants={fadeInUp}
                 className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold text-[#c0a146] mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-[#e1a200] mb-2">
                   {stat.value}
                 </div>
                 <div className="text-sm text-muted-foreground font-medium">
@@ -117,8 +117,8 @@ export default function AboutPage() {
               <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-lg">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 rounded-xl bg-[#c0a146]/10">
-                      <Target className="h-6 w-6 text-[#c0a146]" />
+                    <div className="p-3 rounded-xl bg-[#e1a200]/10">
+                      <Target className="h-6 w-6 text-[#e1a200]" />
                     </div>
                     <h2 className="text-2xl font-bold">Our Mission</h2>
                   </div>
@@ -141,8 +141,8 @@ export default function AboutPage() {
               <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-lg">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 rounded-xl bg-[#c0a146]/10">
-                      <Eye className="h-6 w-6 text-[#c0a146]" />
+                    <div className="p-3 rounded-xl bg-[#e1a200]/10">
+                      <Eye className="h-6 w-6 text-[#e1a200]" />
                     </div>
                     <h2 className="text-2xl font-bold">Our Vision</h2>
                   </div>
@@ -180,11 +180,11 @@ export default function AboutPage() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Card className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:border-[#c0a146]/30 h-full">
+                  <Card className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:border-[#e1a200]/30 h-full">
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center text-center gap-4">
-                        <div className="p-3 rounded-xl bg-[#c0a146]/10">
-                          <feature.icon className="h-6 w-6 text-[#c0a146]" />
+                        <div className="p-3 rounded-xl bg-[#e1a200]/10">
+                          <feature.icon className="h-6 w-6 text-[#e1a200]" />
                         </div>
                         <p className="font-medium text-sm leading-relaxed">
                           {feature.text}
@@ -208,8 +208,8 @@ export default function AboutPage() {
             <Card className="border-border/40 bg-gradient-to-br from-card/50 to-muted/30 backdrop-blur-sm shadow-lg">
               <CardContent className="p-8 md:p-12">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 rounded-xl bg-[#c0a146]/10">
-                    <Heart className="h-6 w-6 text-[#c0a146]" />
+                  <div className="p-3 rounded-xl bg-[#e1a200]/10">
+                    <Heart className="h-6 w-6 text-[#e1a200]" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold">Why We Built This Platform</h2>
                 </div>
@@ -226,7 +226,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-[#c0a146]/10 via-transparent to-transparent">
+      <section className="py-16 md:py-24 bg-gradient-to-br from-[#e1a200]/10 via-transparent to-transparent">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -246,7 +246,7 @@ export default function AboutPage() {
               <Button
                 asChild
                 size="lg"
-                className="bg-[#c0a146] hover:bg-[#c0a146]/90 text-white shadow-lg hover:shadow-xl transition-all"
+                className="bg-[#e1a200] hover:bg-[#e1a200]/90 text-white shadow-lg hover:shadow-xl transition-all"
               >
                 <Link href="/auth/register">
                   Start Selling Today
@@ -257,7 +257,7 @@ export default function AboutPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-[#c0a146]/30 hover:bg-[#c0a146]/10"
+                className="border-[#e1a200]/30 hover:bg-[#e1a200]/10"
               >
                 <Link href="/stores">
                   Explore Stores

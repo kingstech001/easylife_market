@@ -87,7 +87,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
           <div className="mx-auto">
-          <Image src={'/logo.png'} alt="logo" width={50} height={50} />
+          <Image src={'/logo.png'} alt="logo" width={100} height={100} />
           </div>
 
           {/* Title */}
@@ -182,7 +182,7 @@ export default function LoginPage() {
                 </div>
                 <Link
                   href="/auth/forgot-password"
-                  className="text-sm text-[#c0a146] hover:text-[#d4b55e] font-medium transition-colors"
+                  className="text-sm text-[#e1a200] hover:text-[#d0a027] font-medium transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -191,7 +191,7 @@ export default function LoginPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="w-full h-11  transition-all duration-300 shadow-lg hover:shadow-xl"
                 disabled={isLoading}
               >
                 {isLoading ? (

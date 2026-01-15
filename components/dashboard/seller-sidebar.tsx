@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 
 const sidebarNavItems = [
   { title: "Overview", href: "/dashboard/seller", icon: LayoutDashboard },
@@ -88,13 +89,14 @@ export function SellerSidebar() {
       <SidebarHeader className="border-b border-border/40 bg-gradient-to-b from-muted/30 to-transparent px-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href="/dashboard/seller" className="flex items-center gap-3 py-4 group">
-              <div className="relative">
-                <div className="w-9 h-9 bg-gradient-to-br from-[#c0a146] via-[#d4b55e] to-[#c0a146] rounded-xl flex items-center justify-center shadow-lg shadow-[#c0a146]/20 transition-transform group-hover:scale-105">
+            <Link href="/dashboard/seller" className="flex items-center group">
+              {/* <div className="relative">
+                <div className="w-9 h-9 bg-gradient-to-br from-[#e1a200] via-[#d4b55e] to-[#e1a200] rounded-xl flex items-center justify-center shadow-lg shadow-[#e1a200]/20 transition-transform group-hover:scale-105">
                   <ShoppingBag className="h-4 w-4 text-white" strokeWidth={2.5} />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
-              </div>
+              </div> */}
+              <Image src={'/logo.png'} alt="logo" width={70} height={36} />
               <div className="flex flex-col">
                 <span className="font-bold text-base tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                   EasyLife
@@ -124,7 +126,7 @@ export function SellerSidebar() {
                       className={`
                         relative h-9 px-2.5 rounded-lg transition-all duration-200
                         ${isActive 
-                          ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold shadow-sm hover:bg-[#c0a146]/15' 
+                          ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold shadow-sm hover:bg-[#e1a200]/15' 
                           : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                         }
                       `}
@@ -135,7 +137,7 @@ export function SellerSidebar() {
                           <span className="text-[13px]">{item.title}</span>
                         </div>
                         {isActive && (
-                          <ChevronRight className="h-3.5 w-3.5 text-[#c0a146] flex-shrink-0" strokeWidth={2.5} />
+                          <ChevronRight className="h-3.5 w-3.5 text-[#e1a200] flex-shrink-0" strokeWidth={2.5} />
                         )}
                       </Link>
                     </SidebarMenuButton>
@@ -162,7 +164,7 @@ export function SellerSidebar() {
                   className={`
                     h-9 px-2.5 rounded-lg transition-all duration-200
                     ${pathname === "/dashboard/seller/support"
-                      ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold'
+                      ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold'
                       : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                     }
                   `}
@@ -181,7 +183,7 @@ export function SellerSidebar() {
                   className={`
                     h-9 px-2.5 rounded-lg transition-all duration-200
                     ${pathname === "/dashboard/seller/settings"
-                      ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold'
+                      ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold'
                       : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                     }
                   `}
@@ -202,9 +204,9 @@ export function SellerSidebar() {
           {/* User Profile Section */}
           <SidebarMenuItem>
             <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-muted/50 border border-border/40">
-              <Avatar className="h-8 w-8 border-2 border-[#c0a146]/20 flex-shrink-0">
+              <Avatar className="h-8 w-8 border-2 border-[#e1a200]/20 flex-shrink-0">
                 <AvatarImage src={user?.avatar} alt={user?.name} />
-                <AvatarFallback className="bg-gradient-to-br from-[#c0a146] to-[#c0a146]/80 text-white text-[10px] font-semibold">
+                <AvatarFallback className="bg-gradient-to-br from-[#e1a200] to-[#e1a200]/80 text-white text-[10px] font-semibold">
                   {getUserInitials(user?.name)}
                 </AvatarFallback>
               </Avatar>

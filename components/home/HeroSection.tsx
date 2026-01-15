@@ -16,8 +16,8 @@ export default function HeroSection() {
         {/* Enhanced animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-[10%] sm:top-[20%] left-[15%] sm:left-[20%] w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-[10%] sm:bottom-[20%] right-[15%] sm:right-[20%] w-56 h-56 sm:w-96 sm:h-96 lg:w-[500px] lg:h-[500px] bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] lg:w-[1000px] h-[600px] sm:h-[800px] lg:h-[1000px] bg-gradient-to-r from-primary/5 via-transparent to-[#c0a146]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-[10%] sm:bottom-[20%] right-[15%] sm:right-[20%] w-56 h-56 sm:w-96 sm:h-96 lg:w-[500px] lg:h-[500px] bg-[#e1a200]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] lg:w-[1000px] h-[600px] sm:h-[800px] lg:h-[1000px] bg-gradient-to-r from-primary/5 via-transparent to-[#e1a200]/5 rounded-full blur-3xl" />
         </div>
 
         {/* Grid pattern overlay */}
@@ -31,9 +31,9 @@ export default function HeroSection() {
               <div className="flex justify-center lg:justify-start animate-fade-in">
                 <Badge
                   variant="secondary"
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
                 >
-                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#c0a146]" />
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#e1a200]" />
                   New Platform Launch 🎉
                 </Badge>
               </div>
@@ -44,16 +44,16 @@ export default function HeroSection() {
                   <span className="block sm:inline bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                     Buy and Sell{" "}
                   </span>
-                  <span className="block sm:inline mt-1 sm:mt-0 bg-gradient-to-r from-primary via-[#c0a146] to-primary/70 bg-clip-text text-transparent">
+                  <span className="block sm:inline mt-1 sm:mt-0 bg-gradient-to-r from-primary via-[#e1a200] to-primary/70 bg-clip-text text-transparent">
                     Seamlessly
                   </span>
                   <span className="block mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">
                     with{" "}
                     <span className="relative inline-block">
-                      <span className="bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent font-extrabold">
+                      <span className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] bg-clip-text text-transparent font-extrabold">
                         EasyLife
                       </span>
-                      <span className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] rounded-full opacity-50"></span>
+                      <span className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-[#e1a200] to-[#d4b55e] rounded-full opacity-50"></span>
                     </span>
                   </span>
                 </h1>
@@ -72,11 +72,11 @@ export default function HeroSection() {
                 ].map((stat, index) => (
                   <div 
                     key={index}
-                    className="group p-3 sm:p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-[#c0a146]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#c0a146]/10 hover:-translate-y-1"
+                    className="group p-3 sm:p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-[#e1a200]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#e1a200]/10 hover:-translate-y-1"
                   >
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3">
-                      <div className="p-2 sm:p-2.5 rounded-lg bg-gradient-to-br from-[#c0a146]/20 to-primary/20 group-hover:from-[#c0a146]/30 group-hover:to-primary/30 transition-all">
-                        <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#c0a146]" />
+                      <div className="p-2 sm:p-2.5 rounded-lg bg-gradient-to-br from-[#e1a200]/20 to-primary/20 group-hover:from-[#e1a200]/30 group-hover:to-primary/30 transition-all">
+                        <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#e1a200]" />
                       </div>
                       <div className="text-center sm:text-left flex-1">
                         <span className="block text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
@@ -98,8 +98,8 @@ export default function HeroSection() {
                     size="lg"
                     className={cn(
                       "group w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                      "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
                       "hover:scale-105 active:scale-95",
                       "relative overflow-hidden"
                     )}
@@ -116,8 +116,8 @@ export default function HeroSection() {
                     size="lg"
                     className={cn(
                       "group w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#c0a146]/50",
-                      "hover:bg-muted/50 hover:shadow-lg hover:shadow-[#c0a146]/10",
+                      "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50",
+                      "hover:bg-muted/50 hover:shadow-lg hover:shadow-[#e1a200]/10",
                       "hover:scale-105 active:scale-95"
                     )}
                   >
@@ -145,7 +145,7 @@ export default function HeroSection() {
                   <div className="text-left">
                     <div className="flex items-center gap-1">
                       {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-[#c0a146] text-[#c0a146]" />
+                        <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-[#e1a200] text-[#e1a200]" />
                       ))}
                     </div>
                     <p className="text-xs sm:text-sm text-muted-foreground">
@@ -160,7 +160,7 @@ export default function HeroSection() {
                       key={index}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50"
                     >
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-[#c0a146]" />
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-[#e1a200]" />
                       <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                         {feature}
                       </span>
@@ -174,11 +174,11 @@ export default function HeroSection() {
             <div className="relative flex justify-center lg:justify-end order-1 lg:order-2 mt-4 md:mt-0">
               <div className="relative w-full max-w-[280px] xs:max-w-[350px] sm:max-w-[450px] md:max-w-[550px] lg:max-w-[600px]">
                 {/* Decorative elements */}
-                <div className="absolute -top-4 -left-4 w-16 h-16 sm:w-24 sm:h-24 bg-[#c0a146]/20 rounded-full blur-2xl animate-pulse" />
+                <div className="absolute -top-4 -left-4 w-16 h-16 sm:w-24 sm:h-24 bg-[#e1a200]/20 rounded-full blur-2xl animate-pulse" />
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 sm:w-32 sm:h-32 bg-primary/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
 
                 {/* Main image container */}
-                <div className="relative aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted border-2 border-border/50 backdrop-blur-sm shadow-2xl hover:shadow-[#c0a146]/20 transition-all duration-500 hover:scale-[1.02]">
+                <div className="relative aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted border-2 border-border/50 backdrop-blur-sm shadow-2xl hover:shadow-[#e1a200]/20 transition-all duration-500 hover:scale-[1.02]">
                   <Image
                     src="/hero-image.png"
                     alt="Modern E-commerce Dashboard Interface"
@@ -197,7 +197,7 @@ export default function HeroSection() {
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-500 rounded-full animate-pulse" />
                       <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground">Live Sales</span>
                     </div>
-                    <p className="text-base sm:text-lg lg:text-xl font-bold mt-0.5 sm:mt-1 bg-gradient-to-r from-[#c0a146] to-primary bg-clip-text text-transparent">
+                    <p className="text-base sm:text-lg lg:text-xl font-bold mt-0.5 sm:mt-1 bg-gradient-to-r from-[#e1a200] to-primary bg-clip-text text-transparent">
                       ₦12,847
                     </p>
                     <div className="flex items-center gap-1 mt-1">
@@ -208,8 +208,8 @@ export default function HeroSection() {
 
                   <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 bg-card/95 backdrop-blur-md border border-border/50 rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-xl hover:scale-105 transition-transform duration-300">
                     <div className="flex items-center gap-1.5 sm:gap-2">
-                      <div className="p-1 sm:p-1.5 rounded-md bg-gradient-to-br from-[#c0a146]/20 to-primary/20">
-                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#c0a146]" />
+                      <div className="p-1 sm:p-1.5 rounded-md bg-gradient-to-br from-[#e1a200]/20 to-primary/20">
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#e1a200]" />
                       </div>
                       <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground">Growth</span>
                     </div>
@@ -235,8 +235,8 @@ export default function HeroSection() {
 
                 {/* Arrow indicator - Responsive */}
                 <div className="absolute -bottom-12 sm:-bottom-16 lg:-bottom-20 left-1/2 lg:left-1/3 transform -translate-x-1/2 animate-bounce hidden sm:block">
-                  <div className="p-3 sm:p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 backdrop-blur-sm border border-[#c0a146]/30">
-                    <ArrowRight className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#c0a146] rotate-90" />
+                  <div className="p-3 sm:p-4 rounded-full bg-gradient-to-br from-[#e1a200]/20 to-primary/20 backdrop-blur-sm border border-[#e1a200]/30">
+                    <ArrowRight className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#e1a200] rotate-90" />
                   </div>
                 </div>
               </div>

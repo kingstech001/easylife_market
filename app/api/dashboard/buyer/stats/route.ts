@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import User from "@/models/User"
 import MainOrder from "@/models/MainOrder"
-import Order from "@/models/Order"
 import mongoose from "mongoose"
 
 export async function GET(req: Request) {

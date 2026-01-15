@@ -142,20 +142,20 @@ function MarqueeRow({
       >
         {[...items, ...items].map((testimonial, idx) => (
           <div key={idx} className="flex-none w-[320px] md:w-[380px]">
-            <Card className="group/card relative flex flex-col justify-between h-full bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-sm border border-border/50 shadow-lg transition-all duration-300 hover:shadow-2xl hover:shadow-[#c0a146]/10 hover:border-[#c0a146]/30 hover:scale-[1.02] overflow-hidden">
+            <Card className="group/card relative flex flex-col justify-between h-full bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-sm border border-border/50 shadow-lg transition-all duration-300 hover:shadow-2xl hover:shadow-[#e1a200]/10 hover:border-[#e1a200]/30 hover:scale-[1.02] overflow-hidden">
               {/* Decorative corner accent */}
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#c0a146]/10 to-transparent rounded-bl-full opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#e1a200]/10 to-transparent rounded-bl-full opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
               
               {/* Quote icon */}
-              <div className="absolute top-4 left-4 p-2 rounded-lg bg-[#c0a146]/10 opacity-50 group-hover/card:opacity-100 transition-all duration-300 group-hover/card:scale-110">
-                <Quote className="w-4 h-4 sm:w-5 sm:h-5 text-[#c0a146]" />
+              <div className="absolute top-4 left-4 p-2 rounded-lg bg-[#e1a200]/10 opacity-50 group-hover/card:opacity-100 transition-all duration-300 group-hover/card:scale-110">
+                <Quote className="w-4 h-4 sm:w-5 sm:h-5 text-[#e1a200]" />
               </div>
 
               <CardHeader className="pb-4 pt-16">
                 {/* Star rating */}
                 <div className="flex items-center gap-1 mb-3">
                   {Array.from({ length: testimonial.rating || 5 }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#c0a146] text-[#c0a146]" />
+                    <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#e1a200] text-[#e1a200]" />
                   ))}
                 </div>
                 <CardTitle className="text-base sm:text-lg font-semibold leading-relaxed whitespace-normal text-foreground/90 group-hover/card:text-foreground transition-colors">
@@ -166,14 +166,14 @@ function MarqueeRow({
               <CardContent className="pt-4 border-t border-border/50">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <Avatar className="h-11 w-11 sm:h-12 sm:w-12 border-2 border-border/50 group-hover/card:border-[#c0a146]/50 transition-colors ring-2 ring-background">
+                    <Avatar className="h-11 w-11 sm:h-12 sm:w-12 border-2 border-border/50 group-hover/card:border-[#e1a200]/50 transition-colors ring-2 ring-background">
                       <AvatarImage src={testimonial.avatar || "/placeholder.svg"} alt={testimonial.author} />
-                      <AvatarFallback className="bg-gradient-to-br from-[#c0a146]/20 to-primary/20 text-[#c0a146] font-semibold">
+                      <AvatarFallback className="bg-gradient-to-br from-[#e1a200]/20 to-primary/20 text-[#e1a200] font-semibold">
                         {testimonial.author.split(" ").map((n) => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
                     {/* Verified badge */}
-                    <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-[#c0a146] shadow-md">
+                    <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-[#e1a200] shadow-md">
                       <Award className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                     </div>
                   </div>
@@ -189,7 +189,7 @@ function MarqueeRow({
               </CardContent>
 
               {/* Bottom accent line */}
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#c0a146] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#e1a200] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
             </Card>
           </div>
         ))}
@@ -243,9 +243,9 @@ export function TestimonialsSection() {
       
       {/* Animated background elements - Responsive */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-[15%] -left-[15%] sm:top-[20%] sm:-left-[20%] w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-[15%] -left-[15%] sm:top-[20%] sm:-left-[20%] w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-[#e1a200]/5 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-[15%] -right-[15%] sm:bottom-[20%] sm:-right-[20%] w-72 h-72 sm:w-88 sm:h-88 lg:w-96 lg:h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] lg:w-[900px] h-[500px] sm:h-[700px] lg:h-[900px] bg-gradient-to-r from-[#c0a146]/3 via-transparent to-primary/3 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] lg:w-[900px] h-[500px] sm:h-[700px] lg:h-[900px] bg-gradient-to-r from-[#e1a200]/3 via-transparent to-primary/3 rounded-full blur-3xl" />
       </div>
       
       {/* Subtle grid pattern - Responsive */}
@@ -265,9 +265,9 @@ export function TestimonialsSection() {
             <div className="flex justify-center">
               <Badge
                 variant="secondary"
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm"
               >
-                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#c0a146]" />
+                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#e1a200]" />
                 Seller Testimonials
               </Badge>
             </div>
@@ -278,7 +278,7 @@ export function TestimonialsSection() {
                 <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                   What Our{" "}
                 </span>
-                <span className="bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-primary bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
                   Sellers Say
                 </span>
               </h2>
@@ -296,10 +296,10 @@ export function TestimonialsSection() {
               ].map((stat, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50 hover:border-[#c0a146]/30 transition-all"
+                  className="flex flex-col items-center gap-2 px-2 py-2 rounded-lg bg-muted/50 border border-border/50 hover:border-[#e1a200]/30 transition-all"
                 >
-                  <div className="p-1.5 rounded-md bg-[#c0a146]/10">
-                    <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#c0a146]" />
+                  <div className="p-1.5 rounded-md bg-[#e1a200]/10">
+                    <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#e1a200]" />
                   </div>
                   <div className="text-center">
                     <p className="text-sm sm:text-base font-bold text-foreground">{stat.value}</p>
@@ -322,8 +322,8 @@ export function TestimonialsSection() {
             <div className="px-4 sm:px-6 bg-background">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent to-border" />
-                <div className="p-2.5 sm:p-3 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 shadow-lg">
-                  <Quote className="w-5 h-5 sm:w-6 sm:h-6 text-[#c0a146]" />
+                <div className="p-2.5 sm:p-3 rounded-full bg-gradient-to-br from-[#e1a200]/20 to-primary/20 shadow-lg">
+                  <Quote className="w-5 h-5 sm:w-6 sm:h-6 text-[#e1a200]" />
                 </div>
                 <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-border to-transparent" />
               </div>
@@ -344,7 +344,7 @@ export function TestimonialsSection() {
             <div className="flex justify-center">
               <Badge
                 variant="secondary"
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-primary/10 to-[#c0a146]/10 text-foreground border-primary/30 hover:from-primary/20 hover:to-[#c0a146]/20 transition-all duration-300 backdrop-blur-sm shadow-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-primary/10 to-[#e1a200]/10 text-foreground border-primary/30 hover:from-primary/20 hover:to-[#e1a200]/20 transition-all duration-300 backdrop-blur-sm shadow-sm"
               >
                 <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-primary" />
                 Buyer Testimonials
@@ -357,7 +357,7 @@ export function TestimonialsSection() {
                 <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                   What Our{" "}
                 </span>
-                <span className="bg-gradient-to-r from-primary via-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary via-[#e1a200] to-[#d4b55e] bg-clip-text text-transparent">
                   Buyers Say
                 </span>
               </h2>

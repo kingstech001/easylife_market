@@ -279,7 +279,7 @@ export default function SubscriptionPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-          className="grid grid-cols-auto-fill min-w-[200px]  m-auto gap-[30px]"
+          className="grid grid-cols-auto-fill-sub min-w-[200px]  m-auto gap-[30px]"
         >
           {plans.map((plan, index) => (
             <motion.div

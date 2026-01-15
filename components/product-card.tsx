@@ -98,6 +98,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
+      <Link href={`/stores/${storeSlug}/products/${product.id}`} className="block h-full">
       <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col">
         <div className="relative aspect-square overflow-hidden">
           <Image
@@ -136,11 +137,11 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
             <Button
               size="icon"
               variant="secondary"
-              className="h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-md"
+              className="h-8 w-8 bg-background/90 backdrop-blur-sm rounded-xl p-2 shadow-lg hover:bg-background transition border hover:border-primary/50 group/wishlist"
               onClick={toggleWishlist}
             >
               <Heart
-                className={`h-4 w-4 transition-colors ${isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""}`}
+                className={`h-4 w-4 transition-colors backdrop-blur-sm ${isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""}`}
               />
             </Button>
           </motion.div>
@@ -148,19 +149,13 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
 
         <CardContent className="p-4 flex-1 flex flex-col">
           <div className="space-y-2 flex-1">
-            <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+            <h3 className="text-base line-clamp-1 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
 
-            {product.description && <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>}
+            {/* {product.description && <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>} */}
 
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-medium">4.5</span>
-              </div>
-              <span className="text-xs text-muted-foreground">(24 reviews)</span>
-            </div>
+            
 
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold text-primary">{formatAmount(product.price)}</span>
@@ -184,12 +179,9 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
 
         <CardFooter className="p-4 pt-0">
           <div className="flex gap-2 w-full">
-            <Button asChild variant="outline" className="flex-1 bg-transparent">
-              <Link href={`/stores/${storeSlug}/products/${product.id}`}>View Details</Link>
-            </Button>
 
             <Button
-              className="flex-1"
+              className="flex-1 p-2"
               disabled={product.inventory_quantity === 0 || isAddingToCart}
               onClick={handleAddToCart}
             >
@@ -202,7 +194,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
                 "Out of Stock"
               ) : (
                 <>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  <ShoppingCart className="h-4 w-4" />
                   Add to Cart
                 </>
               )}
@@ -210,6 +202,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
           </div>
         </CardFooter>
       </Card>
+      </Link>
     </motion.div>
   )
 }

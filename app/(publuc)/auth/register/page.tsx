@@ -111,7 +111,7 @@ export default function RegisterPage() {
                 <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
               </div>
             </div> */}
-            <Image src={'/logo.png'} alt="logo" width={50} height={50} />
+            <Image src={'/logo.png'} alt="logo" width={100} height={100} />
           </div>
 
           {/* Title */}
@@ -330,7 +330,7 @@ export default function RegisterPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="w-full h-11 transition-all duration-300 shadow-lg hover:shadow-xl"
                 disabled={isLoading}
               >
                 {isLoading ? (

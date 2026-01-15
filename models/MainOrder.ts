@@ -1,4 +1,5 @@
 import mongoose, { Document, Model } from "mongoose"
+import "./Order" // Ensure Order model is registered
 
 // Interface for payment details
 interface IPaymentDetails {

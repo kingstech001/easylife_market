@@ -329,7 +329,7 @@ export default async function StorePage({ params }: StorePageProps) {
                             {store.name}
                           </h1>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <StoreStatusBadge openTime={9} closeTime={21} />
+                            <StoreStatusBadge openTime={7} closeTime={21} />
                             <Badge
                               variant="default"
                               className="flex items-center gap-1.5 px-3 py-1"
@@ -432,16 +432,11 @@ export default async function StorePage({ params }: StorePageProps) {
                   Discover our carefully curated collection
                 </p>
               </div>
-              {storeProducts.length > 0 && (
-                <Button variant="ghost" className="hidden md:flex gap-2">
-                  View All
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
+              
             </div>
 
             {storeProducts.length > 0 ? (
-              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-6 grid-cols-auto-fill">
                 {storeProducts.map((product) => (
                   <ProductCard
                     key={product.id}

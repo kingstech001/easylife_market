@@ -20,9 +20,9 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   return (
     <div className="flex gap-6 md:gap-10 items-center">
       <Link href="/" className="inline-flex items-center group">
-        <Image alt="" src={"/logo.png"} width={40} height={40}/>
+        <Image alt="EasyLife Logo" src={"/logo.png"} width={70} height={70} className="drop-shadow-lg"/>
         <div className="">
-          <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-clip-text text-transparent">
+          <span className="font-bold text-xl bg-gradient-to-r from-[#e1a200] via-[#e1a200] to-[#e1a200] bg-clip-text text-transparent">
             EasyLife
           </span>
         </div>
@@ -35,9 +35,9 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
               key={link.href}
               href={link.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-[#c0a146]",
+                "text-sm font-medium transition-colors hover:text-[#e1a200]",
                 isActive
-                  ? "text-[#c0a146] font-semibold"
+                  ? "text-[#e1a200] font-semibold"
                   : "text-muted-foreground"
               )}
             >

@@ -7,6 +7,7 @@ import { SlidersHorizontal, Grid3x3, LayoutGrid, TrendingUp, Award, ShieldCheck,
 import { useCart } from "@/context/cart-context"
 import { useWishlist } from "@/context/wishlist-context"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 
 // Define Product type (matches API response)
 type Product = {
@@ -284,7 +285,7 @@ export default function ProductsPage() {
               </div>
             ) : (
               <>
-                <div className=" grid grid-cols-auto-fill gap-1">
+                <div className=" grid grid-cols-2 sm:grid-cols-auto-fill gap-2">
                   {products.map((product) => {
                     const imageUrl = 
                       product.images?.[0]?.url || 
@@ -301,7 +302,7 @@ export default function ProductsPage() {
                     return (
                       <div
                         key={product._id}
-                        className="group border-2 shadow-sm rounded-2xl overflow-hidden hover:shadow-xl hover:border-primary/50 transition-all duration-300 bg-card"
+                        className="group shadow-sm rounded-2xl overflow-hidden hover:shadow-xl hover:border-primary/50 transition-all duration-300 bg-card h-full"
                       >
                         {/* Product Image */}
                         <Link href={productUrl} className="block relative w-full h-56 bg-muted overflow-hidden">
@@ -338,7 +339,7 @@ export default function ProductsPage() {
 
                           {/* Product Name */}
                           <Link href={productUrl}>
-                            <h2 className="text-xs sm:text-lg  line-clamp-2 group-hover:text-primary transition cursor-pointer">
+                            <h2 className="text-xs sm:text-lg group-hover:text-primary transition cursor-pointer line-clamp-1">
                               {product.name}
                             </h2>
                           </Link>
@@ -352,13 +353,13 @@ export default function ProductsPage() {
                             
                             {/* Action Buttons */}
                             <div className="flex flex-col sm:flex-row gap-2">
-                              <button 
+                              <Button 
                                 onClick={() => handleAddToCart(product)}
-                                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shadow-lg flex items-center justify-center gap-2 group/cart"
+                                className="flex-1 text-xs sm:text-sm font-semibold transition shadow-lg"
                               >
                                 <ShoppingCart className="h-4 w-4 group-hover/cart:scale-110 transition-transform" />
                                 Add to Cart
-                              </button>
+                              </Button>
                               
                               
                             </div>

@@ -76,7 +76,7 @@ export default function FeaturedStoresSection() {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 border-4 border-[#c0a146]/20 border-t-[#c0a146] rounded-full shadow-lg"
+                className="absolute inset-0 border-4 border-[#e1a200]/20 border-t-[#e1a200] rounded-full shadow-lg"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -84,9 +84,9 @@ export default function FeaturedStoresSection() {
                 transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
                 className="absolute inset-0 flex items-center justify-center"
               >
-                <Store className="w-10 h-10 sm:w-12 sm:h-12 text-[#c0a146] animate-pulse" />
+                <Store className="w-10 h-10 sm:w-12 sm:h-12 text-[#e1a200] animate-pulse" />
               </motion.div>
-              <div className="absolute inset-0 rounded-full bg-[#c0a146]/10 blur-2xl animate-pulse" />
+              <div className="absolute inset-0 rounded-full bg-[#e1a200]/10 blur-2xl animate-pulse" />
             </motion.div>
             <div className="space-y-2 sm:space-y-3">
               <h3 className="text-xl sm:text-2xl font-bold text-foreground">
@@ -142,9 +142,9 @@ export default function FeaturedStoresSection() {
 
         {/* Animated background elements - Responsive */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-[15%] -left-[15%] sm:top-[20%] sm:-left-[20%] w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-[15%] -left-[15%] sm:top-[20%] sm:-left-[20%] w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 bg-[#e1a200]/5 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-[15%] -right-[15%] sm:bottom-[20%] sm:-right-[20%] w-72 h-72 sm:w-88 sm:h-88 lg:w-96 lg:h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] lg:w-[900px] h-[500px] sm:h-[700px] lg:h-[900px] bg-gradient-to-r from-[#c0a146]/3 via-transparent to-primary/3 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] lg:w-[900px] h-[500px] sm:h-[700px] lg:h-[900px] bg-gradient-to-r from-[#e1a200]/3 via-transparent to-primary/3 rounded-full blur-3xl" />
         </div>
 
         {/* Subtle grid pattern - Responsive */}
@@ -162,9 +162,9 @@ export default function FeaturedStoresSection() {
             <motion.div variants={itemVariants}>
               <Badge
                 variant="secondary"
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#c0a146]/10 to-primary/10 text-foreground border-[#c0a146]/30 hover:from-[#c0a146]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
               >
-                <Award className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#c0a146] fill-[#c0a146]" />
+                <Award className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-[#e1a200] fill-[#e1a200]" />
                 Top Performing Stores
               </Badge>
             </motion.div>
@@ -175,7 +175,7 @@ export default function FeaturedStoresSection() {
                 <span className="block sm:inline bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                   Featured{" "}
                 </span>
-                <span className="block sm:inline mt-1 sm:mt-0 bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-primary bg-clip-text text-transparent">
+                <span className="block sm:inline mt-1 sm:mt-0 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
                   Success Stories
                 </span>
               </h2>
@@ -190,12 +190,12 @@ export default function FeaturedStoresSection() {
               <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-4 sm:pt-6">
                 {[
                   { icon: Store, label: "Live stores", value: "2,847", color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-                  { icon: TrendingUp, label: "Avg. growth", value: "+156%", color: "text-[#c0a146]", bgColor: "bg-[#c0a146]/10" },
+                  { icon: TrendingUp, label: "Avg. growth", value: "+156%", color: "text-[#e1a200]", bgColor: "bg-[#e1a200]/10" },
                   { icon: Users, label: "Happy customers", value: "50K+", color: "text-blue-500", bgColor: "bg-blue-500/10" },
                 ].map((stat, index) => (
                   <div
                     key={index}
-                    className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-[#c0a146]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#c0a146]/10 hover:-translate-y-1"
+                    className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-[#e1a200]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#e1a200]/10 hover:-translate-y-1"
                   >
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
                       <div className={cn(
@@ -222,7 +222,7 @@ export default function FeaturedStoresSection() {
           {/* Store Cards Grid - Responsive */}
           <div className="relative">
             {/* Decorative elements - Responsive */}
-            <div className="absolute -top-6 -left-6 sm:-top-8 sm:-left-8 w-12 h-12 sm:w-16 sm:h-16 bg-[#c0a146]/20 rounded-full blur-2xl animate-pulse" />
+            <div className="absolute -top-6 -left-6 sm:-top-8 sm:-left-8 w-12 h-12 sm:w-16 sm:h-16 bg-[#e1a200]/20 rounded-full blur-2xl animate-pulse" />
             <div className="absolute -bottom-6 -right-6 sm:-bottom-8 sm:-right-8 w-16 h-16 sm:w-20 sm:h-20 bg-primary/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
 
             {featuredStores.length === 0 ? (
@@ -247,8 +247,8 @@ export default function FeaturedStoresSection() {
                     size="lg"
                     className={cn(
                       "group h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                      "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
                       "hover:scale-105 active:scale-95"
                     )}
                   >
@@ -277,12 +277,12 @@ export default function FeaturedStoresSection() {
                     )}
                   >
                     {/* Glow effect on hover */}
-                    <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#c0a146]/20 via-transparent to-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     {/* Featured badge for middle card */}
                     {index === 1 && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                        <Badge className="bg-gradient-to-r from-[#c0a146] to-[#d4b55e] text-white shadow-lg px-3 py-1">
+                        <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white shadow-lg px-3 py-1">
                           <Star className="w-3 h-3 mr-1 fill-current" />
                           <span className="text-xs sm:text-sm font-semibold">Featured</span>
                         </Badge>
@@ -290,7 +290,7 @@ export default function FeaturedStoresSection() {
                     )}
 
                     {/* Enhanced store card wrapper */}
-                    <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl p-1 transition-all duration-300 group-hover:from-card/90 group-hover:to-card/60 group-hover:border-[#c0a146]/30 group-hover:shadow-2xl group-hover:shadow-[#c0a146]/10 hover:scale-[1.02] sm:hover:scale-105">
+                    <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl p-1 transition-all duration-300 group-hover:from-card/90 group-hover:to-card/60 group-hover:border-[#e1a200]/30 group-hover:shadow-2xl group-hover:shadow-[#e1a200]/10 hover:scale-[1.02] sm:hover:scale-105">
                       <StoreCard store={store} />
                     </div>
 
@@ -328,15 +328,15 @@ export default function FeaturedStoresSection() {
             {/* Decorative elements */}
             <div className="flex items-center gap-4 w-full max-w-md">
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-border" />
-              <div className="p-2 sm:p-2.5 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 shadow-lg">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#c0a146]" />
+              <div className="p-2 sm:p-2.5 rounded-full bg-gradient-to-br from-[#e1a200]/20 to-primary/20 shadow-lg">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#e1a200]" />
               </div>
               <div className="flex-1 h-px bg-gradient-to-r from-border via-border to-transparent" />
             </div>
 
             {/* CTA Content */}
             <div className="text-center space-y-4 sm:space-y-5 max-w-2xl px-4">
-              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground via-[#c0a146] to-foreground bg-clip-text text-transparent">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground via-[#e1a200] to-foreground bg-clip-text text-transparent">
                 Ready to Join These Success Stories?
               </h3>
               <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
@@ -366,8 +366,8 @@ export default function FeaturedStoresSection() {
                     size="lg"
                     className={cn(
                       "group w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#c0a146]/50",
-                      "hover:bg-muted/50 hover:shadow-lg hover:shadow-[#c0a146]/10",
+                      "bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50",
+                      "hover:bg-muted/50 hover:shadow-lg hover:shadow-[#e1a200]/10",
                       "hover:scale-105 active:scale-95"
                     )}
                   >
@@ -382,8 +382,8 @@ export default function FeaturedStoresSection() {
                     size="lg"
                     className={cn(
                       "group w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold transition-all duration-300",
-                      "bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#c0a146]/30",
+                      "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
+                      "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
                       "hover:scale-105 active:scale-95"
                     )}
                   >
