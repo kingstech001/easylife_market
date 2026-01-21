@@ -106,7 +106,7 @@ export async function GET(
 
     // Fetch products and total count - use any type for lean() results
     const [products, totalCount]: [any[], number] = await Promise.all([
-      Product.find(filter).populate("categoryId", "name").sort(sort).skip(skip).limit(limit).lean(),
+      Product.find(filter).sort(sort).skip(skip).limit(limit).lean(),
       Product.countDocuments(filter),
     ])
 

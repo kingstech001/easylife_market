@@ -16,6 +16,7 @@ type Product = {
   inventory_quantity: number;
   images: { id: string; url: string; alt_text: string | null }[];
   store_id: string;
+  store_slug?: string; // ✅ Add store slug
   created_at: string;
   updated_at: string;
 };
@@ -91,26 +92,39 @@ export default function ProductsPage() {
             }];
           }
 
+          // Extract store information
+          const storeId = typeof p.storeId === 'string' ? p.storeId : p.storeId?._id || '';
+          const storeSlug = typeof p.storeId === 'object' && p.storeId?.slug ? p.storeId.slug : '';
+
+          if (!storeSlug) {
+            console.warn('⚠️ Product missing store slug:', p.name, p._id);
+          }
+
           return {
             id: p._id,
             name: p.name,
             description: p.description || null,
             price: p.price,
             compare_at_price: p.compareAtPrice || p.compare_at_price || null,
-            inventory_quantity: p.inventoryQuantity ?? p.inventory_quantity ?? 0, // ✅ Handle both field names
+            inventory_quantity: p.inventoryQuantity ?? p.inventory_quantity ?? 0,
             images: productImages.map((img: any) => ({
               id: img.id || img._id?.toString() || '',
               url: img.url || '',
               alt_text: img.alt_text || img.altText || null,
             })),
-            store_id: typeof p.storeId === 'string' ? p.storeId : p.storeId?._id || '',
+            store_id: storeId,
+            store_slug: storeSlug, // ✅ Store slug for product links
             created_at: p.createdAt || p.created_at || new Date().toISOString(),
             updated_at: p.updatedAt || p.updated_at || new Date().toISOString(),
           };
         });
 
         console.log('✅ Transformed products:', transformedProducts.length);
-        console.log('📦 Sample product inventory:', transformedProducts[0]?.inventory_quantity);
+        console.log('📦 Sample product:', {
+          name: transformedProducts[0]?.name,
+          inventory: transformedProducts[0]?.inventory_quantity,
+          storeSlug: transformedProducts[0]?.store_slug
+        });
 
         setProducts(transformedProducts);
 
@@ -307,7 +321,7 @@ export default function ProductsPage() {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      storeSlug="" // You'll need to get this from your API if needed
+                      storeSlug={product.store_slug || ""} // ✅ Use extracted store slug
                     />
                   ))}
                 </div>

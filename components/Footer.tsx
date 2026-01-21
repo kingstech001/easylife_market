@@ -98,7 +98,7 @@ export function ModernFooter() {
             <div className="lg:col-span-4 space-y-5 sm:space-y-6">
               <div className="space-y-4">
                 <Link href="/" className="inline-flex items-center group">
-                  <Image alt="" src={"/logo.png"} width={40} height={40} />
+                  <Image alt="" src={"/logo.png"} width={70} height={70} />
                   <div className="">
                     <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
                       EasyLife

@@ -489,7 +489,7 @@ export function SiteHeader() {
                   Stores
                 </Link>
                 <Link
-                  href="/allStoreProducts"
+                  href="#"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
                 >
