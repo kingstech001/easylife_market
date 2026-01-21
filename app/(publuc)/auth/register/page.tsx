@@ -1,33 +1,68 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { z } from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Eye, EyeOff, Mail, Lock, User, ShoppingBag, Store } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import Image from "next/image"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Loader2,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  ShoppingBag,
+  Store,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import Image from "next/image";
 
 const registerSchema = z
   .object({
-    firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
-    lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
+    firstName: z
+      .string()
+      .min(2, { message: "First name must be at least 2 characters." }),
+    lastName: z
+      .string()
+      .min(2, { message: "Last name must be at least 2 characters." }),
     email: z.string().email({ message: "Please enter a valid email address." }),
     password: z
       .string()
       .min(8, { message: "Password must be at least 8 characters." })
-      .refine((val) => /[a-z]/.test(val), { message: "Password must contain at least one lowercase letter." })
-      .refine((val) => /[A-Z]/.test(val), { message: "Password must contain at least one uppercase letter." })
-      .refine((val) => /\d/.test(val), { message: "Password must contain at least one number." })
-      .refine((val) => /[^\w\s]/.test(val), { message: "Password must contain at least one special character." }),
+      .refine((val) => /[a-z]/.test(val), {
+        message: "Password must contain at least one lowercase letter.",
+      })
+      .refine((val) => /[A-Z]/.test(val), {
+        message: "Password must contain at least one uppercase letter.",
+      })
+      .refine((val) => /\d/.test(val), {
+        message: "Password must contain at least one number.",
+      })
+      .refine((val) => /[^\w\s]/.test(val), {
+        message: "Password must contain at least one special character.",
+      }),
     confirmPassword: z.string(),
     role: z.enum(["buyer", "seller"], {
       message: "Please select a role.",
@@ -36,15 +71,15 @@ const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
     path: ["confirmPassword"],
-  })
+  });
 
-type RegisterFormValues = z.infer<typeof registerSchema>
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -56,10 +91,10 @@ export default function RegisterPage() {
       confirmPassword: "",
       role: "buyer",
     },
-  })
+  });
 
   async function onSubmit(data: RegisterFormValues) {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const res = await fetch("/api/auth/signup", {
@@ -68,26 +103,26 @@ export default function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
-      })
+      });
 
-      const response = await res.json()
+      const response = await res.json();
 
       if (!res.ok) {
-        toast.error(response.message || "Something went wrong.")
-        return
+        toast.error(response.message || "Something went wrong.");
+        return;
       }
 
       toast.success("Registration successful", {
         description: "Please check your email for verification code.",
-      })
+      });
 
-      router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`)
+      router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (err) {
       toast.error("An error occurred while registering.", {
         description: "Please try again later.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -96,7 +131,10 @@ export default function RegisterPage() {
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-[20%] right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-[20%] right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
       </div>
 
       <Card className="w-full max-w-md border-border/50 shadow-xl relative z-10">
@@ -111,7 +149,7 @@ export default function RegisterPage() {
                 <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
               </div>
             </div> */}
-            <Image src={'/logo.png'} alt="logo" width={100} height={100} />
+            <Image src={"/logo.png"} alt="logo" width={100} height={100} />
           </div>
 
           {/* Title */}
@@ -141,7 +179,7 @@ export default function RegisterPage() {
                             placeholder="John"
                             {...field}
                             disabled={isLoading}
-                            className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                            className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                           />
                         </div>
                       </FormControl>
@@ -163,7 +201,7 @@ export default function RegisterPage() {
                             placeholder="Doe"
                             {...field}
                             disabled={isLoading}
-                            className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                            className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                           />
                         </div>
                       </FormControl>
@@ -188,7 +226,7 @@ export default function RegisterPage() {
                           placeholder="name@example.com"
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
                       </div>
                     </FormControl>
@@ -212,7 +250,7 @@ export default function RegisterPage() {
                           placeholder="Create a password"
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 pr-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
                         <Button
                           type="button"
@@ -231,7 +269,8 @@ export default function RegisterPage() {
                       </div>
                     </FormControl>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Min 8 characters with uppercase, lowercase, number & special character
+                      Min 8 characters with uppercase, lowercase, number &
+                      special character
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -253,14 +292,16 @@ export default function RegisterPage() {
                           placeholder="Confirm your password"
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 pr-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
                           disabled={isLoading}
                         >
                           {showConfirmPassword ? (
@@ -281,45 +322,44 @@ export default function RegisterPage() {
                 control={form.control}
                 name="role"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex items-center gap-6">
                     <FormLabel>I want to register as:</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="grid grid-cols-2 gap-3"
+                        value={field.value}
+                        className="flex gap-6 items-center !m-0"
                         disabled={isLoading}
                       >
-                        <FormItem>
-                          <FormControl>
-                            <RadioGroupItem value="buyer" id="buyer" className="sr-only" />
-                          </FormControl>
+                        {/* Buyer */}
+                        {/* <div className="flex items-center space-x-2 gap-1">
+                          <RadioGroupItem
+                            value="buyer"
+                            id="buyer"
+                            className="border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200] data-[state=unchecked]:bg-white data-[state=unchecked]:border-border"
+                          />
                           <FormLabel
                             htmlFor="buyer"
-                            className={cn(
-                              "flex flex-col items-center justify-center rounded-lg border-2 border-border/50 bg-card p-3 hover:bg-accent hover:border-[#c0a146]/30 cursor-pointer transition-all duration-200",
-                              field.value === "buyer" && "border-[#c0a146] bg-[#c0a146]/5"
-                            )}
+                            className="font-normal cursor-pointer !m-0"
                           >
-                            <ShoppingBag className="h-5 w-5 text-[#c0a146] mb-2" />
-                            <span className="text-sm font-medium">Buyer</span>
+                            Buyer
                           </FormLabel>
-                        </FormItem>
-                        <FormItem>
-                          <FormControl>
-                            <RadioGroupItem value="seller" id="seller" className="sr-only" />
-                          </FormControl>
+                        </div> */}
+
+                        {/* Seller */}
+                        <div className="flex items-center space-x-2 gap-1">
+                          <RadioGroupItem
+                            value="seller"
+                            id="seller"
+                            className="border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200] data-[state=unchecked]:bg-white data-[state=unchecked]:border-border"
+                          />
                           <FormLabel
                             htmlFor="seller"
-                            className={cn(
-                              "flex flex-col items-center justify-center rounded-lg border-2 border-border/50 bg-card p-3 hover:bg-accent hover:border-[#c0a146]/30 cursor-pointer transition-all duration-200",
-                              field.value === "seller" && "border-[#c0a146] bg-[#c0a146]/5"
-                            )}
+                            className="font-normal cursor-pointer !m-0"
                           >
-                            <Store className="h-5 w-5 text-[#c0a146] mb-2" />
-                            <span className="text-sm font-medium">Seller</span>
+                            Seller
                           </FormLabel>
-                        </FormItem>
+                        </div>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -366,7 +406,7 @@ export default function RegisterPage() {
           <Link href="/auth/login" className="w-full">
             <Button
               variant="outline"
-              className="w-full h-11 border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] transition-all duration-300"
+              className="w-full h-11 border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200] transition-all duration-300"
               disabled={isLoading}
             >
               Sign In Instead
@@ -375,5 +415,5 @@ export default function RegisterPage() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

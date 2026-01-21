@@ -13,7 +13,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   const links = [
     { href: "/", label: "Home" },
     { href: "/stores", label: "Stores" },
-    { href: "/allStoreProducts", label: "products" },
+    { href: "#", label: "products" },
     { href: "/about", label: "About" },
   ]
 

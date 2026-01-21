@@ -60,7 +60,7 @@ export default function AboutPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e1a200]/10 border border-[#e1a200]/20 mb-6">
               <Sparkles className="h-4 w-4 text-[#e1a200]" />
-              <span className="text-sm font-medium text-[#e1a200]">About EasyLife Market</span>
+              <span className="text-sm font-medium text-[#e1a200]">About EasyLife</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">

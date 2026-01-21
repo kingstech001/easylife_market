@@ -117,7 +117,7 @@ export default function LoginPage() {
                           placeholder="name@example.com"
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
                       </div>
                     </FormControl>
@@ -141,7 +141,7 @@ export default function LoginPage() {
                           placeholder="Enter your password"
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 pr-10 h-11 border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
                         <Button
                           type="button"
@@ -227,7 +227,7 @@ export default function LoginPage() {
           <Link href="/auth/register" className="w-full">
             <Button
               variant="outline"
-              className="w-full h-11 border-border/50 hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] transition-all duration-300"
+              className="w-full h-11 border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200] transition-all duration-300"
               disabled={isLoading}
             >
               Create an Account

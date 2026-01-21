@@ -23,7 +23,53 @@ interface StoreCardProps {
 
 export function StoreCard({ store }: StoreCardProps) {
   return (
-    <Link href={`/stores/${store.slug}`} className="block h-full">
+    // <Link href={`/stores/${store.slug}`} className="block h-full">
+    //   <Card className="relative h-full flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:border-primary/50 group">
+
+    //     {/* Banner */}
+    //     <div className="relative w-full h-40 bg-muted overflow-hidden">
+    //       {store.banner_url ? (
+    //         <Image
+    //           src={store.banner_url}
+    //           alt={`${store.name} banner`}
+    //           fill
+    //           className="object-cover transition-transform duration-500 group-hover:scale-105"
+    //         />
+    //       ) : (
+    //         <div className="flex items-center justify-center h-full text-muted-foreground/60 text-sm">
+    //           No Banner Image
+    //         </div>
+    //       )}
+    //       {!store.isPublished && (
+    //         <Badge className="absolute top-2 right-2 bg-red-500 text-white">
+    //           Draft
+    //         </Badge>
+    //       )}
+    //     </div>
+
+    //     {/* Logo */}
+    //     {store.logo_url && (
+    //       <div className="absolute z-20 top-28 left-4 w-20 h-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden">
+    //         <Image
+    //           src={store.logo_url}
+    //           alt={`${store.name} logo`}
+    //           fill
+    //           className="object-cover"
+    //         />
+    //       </div>
+    //     )}
+
+    //     {/* Store Info */}
+    //     <CardHeader className="pt-10 pb-4">
+    //       <CardTitle className="text-xl font-bold truncate">{store.name}</CardTitle>
+    //       <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+    //         {store.description || "No description available."}
+    //       </CardDescription>
+    //     </CardHeader>
+
+    //   </Card>
+    // </Link>
+     <Link href="#" className="block h-full">
       <Card className="relative h-full flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:border-primary/50 group">
 
         {/* Banner */}

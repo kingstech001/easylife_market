@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold">Forgot Password?</CardTitle>
-            <div className="w-10 h-10 bg-gradient-to-br from-[#c0a146] to-[#d4b55e] rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#e1a200] to-[#e1a200] rounded-lg flex items-center justify-center">
               <Mail className="h-5 w-5 text-white" />
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
           <CardFooter className="flex flex-col space-y-3">
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300"
+              className="w-full bg-[#e1a200] transition-all duration-300"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -150,7 +150,7 @@ export default function ForgotPasswordPage() {
               )}
             </Button>
             <Link href="/auth/login" className="w-full">
-              <Button variant="ghost" className="w-full hover:text-[#c0a146]">
+              <Button variant="ghost" className="w-full hover:text-[#e1a200]">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Login
               </Button>
