@@ -405,7 +405,7 @@ export default function CreateStorePage() {
                               <StoreIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Input
                                 placeholder="e.g., Fashion Hub"
-                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:ring-2 focus:ring-[#c0a146]/20 focus:border-[#c0a146] transition-colors"
                                 {...field}
                               />
                             </div>
@@ -464,7 +464,7 @@ export default function CreateStorePage() {
                               <MapPin className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Input
                                 placeholder="123 Main St, City"
-                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                                 {...field}
                               />
                             </div>
@@ -490,7 +490,7 @@ export default function CreateStorePage() {
                               <FileText className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Textarea
                                 placeholder="Tell customers what makes your store special..."
-                                className="pl-10 sm:pl-11 min-h-[120px] sm:min-h-[140px] text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors resize-none"
+                                className="pl-10 sm:pl-11 min-h-[120px] sm:min-h-[140px] text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors resize-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                                 {...field}
                               />
                             </div>
@@ -517,7 +517,7 @@ export default function CreateStorePage() {
                               <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Input
                                 placeholder="Electronics, Fashion"
-                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
                                 {...field}
                               />
                             </div>
