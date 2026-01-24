@@ -92,7 +92,7 @@ export default function CreateStorePage() {
 
         if (savedDraft) {
           const draftData = JSON.parse(savedDraft);
-          
+
           Object.keys(draftData).forEach((key) => {
             form.setValue(key as keyof StoreFormValues, draftData[key]);
           });
@@ -124,7 +124,7 @@ export default function CreateStorePage() {
           JSON.stringify({
             logo: logoPreview,
             banner: bannerPreview,
-          })
+          }),
         );
       } catch (error) {
         console.error("Failed to save draft:", error);
@@ -184,7 +184,7 @@ export default function CreateStorePage() {
         setLogoPreview(result);
         localStorage.setItem(
           PREVIEW_STORAGE_KEY,
-          JSON.stringify({ logo: result, banner: bannerPreview })
+          JSON.stringify({ logo: result, banner: bannerPreview }),
         );
         toast.success("Logo uploaded successfully");
       };
@@ -213,7 +213,7 @@ export default function CreateStorePage() {
         setBannerPreview(result);
         localStorage.setItem(
           PREVIEW_STORAGE_KEY,
-          JSON.stringify({ logo: logoPreview, banner: result })
+          JSON.stringify({ logo: logoPreview, banner: result }),
         );
         toast.success("Banner uploaded successfully");
       };
@@ -251,7 +251,7 @@ export default function CreateStorePage() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const categoriesArray = data.categories
         ? data.categories
@@ -276,7 +276,8 @@ export default function CreateStorePage() {
 
       if (!res.ok) {
         toast.error("Failed to create store", {
-          description: result.message || "Unable to create your store. Please try again.",
+          description:
+            result.message || "Unable to create your store. Please try again.",
         });
         return;
       }
@@ -302,7 +303,7 @@ export default function CreateStorePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-6 sm:py-8 px-3 sm:px-4 lg:px-8">
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#c0a146]/10 rounded-full blur-3xl" />
@@ -312,49 +313,54 @@ export default function CreateStorePage() {
 
       <div className="relative max-w-5xl mx-auto">
         {/* Header Section */}
-        <AnimatedContainer animation="fadeIn" className="mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4">
+        <AnimatedContainer animation="fadeIn" className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="flex items-center gap-3 sm:gap-4">
               <div className="relative">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#c0a146] to-[#d4b55e] flex items-center justify-center shadow-xl">
-                  <StoreIcon className="h-8 w-8 text-white" />
+                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#c0a146] to-[#d4b55e] flex items-center justify-center shadow-xl">
+                  <StoreIcon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-emerald-500 rounded-full border-4 border-background" />
+                <div className="absolute -bottom-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 bg-emerald-500 rounded-full border-2 sm:border-4 border-background" />
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   Create Your Store
                 </h1>
-                <p className="text-muted-foreground mt-1 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#c0a146]" />
-                  Build your online presence in minutes
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-[#c0a146]" />
+                  Build your online presence
                 </p>
               </div>
             </div>
-            
+
             {hasDraft && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={clearDraft}
-                className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm border-destructive/50 text-destructive hover:bg-destructive/10 h-9 px-3 sm:px-4"
               >
-                <RotateCcw className="h-4 w-4" />
-                Clear Draft
+                <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Clear Draft</span>
+                <span className="xs:hidden">Clear</span>
               </Button>
             )}
           </div>
 
           {hasDraft && (
             <Card className="border-[#c0a146]/30 bg-gradient-to-r from-[#c0a146]/5 to-transparent">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[#c0a146]/20 flex items-center justify-center">
-                    <Check className="h-5 w-5 text-[#c0a146]" />
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-[#c0a146]/20 flex items-center justify-center flex-shrink-0">
+                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-[#c0a146]" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm">Draft Saved</p>
-                    <p className="text-xs text-muted-foreground">Your progress is automatically saved</p>
+                    <p className="font-medium text-xs sm:text-sm">
+                      Draft Saved
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      Your progress is automatically saved
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -363,39 +369,50 @@ export default function CreateStorePage() {
         </AnimatedContainer>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 sm:space-y-6"
+          >
             {/* Store Information Card */}
             <AnimatedContainer animation="slideUp" delay={0.1}>
               <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-5 w-5 text-primary" />
+                <CardContent className="p-4 sm:p-6 lg:p-8">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold">Store Information</h2>
-                      <p className="text-sm text-muted-foreground">Essential details about your business</p>
+                      <h2 className="text-lg sm:text-xl font-semibold">
+                        Store Information
+                      </h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">
+                        Essential details about your business
+                      </p>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Store Name</FormLabel>
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Store Name
+                          </FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <StoreIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                              <Input 
-                                placeholder="e.g., Fashion Hub, Tech Store" 
-                                className="pl-11 h-12 text-base border-border/50 focus:border-[#c0a146] transition-colors"
-                                {...field} 
+                              <StoreIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                              <Input
+                                placeholder="e.g., Fashion Hub"
+                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                {...field}
                               />
                             </div>
                           </FormControl>
-                          <FormDescription>Choose a memorable name for your customers</FormDescription>
+                          <FormDescription className="text-xs sm:text-sm">
+                            Choose a memorable name for your customers
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -406,22 +423,29 @@ export default function CreateStorePage() {
                       name="slug"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Store URL</FormLabel>
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Store URL
+                          </FormLabel>
                           <FormControl>
                             <div className="flex items-stretch overflow-hidden rounded-lg border border-border/50 focus-within:border-[#c0a146] focus-within:ring-2 focus-within:ring-[#c0a146]/20 transition-all">
-                              <div className="flex items-center px-4 bg-muted/50 border-r">
-                                <Link2 className="h-4 w-4 text-muted-foreground mr-2" />
-                                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                              <div className="flex items-center px-2 sm:px-4 bg-muted/50 border-r">
+                                <Link2 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground mr-1 sm:mr-2 flex-shrink-0" />
+                                <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap hidden xs:inline">
                                   shopbuilder.com/stores/
                                 </span>
+                                <span className="text-xs text-muted-foreground xs:hidden">
+                                  .../
+                                </span>
                               </div>
-                              <Input 
-                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-12 text-base"
-                                {...field} 
+                              <Input
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-11 sm:h-12 text-sm sm:text-base"
+                                {...field}
                               />
                             </div>
                           </FormControl>
-                          <FormDescription>Your unique store address</FormDescription>
+                          <FormDescription className="text-xs sm:text-sm">
+                            Your unique store address
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -432,18 +456,22 @@ export default function CreateStorePage() {
                       name="location"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Store Address</FormLabel>
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Store Address
+                          </FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <MapPin className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                              <MapPin className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Input
-                                placeholder="123 Main Street, City, Country"
-                                className="pl-11 h-12 text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                placeholder="123 Main St, City"
+                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors"
                                 {...field}
                               />
                             </div>
                           </FormControl>
-                          <FormDescription>Your physical business location</FormDescription>
+                          <FormDescription className="text-xs sm:text-sm">
+                            Your physical business location
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -454,19 +482,22 @@ export default function CreateStorePage() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Store Description</FormLabel>
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Store Description
+                          </FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <FileText className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                              <FileText className="absolute left-3 top-3 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Textarea
-                                placeholder="Tell your customers what makes your store special..."
-                                className="pl-11 min-h-[140px] text-base border-border/50 focus:border-[#c0a146] transition-colors resize-none"
+                                placeholder="Tell customers what makes your store special..."
+                                className="pl-10 sm:pl-11 min-h-[120px] sm:min-h-[140px] text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors resize-none"
                                 {...field}
                               />
                             </div>
                           </FormControl>
-                          <FormDescription>
-                            A compelling description helps customers understand your brand
+                          <FormDescription className="text-xs sm:text-sm hidden sm:block">
+                            A compelling description helps customers understand
+                            your brand
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -478,19 +509,21 @@ export default function CreateStorePage() {
                       name="categories"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Product Categories</FormLabel>
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Product Categories
+                          </FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               <Input
-                                placeholder="Electronics, Fashion, Home & Garden"
-                                className="pl-11 h-12 text-base border-border/50 focus:border-[#c0a146] transition-colors"
+                                placeholder="Electronics, Fashion"
+                                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-[#c0a146] transition-colors"
                                 {...field}
                               />
                             </div>
                           </FormControl>
-                          <FormDescription>
-                            Separate multiple categories with commas
+                          <FormDescription className="text-xs sm:text-sm">
+                            Separate with commas
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -504,28 +537,34 @@ export default function CreateStorePage() {
             {/* Store Branding Card */}
             <AnimatedContainer animation="slideUp" delay={0.2}>
               <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
-                <CardContent className="p-6 sm:p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <ImageIcon className="h-5 w-5 text-primary" />
+                <CardContent className="p-4 sm:p-6 lg:p-8">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold">Visual Identity</h2>
-                      <p className="text-sm text-muted-foreground">Make your store recognizable</p>
+                      <h2 className="text-lg sm:text-xl font-semibold">
+                        Visual Identity
+                      </h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">
+                        Make your store recognizable
+                      </p>
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-8">
+                  <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
                     {/* Logo Upload */}
                     <FormField
                       control={form.control}
                       name="logo_url"
                       render={() => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Store Logo</FormLabel>
-                          <div className="space-y-4">
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Store Logo
+                          </FormLabel>
+                          <div className="space-y-3 sm:space-y-4">
                             <div className="relative group">
-                              <div className="h-40 w-40 mx-auto rounded-2xl border-2 border-dashed border-border/50 bg-muted/30 overflow-hidden flex items-center justify-center transition-all group-hover:border-[#c0a146]/50">
+                              <div className="h-32 w-32 sm:h-40 sm:w-40 mx-auto rounded-xl sm:rounded-2xl border-2 border-dashed border-border/50 bg-muted/30 overflow-hidden flex items-center justify-center transition-all group-hover:border-[#c0a146]/50">
                                 {logoPreview ? (
                                   <>
                                     <img
@@ -537,20 +576,22 @@ export default function CreateStorePage() {
                                       type="button"
                                       size="icon"
                                       variant="destructive"
-                                      className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      className="absolute top-2 right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                       onClick={() => {
                                         setLogoPreview(null);
                                         form.setValue("logo_url", "");
                                         toast.success("Logo removed");
                                       }}
                                     >
-                                      <X className="h-4 w-4" />
+                                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </Button>
                                   </>
                                 ) : (
-                                  <div className="text-center p-4">
-                                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                    <p className="text-xs text-muted-foreground">Click to upload</p>
+                                  <div className="text-center p-3 sm:p-4">
+                                    <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mx-auto mb-1 sm:mb-2" />
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                      Click to upload
+                                    </p>
                                   </div>
                                 )}
                               </div>
@@ -558,10 +599,12 @@ export default function CreateStorePage() {
                             <Button
                               variant="outline"
                               type="button"
-                              className="w-full h-11 border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 transition-colors"
-                              onClick={() => document.getElementById("logo-upload")?.click()}
+                              className="w-full h-10 sm:h-11 text-sm border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 transition-colors"
+                              onClick={() =>
+                                document.getElementById("logo-upload")?.click()
+                              }
                             >
-                              <Upload className="mr-2 h-4 w-4" />
+                              <Upload className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                               {logoPreview ? "Change Logo" : "Upload Logo"}
                             </Button>
                             <input
@@ -571,8 +614,13 @@ export default function CreateStorePage() {
                               className="hidden"
                               onChange={handleLogoUpload}
                             />
-                            <p className="text-xs text-muted-foreground text-center">
-                              Recommended: 200×200px, PNG or JPG (Max 5MB)
+                            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+                              <span className="hidden sm:inline">
+                                Recommended: 200×200px, PNG or JPG (Max 5MB)
+                              </span>
+                              <span className="sm:hidden">
+                                PNG/JPG, Max 5MB
+                              </span>
                             </p>
                           </div>
                         </FormItem>
@@ -585,10 +633,12 @@ export default function CreateStorePage() {
                       name="banner_url"
                       render={() => (
                         <FormItem>
-                          <FormLabel className="text-base font-medium">Store Banner</FormLabel>
-                          <div className="space-y-4">
+                          <FormLabel className="text-sm sm:text-base font-medium">
+                            Store Banner
+                          </FormLabel>
+                          <div className="space-y-3 sm:space-y-4">
                             <div className="relative group">
-                              <div className="aspect-[2/1] w-full rounded-xl border-2 border-dashed border-border/50 bg-muted/30 overflow-hidden flex items-center justify-center transition-all group-hover:border-[#c0a146]/50">
+                              <div className="aspect-[2/1] w-full rounded-lg sm:rounded-xl border-2 border-dashed border-border/50 bg-muted/30 overflow-hidden flex items-center justify-center transition-all group-hover:border-[#c0a146]/50">
                                 {bannerPreview ? (
                                   <>
                                     <img
@@ -600,20 +650,22 @@ export default function CreateStorePage() {
                                       type="button"
                                       size="icon"
                                       variant="destructive"
-                                      className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      className="absolute top-2 right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                       onClick={() => {
                                         setBannerPreview(null);
                                         form.setValue("banner_url", "");
                                         toast.success("Banner removed");
                                       }}
                                     >
-                                      <X className="h-4 w-4" />
+                                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </Button>
                                   </>
                                 ) : (
-                                  <div className="text-center p-4">
-                                    <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                    <p className="text-xs text-muted-foreground">Click to upload</p>
+                                  <div className="text-center p-3 sm:p-4">
+                                    <ImageIcon className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mx-auto mb-1 sm:mb-2" />
+                                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                      Click to upload
+                                    </p>
                                   </div>
                                 )}
                               </div>
@@ -621,11 +673,17 @@ export default function CreateStorePage() {
                             <Button
                               variant="outline"
                               type="button"
-                              className="w-full h-11 border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 transition-colors"
-                              onClick={() => document.getElementById("banner-upload")?.click()}
+                              className="w-full h-10 sm:h-11 text-sm border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 transition-colors"
+                              onClick={() =>
+                                document
+                                  .getElementById("banner-upload")
+                                  ?.click()
+                              }
                             >
-                              <Upload className="mr-2 h-4 w-4" />
-                              {bannerPreview ? "Change Banner" : "Upload Banner"}
+                              <Upload className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              {bannerPreview
+                                ? "Change Banner"
+                                : "Upload Banner"}
                             </Button>
                             <input
                               id="banner-upload"
@@ -634,8 +692,13 @@ export default function CreateStorePage() {
                               className="hidden"
                               onChange={handleBannerUpload}
                             />
-                            <p className="text-xs text-muted-foreground text-center">
-                              Recommended: 1200x600px, PNG or JPG (Max 5MB)
+                            <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+                              <span className="hidden sm:inline">
+                                Recommended: 1200x600px, PNG or JPG (Max 5MB)
+                              </span>
+                              <span className="sm:hidden">
+                                PNG/JPG, Max 5MB
+                              </span>
                             </p>
                           </div>
                         </FormItem>
@@ -649,31 +712,38 @@ export default function CreateStorePage() {
             {/* Submit Section */}
             <AnimatedContainer animation="fadeIn" delay={0.3}>
               <Card className="border-[#c0a146]/30 shadow-xl backdrop-blur-sm bg-gradient-to-br from-card/95 to-card/80">
-                <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center">
-                        <Check className="h-6 w-6 text-emerald-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="font-semibold">Ready to Launch</p>
-                        <p className="text-sm text-muted-foreground">Your store setup is complete</p>
+                        <p className="font-semibold text-sm sm:text-base">
+                          Ready to Launch
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Your store setup is complete
+                        </p>
                       </div>
                     </div>
                     <Button
                       type="submit"
                       disabled={isSubmitting}
                       size="lg"
-                      className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] text-white shadow-lg hover:shadow-xl transition-all duration-300"
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Creating Store...
+                          <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                          <span className="hidden xs:inline">
+                            Creating Store...
+                          </span>
+                          <span className="xs:hidden">Creating...</span>
                         </>
                       ) : (
                         <>
-                          <StoreIcon className="mr-2 h-5 w-5" />
+                          <StoreIcon className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                           Create Store
                         </>
                       )}
