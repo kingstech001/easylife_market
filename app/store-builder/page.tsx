@@ -439,10 +439,10 @@ export default function StoreBuilderPage() {
         <div className="absolute top-6 left-0 right-0 px-4 md:px-8 flex justify-between items-center z-20">
           <Button
             variant="outline"
-            onClick={() => router.push("/dashboard/seller")}
+            onClick={() => router.push("/create-store")}
             className="backdrop-blur-md bg-background/90 hover:bg-background shadow-lg border h-11"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
           </Button>
           <Button
             onClick={publishStore}
