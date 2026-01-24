@@ -89,7 +89,7 @@ export default function RegisterPage() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "buyer",
+      role: "seller",
     },
   });
 
@@ -130,26 +130,18 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/10 to-background p-4">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-[#c0a146]/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-[#e1a200]/5 rounded-full blur-3xl animate-pulse" />
         <div
           className="absolute bottom-[20%] right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
         />
       </div>
 
-      <Card className="w-full max-w-md border-border/50 shadow-xl relative z-10">
-        <CardHeader className="space-y-4 text-center">
+      <Card className="w-full max-w-md border-none shadow-none p-0 relative z-10 bg-transparent space-y-4">
+        <CardHeader className="space-y-4 text-center p-0">
           {/* Logo */}
-          <div className="mx-auto">
-            {/* <div className="relative inline-block">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#c0a146] to-[#d4b55e] rounded-xl flex items-center justify-center shadow-lg">
-                <ShoppingBag className="h-8 w-8 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1">
-                <div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
-              </div>
-            </div> */}
-            <Image src={"/logo.png"} alt="logo" width={100} height={100} />
+          <div className="mx-auto drop-shadow-md">
+            <Image src={"/logo.png"} alt="logo" width={100} height={100}/>
           </div>
 
           {/* Title */}
@@ -161,26 +153,28 @@ export default function RegisterPage() {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {/* First and Last Name */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                    <FormItem className="relative">
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                           <Input
-                            placeholder="John"
+                            placeholder=" "
                             {...field}
                             disabled={isLoading}
-                            className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
+                            className="peer pl-10 pr-4 h-14 pt-4 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                           />
+                          <FormLabel className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-muted-foreground">
+                            First Name
+                          </FormLabel>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -192,17 +186,19 @@ export default function RegisterPage() {
                   control={form.control}
                   name="lastName"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                    <FormItem className="relative">
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                           <Input
-                            placeholder="Doe"
+                            placeholder=" "
                             {...field}
                             disabled={isLoading}
-                            className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
+                            className="peer pl-10 pr-4 h-14 pt-4 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                           />
+                          <FormLabel className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-muted-foreground">
+                            Last Name
+                          </FormLabel>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -216,18 +212,20 @@ export default function RegisterPage() {
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                  <FormItem className="relative">
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                           type="email"
-                          placeholder="name@example.com"
+                          placeholder=" "
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
+                          className="peer pl-10 pr-4 h-14 pt-4 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
+                        <FormLabel className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-muted-foreground">
+                          Email Address
+                        </FormLabel>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -240,23 +238,25 @@ export default function RegisterPage() {
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
+                  <FormItem className="relative">
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Create a password"
+                          placeholder=" "
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
+                          className="peer pl-10 pr-12 h-14 pt-4 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
+                        <FormLabel className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-muted-foreground">
+                          Password
+                        </FormLabel>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent z-10"
                           onClick={() => setShowPassword(!showPassword)}
                           disabled={isLoading}
                         >
@@ -282,23 +282,25 @@ export default function RegisterPage() {
                 control={form.control}
                 name="confirmPassword"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                  <FormItem className="relative">
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm your password"
+                          placeholder=" "
                           {...field}
                           disabled={isLoading}
-                          className="pl-10 pr-10 h-11 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
+                          className="peer pl-10 pr-12 h-14 pt-4 outline-none ring-0 focus:border-1 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-border/50 focus:border-[#e1a200]/50"
                         />
+                        <FormLabel className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-muted-foreground">
+                          Confirm Password
+                        </FormLabel>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-transparent z-10"
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
@@ -331,21 +333,6 @@ export default function RegisterPage() {
                         className="flex gap-6 items-center !m-0"
                         disabled={isLoading}
                       >
-                        {/* Buyer */}
-                        {/* <div className="flex items-center space-x-2 gap-1">
-                          <RadioGroupItem
-                            value="buyer"
-                            id="buyer"
-                            className="border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200] data-[state=unchecked]:bg-white data-[state=unchecked]:border-border"
-                          />
-                          <FormLabel
-                            htmlFor="buyer"
-                            className="font-normal cursor-pointer !m-0"
-                          >
-                            Buyer
-                          </FormLabel>
-                        </div> */}
-
                         {/* Seller */}
                         <div className="flex items-center space-x-2 gap-1">
                           <RadioGroupItem
@@ -360,6 +347,20 @@ export default function RegisterPage() {
                             Seller
                           </FormLabel>
                         </div>
+                        {/* Buyer
+                        <div className="flex items-center space-x-2 gap-1">
+                          <RadioGroupItem
+                            value="buyer"
+                            id="buyer"
+                            className="border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200] data-[state=unchecked]:bg-white data-[state=unchecked]:border-border"
+                          />
+                          <FormLabel
+                            htmlFor="buyer"
+                            className="font-normal cursor-pointer !m-0"
+                          >
+                            Buyer
+                          </FormLabel>
+                        </div> */}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -370,7 +371,7 @@ export default function RegisterPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="w-full h-11 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -389,7 +390,7 @@ export default function RegisterPage() {
           </Form>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-4 p-0">
           {/* Divider */}
           <div className="relative w-full">
             <div className="absolute inset-0 flex items-center">
