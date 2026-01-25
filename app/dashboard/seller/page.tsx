@@ -246,24 +246,26 @@ export default function SellerDashboardPage() {
           className="relative"
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+            <div className=" items-start gap-4">
+              <div className="flex gap-2 items-center">
+                <div className="h-16 w-16 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
                 <Store className="h-8 w-8 text-blue-600" />
               </div>
               <div className="space-y-1">
                 <h1 className="text-xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                   Welcome back,{" "}
-                  <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  <span className="block sm:inline bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                     {storeName || "Your Store"}
                   </span>
                 </h1>
                 {storeError && (
                   <p className="text-red-500 text-sm">{storeError}</p>
                 )}
-                <p className="text-sm md:text-lg text-slate-600 dark:text-slate-400">
+              </div>
+              </div>
+                <p className="text-sm md:text-lg text-slate-600 dark:text-slate-400 mt-2">
                   Manage your store and track your success
                 </p>
-              </div>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="secondary" className="px-3 py-1">

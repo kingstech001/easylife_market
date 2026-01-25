@@ -52,7 +52,13 @@ const productSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters."),
   description: z.string().optional(),
   price: z.coerce.number().positive("Price must be a positive number."),
-  compareAtPrice: z.coerce.number().positive().optional().or(z.literal("")),
+  compareAtPrice: z
+    .union([
+      z.coerce.number().positive("Compare at price must be positive."),
+      z.literal(""),
+      z.undefined(),
+    ])
+    .optional(),
   category: z.string().optional(),
   inventoryQuantity: z.coerce
     .number()
@@ -76,7 +82,10 @@ export default function StoreBuilderPage() {
   const [products, setProducts] = useState<ProductFormValues[]>([]);
   const DRAFT_KEY = "store-builder:product-draft-v1";
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isPublishingStore, setIsPublishingStore] = useState(false);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [editingProduct, setEditingProduct] =
     useState<ProductFormValues | null>(null);
@@ -89,6 +98,7 @@ export default function StoreBuilderPage() {
       name: "",
       description: "",
       price: 0,
+      compareAtPrice: undefined,
       category: "",
       inventoryQuantity: 0,
       images: [],
@@ -178,30 +188,39 @@ export default function StoreBuilderPage() {
   }, []);
 
   const handleEdit = (p: ProductFormValues) => {
+    console.log("✏️ handleEdit called for product:", p.name, "ID:", p.id || p._id);
     pauseSave.current = true;
-    setEditingProduct(p);
-
+    
     const { id, _id, ...productData } = p;
+    setEditingProduct(p);
+    
+    // Reset form with the product data
     form.reset({
       ...productData,
       category: productData.category || "",
       description: productData.description || "",
+      compareAtPrice: productData.compareAtPrice || undefined,
       images: productData.images || [],
     });
 
+    // Clear localStorage draft
     try {
       localStorage.removeItem(DRAFT_KEY);
-    } catch {}
+    } catch (err) {
+      console.warn("Failed to clear draft:", err);
+    }
 
+    // Resume auto-save after a delay
     setTimeout(() => {
       pauseSave.current = false;
+      console.log("✅ handleEdit setup complete, form ready for editing");
     }, 100);
   };
 
   const handleDelete = async (productId: string) => {
     if (!productId) return;
 
-    setIsSubmitting(true);
+    setIsDeletingProduct(true);
     try {
       const res = await fetch(`/api/dashboard/seller/products/${productId}`, {
         method: "DELETE",
@@ -219,29 +238,51 @@ export default function StoreBuilderPage() {
 
       if ((editingProduct?.id || editingProduct?._id) === productId) {
         setEditingProduct(null);
-        form.reset({
-          name: "",
-          description: "",
-          price: 0,
-          category: "",
-          inventoryQuantity: 0,
-          images: [],
-        });
+        form.reset(
+          {
+            name: "",
+            description: "",
+            price: 0,
+            category: "",
+            inventoryQuantity: 0,
+            images: [],
+          },
+          { keepValues: false }
+        );
         setActiveTab("details");
       }
     } catch (error: any) {
       console.error("Delete error:", error);
       toast.error(error.message || "Failed to delete product");
     } finally {
-      setIsSubmitting(false);
+      setIsDeletingProduct(false);
     }
   };
 
   const handleSubmit = async (data: ProductFormValues) => {
+    console.log("🔄 handleSubmit called with data:", data);
+    
+    // Validate form before proceeding
+    const isValid = await form.trigger();
+    if (!isValid) {
+      console.error("❌ Form validation failed");
+      toast.error("Please fix all validation errors before saving");
+      return;
+    }
+    
     const editingId = editingProduct?.id || editingProduct?._id;
     const isCreating = !editingId;
+    
+    console.log("📋 Submission Details:", {
+      editingId,
+      isCreating,
+      editingProduct: editingProduct ? { id: editingId, name: editingProduct.name } : null,
+      productsCount: products.length,
+      storeId: store?._id,
+    });
 
     if (products.length >= 10 && isCreating) {
+      console.warn("⚠️ Maximum products reached");
       toast.error(
         "Maximum of 10 products reached. Delete an existing product to add a new one."
       );
@@ -249,11 +290,13 @@ export default function StoreBuilderPage() {
     }
 
     if (!store?._id) {
+      console.error("❌ No store found");
       toast.error("No store found. Please ensure your store is set up.");
       return;
     }
 
-    setIsSubmitting(true);
+    console.log(`📤 ${isCreating ? "Creating" : "Updating"} product...`);
+    setIsSavingProduct(true);
 
     try {
       const cleanedData = {
@@ -269,12 +312,14 @@ export default function StoreBuilderPage() {
       let resultProduct: ProductFormValues;
 
       if (editingId) {
+        console.log("✏️ Updating product:", editingId);
         const res = await fetch(`/api/dashboard/seller/products/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cleanedData),
         });
 
+        console.log("📡 Update response status:", res.status);
         const responseData = await res.json();
 
         if (!res.ok) {
@@ -286,6 +331,7 @@ export default function StoreBuilderPage() {
         }
 
         resultProduct = responseData.data;
+        console.log("✅ Product updated successfully:", resultProduct);
         setProducts((prev) =>
           prev.map((p) => {
             const pId = p.id || p._id;
@@ -295,12 +341,14 @@ export default function StoreBuilderPage() {
         );
         toast.success(responseData.message || "Product updated successfully");
       } else {
+        console.log("➕ Creating new product...");
         const res = await fetch("/api/dashboard/seller/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cleanedData),
         });
 
+        console.log("📡 Create response status:", res.status);
         const responseData = await res.json();
 
         if (!res.ok) {
@@ -312,10 +360,12 @@ export default function StoreBuilderPage() {
         }
 
         resultProduct = responseData.product;
+        console.log("✅ Product created successfully:", resultProduct);
         setProducts((prev) => [...prev, resultProduct]);
         toast.success(responseData.message || "Product added successfully");
       }
 
+      console.log("🧹 Cleaning up after submission...");
       // Clear form and reset state
       pauseSave.current = true;
       try {
@@ -326,32 +376,43 @@ export default function StoreBuilderPage() {
 
       setEditingProduct(null);
 
-      form.reset({
-        name: "",
-        description: "",
-        price: 0,
-        category: "",
-        inventoryQuantity: 0,
-        images: [],
-      });
+      // Reset form with keepValues: false to ensure dirty state is cleared
+      form.reset(
+        {
+          name: "",
+          description: "",
+          price: 0,
+          compareAtPrice: undefined,
+          category: "",
+          inventoryQuantity: 0,
+          images: [],
+        },
+        { keepValues: false }
+      );
 
+      // Clear file upload input
       try {
         const uploadInput = document.getElementById(
           "upload"
         ) as HTMLInputElement | null;
         if (uploadInput) uploadInput.value = "";
-      } catch (err) {}
+      } catch (err) {
+        console.warn("Failed to clear upload input:", err);
+      }
 
       setActiveTab("details");
 
+      // Increase timeout to ensure all state updates complete before resuming auto-save
       setTimeout(() => {
         pauseSave.current = false;
-      }, 500);
+        console.log("✅ handleSubmit completed successfully!");
+      }, 800);
     } catch (error: any) {
-      console.error("Save/Update error:", error);
+      console.error("❌ Save/Update error:", error);
       toast.error(error.message || "Failed to save product");
     } finally {
-      setIsSubmitting(false);
+      setIsSavingProduct(false);
+      console.log("🏁 handleSubmit finally block - isSavingProduct set to false");
     }
   };
 
@@ -361,7 +422,7 @@ export default function StoreBuilderPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsPublishingStore(true);
 
     try {
       const res = await fetch("/api/dashboard/seller/store/publish", {
@@ -391,7 +452,7 @@ export default function StoreBuilderPage() {
       console.error("Publish error:", error);
       toast.error(error.message || "Failed to publish store");
     } finally {
-      setIsSubmitting(false);
+      setIsPublishingStore(false);
     }
   };
 
@@ -446,10 +507,10 @@ export default function StoreBuilderPage() {
           </Button>
           <Button
             onClick={publishStore}
-            disabled={isSubmitting || !products.length}
+            disabled={isPublishingStore || !products.length}
             className="h-11 shadow-lg bg-[#c0a146] hover:bg-[#c0a146]/90"
           >
-            {isSubmitting ? (
+            {isPublishingStore ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...
               </>
@@ -530,6 +591,7 @@ export default function StoreBuilderPage() {
                         name: "",
                         description: "",
                         price: 0,
+                        compareAtPrice: undefined,
                         category: "",
                         inventoryQuantity: 0,
                         images: [],
@@ -685,6 +747,7 @@ export default function StoreBuilderPage() {
                               name: "",
                               description: "",
                               price: 0,
+                              compareAtPrice: undefined,
                               category: "",
                               inventoryQuantity: 0,
                               images: [],
@@ -881,7 +944,7 @@ export default function StoreBuilderPage() {
                                   }
                                   const formData = new FormData();
                                   formData.append("file", file);
-                                  setIsSubmitting(true);
+                                  setIsUploadingImage(true);
                                   try {
                                     const res = await fetch("/api/upload", {
                                       method: "POST",
@@ -911,7 +974,7 @@ export default function StoreBuilderPage() {
                                     console.error(err);
                                     toast.error("Image upload failed");
                                   } finally {
-                                    setIsSubmitting(false);
+                                    setIsUploadingImage(false);
                                   }
                                 }}
                               />
@@ -1056,12 +1119,12 @@ export default function StoreBuilderPage() {
                           <Button
                             type="submit"
                             disabled={
-                              isSubmitting ||
+                              isSavingProduct ||
                               (products.length >= 10 && !editingProduct)
                             }
                             className="bg-[#c0a146] hover:bg-[#c0a146]/90 text-white shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
                           >
-                            {isSubmitting ? (
+                            {isSavingProduct ? (
                               <>
                                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                                 {editingProduct ? "Updating..." : "Saving..."}

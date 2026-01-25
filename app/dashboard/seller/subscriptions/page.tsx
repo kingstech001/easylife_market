@@ -252,7 +252,7 @@ export default function SubscriptionPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="container max-w-7xl mx-auto py-8 space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -260,15 +260,15 @@ export default function SubscriptionPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="space-y-3"
         >
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
             <div className="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
               <Banknote />
             </div>
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              Choose Your Subscription Plan
+              Subscription Plan
             </h1>
           </div>
-          <p className="text-lg text-slate-600 dark:text-slate-400 ">
+          <p className="text-sm sm:text-lg text-slate-600 dark:text-slate-400 ">
             Upgrade your plan to unlock more features for your store and grow
             your business
           </p>

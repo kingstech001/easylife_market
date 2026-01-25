@@ -72,14 +72,14 @@ export default function StoreViewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto py-8 px-4 sm:px-6">
+      <div className="container max-w-6xl mx-auto py-8 sm:px-6">
         {/* Header with Edit Button */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex items-center justify-between"
+          className="mb-8 sm:flex items-center justify-between"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex gap-4 mb-2">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Store className="h-6 w-6" />
             </div>
@@ -88,7 +88,7 @@ export default function StoreViewPage() {
               <p className="text-muted-foreground">View and manage your store</p>
             </div>
           </div>
-          <Button onClick={handleEditStore} size="lg">
+          <Button onClick={handleEditStore} size="lg" className="w-full sm:w-auto">
             <Edit className="mr-2 h-4 w-4" />
             Edit Store
           </Button>
@@ -139,7 +139,7 @@ export default function StoreViewPage() {
                     </div>
                   </div>
 
-                  <div className="flex-1 pt-4">
+                  <div className="flex-1">
                     <h2 className="text-3xl font-bold mb-2">{store.name}</h2>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
@@ -250,7 +250,7 @@ export default function StoreViewPage() {
                       Add your logo, banner, and description to make your store stand out
                     </p>
                   </div>
-                  <Button onClick={handleEditStore} size="lg" className="shrink-0">
+                  <Button onClick={handleEditStore} size="lg" className="shrink-0 w-full sm:w-auto">
                     <Edit className="mr-2 h-4 w-4" />
                     Edit Store Settings
                   </Button>
