@@ -8,6 +8,7 @@ export async function POST(req: Request) {
     await connectToDB()
 
     const { email, code, resend } = await req.json()
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://easy-life-market.vercel.app"
 
     console.log("Verification request:", { email, code: code ? "***" : undefined, resend })
 
@@ -74,8 +75,9 @@ export async function POST(req: Request) {
           subject: "Your New Verification Code",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #c0a146 0%, #d4b55e 100%); border-radius: 10px 10px 0 0;">
-                <h1 style="color: white; margin: 0;">Easylife Market</h1>
+              <div style="text-align: center; padding: 20px; background-color: #e1a200; border-radius: 10px 10px 0 0;">
+                <img src="${baseUrl}/logo-white.png" alt="Easylife Logo" style="width: 120px;"/>
+                <h1 style="color: white; margin: 0;">Easylife</h1>
               </div>
               
               <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">

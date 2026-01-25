@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     await connectToDB()
 
     const { email } = await req.json()
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
     if (!email) {
       return NextResponse.json(
@@ -76,8 +77,8 @@ export async function POST(req: NextRequest) {
                     
                     <!-- Header with Logo -->
                     <tr>
-                      <td style="background-color: #ffffff; padding: 30px 40px; border-bottom: 3px solid #c0a146;">
-                        <img src="/logo.png" alt="EasyLife" width="120" style="display: block; margin: 0 auto;">
+                      <td style="background-color: #e1a200; padding: 30px 40px; border-bottom: 3px solid #c0a146;">
+                        <img src="${baseUrl}/logo.png" alt="EasyLife" width="120" style="display: block; margin: 0 auto;">
                       </td>
                     </tr>
                     
