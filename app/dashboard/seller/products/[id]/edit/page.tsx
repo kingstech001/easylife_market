@@ -378,7 +378,7 @@ export default function EditProductPage() {
             <span className="hidden sm:inline">Back to Products</span>
             <span className="sm:hidden">Back</span>
           </Button>
-          <div className="flex items-start gap-3 sm:gap-4 justify-between">
+          <div className="sm:flex items-start gap-3 sm:gap-4 justify-between">
             <div>
               <div className="flex gap-2 items-center">
                 <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20 flex-shrink-0">
