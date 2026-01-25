@@ -350,126 +350,201 @@ export default function ProductListPage() {
                   <p>Error: {error}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[80px] sm:w-[100px]">
-                          Image
-                        </TableHead>
-                        <TableHead className="min-w-[150px]">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort("name")}
-                            className="px-0 h-auto"
-                          >
-                            Product Name
-                            <ArrowUpDown className="ml-2 h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="hidden md:table-cell">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort("category")}
-                            className="px-0 h-auto"
-                          >
-                            Category
-                            <ArrowUpDown className="ml-2 h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="text-right">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort("price")}
-                            className="px-0 h-auto"
-                          >
-                            Price
-                            <ArrowUpDown className="ml-2 h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="text-right hidden sm:table-cell">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort("inventoryQuantity")}
-                            className="px-0 h-auto"
-                          >
-                            Stock
-                            <ArrowUpDown className="ml-2 h-3 w-3" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredAndSortedProducts.length === 0 ? (
+                <>
+                  {/* Mobile View - Cards */}
+                  <div className="sm:hidden space-y-1.5 px-0.5">
+                    {filteredAndSortedProducts.length === 0 ? (
+                      <div className="h-20 flex items-center justify-center text-center text-muted-foreground px-1 text-[9px]">
+                        {searchTerm
+                          ? "No products match your search."
+                          : "No products yet. Add your first product!"}
+                      </div>
+                    ) : (
+                      filteredAndSortedProducts.map((product) => (
+                        <motion.div
+                          key={product._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border rounded p-1 xs:p-1.5 bg-background/50 overflow-hidden"
+                        >
+                          <div className="flex items-start gap-1 xs:gap-1.5">
+                            <img
+                              src={
+                                product.images?.[0]?.url || "/placeholder.svg"
+                              }
+                              alt={product.name}
+                              className="w-9 h-9 xs:w-10 xs:h-10 rounded object-cover flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-[10px] xs:text-[11px] truncate leading-none">
+                                {product.name}
+                              </h3>
+                              <p className="text-[9px] xs:text-[10px] text-muted-foreground truncate leading-none mt-0.5">
+                                {product.category || "Uncategorized"}
+                              </p>
+                              <div className="flex flex-col gap-0 mt-0.5 text-[9px] xs:text-[10px]">
+                                <span className="font-medium leading-none">
+                                  {formatAmount(product.price)}
+                                </span>
+                                <span className="text-muted-foreground leading-none">
+                                  Stock: {product.inventoryQuantity}
+                                </span>
+                              </div>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-5 w-5 xs:h-6 xs:w-6 flex-shrink-0 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <ArrowUpDown className="h-2.5 w-2.5 xs:h-3 xs:w-3 rotate-90" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleEditProduct(product._id)
+                                  }
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleDeleteProduct(product._id)
+                                  }
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop View - Table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="h-24 text-center text-muted-foreground"
-                          >
-                            {searchTerm
-                              ? "No products match your search."
-                              : "No products yet. Add your first product!"}
-                          </TableCell>
+                          <TableHead className="w-[80px] sm:w-[100px]">
+                            Image
+                          </TableHead>
+                          <TableHead className="min-w-[140px]">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort("name")}
+                              className="px-0 h-auto"
+                            >
+                              Product Name
+                              <ArrowUpDown className="ml-2 h-3 w-3" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="hidden md:table-cell">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort("category")}
+                              className="px-0 h-auto"
+                            >
+                              Category
+                              <ArrowUpDown className="ml-2 h-3 w-3" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-right">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort("price")}
+                              className="px-0 h-auto"
+                            >
+                              Price
+                              <ArrowUpDown className="ml-2 h-3 w-3" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-right hidden sm:table-cell">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort("inventoryQuantity")}
+                              className="px-0 h-auto"
+                            >
+                              Stock
+                              <ArrowUpDown className="ml-2 h-3 w-3" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        filteredAndSortedProducts.map((product) => (
-                          <TableRow key={product._id}>
-                            <TableCell>
-                              <img
-                                src={
-                                  product.images?.[0]?.url || "/placeholder.svg"
-                                }
-                                alt={product.name}
-                                className="w-12 h-12 rounded-md object-cover"
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium text-[12px]">
-                              {product.name}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              {product.category || "Uncategorized"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatAmount(product.price)}
-                            </TableCell>
-                            <TableCell className="text-right hidden sm:table-cell">
-                              {product.inventoryQuantity}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <span className="sr-only">Open menu</span>
-                                    <ArrowUpDown className="h-4 w-4 rotate-90" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleEditProduct(product._id)
-                                    }
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleDeleteProduct(product._id)
-                                    }
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAndSortedProducts.length === 0 ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="h-24 text-center text-muted-foreground"
+                            >
+                              {searchTerm
+                                ? "No products match your search."
+                                : "No products yet. Add your first product!"}
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ) : (
+                          filteredAndSortedProducts.map((product) => (
+                            <TableRow key={product._id}>
+                              <TableCell>
+                                <img
+                                  src={
+                                    product.images?.[0]?.url || "/placeholder.svg"
+                                  }
+                                  alt={product.name}
+                                  className="w-12 h-12 rounded-md object-cover"
+                                />
+                              </TableCell>
+                              <TableCell className="font-medium text-sm truncate max-w-[140px]">
+                                {product.name}
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                {product.category || "Uncategorized"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatAmount(product.price)}
+                              </TableCell>
+                              <TableCell className="text-right hidden sm:table-cell">
+                                {product.inventoryQuantity}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <span className="sr-only">Open menu</span>
+                                      <ArrowUpDown className="h-4 w-4 rotate-90" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleEditProduct(product._id)
+                                      }
+                                    >
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleDeleteProduct(product._id)
+                                      }
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
