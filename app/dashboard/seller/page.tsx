@@ -192,7 +192,7 @@ export default function SellerDashboardPage() {
 
   return (
     <div className="min-h-screen ">
-      <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="container max-w-7xl mx-auto space-y-8">
         {/* Subscription Alert - FIXED */}
         {subscriptionAlert.show && (
           <motion.div
@@ -429,7 +429,7 @@ export default function SellerDashboardPage() {
           className="grid gap-6 lg:grid-cols-2"
         >
           <Card className="border-1 border">
-            <CardHeader className="pb-4">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -442,13 +442,13 @@ export default function SellerDashboardPage() {
                 <Badge variant="secondary">Live</Badge>
               </div>
             </CardHeader>
-            <CardContent className="pl-2">
+            <CardContent className="p-3">
               <VisitorsChart />
             </CardContent>
           </Card>
 
           <Card className="border-1 border">
-            <CardHeader className="pb-4">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -461,7 +461,7 @@ export default function SellerDashboardPage() {
                 <Badge variant="secondary">₦</Badge>
               </div>
             </CardHeader>
-            <CardContent className="pl-2">
+            <CardContent >
               <SalesChart />
             </CardContent>
           </Card>
