@@ -222,7 +222,7 @@ export default function StoreSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sm:flex items-center justify-between space-y-6">
+      <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Edit Store</h2>
         <Button onClick={handleSave} disabled={isLoading}>
           {isLoading ? (
