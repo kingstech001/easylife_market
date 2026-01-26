@@ -461,7 +461,7 @@ export default function SellerDashboardPage() {
                 <Badge variant="secondary">₦</Badge>
               </div>
             </CardHeader>
-            <CardContent >
+            <CardContent className="p-3">
               <SalesChart />
             </CardContent>
           </Card>
