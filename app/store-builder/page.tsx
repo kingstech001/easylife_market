@@ -18,7 +18,6 @@ import {
   Upload,
   X,
   Edit3,
-  DollarSign,
   Tag,
   Box,
   Sparkles,
@@ -69,7 +68,7 @@ const productSchema = z.object({
       z.object({
         url: z.string().url("Invalid image URL."),
         altText: z.string().optional(),
-      })
+      }),
     )
     .optional(),
 });
@@ -91,6 +90,7 @@ export default function StoreBuilderPage() {
     useState<ProductFormValues | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pauseSave = useRef(false);
+  const formSectionRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema) as Resolver<ProductFormValues>,
@@ -131,7 +131,7 @@ export default function StoreBuilderPage() {
         try {
           localStorage.setItem(
             DRAFT_KEY,
-            JSON.stringify({ values, updatedAt: Date.now() })
+            JSON.stringify({ values, updatedAt: Date.now() }),
           );
         } catch (err) {
           console.warn("Failed to save product draft:", err);
@@ -155,7 +155,7 @@ export default function StoreBuilderPage() {
             .json()
             .catch(() => ({ message: "Unknown error" }));
           throw new Error(
-            `Failed to fetch store: ${errorData.message || storeRes.statusText}`
+            `Failed to fetch store: ${errorData.message || storeRes.statusText}`,
           );
         }
         const { store } = await storeRes.json();
@@ -169,7 +169,7 @@ export default function StoreBuilderPage() {
           throw new Error(
             `Failed to fetch products: ${
               errorData.message || productRes.statusText
-            }`
+            }`,
           );
         }
         const { products } = await productRes.json();
@@ -178,7 +178,7 @@ export default function StoreBuilderPage() {
         console.error("Error during data fetch:", error);
         toast.error(
           error.message ||
-            "Failed to fetch store or products. Please try again."
+            "Failed to fetch store or products. Please try again.",
         );
       } finally {
         setLoading(false);
@@ -188,12 +188,17 @@ export default function StoreBuilderPage() {
   }, []);
 
   const handleEdit = (p: ProductFormValues) => {
-    console.log("✏️ handleEdit called for product:", p.name, "ID:", p.id || p._id);
+    console.log(
+      "✏️ handleEdit called for product:",
+      p.name,
+      "ID:",
+      p.id || p._id,
+    );
     pauseSave.current = true;
-    
+
     const { id, _id, ...productData } = p;
     setEditingProduct(p);
-    
+
     // Reset form with the product data
     form.reset({
       ...productData,
@@ -214,6 +219,11 @@ export default function StoreBuilderPage() {
     setTimeout(() => {
       pauseSave.current = false;
       console.log("✅ handleEdit setup complete, form ready for editing");
+      // Scroll to form on mobile
+      formSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 100);
   };
 
@@ -230,7 +240,7 @@ export default function StoreBuilderPage() {
           .json()
           .catch(() => ({ message: "Unknown error" }));
         throw new Error(
-          `Failed to delete product: ${errorData.message || res.statusText}`
+          `Failed to delete product: ${errorData.message || res.statusText}`,
         );
       }
       setProducts(products.filter((p) => (p.id || p._id) !== productId));
@@ -247,7 +257,7 @@ export default function StoreBuilderPage() {
             inventoryQuantity: 0,
             images: [],
           },
-          { keepValues: false }
+          { keepValues: false },
         );
         setActiveTab("details");
       }
@@ -261,7 +271,7 @@ export default function StoreBuilderPage() {
 
   const handleSubmit = async (data: ProductFormValues) => {
     console.log("🔄 handleSubmit called with data:", data);
-    
+
     // Validate form before proceeding
     const isValid = await form.trigger();
     if (!isValid) {
@@ -269,14 +279,16 @@ export default function StoreBuilderPage() {
       toast.error("Please fix all validation errors before saving");
       return;
     }
-    
+
     const editingId = editingProduct?.id || editingProduct?._id;
     const isCreating = !editingId;
-    
+
     console.log("📋 Submission Details:", {
       editingId,
       isCreating,
-      editingProduct: editingProduct ? { id: editingId, name: editingProduct.name } : null,
+      editingProduct: editingProduct
+        ? { id: editingId, name: editingProduct.name }
+        : null,
       productsCount: products.length,
       storeId: store?._id,
     });
@@ -284,7 +296,7 @@ export default function StoreBuilderPage() {
     if (products.length >= 10 && isCreating) {
       console.warn("⚠️ Maximum products reached");
       toast.error(
-        "Maximum of 10 products reached. Delete an existing product to add a new one."
+        "Maximum of 10 products reached. Delete an existing product to add a new one.",
       );
       return;
     }
@@ -326,7 +338,7 @@ export default function StoreBuilderPage() {
           throw new Error(
             `Failed to update product: ${
               responseData.message || responseData.error || res.statusText
-            }`
+            }`,
           );
         }
 
@@ -337,7 +349,7 @@ export default function StoreBuilderPage() {
             const pId = p.id || p._id;
             const rId = resultProduct.id || resultProduct._id;
             return pId === rId ? resultProduct : p;
-          })
+          }),
         );
         toast.success(responseData.message || "Product updated successfully");
       } else {
@@ -355,7 +367,7 @@ export default function StoreBuilderPage() {
           throw new Error(
             `Failed to add product: ${
               responseData.message || responseData.error || res.statusText
-            }`
+            }`,
           );
         }
 
@@ -387,13 +399,13 @@ export default function StoreBuilderPage() {
           inventoryQuantity: 0,
           images: [],
         },
-        { keepValues: false }
+        { keepValues: false },
       );
 
       // Clear file upload input
       try {
         const uploadInput = document.getElementById(
-          "upload"
+          "upload",
         ) as HTMLInputElement | null;
         if (uploadInput) uploadInput.value = "";
       } catch (err) {
@@ -412,7 +424,9 @@ export default function StoreBuilderPage() {
       toast.error(error.message || "Failed to save product");
     } finally {
       setIsSavingProduct(false);
-      console.log("🏁 handleSubmit finally block - isSavingProduct set to false");
+      console.log(
+        "🏁 handleSubmit finally block - isSavingProduct set to false",
+      );
     }
   };
 
@@ -437,7 +451,7 @@ export default function StoreBuilderPage() {
         throw new Error(
           data.message ||
             data.error ||
-            `Failed to publish store: ${res.statusText}`
+            `Failed to publish store: ${res.statusText}`,
         );
       }
 
@@ -570,13 +584,13 @@ export default function StoreBuilderPage() {
           <div className="lg:col-span-4">
             <Card className="shadow-xl border-border/50 bg-card/90 backdrop-blur-sm sticky top-8">
               <CardHeader className="pb-4 border-b">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex justify-between">
+                  <div className="flex items-start gap-3">
                     <div className="p-2 rounded-xl bg-[#c0a146]/10">
                       <Package className="w-5 h-5 text-[#c0a146]" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">Products</CardTitle>
+                      <CardTitle className="text-2xl">Products</CardTitle>
                       <Badge variant="secondary" className="mt-1">
                         {products.length} / 10
                       </Badge>
@@ -600,6 +614,13 @@ export default function StoreBuilderPage() {
                       try {
                         localStorage.removeItem(DRAFT_KEY);
                       } catch {}
+                      // Scroll to form on mobile
+                      setTimeout(() => {
+                        formSectionRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }, 100);
                     }}
                     className="bg-[#c0a146] hover:bg-[#c0a146]/90 h-9"
                   >
@@ -662,7 +683,7 @@ export default function StoreBuilderPage() {
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                     <span className="flex items-center gap-1 font-medium text-foreground">
-                                      <DollarSign className="w-3 h-3" />₦
+                                      <span className="text-base">₦</span>
                                       {p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
@@ -704,7 +725,7 @@ export default function StoreBuilderPage() {
           </div>
 
           {/* Product Form */}
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-8" ref={formSectionRef}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={editingProduct?.id || editingProduct?._id || "new"}
@@ -714,8 +735,8 @@ export default function StoreBuilderPage() {
                 transition={{ duration: 0.3 }}
               >
                 <Card className="shadow-xl border-border/50 bg-card/90 backdrop-blur-sm">
-                  <CardHeader className="pb-6 border-b">
-                    <div className="flex items-center justify-between">
+                  <CardHeader className="pb-6 p-3 border-b">
+                    <div>
                       <div className="flex items-center gap-4">
                         <div className="p-3 rounded-2xl bg-[#c0a146]/10">
                           {editingProduct ? (
@@ -737,35 +758,37 @@ export default function StoreBuilderPage() {
                           </p>
                         </div>
                       </div>
-                      {editingProduct && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingProduct(null);
-                            form.reset({
-                              name: "",
-                              description: "",
-                              price: 0,
-                              compareAtPrice: undefined,
-                              category: "",
-                              inventoryQuantity: 0,
-                              images: [],
-                            });
-                            setActiveTab("details");
-                            try {
-                              localStorage.removeItem(DRAFT_KEY);
-                            } catch {}
-                          }}
-                          className="h-9"
-                        >
-                          <X className="w-4 h-4 mr-2" />
-                          Cancel
-                        </Button>
-                      )}
+                      <div className="flex items-end justify-end mt-2">
+                        {editingProduct && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingProduct(null);
+                              form.reset({
+                                name: "",
+                                description: "",
+                                price: 0,
+                                compareAtPrice: undefined,
+                                category: "",
+                                inventoryQuantity: 0,
+                                images: [],
+                              });
+                              setActiveTab("details");
+                              try {
+                                localStorage.removeItem(DRAFT_KEY);
+                              } catch {}
+                            }}
+                            className="h-9 mr-0"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6 md:p-8">
+                  <CardContent className="p-3 md:p-8">
                     <Form {...form}>
                       <form
                         onSubmit={form.handleSubmit(handleSubmit)}
@@ -838,7 +861,9 @@ export default function StoreBuilderPage() {
                                     </FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#c0a146]" />
+                                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#c0a146] text-lg">
+                                          ₦
+                                        </span>
                                         <Input
                                           type="number"
                                           step="0.01"
@@ -965,10 +990,10 @@ export default function StoreBuilderPage() {
                                           } image ${existingImages.length + 1}`,
                                         },
                                       ],
-                                      { shouldDirty: true }
+                                      { shouldDirty: true },
                                     );
                                     toast.success(
-                                      "Image uploaded successfully"
+                                      "Image uploaded successfully",
                                     );
                                   } catch (err) {
                                     console.error(err);
@@ -1015,9 +1040,9 @@ export default function StoreBuilderPage() {
                                         form.setValue(
                                           "images",
                                           currentImages.filter(
-                                            (_, i) => i !== idx
+                                            (_, i) => i !== idx,
                                           ),
-                                          { shouldDirty: true }
+                                          { shouldDirty: true },
                                         );
                                       }}
                                     >

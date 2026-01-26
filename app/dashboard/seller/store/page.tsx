@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
+import ExpandableText from "@/components/ExpandableText"
 
 interface StoreData {
   _id: string
@@ -164,7 +165,7 @@ export default function StoreViewPage() {
             </Card>
           </motion.div>
 
-          {/* Store Description */}
+          {/* Store Description with Expandable Text */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -176,9 +177,9 @@ export default function StoreViewPage() {
               </CardHeader>
               <CardContent>
                 {store.description ? (
-                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                    {store.description}
-                  </p>
+                  <div className="leading-relaxed">
+                    <ExpandableText text={store.description} limit={200} />
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">No description added yet</p>
