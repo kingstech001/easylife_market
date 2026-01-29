@@ -1,227 +1,189 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useReducer, type ReactNode, useEffect, useRef } from "react"
-import { toast } from "sonner"
+import React, { createContext, useContext, useState, useEffect } from "react"
+
+export interface ISelectedVariant {
+  color?: {
+    name: string
+    hex: string
+  }
+  size?: string
+}
 
 export interface CartItem {
   id: string
+  productId: string
   name: string
   price: number
   quantity: number
   image: string
   storeId: string
-  productId: string
+  selectedVariant?: ISelectedVariant
 }
 
-interface CartState {
+interface CartContextType {
   items: CartItem[]
-}
-
-type Action =
-  | { type: "ADD_ITEM"; payload: CartItem }
-  | { type: "REMOVE_ITEM"; payload: string }
-  | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
-  | { type: "SET_CART"; payload: CartItem[] }
-  | { type: "CLEAR_CART" }
-
-const CART_STORAGE_KEY = "cart"
-
-const initialState: CartState = {
-  items: [],
-}
-
-function cartReducer(state: CartState, action: Action): CartState {
-  switch (action.type) {
-    case "ADD_ITEM": {
-      const existingItem = state.items.find((item) => item.id === action.payload.id)
-      if (existingItem) {
-        return {
-          ...state,
-          items: state.items.map((item) =>
-            item.id === action.payload.id ? { ...item, quantity: item.quantity + action.payload.quantity } : item,
-          ),
-        }
-      }
-      return {
-        ...state,
-        items: [...state.items, action.payload],
-      }
-    }
-    case "REMOVE_ITEM":
-      return {
-        ...state,
-        items: state.items.filter((item) => item.id !== action.payload),
-      }
-    case "UPDATE_QUANTITY": {
-      if (action.payload.quantity <= 0) {
-        return {
-          ...state,
-          items: state.items.filter((item) => item.id !== action.payload.id),
-        }
-      }
-      return {
-        ...state,
-        items: state.items.map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item,
-        ),
-      }
-    }
-    case "SET_CART":
-      return {
-        ...state,
-        items: action.payload,
-      }
-    case "CLEAR_CART":
-      console.log('🗑️ Cart cleared - all items removed')
-      return {
-        ...state,
-        items: [],
-      }
-    default:
-      return state
-  }
-}
-
-type CartContextType = {
-  items: CartItem[]
-  state: CartState
-  dispatch: React.Dispatch<Action>
-  addToCart: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void
-  removeFromCart: (id: string) => void
-  updateQuantity: (id: string, quantity: number) => void
-  clearCart: (silent?: boolean) => void
-  getTotalItems: () => number
+  addToCart: (item: Omit<CartItem, "selectedVariant"> & { selectedVariant?: ISelectedVariant }) => void
+  removeFromCart: (id: string, variantKey?: string) => void
+  updateQuantity: (id: string, quantity: number, variantKey?: string) => void
   getTotalPrice: () => number
+  getTotalItems: () => number
+  clearCart: () => void
+  getCartItemKey: (id: string, variant?: ISelectedVariant) => string
+  getItemByKey: (key: string) => CartItem | undefined
+  updateItemVariant: (id: string, oldVariant: ISelectedVariant | undefined, newVariant: ISelectedVariant | undefined) => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, initialState)
-  const saveTimeout = useRef<number | undefined>(undefined)
+const CART_STORAGE_KEY = "cart_items"
 
-  // Load from localStorage on mount (client only)
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY)
-      if (!stored) return
-      const parsed = JSON.parse(stored)
-      if (Array.isArray(parsed)) {
-        dispatch({ type: "SET_CART", payload: parsed })
-        console.log('📦 Cart loaded from localStorage:', parsed.length, 'items')
-      }
-    } catch (err) {
-      console.warn("Failed to restore cart from localStorage:", err)
-      // Remove corrupted data
-      try {
-        localStorage.removeItem(CART_STORAGE_KEY)
-      } catch (e) {
-        // Ignore if can't remove
-      }
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Generate unique key for cart item considering variants
+  const getCartItemKey = (id: string, variant?: ISelectedVariant): string => {
+    if (!variant || (!variant.color && !variant.size)) {
+      return id
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const colorKey = variant.color?.hex || ""
+    const sizeKey = variant.size || ""
+    return `${id}-${colorKey}-${sizeKey}`
+  }
+
+  // Get cart item by unique key
+  const getItemByKey = (key: string): CartItem | undefined => {
+    return items.find((item) => getCartItemKey(item.id, item.selectedVariant) === key)
+  }
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY)
+      if (savedCart) {
+        const parsedItems = JSON.parse(savedCart)
+        setItems(Array.isArray(parsedItems) ? parsedItems : [])
+      }
+    } catch (error) {
+      console.error("Failed to load cart from localStorage:", error)
+      localStorage.removeItem(CART_STORAGE_KEY)
+      setItems([])
+    }
+    setIsHydrated(true)
   }, [])
 
-  // Persist cart to localStorage when it changes (debounced small delay)
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      // debounce to avoid too-frequent writes when user updates rapidly
-      if (saveTimeout.current) {
-        window.clearTimeout(saveTimeout.current)
+    if (isHydrated) {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+      } catch (error) {
+        console.error("Failed to save cart to localStorage:", error)
       }
-      saveTimeout.current = window.setTimeout(() => {
-        try {
-          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items))
-          console.log('💾 Cart saved to localStorage:', state.items.length, 'items')
-        } catch (e) {
-          console.warn("Failed to save cart to localStorage:", e)
+    }
+  }, [items, isHydrated])
+
+  const addToCart = (newItem: Omit<CartItem, "selectedVariant"> & { selectedVariant?: ISelectedVariant }) => {
+    setItems((prevItems) => {
+      const itemKey = getCartItemKey(newItem.id, newItem.selectedVariant)
+      const existingItemIndex = prevItems.findIndex((item) => getCartItemKey(item.id, item.selectedVariant) === itemKey)
+
+      if (existingItemIndex > -1) {
+        // If item already exists with same variant, increase quantity
+        const updatedItems = [...prevItems]
+        updatedItems[existingItemIndex] = {
+          ...updatedItems[existingItemIndex],
+          quantity: updatedItems[existingItemIndex].quantity + newItem.quantity,
         }
-      }, 200)
-    } catch (err) {
-      console.warn("Unable to persist cart:", err)
-    }
-
-    return () => {
-      if (saveTimeout.current) {
-        window.clearTimeout(saveTimeout.current)
+        return updatedItems
+      } else {
+        // Add new item with variant support
+        return [...prevItems, newItem as CartItem]
       }
-    }
-  }, [state.items])
-
-  const addToCart = (item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
-    // Guard: Ensure storeId and productId are present
-    if (!item.storeId || !item.productId) {
-      toast.error("Cannot add to cart: Missing store or product information.")
-      return
-    }
-    const cartItem: CartItem = {
-      ...item,
-      quantity: item.quantity || 1,
-    }
-    dispatch({ type: "ADD_ITEM", payload: cartItem })
-    toast.success(`${item.name} added to cart`, {
-      action: {
-        label: "View Cart",
-        onClick: () => {
-          window.location.href = "/cart"
-        },
-      },
     })
   }
 
-  const removeFromCart = (id: string) => {
-    const item = state.items.find((item) => item.id === id)
-    dispatch({ type: "REMOVE_ITEM", payload: id })
-    if (item) {
-      toast(`${item.name} removed from cart`)
+  const removeFromCart = (id: string, variantKey?: string) => {
+    setItems((prevItems) => {
+      if (variantKey) {
+        // Remove by variant key
+        return prevItems.filter((item) => getCartItemKey(item.id, item.selectedVariant) !== variantKey)
+      }
+      // Remove all items with this product ID
+      return prevItems.filter((item) => item.id !== id)
+    })
+  }
+
+  const updateQuantity = (id: string, quantity: number, variantKey?: string) => {
+    if (quantity <= 0) {
+      removeFromCart(id, variantKey)
+      return
     }
+
+    setItems((prevItems) =>
+      prevItems.map((item) => {
+        const itemKey = getCartItemKey(item.id, item.selectedVariant)
+        if (variantKey ? itemKey === variantKey : item.id === id) {
+          return { ...item, quantity: Math.max(1, quantity) }
+        }
+        return item
+      })
+    )
   }
 
-  const updateQuantity = (id: string, quantity: number) => {
-    dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
+  const updateItemVariant = (id: string, oldVariant: ISelectedVariant | undefined, newVariant: ISelectedVariant | undefined) => {
+    setItems((prevItems) => {
+      const oldKey = getCartItemKey(id, oldVariant)
+      const newKey = getCartItemKey(id, newVariant)
+
+      // If the new key already exists, merge quantities
+      const existingItemIndex = prevItems.findIndex((item) => getCartItemKey(item.id, item.selectedVariant) === newKey)
+
+      if (existingItemIndex > -1) {
+        const itemToRemove = prevItems.find((item) => getCartItemKey(item.id, item.selectedVariant) === oldKey)
+        if (itemToRemove) {
+          const updated = [...prevItems]
+          updated[existingItemIndex].quantity += itemToRemove.quantity
+          return updated.filter((item) => getCartItemKey(item.id, item.selectedVariant) !== oldKey)
+        }
+      }
+
+      // Otherwise, just update the variant
+      return prevItems.map((item) => {
+        if (getCartItemKey(item.id, item.selectedVariant) === oldKey) {
+          return { ...item, selectedVariant: newVariant }
+        }
+        return item
+      })
+    })
   }
 
-  const clearCart = (silent = false) => {
-    console.log('🧹 clearCart() called - dispatching CLEAR_CART action')
-    dispatch({ type: "CLEAR_CART" })
-    
-    // Immediately clear from localStorage
-    try {
-      localStorage.removeItem(CART_STORAGE_KEY)
-      console.log('✅ Cart cleared from localStorage')
-    } catch (e) {
-      console.warn("Failed to clear cart from localStorage:", e)
-    }
-    
-    // Only show toast if not silent (e.g., manual clear vs. after payment)
-    if (!silent) {
-      toast.success("Cart cleared")
-    }
+  const getTotalPrice = (): number => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0)
   }
 
-  const getTotalItems = () => {
-    return state.items.reduce((total, item) => total + item.quantity, 0)
+  const getTotalItems = (): number => {
+    return items.reduce((total, item) => total + item.quantity, 0)
   }
 
-  const getTotalPrice = () => {
-    return state.items.reduce((total, item) => total + item.price * item.quantity, 0)
+  const clearCart = () => {
+    setItems([])
   }
 
   return (
     <CartContext.Provider
       value={{
-        items: state.items,
-        state,
-        dispatch,
+        items,
         addToCart,
         removeFromCart,
         updateQuantity,
-        clearCart,
-        getTotalItems,
         getTotalPrice,
+        getTotalItems,
+        clearCart,
+        getCartItemKey,
+        getItemByKey,
+        updateItemVariant,
       }}
     >
       {children}

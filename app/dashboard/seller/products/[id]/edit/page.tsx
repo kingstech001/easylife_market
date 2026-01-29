@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { z } from "zod";
@@ -20,6 +20,7 @@ import {
   Trash2,
   Save,
   Info,
+  Palette,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,49 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import ProductVariantsEditor, { type ProductVariant } from "@/components/ProductVariantsEditor";
+
+// Categories that support variants
+const VARIANT_CATEGORIES = [
+  "Clothing",
+  "Fashion",
+  "Apparel",
+  "Shoes",
+  "Footwear",
+  "Accessories",
+  "Jewelry",
+  "Bags",
+  "Sportswear",
+  "Underwear",
+  "Swimwear",
+];
+
+function categorySupportsVariants(category: string | undefined): boolean {
+  if (!category) return false;
+  const normalizedCategory = category.toLowerCase().trim();
+  return VARIANT_CATEGORIES.some(
+    (vc) =>
+      normalizedCategory.includes(vc.toLowerCase()) ||
+      vc.toLowerCase().includes(normalizedCategory)
+  );
+}
+
+const variantSchema = z.object({
+  color: z.object({
+    name: z.string().min(1, "Color name is required"),
+    hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color"),
+  }),
+  sizes: z
+    .array(
+      z.object({
+        size: z.string().min(1, "Size is required"),
+        quantity: z.number().min(0, "Quantity must be non-negative"),
+      })
+    )
+    .min(1, "At least one size is required"),
+  priceAdjustment: z.number().optional(),
+});
 
 type Product = {
   _id: string;
@@ -47,6 +91,12 @@ type Product = {
   category?: string;
   inventoryQuantity: number;
   images?: { url: string; altText?: string }[];
+  hasVariants?: boolean;
+  variants?: Array<{
+    color: { name: string; hex: string };
+    sizes: Array<{ size: string; quantity: number }>;
+    priceAdjustment?: number;
+  }>;
   createdAt: string;
   updatedAt: string;
 };
@@ -68,6 +118,8 @@ const productFormSchema = z.object({
       }),
     )
     .optional(),
+  hasVariants: z.boolean().optional(),
+  variants: z.array(variantSchema).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -104,8 +156,58 @@ export default function EditProductPage() {
       category: "",
       inventoryQuantity: 0,
       images: [],
+      hasVariants: false,
+      variants: [],
     },
   });
+
+  const watchedCategory = form.watch("category");
+  const watchedHasVariants = form.watch("hasVariants");
+  const watchedVariants = form.watch("variants");
+
+  // Check if current category supports variants
+  const supportsVariants = useMemo(() => {
+    return categorySupportsVariants(watchedCategory);
+  }, [watchedCategory]);
+
+  // Reset variants when category changes to non-supporting
+  useEffect(() => {
+    if (!supportsVariants && watchedHasVariants) {
+      form.setValue("hasVariants", false);
+      form.setValue("variants", []);
+    }
+  }, [supportsVariants, watchedHasVariants, form]);
+
+  // Auto-save variants to database when they change
+  useEffect(() => {
+    if (!id) return;
+
+    const saveVariants = async () => {
+      try {
+        const response = await fetch(`/api/dashboard/seller/products/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hasVariants: watchedHasVariants,
+            variants: watchedHasVariants ? watchedVariants : [],
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("[v0] Failed to save variants:", error);
+        } else {
+          console.log("[v0] Variants saved successfully");
+        }
+      } catch (error) {
+        console.error("[v0] Error saving variants:", error);
+      }
+    };
+
+    // Debounce the save to avoid too many requests
+    const timer = setTimeout(saveVariants, 1000);
+    return () => clearTimeout(timer);
+  }, [id, watchedHasVariants, watchedVariants]);
 
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -157,6 +259,8 @@ export default function EditProductPage() {
         category: product.category || "",
         inventoryQuantity: product.inventoryQuantity,
         images: product.images || [],
+        hasVariants: product.hasVariants || false,
+        variants: product.variants || [],
       });
 
       if (product.images) {
@@ -292,12 +396,30 @@ export default function EditProductPage() {
     console.log("📡 Updating product at:", apiUrl);
 
     try {
+      // Calculate total inventory from variants if hasVariants is true
+      let totalInventory = data.inventoryQuantity;
+      if (data.hasVariants && data.variants && data.variants.length > 0) {
+        totalInventory = data.variants.reduce((total, variant) => {
+          return total + variant.sizes.reduce((sizeTotal, size) => sizeTotal + size.quantity, 0);
+        }, 0);
+      }
+
+      const cleanedData = {
+        ...data,
+        category: data.category?.trim() || undefined,
+        compareAtPrice: data.compareAtPrice || undefined,
+        description: data.description?.trim() || undefined,
+        inventoryQuantity: totalInventory,
+        hasVariants: data.hasVariants || false,
+        variants: data.hasVariants ? data.variants || [] : [],
+      };
+
       const response = await fetch(`/api/dashboard/seller/products/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(cleanedData),
       });
 
       console.log("📡 Update response status:", response.status);
@@ -422,21 +544,21 @@ export default function EditProductPage() {
               onValueChange={setActiveTab}
               className="space-y-4 sm:space-y-6"
             >
-              <TabsList className="grid w-full grid-cols-3 h-10 sm:h-12 bg-muted/50 dark:bg-muted/20 p-1">
+              <TabsList className="grid w-full grid-cols-4 h-10 sm:h-12 bg-muted/50 dark:bg-muted/20 p-1">
                 <TabsTrigger
                   value="details"
                   className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-sm px-2 sm:px-3"
                 >
                   <Tag className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline sm:hidden">Details</span>
-                  <span className="hidden sm:inline">Product Details</span>
+                  <span className="hidden sm:inline">Details</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="images"
                   className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-sm px-2 sm:px-3"
                 >
                   <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Images</span>
+                  <span className="hidden sm:inline">Images</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="inventory"
@@ -445,6 +567,14 @@ export default function EditProductPage() {
                   <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline sm:hidden">Stock</span>
                   <span className="hidden sm:inline">Inventory</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="variants"
+                  className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-sm px-2 sm:px-3"
+                  disabled={!supportsVariants}
+                >
+                  <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Variants</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -593,29 +723,52 @@ export default function EditProductPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
-                      <FormField
-                        control={form.control}
-                        name="inventoryQuantity"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Stock Quantity</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="0"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value) || 0)
-                                }
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Number of items available for sale
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {watchedHasVariants ? (
+                        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Palette className="h-5 w-5 text-primary mt-0.5" />
+                            <div className="text-sm">
+                              <p className="font-medium text-foreground mb-1">Variants Enabled</p>
+                              <p className="text-muted-foreground">
+                                Inventory is managed per variant. Go to the Variants tab to set quantities for each
+                                color/size combination.
+                              </p>
+                              <p className="text-primary font-medium mt-2">
+                                Total inventory:{" "}
+                                {watchedVariants?.reduce(
+                                  (total, v) => total + v.sizes.reduce((st, s) => st + s.quantity, 0),
+                                  0
+                                ) || 0}{" "}
+                                items
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <FormField
+                          control={form.control}
+                          name="inventoryQuantity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Stock Quantity</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value) || 0)
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Number of items available for sale
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
 
                       <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 p-4">
                         <div className="flex gap-3">
@@ -719,6 +872,90 @@ export default function EditProductPage() {
                       ))}
                     </div>
                   )}
+                </motion.div>
+              </TabsContent>
+
+              {/* Variants Tab */}
+              <TabsContent value="variants" className="mt-4 sm:mt-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20">
+                    <CardHeader className="pb-4 sm:pb-6">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                          <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
+                          Color & Size Variants
+                        </CardTitle>
+                        {supportsVariants && (
+                          <FormField
+                            control={form.control}
+                            name="hasVariants"
+                            render={({ field }) => (
+                              <FormItem className="flex items-center gap-2">
+                                <FormLabel className="text-sm font-normal">Enable variants</FormLabel>
+                                <FormControl>
+                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+                      {supportsVariants ? (
+                        watchedHasVariants ? (
+                          <ProductVariantsEditor
+                            variants={(watchedVariants as ProductVariant[]) || []}
+                            onChange={(newVariants) => {
+                              form.setValue("variants", newVariants, { shouldDirty: true });
+                            }}
+                            category={watchedCategory}
+                          />
+                        ) : (
+                          <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-12 text-center bg-muted/20">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
+                              <Palette className="w-8 h-8 text-muted-foreground/50" />
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">Variants Disabled</h3>
+                            <p className="text-muted-foreground text-sm mb-4">
+                              Enable variants to add color and size options to your product
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => form.setValue("hasVariants", true)}
+                              className="bg-transparent"
+                            >
+                              <Palette className="w-4 h-4 mr-2" />
+                              Enable Variants
+                            </Button>
+                          </div>
+                        )
+                      ) : (
+                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-12 text-center bg-muted/20">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
+                            <Palette className="w-8 h-8 text-muted-foreground/50" />
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2">Variants Not Available</h3>
+                          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                            Color and size variants are only available for clothing, fashion, and related categories.
+                            Update your product category to enable this feature.
+                          </p>
+                          <div className="mt-4 flex flex-wrap justify-center gap-2">
+                            {VARIANT_CATEGORIES.slice(0, 6).map((cat) => (
+                              <Badge key={cat} variant="secondary" className="text-xs">
+                                {cat}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </motion.div>
               </TabsContent>
             </Tabs>

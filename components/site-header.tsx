@@ -45,11 +45,11 @@ export function SiteHeader() {
   const [authenticated, setAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [dashboardLink, setDashboardLink] = useState("/dashboard");
-  const { state } = useCart();
+  const { items } = useCart();
   const { state: wishlistState } = useWishlist();
 
-  const itemCount = state.items.reduce((sum, item) => sum + item.quantity, 0);
-  const wishlistCount = wishlistState.wishlist.length;
+  const itemCount = items?.reduce((total: number, item: { quantity: number }) => total + item.quantity, 0) ?? 0;
+  const wishlistCount = wishlistState?.wishlist ? wishlistState.wishlist.length : 0;
 
   // Don't show cart and wishlist for sellers
   const showShoppingFeatures = userRole !== "seller";
@@ -386,7 +386,7 @@ export function SiteHeader() {
                             >
                               {store.logo ? (
                                 <img
-                                  src={store.logo}
+                                  src={store.logo || "/placeholder.svg"}
                                   alt={store.businessName}
                                   className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
                                 />
@@ -425,7 +425,7 @@ export function SiteHeader() {
                             >
                               {product.image ? (
                                 <img
-                                  src={product.image}
+                                  src={product.image || "/placeholder.svg"}
                                   alt={product.name}
                                   className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
                                 />

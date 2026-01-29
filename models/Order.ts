@@ -1,5 +1,20 @@
-// models/Order.ts
 import mongoose, { Schema, Document } from "mongoose"
+
+export interface ISelectedVariant {
+  color?: {
+    name: string
+    hex: string
+  }
+  size?: string
+}
+
+export interface IOrderItem {
+  productId: mongoose.Types.ObjectId
+  productName: string
+  quantity: number
+  priceAtPurchase: number
+  selectedVariant?: ISelectedVariant
+}
 
 export interface IOrder extends Document {
   storeId: mongoose.Types.ObjectId
@@ -18,12 +33,7 @@ export interface IOrder extends Document {
     fees?: number
     paidAt?: Date
   }
-  items: Array<{
-    productId: mongoose.Types.ObjectId
-    productName: string
-    quantity: number
-    priceAtPurchase: number
-  }>
+  items: IOrderItem[]
   shippingInfo: {
     firstName: string
     lastName: string
@@ -57,8 +67,6 @@ const OrderSchema = new Schema<IOrder>(
     reference: {
       type: String,
       required: true,
-      // SECURITY: Compound unique index to prevent duplicate orders
-      // Each reference can appear multiple times (one per store), but only once per store
       index: true,
     },
     totalPrice: {
@@ -113,6 +121,13 @@ const OrderSchema = new Schema<IOrder>(
           type: Number,
           required: true,
           min: 0,
+        },
+        selectedVariant: {
+          color: {
+            name: String,
+            hex: String,
+          },
+          size: String,
         },
       },
     ],

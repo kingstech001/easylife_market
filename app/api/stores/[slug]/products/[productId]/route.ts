@@ -78,7 +78,17 @@ export async function GET(
 
     console.log('✅ Product found:', product.name)
 
-    // Transform product safely
+    // ⭐ Check for variants
+    const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+    
+    if (hasVariants) {
+      console.log('🎨 Product has variants:', product.variants.length);
+      console.log('🎨 First variant:', product.variants[0]);
+    } else {
+      console.log('📦 Product has no variants');
+    }
+
+    // Transform product safely - ⭐ NOW INCLUDING VARIANTS ⭐
     const transformedProduct: ProductResponse = {
       id: product._id.toString(),
       name: product.name || "Untitled Product",
@@ -98,9 +108,23 @@ export async function GET(
       store_id: product.storeId.toString(),
       created_at: product.createdAt || new Date(),
       updated_at: product.updatedAt || new Date(),
+      // ⭐ ADD VARIANTS HERE ⭐
+      hasVariants: hasVariants,
+      variants: hasVariants ? product.variants.map((variant: any) => ({
+        color: {
+          name: variant.color?.name || '',
+          hex: variant.color?.hex || '#000000',
+          _id: variant.color?._id?.toString()
+        },
+        sizes: Array.isArray(variant.sizes) ? variant.sizes.map((size: any) => ({
+          size: size.size || '',
+          quantity: size.quantity || 0,
+          _id: size._id?.toString()
+        })) : [],
+        priceAdjustment: variant.priceAdjustment || 0,
+        _id: variant._id?.toString()
+      })) : undefined
     }
-
-    console.log('✅ Product transformed successfully')
 
     return NextResponse.json({ success: true, product: transformedProduct }, { status: 200 })
   } catch (error: unknown) {

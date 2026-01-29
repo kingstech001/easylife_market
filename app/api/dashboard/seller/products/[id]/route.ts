@@ -138,11 +138,14 @@ export async function PUT(
     product.category = updates.category ?? product.category
     product.inventoryQuantity = updates.inventoryQuantity ?? product.inventoryQuantity
     product.images = updates.images ?? product.images
+    product.hasVariants = updates.hasVariants ?? product.hasVariants
+    product.variants = updates.variants ?? product.variants
     product.updatedAt = new Date()
 
     await product.save()
 
     console.log(`✅ PUT Product: Product ${id} updated successfully by store ${userStore._id}.`)
+    console.log(`[v0] Variants updated: hasVariants=${product.hasVariants}, variantCount=${product.variants?.length || 0}`)
 
     return NextResponse.json(
       { success: true, message: "Product updated successfully", data: product },

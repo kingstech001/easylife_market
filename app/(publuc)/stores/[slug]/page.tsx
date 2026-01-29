@@ -51,6 +51,21 @@ interface ProductData {
   store_id: string;
   created_at: string;
   updated_at: string;
+  hasVariants?: boolean;
+  variants?: Array<{
+    color: { 
+      name: string;
+      hex: string;
+      _id?: string;
+    };
+    sizes: Array<{ 
+      size: string;
+      quantity: number;
+      _id?: string;
+    }>;
+    priceAdjustment?: number;
+    _id?: string;
+  }>;
 }
 
 interface StorePageProps {
@@ -191,23 +206,50 @@ async function getStoreProducts(
 
     console.log("✅ Active products fetched successfully:", products.length);
 
-    return products.map((product: any) => ({
-      id: product._id?.toString() || "",
-      name: product.name || "Unnamed Product",
-      description: product.description || null,
-      price: product.price || 0,
-      compare_at_price: product.compareAtPrice || null,
-      category_id: product.categoryId?.toString() || undefined,
-      inventory_quantity: product.inventoryQuantity || 0,
-      images: (product.images || []).map((img: any) => ({
-        id: img._id?.toString() || "",
-        url: img.url || "",
-        alt_text: img.altText || null,
-      })),
-      store_id: product.storeId?.toString() || "",
-      created_at: product.createdAt?.toISOString() || new Date().toISOString(),
-      updated_at: product.updatedAt?.toISOString() || new Date().toISOString(),
-    }));
+    return products.map((product: any) => {
+      // Check if product has variants
+      const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+      
+      // Log variant data for debugging
+      if (hasVariants) {
+        console.log(`📦 Product "${product.name}" has ${product.variants.length} variant(s)`);
+        console.log('Variants:', JSON.stringify(product.variants, null, 2));
+      }
+
+      return {
+        id: product._id?.toString() || "",
+        name: product.name || "Unnamed Product",
+        description: product.description || null,
+        price: product.price || 0,
+        compare_at_price: product.compareAtPrice || null,
+        category_id: product.categoryId?.toString() || undefined,
+        inventory_quantity: product.inventoryQuantity || 0,
+        images: (product.images || []).map((img: any) => ({
+          id: img._id?.toString() || "",
+          url: img.url || "",
+          alt_text: img.altText || null,
+        })),
+        store_id: product.storeId?.toString() || "",
+        created_at: product.createdAt?.toISOString() || new Date().toISOString(),
+        updated_at: product.updatedAt?.toISOString() || new Date().toISOString(),
+        // ⭐ ADD VARIANTS HERE ⭐
+        hasVariants: hasVariants,
+        variants: hasVariants ? product.variants.map((variant: any) => ({
+          color: {
+            name: variant.color?.name || '',
+            hex: variant.color?.hex || '#000000',
+            _id: variant.color?._id?.toString()
+          },
+          sizes: (variant.sizes || []).map((size: any) => ({
+            size: size.size || '',
+            quantity: size.quantity || 0,
+            _id: size._id?.toString()
+          })),
+          priceAdjustment: variant.priceAdjustment || 0,
+          _id: variant._id?.toString()
+        })) : undefined
+      };
+    });
   } catch (error) {
     console.error("❌ Error fetching products:", error);
     return [];
@@ -360,58 +402,58 @@ export default async function StorePage({ params }: StorePageProps) {
             </Card>
 
             {/* Store Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
+            <div className="flex gap-1 sm:gap-4 justify-between px-2">
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 flex-1 flex items-center justify-center py-2">
+                <CardContent className="p-0 items-center justify-center text-center">
+                  <div className="flex items-center justify-center">
                     <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                  <div className="text-[10px] sm:text-xl font-bold text-blue-900 dark:text-blue-100">
                     {storeProducts.length}
                   </div>
-                  <div className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                  <div className="text-[10px] text-blue-700 dark:text-blue-300 font-medium">
                     Total Products
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 flex-1 flex items-center justify-center py-2">
+                <CardContent className="p-0 text-center">
+                  <div className="flex items-center justify-center ">
                     <Star className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
-                  <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  <div className="text-[10px] sm:text-xl font-bold text-green-900 dark:text-green-100">
                     4.8
                   </div>
-                  <div className="text-xs text-green-700 dark:text-green-300 font-medium">
+                  <div className="text-[10px] text-green-700 dark:text-green-300 font-medium">
                     Store Rating
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20">
-                <CardContent className="p-4 text-center">
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20 flex-1 flex items-center justify-center py-2">
+                <CardContent className="p-0 text-center">
                   <div className="flex items-center justify-center mb-2">
                     <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                  <div className="text-[10px] sm:text-xl font-bold text-purple-900 dark:text-purple-100">
                     127
                   </div>
-                  <div className="text-xs text-purple-700 dark:text-purple-300 font-medium">
+                  <div className="text-[10px] text-purple-700 dark:text-purple-300 font-medium">
                     Orders Completed
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
-                <CardContent className="p-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20 flex-1 flex items-center justify-center py-2">
+                <CardContent className="p-0 text-center">
+                  <div className="flex items-center justify-center">
                     <Award className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
-                  <div className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                  <div className="text-[10px] sm:text-xl font-bold text-orange-900 dark:text-orange-100">
                     98%
                   </div>
-                  <div className="text-xs text-orange-700 dark:text-orange-300 font-medium">
+                  <div className="text-[10px] text-orange-700 dark:text-orange-300 font-medium">
                     Positive Reviews
                   </div>
                 </CardContent>
@@ -436,7 +478,7 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
 
             {storeProducts.length > 0 ? (
-              <div className="grid gap-6 grid-cols-auto-fill">
+              <div className="grid gap-6 grid-cols-2 sm:grid-cols-auto-fill">
                 {storeProducts.map((product) => (
                   <ProductCard
                     key={product.id}

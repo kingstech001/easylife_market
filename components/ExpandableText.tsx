@@ -13,7 +13,7 @@ export default function ExpandableText({ text, limit = 120 }: { text?: string | 
   }
 
   return (
-    <span className="text-[12px] md:text-xl text-muted-foreground">
+    <span className="text-[10px] md:text-sm text-muted-foreground">
       {expanded ? normalized : `${preview}${isLong ? "…" : " "}`}&nbsp;
       {isLong && (
         <button

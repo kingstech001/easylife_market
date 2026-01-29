@@ -16,7 +16,7 @@ const config: Config = {
 			'custom-sm-2': '800px',
 		  },
 		  gridTemplateColumns: {
-			'auto-fill': 'repeat(auto-fill, minmax(200px, 1fr))',
+			'auto-fill': 'repeat(auto-fill, minmax(150px, 1fr))',
 			'auto-fill-sub': 'repeat(auto-fill, minmax(300px, 1fr))',
 		  },
   		colors: {

@@ -2,11 +2,74 @@
 
 import mongoose, { Schema, Document, Model } from "mongoose"
 
+// ================== Categories that support variants ==================
+export const VARIANT_CATEGORIES = [
+  "Clothing",
+  "Fashion",
+  "Apparel",
+  "Shoes",
+  "Footwear",
+  "Accessories",
+  "Jewelry",
+  "Bags",
+  "Sportswear",
+  "Underwear",
+  "Swimwear",
+] as const
+
+// ================== Predefined Colors ==================
+export const PREDEFINED_COLORS = [
+  { name: "Black", hex: "#000000" },
+  { name: "White", hex: "#FFFFFF" },
+  { name: "Red", hex: "#EF4444" },
+  { name: "Blue", hex: "#3B82F6" },
+  { name: "Green", hex: "#22C55E" },
+  { name: "Yellow", hex: "#EAB308" },
+  { name: "Orange", hex: "#F97316" },
+  { name: "Purple", hex: "#A855F7" },
+  { name: "Pink", hex: "#EC4899" },
+  { name: "Gray", hex: "#6B7280" },
+  { name: "Brown", hex: "#92400E" },
+  { name: "Navy", hex: "#1E3A5F" },
+  { name: "Beige", hex: "#D4C4A8" },
+  { name: "Cream", hex: "#FFFDD0" },
+  { name: "Maroon", hex: "#800000" },
+  { name: "Teal", hex: "#14B8A6" },
+] as const
+
+// ================== Predefined Sizes ==================
+export const PREDEFINED_SIZES = {
+  clothing: ["XS", "S", "M", "L", "XL", "XXL", "3XL"],
+  shoes: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"],
+  numeric: ["6", "8", "10", "12", "14", "16", "18", "20"],
+  oneSize: ["One Size"],
+} as const
+
 // ================== Interfaces ==================
 export interface IProductImage {
   _id?: mongoose.Types.ObjectId
   url: string
   altText?: string
+}
+
+export interface IColorVariant {
+  _id?: mongoose.Types.ObjectId
+  name: string
+  hex: string
+}
+
+export interface ISizeVariant {
+  _id?: mongoose.Types.ObjectId
+  size: string
+  quantity: number
+}
+
+export interface IProductVariant {
+  _id?: mongoose.Types.ObjectId
+  color: IColorVariant
+  sizes: ISizeVariant[]
+  images?: IProductImage[]
+  priceAdjustment?: number // +/- adjustment from base price
 }
 
 export interface IDimensions {
@@ -35,11 +98,97 @@ export interface IProduct extends Document {
   createdAt?: Date
   updatedAt?: Date
   
+  // Variant fields
+  hasVariants: boolean
+  variants: IProductVariant[]
+  
   // Virtual property
   primaryImage?: string
+  totalVariantQuantity?: number
+}
+
+// ================== Helper Function ==================
+export function categorySupportsVariants(category: string | undefined): boolean {
+  if (!category) return false
+  const normalizedCategory = category.toLowerCase().trim()
+  return VARIANT_CATEGORIES.some(
+    (vc) => normalizedCategory.includes(vc.toLowerCase()) || vc.toLowerCase().includes(normalizedCategory)
+  )
 }
 
 // ================== Schema ==================
+const ColorVariantSchema = new Schema<IColorVariant>(
+  {
+    name: {
+      type: String,
+      required: [true, "Color name is required"],
+      trim: true,
+    },
+    hex: {
+      type: String,
+      required: [true, "Color hex code is required"],
+      match: [/^#[0-9A-Fa-f]{6}$/, "Invalid hex color code"],
+    },
+  },
+  { _id: true }
+)
+
+const SizeVariantSchema = new Schema<ISizeVariant>(
+  {
+    size: {
+      type: String,
+      required: [true, "Size is required"],
+      trim: true,
+    },
+    quantity: {
+      type: Number,
+      required: [true, "Quantity is required"],
+      min: [0, "Quantity cannot be negative"],
+      default: 0,
+    },
+  },
+  { _id: true }
+)
+
+const ProductVariantSchema = new Schema<IProductVariant>(
+  {
+    color: {
+      type: ColorVariantSchema,
+      required: [true, "Color is required for variant"],
+    },
+    sizes: {
+      type: [SizeVariantSchema],
+      required: [true, "At least one size is required"],
+      validate: {
+        validator: function (arr: ISizeVariant[]) {
+          return arr && arr.length > 0
+        },
+        message: "At least one size variant is required",
+      },
+    },
+    images: {
+      type: [
+        {
+          url: {
+            type: String,
+            required: [true, "Image URL is required"],
+          },
+          altText: {
+            type: String,
+            default: "",
+          },
+        },
+      ],
+      default: [],
+    },
+    priceAdjustment: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { _id: true }
+)
+
 const ProductSchema = new Schema<IProduct>(
   {
     name: {
@@ -141,6 +290,15 @@ const ProductSchema = new Schema<IProduct>(
       height: { type: Number, min: 0 },
     },
     tags: { type: [String], default: [] },
+    // Variant fields
+    hasVariants: {
+      type: Boolean,
+      default: false,
+    },
+    variants: {
+      type: [ProductVariantSchema],
+      default: [],
+    },
   },
   { timestamps: true }
 )
@@ -155,6 +313,15 @@ ProductSchema.index({ createdAt: -1 })
 // ================== Virtuals ==================
 ProductSchema.virtual("primaryImage").get(function (this: IProduct) {
   return this.images && this.images.length > 0 ? this.images[0].url : undefined
+})
+
+ProductSchema.virtual("totalVariantQuantity").get(function (this: IProduct) {
+  if (!this.hasVariants || !this.variants || this.variants.length === 0) {
+    return this.inventoryQuantity
+  }
+  return this.variants.reduce((total, variant) => {
+    return total + variant.sizes.reduce((sizeTotal, size) => sizeTotal + size.quantity, 0)
+  }, 0)
 })
 
 // ================== JSON Transform ==================
@@ -197,6 +364,16 @@ ProductSchema.pre<IProduct>("save", function (next) {
       // If re-activated, clear deactivatedAt
       this.deactivatedAt = null
     }
+  }
+  next()
+})
+
+// Update inventoryQuantity based on variants if hasVariants is true
+ProductSchema.pre<IProduct>("save", function (next) {
+  if (this.hasVariants && this.variants && this.variants.length > 0) {
+    this.inventoryQuantity = this.variants.reduce((total, variant) => {
+      return total + variant.sizes.reduce((sizeTotal, size) => sizeTotal + size.quantity, 0)
+    }, 0)
   }
   next()
 })

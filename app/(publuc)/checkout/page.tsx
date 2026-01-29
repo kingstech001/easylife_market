@@ -383,7 +383,7 @@ export default function CheckoutPage() {
         <AnimatedContainer animation="fadeIn" className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => router.push("/stores")}
+            onClick={() => router.push("/allStoreProducts")}
             className="mb-4 hover:bg-primary/10 rounded-xl"
             disabled={isProcessing || isInitializing}
           >
@@ -685,7 +685,7 @@ export default function CheckoutPage() {
                     variant="outline"
                     onClick={handleBack}
                     size="lg"
-                    className="h-12 rounded-xl border-2"
+                    className="h-12 rounded-xl border-2 bg-transparent"
                     disabled={isProcessing || isInitializing}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -734,7 +734,7 @@ export default function CheckoutPage() {
                 {/* Cart Items */}
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
                   {cartItems.map((item) => (
-                    <Card key={item.id} className="border-2 hover:border-primary/50 transition-all overflow-hidden">
+                    <Card key={`${item.id}-${item.selectedVariant?.color?.hex || ''}-${item.selectedVariant?.size || ''}`} className="border-2 hover:border-primary/50 transition-all overflow-hidden">
                       <CardContent className="p-3">
                         <div className="flex gap-3">
                           <div className="relative h-20 w-20 overflow-hidden rounded-xl border-2 flex-shrink-0 bg-muted">
@@ -747,7 +747,28 @@ export default function CheckoutPage() {
                           </div>
                           <div className="flex flex-1 flex-col min-w-0">
                             <div className="flex justify-between items-start mb-2">
-                              <span className="line-clamp-2 font-semibold text-sm leading-tight">{item.name}</span>
+                              <div className="flex-1">
+                                <span className="line-clamp-2 font-semibold text-sm leading-tight">{item.name}</span>
+                                {item.selectedVariant && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {item.selectedVariant.color && (
+                                      <div className="flex items-center gap-1">
+                                        <div
+                                          className="w-3 h-3 rounded-full border border-gray-300"
+                                          style={{ backgroundColor: item.selectedVariant.color.hex }}
+                                          title={item.selectedVariant.color.name}
+                                        />
+                                        <span className="text-xs text-muted-foreground">{item.selectedVariant.color.name}</span>
+                                      </div>
+                                    )}
+                                    {item.selectedVariant.size && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {item.selectedVariant.color ? "•" : ""} Size: {item.selectedVariant.size}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"

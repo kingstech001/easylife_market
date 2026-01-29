@@ -17,16 +17,17 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFormatAmount } from "@/hooks/useFormatAmount";
+import { Badge } from "@/components/ui/badge";
 
 type CartOverlayProps = {
   onClose: () => void;
 };
 
 export default function CartOverlay({ onClose }: CartOverlayProps) {
-  const { state, dispatch } = useCart();
+  const { items = [], removeFromCart, updateQuantity, getCartItemKey } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const itemCount = state.items.reduce((sum, item) => sum + item.quantity, 0);
+  const itemCount = items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
   const { formatAmount } = useFormatAmount();
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
   // Auto-close overlay when cart becomes empty
   useEffect(() => {
-    if (isMounted && state.items.length === 0 && itemCount === 0) {
+    if (isMounted && items.length === 0 && itemCount === 0) {
       // Small delay to allow user to see the empty state briefly
       const timer = setTimeout(() => {
         handleClose();
@@ -52,7 +53,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
       
       return () => clearTimeout(timer);
     }
-  }, [state.items.length, itemCount, isMounted]);
+  }, [items.length, itemCount, isMounted]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -63,8 +64,8 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
   if (!isMounted) return null;
 
-  const subtotal = state.items.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+  const subtotal = items.reduce(
+    (acc: number, item: { price: number; quantity: number }) => acc + item.price * item.quantity,
     0
   );
 
@@ -115,7 +116,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto p-6">
-          {state.items.length === 0 ? (
+          {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-muted flex items-center justify-center">
                 <Package className="h-12 w-12 text-muted-foreground" />
@@ -130,109 +131,115 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {state.items.map((item) => (
-                <Card
-                  key={item.id}
-                  className="border-2 hover:border-primary/50 transition-all overflow-hidden"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      {/* Product Image */}
-                      <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-muted">
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
-                            {item.name}
-                          </h3>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-red-700 hover:bg-destructive/10 h-8 w-8 rounded-lg flex-shrink-0"
-                            onClick={() =>
-                              dispatch({
-                                type: "REMOVE_ITEM",
-                                payload: item.id,
-                              })
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+              {items.map((item) => {
+                const itemKey = getCartItemKey(item.id, item.selectedVariant);
+                
+                return (
+                  <Card
+                    key={itemKey}
+                    className="border-2 hover:border-primary/50 transition-all overflow-hidden"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        {/* Product Image */}
+                        <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-muted">
+                          <Image
+                            src={item.image || "/placeholder.svg"}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
 
-                        <div className="flex items-center justify-between mt-3">
-                          {/* Quantity Controls */}
-                          <div className="flex items-center border-2 rounded-lg overflow-hidden">
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
+                                {item.name}
+                              </h3>
+                              
+                              {/* Display variant info if available */}
+                              {item.selectedVariant && (item.selectedVariant.color || item.selectedVariant.size) && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {item.selectedVariant.color && (
+                                    <Badge variant="outline" className="text-xs">
+                                      <div 
+                                        className="w-2 h-2 rounded-full mr-1" 
+                                        style={{ backgroundColor: item.selectedVariant.color.hex }}
+                                      />
+                                      {item.selectedVariant.color.name}
+                                    </Badge>
+                                  )}
+                                  {item.selectedVariant.size && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Size: {item.selectedVariant.size}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-none hover:bg-primary/10"
-                              onClick={() =>
-                                dispatch({
-                                  type: "UPDATE_QUANTITY",
-                                  payload: {
-                                    id: item.id,
-                                    quantity: item.quantity - 1,
-                                  },
-                                })
-                              }
-                              disabled={item.quantity <= 1}
+                              className="text-destructive hover:text-red-700 hover:bg-destructive/10 h-8 w-8 rounded-lg flex-shrink-0"
+                              onClick={() => removeFromCart(item.id, itemKey)}
                             >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="px-3 text-sm font-semibold min-w-[2rem] text-center">
-                              {item.quantity}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-none hover:bg-primary/10"
-                              onClick={() =>
-                                dispatch({
-                                  type: "UPDATE_QUANTITY",
-                                  payload: {
-                                    id: item.id,
-                                    quantity: item.quantity + 1,
-                                  },
-                                })
-                              }
-                            >
-                              <Plus className="h-3 w-3" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
 
-                          {/* Price */}
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-primary">
-                              {formatAmount(item.price * item.quantity)}
-                            </p>
+                          <div className="flex items-center justify-between mt-3">
+                            {/* Quantity Controls */}
+                            <div className="flex items-center border-2 rounded-lg overflow-hidden">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-none hover:bg-primary/10"
+                                onClick={() => updateQuantity(item.id, item.quantity - 1, itemKey)}
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="px-3 text-sm font-semibold min-w-[2rem] text-center">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-none hover:bg-primary/10"
+                                onClick={() => updateQuantity(item.id, item.quantity + 1, itemKey)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
 
-                            {item.quantity > 1 && (
-                              <p className="text-xs text-muted-foreground">
-                                {formatAmount(item.price)} each
+                            {/* Price */}
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-primary">
+                                {formatAmount(item.price * item.quantity)}
                               </p>
-                            )}
+
+                              {item.quantity > 1 && (
+                                <p className="text-xs text-muted-foreground">
+                                  {formatAmount(item.price)} each
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        {state.items.length > 0 && (
+        {items.length > 0 && (
           <div className="border-t bg-gradient-to-br from-background to-muted/20 p-6 space-y-4">
             {/* Price Breakdown */}
             <Card className="border-0 shadow-sm bg-muted/50 mb-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm, type Resolver } from "react-hook-form";
@@ -23,6 +23,7 @@ import {
   Sparkles,
   LucideImage,
   Check,
+  Palette,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -42,8 +43,53 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 import ExpandableText from "@/components/ExpandableText";
+import ProductVariantsEditor, {
+  type ProductVariant,
+} from "@/components/ProductVariantsEditor";
+
+// Categories that support variants
+const VARIANT_CATEGORIES = [
+  "Clothing",
+  "Fashion",
+  "Apparel",
+  "Shoes",
+  "Footwear",
+  "Accessories",
+  "Jewelry",
+  "Bags",
+  "Sportswear",
+  "Underwear",
+  "Swimwear",
+];
+
+function categorySupportsVariants(category: string | undefined): boolean {
+  if (!category) return false;
+  const normalizedCategory = category.toLowerCase().trim();
+  return VARIANT_CATEGORIES.some(
+    (vc) =>
+      normalizedCategory.includes(vc.toLowerCase()) ||
+      vc.toLowerCase().includes(normalizedCategory),
+  );
+}
+
+const variantSchema = z.object({
+  color: z.object({
+    name: z.string().min(1, "Color name is required"),
+    hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color"),
+  }),
+  sizes: z
+    .array(
+      z.object({
+        size: z.string().min(1, "Size is required"),
+        quantity: z.number().min(0, "Quantity must be non-negative"),
+      }),
+    )
+    .min(1, "At least one size is required"),
+  priceAdjustment: z.number().optional(),
+});
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -71,6 +117,8 @@ const productSchema = z.object({
       }),
     )
     .optional(),
+  hasVariants: z.boolean().optional(),
+  variants: z.array(variantSchema).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -102,10 +150,28 @@ export default function StoreBuilderPage() {
       category: "",
       inventoryQuantity: 0,
       images: [],
+      hasVariants: false,
+      variants: [],
     },
   });
 
   const watchedImages = form.watch("images");
+  const watchedCategory = form.watch("category");
+  const watchedHasVariants = form.watch("hasVariants");
+  const watchedVariants = form.watch("variants");
+
+  // Check if current category supports variants
+  const supportsVariants = useMemo(() => {
+    return categorySupportsVariants(watchedCategory);
+  }, [watchedCategory]);
+
+  // Reset variants when category changes to non-supporting
+  useEffect(() => {
+    if (!supportsVariants && watchedHasVariants) {
+      form.setValue("hasVariants", false);
+      form.setValue("variants", []);
+    }
+  }, [supportsVariants, watchedHasVariants, form]);
 
   // Load draft on mount
   useEffect(() => {
@@ -167,9 +233,7 @@ export default function StoreBuilderPage() {
             .json()
             .catch(() => ({ message: "Unknown error" }));
           throw new Error(
-            `Failed to fetch products: ${
-              errorData.message || productRes.statusText
-            }`,
+            `Failed to fetch products: ${errorData.message || productRes.statusText}`,
           );
         }
         const { products } = await productRes.json();
@@ -188,12 +252,6 @@ export default function StoreBuilderPage() {
   }, []);
 
   const handleEdit = (p: ProductFormValues) => {
-    console.log(
-      "✏️ handleEdit called for product:",
-      p.name,
-      "ID:",
-      p.id || p._id,
-    );
     pauseSave.current = true;
 
     const { id, _id, ...productData } = p;
@@ -206,6 +264,8 @@ export default function StoreBuilderPage() {
       description: productData.description || "",
       compareAtPrice: productData.compareAtPrice || undefined,
       images: productData.images || [],
+      hasVariants: productData.hasVariants || false,
+      variants: productData.variants || [],
     });
 
     // Clear localStorage draft
@@ -218,8 +278,6 @@ export default function StoreBuilderPage() {
     // Resume auto-save after a delay
     setTimeout(() => {
       pauseSave.current = false;
-      console.log("✅ handleEdit setup complete, form ready for editing");
-      // Scroll to form on mobile
       formSectionRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -256,6 +314,8 @@ export default function StoreBuilderPage() {
             category: "",
             inventoryQuantity: 0,
             images: [],
+            hasVariants: false,
+            variants: [],
           },
           { keepValues: false },
         );
@@ -270,12 +330,9 @@ export default function StoreBuilderPage() {
   };
 
   const handleSubmit = async (data: ProductFormValues) => {
-    console.log("🔄 handleSubmit called with data:", data);
-
     // Validate form before proceeding
     const isValid = await form.trigger();
     if (!isValid) {
-      console.error("❌ Form validation failed");
       toast.error("Please fix all validation errors before saving");
       return;
     }
@@ -283,18 +340,7 @@ export default function StoreBuilderPage() {
     const editingId = editingProduct?.id || editingProduct?._id;
     const isCreating = !editingId;
 
-    console.log("📋 Submission Details:", {
-      editingId,
-      isCreating,
-      editingProduct: editingProduct
-        ? { id: editingId, name: editingProduct.name }
-        : null,
-      productsCount: products.length,
-      storeId: store?._id,
-    });
-
     if (products.length >= 10 && isCreating) {
-      console.warn("⚠️ Maximum products reached");
       toast.error(
         "Maximum of 10 products reached. Delete an existing product to add a new one.",
       );
@@ -302,48 +348,57 @@ export default function StoreBuilderPage() {
     }
 
     if (!store?._id) {
-      console.error("❌ No store found");
       toast.error("No store found. Please ensure your store is set up.");
       return;
     }
 
-    console.log(`📤 ${isCreating ? "Creating" : "Updating"} product...`);
     setIsSavingProduct(true);
 
     try {
+      // Calculate total inventory from variants if hasVariants is true
+      let totalInventory = data.inventoryQuantity;
+      if (data.hasVariants && data.variants && data.variants.length > 0) {
+        totalInventory = data.variants.reduce((total, variant) => {
+          return (
+            total +
+            variant.sizes.reduce(
+              (sizeTotal, size) => sizeTotal + size.quantity,
+              0,
+            )
+          );
+        }, 0);
+      }
+
       const cleanedData = {
         name: data.name,
         description: data.description || "",
         price: Number(data.price),
         category: data.category || "",
-        inventoryQuantity: Number(data.inventoryQuantity),
+        inventoryQuantity: totalInventory,
         images: data.images || [],
         storeId: store._id,
+        hasVariants: data.hasVariants || false,
+        variants: data.hasVariants ? data.variants || [] : [],
       };
 
       let resultProduct: ProductFormValues;
 
       if (editingId) {
-        console.log("✏️ Updating product:", editingId);
         const res = await fetch(`/api/dashboard/seller/products/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cleanedData),
         });
 
-        console.log("📡 Update response status:", res.status);
         const responseData = await res.json();
 
         if (!res.ok) {
           throw new Error(
-            `Failed to update product: ${
-              responseData.message || responseData.error || res.statusText
-            }`,
+            `Failed to update product: ${responseData.message || responseData.error || res.statusText}`,
           );
         }
 
         resultProduct = responseData.data;
-        console.log("✅ Product updated successfully:", resultProduct);
         setProducts((prev) =>
           prev.map((p) => {
             const pId = p.id || p._id;
@@ -353,31 +408,25 @@ export default function StoreBuilderPage() {
         );
         toast.success(responseData.message || "Product updated successfully");
       } else {
-        console.log("➕ Creating new product...");
         const res = await fetch("/api/dashboard/seller/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cleanedData),
         });
 
-        console.log("📡 Create response status:", res.status);
         const responseData = await res.json();
 
         if (!res.ok) {
           throw new Error(
-            `Failed to add product: ${
-              responseData.message || responseData.error || res.statusText
-            }`,
+            `Failed to add product: ${responseData.message || responseData.error || res.statusText}`,
           );
         }
 
         resultProduct = responseData.product;
-        console.log("✅ Product created successfully:", resultProduct);
         setProducts((prev) => [...prev, resultProduct]);
         toast.success(responseData.message || "Product added successfully");
       }
 
-      console.log("🧹 Cleaning up after submission...");
       // Clear form and reset state
       pauseSave.current = true;
       try {
@@ -388,7 +437,6 @@ export default function StoreBuilderPage() {
 
       setEditingProduct(null);
 
-      // Reset form with keepValues: false to ensure dirty state is cleared
       form.reset(
         {
           name: "",
@@ -398,11 +446,12 @@ export default function StoreBuilderPage() {
           category: "",
           inventoryQuantity: 0,
           images: [],
+          hasVariants: false,
+          variants: [],
         },
         { keepValues: false },
       );
 
-      // Clear file upload input
       try {
         const uploadInput = document.getElementById(
           "upload",
@@ -414,19 +463,14 @@ export default function StoreBuilderPage() {
 
       setActiveTab("details");
 
-      // Increase timeout to ensure all state updates complete before resuming auto-save
       setTimeout(() => {
         pauseSave.current = false;
-        console.log("✅ handleSubmit completed successfully!");
       }, 800);
     } catch (error: any) {
-      console.error("❌ Save/Update error:", error);
+      console.error("Save/Update error:", error);
       toast.error(error.message || "Failed to save product");
     } finally {
       setIsSavingProduct(false);
-      console.log(
-        "🏁 handleSubmit finally block - isSavingProduct set to false",
-      );
     }
   };
 
@@ -475,7 +519,7 @@ export default function StoreBuilderPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-[#c0a146] rounded-full animate-spin mx-auto"></div>
+            <div className="w-20 h-20 border-4 border-muted border-t-[#c0a146] rounded-full animate-spin mx-auto" />
             <div className="absolute inset-0 flex items-center justify-center">
               <Store className="w-8 h-8 text-[#c0a146] animate-pulse" />
             </div>
@@ -609,12 +653,13 @@ export default function StoreBuilderPage() {
                         category: "",
                         inventoryQuantity: 0,
                         images: [],
+                        hasVariants: false,
+                        variants: [],
                       });
                       setActiveTab("details");
                       try {
                         localStorage.removeItem(DRAFT_KEY);
                       } catch {}
-                      // Scroll to form on mobile
                       setTimeout(() => {
                         formSectionRef.current?.scrollIntoView({
                           behavior: "smooth",
@@ -683,7 +728,7 @@ export default function StoreBuilderPage() {
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                     <span className="flex items-center gap-1 font-medium text-foreground">
-                                      <span className="text-base">₦</span>
+                                      <span className="text-base">N</span>
                                       {p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
@@ -691,15 +736,26 @@ export default function StoreBuilderPage() {
                                       {p.inventoryQuantity} in stock
                                     </span>
                                   </div>
-                                  {p.category && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs border-[#c0a146]/30"
-                                    >
-                                      <Tag className="w-2 h-2 mr-1" />
-                                      {p.category}
-                                    </Badge>
-                                  )}
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {p.category && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs border-[#c0a146]/30"
+                                      >
+                                        <Tag className="w-2 h-2 mr-1" />
+                                        {p.category}
+                                      </Badge>
+                                    )}
+                                    {p.hasVariants && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        <Palette className="w-2 h-2 mr-1" />
+                                        {p.variants?.length || 0} variants
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
                                 <Button
                                   variant="ghost"
@@ -773,13 +829,15 @@ export default function StoreBuilderPage() {
                                 category: "",
                                 inventoryQuantity: 0,
                                 images: [],
+                                hasVariants: false,
+                                variants: [],
                               });
                               setActiveTab("details");
                               try {
                                 localStorage.removeItem(DRAFT_KEY);
                               } catch {}
                             }}
-                            className="h-9 mr-0"
+                            className="h-9 mr-0 bg-transparent"
                           >
                             <X className="w-4 h-4 mr-2" />
                             Cancel
@@ -799,29 +857,40 @@ export default function StoreBuilderPage() {
                           onValueChange={setActiveTab}
                           className="space-y-8"
                         >
-                          <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl h-12">
+                          <TabsList className="grid w-full grid-cols-4 bg-muted p-1 rounded-xl h-12">
                             <TabsTrigger
                               value="details"
                               className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
                             >
                               <Settings className="w-4 h-4 mr-2" />
-                              Details
+                              <span className="hidden sm:inline">Details</span>
                             </TabsTrigger>
                             <TabsTrigger
                               value="images"
                               className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
                             >
                               <ImageIcon className="w-4 h-4 mr-2" />
-                              Images
+                              <span className="hidden sm:inline">Images</span>
                             </TabsTrigger>
                             <TabsTrigger
                               value="inventory"
                               className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
                             >
                               <Box className="w-4 h-4 mr-2" />
-                              Inventory
+                              <span className="hidden sm:inline">
+                                Inventory
+                              </span>
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="variants"
+                              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
+                              disabled={!supportsVariants}
+                            >
+                              <Palette className="w-4 h-4 mr-2" />
+                              <span className="hidden sm:inline">Variants</span>
                             </TabsTrigger>
                           </TabsList>
+
                           {/* Details Tab */}
                           <TabsContent
                             value="details"
@@ -896,6 +965,13 @@ export default function StoreBuilderPage() {
                                         />
                                       </div>
                                     </FormControl>
+                                    {supportsVariants && (
+                                      <FormDescription className="flex items-center gap-1 text-[#c0a146]">
+                                        <Palette className="w-3 h-3" />
+                                        This category supports color/size
+                                        variants
+                                      </FormDescription>
+                                    )}
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -985,9 +1061,7 @@ export default function StoreBuilderPage() {
                                         ...existingImages,
                                         {
                                           url: secure_url,
-                                          altText: `${
-                                            form.getValues("name") || "Product"
-                                          } image ${existingImages.length + 1}`,
+                                          altText: `${form.getValues("name") || "Product"} image ${existingImages.length + 1}`,
                                         },
                                       ],
                                       { shouldDirty: true },
@@ -1091,35 +1165,66 @@ export default function StoreBuilderPage() {
                               </div>
                             </div>
 
-                            <div className="max-w-md">
-                              <FormField
-                                control={form.control}
-                                name="inventoryQuantity"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-base">
-                                      Stock Quantity *
-                                    </FormLabel>
-                                    <FormControl>
-                                      <div className="relative">
-                                        <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#c0a146]" />
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          placeholder="0"
-                                          className="pl-12 h-12"
-                                          {...field}
-                                        />
-                                      </div>
-                                    </FormControl>
-                                    <FormDescription>
-                                      How many units do you have in stock?
-                                    </FormDescription>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
+                            {watchedHasVariants ? (
+                              <div className="rounded-lg bg-[#c0a146]/10 border border-[#c0a146]/20 p-4">
+                                <div className="flex items-start gap-3">
+                                  <Palette className="h-5 w-5 text-[#c0a146] mt-0.5" />
+                                  <div className="text-sm">
+                                    <p className="font-medium text-foreground mb-1">
+                                      Variants Enabled
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                      Inventory is managed per variant. Go to
+                                      the Variants tab to set quantities for
+                                      each color/size combination.
+                                    </p>
+                                    <p className="text-[#c0a146] font-medium mt-2">
+                                      Total inventory:{" "}
+                                      {watchedVariants?.reduce(
+                                        (total, v) =>
+                                          total +
+                                          v.sizes.reduce(
+                                            (st, s) => st + s.quantity,
+                                            0,
+                                          ),
+                                        0,
+                                      ) || 0}{" "}
+                                      items
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="max-w-md">
+                                <FormField
+                                  control={form.control}
+                                  name="inventoryQuantity"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className="text-base">
+                                        Stock Quantity *
+                                      </FormLabel>
+                                      <FormControl>
+                                        <div className="relative">
+                                          <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#c0a146]" />
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            placeholder="0"
+                                            className="pl-12 h-12"
+                                            {...field}
+                                          />
+                                        </div>
+                                      </FormControl>
+                                      <FormDescription>
+                                        How many units do you have in stock?
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            )}
 
                             <div className="rounded-lg bg-[#c0a146]/10 border border-[#c0a146]/20 p-4 max-w-md">
                               <div className="flex items-start gap-3">
@@ -1137,6 +1242,115 @@ export default function StoreBuilderPage() {
                                 </div>
                               </div>
                             </div>
+                          </TabsContent>
+
+                          {/* Variants Tab */}
+                          <TabsContent
+                            value="variants"
+                            className="space-y-6 mt-8"
+                          >
+                            {supportsVariants ? (
+                              <>
+                                <div className="flex flex-col sm:flex-row items-center justify-between pb-4 border-b">
+                                  <div className="space-y-1 mb-2 sm:mb-0">
+                                    <div className="flex items-center">
+                                      <div className="p-2 rounded-lg bg-[#c0a146]/10">
+                                        <Palette className="h-5 w-5 text-[#c0a146]" />
+                                      </div>
+                                      <h3 className="text-lg font-semibold">
+                                        Color & Size Variants
+                                      </h3>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      Add different colors and sizes for your{" "}
+                                      {watchedCategory || "product"}
+                                    </p>
+                                  </div>
+                                  <FormField
+                                    control={form.control}
+                                    name="hasVariants"
+                                    render={({ field }) => (
+                                      <FormItem className="flex items-center gap-2">
+                                        <FormLabel className="text-sm font-normal">
+                                          Enable variants
+                                        </FormLabel>
+                                        <FormControl>
+                                          <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+
+                                {watchedHasVariants ? (
+                                  <ProductVariantsEditor
+                                    variants={
+                                      (watchedVariants as ProductVariant[]) ||
+                                      []
+                                    }
+                                    onChange={(newVariants) => {
+                                      form.setValue("variants", newVariants, {
+                                        shouldDirty: true,
+                                      });
+                                    }}
+                                    category={watchedCategory}
+                                  />
+                                ) : (
+                                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-12 text-center bg-muted/20">
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
+                                      <Palette className="w-8 h-8 text-muted-foreground/50" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold mb-2">
+                                      Variants Disabled
+                                    </h3>
+                                    <p className="text-muted-foreground text-sm mb-4">
+                                      Enable variants to add color and size
+                                      options to your product
+                                    </p>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() =>
+                                        form.setValue("hasVariants", true)
+                                      }
+                                      className="bg-transparent"
+                                    >
+                                      <Palette className="w-4 h-4 mr-2" />
+                                      Enable Variants
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="border-2 border-dashed border-muted-foreground/25 rounded-2xl p-12 text-center bg-muted/20">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
+                                  <Palette className="w-8 h-8 text-muted-foreground/50" />
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">
+                                  Variants Not Available
+                                </h3>
+                                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                                  Color and size variants are only available for
+                                  clothing, fashion, and related categories.
+                                  Update your product category to enable this
+                                  feature.
+                                </p>
+                                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                  {VARIANT_CATEGORIES.slice(0, 6).map((cat) => (
+                                    <Badge
+                                      key={cat}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {cat}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </TabsContent>
                         </Tabs>
 

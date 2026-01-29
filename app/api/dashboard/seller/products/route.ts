@@ -69,10 +69,12 @@ export async function POST(req: Request) {
       inventoryQuantity: body.inventoryQuantity,
       storeId: body.storeId,
       hasImages: !!body.images,
-      imageCount: body.images?.length
+      imageCount: body.images?.length,
+      hasVariants: body.hasVariants,
+      variantCount: body.variants?.length
     })
 
-    const { name, description, price, compareAtPrice, category, inventoryQuantity, images, storeId } = body
+    const { name, description, price, compareAtPrice, category, inventoryQuantity, images, storeId, hasVariants, variants } = body
 
     // ✅ Detailed validation with specific error messages
     if (!name) {
@@ -160,14 +162,17 @@ export async function POST(req: Request) {
       description,
       price,
       compareAtPrice,
-      category: category || undefined, // Allow string category
+      category: category || undefined,
       inventoryQuantity,
       images: images || [],
+      hasVariants: hasVariants || false,
+      variants: hasVariants ? variants || [] : [],
       storeId: store._id,
       sellerId: user.id,
     }
     
     console.log("📝 Product data:", productData)
+    console.log(`[v0] Creating product with variants: hasVariants=${productData.hasVariants}, variantCount=${productData.variants.length}`)
     
     const product = await Product.create(productData)
 
