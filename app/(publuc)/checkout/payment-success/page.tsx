@@ -85,7 +85,7 @@ function PaymentSuccessContent() {
             
             // ✅ Clear cart for subscription payments (silently)
             if (!cartClearedRef.current) {
-              clearCart(true)
+              clearCart()
               cartClearedRef.current = true
               console.log("🗑️ Cart cleared after subscription payment")
             }
@@ -112,7 +112,7 @@ function PaymentSuccessContent() {
           
           // ✅ Clear cart after successful order creation (silently)
           if (!cartClearedRef.current) {
-            clearCart(true)
+            clearCart()
             cartClearedRef.current = true
             console.log("🗑️ Cart cleared after order creation")
             toast.success("Payment successful! Your order has been placed.")

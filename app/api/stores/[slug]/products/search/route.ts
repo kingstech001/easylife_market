@@ -111,24 +111,45 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
     ])
 
     // Transform products with safe property access
-    const transformedProducts: ProductResponse[] = products.map((product: any) => ({
-      id: product._id.toString(),
-      name: product.name,
-      description: product.description || null,
-      price: product.price,
-      compare_at_price: product.compareAtPrice || null,
-      category_id: product.categoryId?._id?.toString() || product.categoryId?.toString() || null,
-      inventory_quantity: product.inventoryQuantity,
-      images:
-        product.images?.map((img: any, index: number) => ({
-          id: img._id?.toString() || `img-${index}`,
-          url: img.url,
-          alt_text: img.altText || null,
-        })) || [],
-      store_id: product.storeId.toString(),
-      created_at: product.createdAt || new Date(),
-      updated_at: product.updatedAt || new Date(),
-    }))
+    const transformedProducts: ProductResponse[] = products.map((product: any) => {
+      // Check if product has variants
+      const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+      
+      return {
+        id: product._id.toString(),
+        name: product.name,
+        description: product.description || null,
+        price: product.price,
+        compare_at_price: product.compareAtPrice || null,
+        category_id: product.categoryId?._id?.toString() || product.categoryId?.toString() || null,
+        inventory_quantity: product.inventoryQuantity,
+        images:
+          product.images?.map((img: any, index: number) => ({
+            id: img._id?.toString() || `img-${index}`,
+            url: img.url,
+            alt_text: img.altText || null,
+          })) || [],
+        store_id: product.storeId.toString(),
+        created_at: product.createdAt || new Date(),
+        updated_at: product.updatedAt || new Date(),
+        // ⭐ ADD VARIANTS HERE ⭐
+        hasVariants: hasVariants,
+        variants: hasVariants ? product.variants.map((variant: any) => ({
+          color: {
+            name: variant.color?.name || '',
+            hex: variant.color?.hex || '#000000',
+            _id: variant.color?._id?.toString()
+          },
+          sizes: Array.isArray(variant.sizes) ? variant.sizes.map((size: any) => ({
+            size: size.size || '',
+            quantity: size.quantity || 0,
+            _id: size._id?.toString()
+          })) : [],
+          priceAdjustment: variant.priceAdjustment || 0,
+          _id: variant._id?.toString()
+        })) : undefined,
+      }
+    })
 
     const pagination: PaginationResponse = {
       currentPage: page,

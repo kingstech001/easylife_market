@@ -113,6 +113,9 @@ export async function GET(
     // Transform the products
     const transformedProducts: ProductResponse[] = products.map((product: any) => {
       try {
+        // Check if product has variants
+        const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+        
         return {
           id: product._id.toString(),
           name: product.name || "Untitled Product",
@@ -131,6 +134,22 @@ export async function GET(
           store_id: product.storeId.toString(),
           created_at: product.createdAt || new Date(),
           updated_at: product.updatedAt || new Date(),
+          // ⭐ CORRECT VARIANT STRUCTURE ⭐
+          hasVariants: hasVariants,
+          variants: hasVariants ? product.variants.map((variant: any) => ({
+            color: {
+              name: variant.color?.name || '',
+              hex: variant.color?.hex || '#000000',
+              _id: variant.color?._id?.toString()
+            },
+            sizes: Array.isArray(variant.sizes) ? variant.sizes.map((size: any) => ({
+              size: size.size || '',
+              quantity: size.quantity || 0,
+              _id: size._id?.toString()
+            })) : [],
+            priceAdjustment: variant.priceAdjustment || 0,
+            _id: variant._id?.toString()
+          })) : undefined,
         }
       } catch (transformError) {
         console.error('❌ Error transforming product:', product._id, transformError)
@@ -146,6 +165,8 @@ export async function GET(
           store_id: product.storeId?.toString() || "",
           created_at: new Date(),
           updated_at: new Date(),
+          hasVariants: false,
+          variants: undefined,
         }
       }
     })
