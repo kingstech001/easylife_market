@@ -507,10 +507,10 @@ export function SiteHeader() {
               <Separator className="my-6" />
 
               {/* Action Buttons */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Shopping Features - Only for non-sellers */}
                 {showShoppingFeatures && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div>
                     <Link
                       href="/wishlist"
                       onClick={() => setMobileMenuOpen(false)}

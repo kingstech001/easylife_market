@@ -601,7 +601,7 @@ export default function ProductPage({
                   <CardContent className="p-6 space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-lg">Select Color</h3>
+                        <h3 className="font-semibold text-sm sm:text-lg">Select Color</h3>
                       </div>
                       <div className="flex flex-wrap gap-3">
                         {parsedVariants.map((variant: ProductVariant) => (
@@ -616,9 +616,9 @@ export default function ProductPage({
                                 setSelectedSize(variant.sizes[0].size);
                               }
                             }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all ${
+                            className={`flex items-center gap-2 px-2 py-2 rounded-xl border-2 transition-all ${
                               selectedColor === variant.color.name
-                                ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                                ? "border-primary bg-primary/10 ring-1 ring-primary/30"
                                 : "border-border hover:border-primary/50"
                             }`}
                           >
@@ -626,7 +626,7 @@ export default function ProductPage({
                               className="w-6 h-6 rounded-full border-2 border-muted-foreground/30"
                               style={{ backgroundColor: variant.color.hex }}
                             />
-                            <span className="font-medium hidden sm:block">{variant.color.name}</span>
+                            
                           </motion.button>
                         ))}
                       </div>
@@ -636,7 +636,7 @@ export default function ProductPage({
                     {selectedColor && availableSizes.length > 0 && (
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-semibold text-lg">Select Size</h3>
+                          <h3 className="font-semibold text-sm sm:text-lg">Select Size</h3>
                          
                         </div>
                         <div className="flex flex-wrap gap-3">
@@ -647,7 +647,7 @@ export default function ProductPage({
                               whileTap={{ scale: 0.95 }}
                               onClick={() => setSelectedSize(sizeData.size)}
                               disabled={sizeData.quantity === 0}
-                              className={`px-6 py-3 rounded-xl border-2 font-medium transition-all ${
+                              className={`px-3 py-2 rounded-xl border-2 font-medium transition-all ${
                                 selectedSize === sizeData.size
                                   ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/30"
                                   : sizeData.quantity === 0
@@ -928,7 +928,7 @@ export default function ProductPage({
                   transition={{ duration: 0.2 }}
                 >
                   <Card
-                    className="overflow-hidden h-full flex flex-col cursor-pointer border-2 hover:border-primary/50 hover:shadow-xl transition-all"
+                    className="overflow-hidden h-full flex flex-col cursor-pointer border-1 hover:border-primary/50 hover:shadow-sm transition-all"
                     onClick={() =>
                       router.push(
                         `/stores/${params.slug}/products/${relatedProduct.id}`
@@ -944,15 +944,15 @@ export default function ProductPage({
                       />
                     </div>
                     <CardContent className="p-4 flex-1">
-                      <h3 className="font-semibold line-clamp-2 mb-2">
+                      <h3 className="font-semibold text-base line-clamp-1 mb-2">
                         {relatedProduct.name}
                       </h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-primary">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className=" font-bold text-primary">
                           {formatAmount(relatedProduct.price)}
                         </span>
                         {relatedProduct.compare_at_price && (
-                          <span className="text-sm text-muted-foreground line-through">
+                          <span className="text-[10px] text-muted-foreground line-through">
                             {formatAmount(relatedProduct.compare_at_price)}
                           </span>
                         )}
