@@ -415,7 +415,7 @@ export default function ProductPage({
           <div className=" lg:max-w-[600px] mx-auto w-full">
             <AnimatedContainer animation="slideIn" className="space-y-4 sticky top-8">
               {/* Main Image */}
-              <Card className="overflow-hidden border-2 shadow-lg">
+              <Card className="overflow-hidden border-2">
                 <div className="relative aspect-square bg-muted">
                   <Image
                     src={
@@ -446,15 +446,15 @@ export default function ProductPage({
 
               {/* Thumbnail Gallery */}
               {product.images.length > 1 && (
-                <div className="flex gap-3 overflow-auto pb-2">
+                <div className="flex gap-3 pb-2">
                   {product.images.map((image, index) => (
                     <motion.button
                       key={image.id}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`relative aspect-square w-24 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 transition-all ${
+                      className={`relative aspect-square w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl  transition-all ${
                         selectedImage === index
-                          ? "ring-4 ring-primary border-primary shadow-lg"
+                          ? "ring-2 ring-[#e1a200] border-primary shadow-lg"
                           : "border-border hover:border-primary/50"
                       }`}
                       onClick={() => setSelectedImage(index)}
@@ -473,7 +473,7 @@ export default function ProductPage({
               {/* Trust Badges */}
               <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
                 <CardContent className="p-3">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3">
                     <div className="text-center">
                       <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
                         <ShieldCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
