@@ -395,10 +395,10 @@ export default function ProductVariantsEditor({
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="pt-0 space-y-4">
+                  <CardContent className="p-3 space-y-4 ">
                     {/* Size Management */}
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-2 items-start sm:items-center justify-between">
                         <Label className="flex items-center gap-2 text-sm font-medium">
                           <Ruler className="h-4 w-4" />
                           Sizes & Quantities
