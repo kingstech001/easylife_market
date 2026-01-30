@@ -24,10 +24,18 @@ type CartOverlayProps = {
 };
 
 export default function CartOverlay({ onClose }: CartOverlayProps) {
-  const { items = [], removeFromCart, updateQuantity, getCartItemKey } = useCart();
+  const {
+    items = [],
+    removeFromCart,
+    updateQuantity,
+    getCartItemKey,
+  } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const itemCount = items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+  const itemCount = items.reduce(
+    (sum: number, item: { quantity: number }) => sum + item.quantity,
+    0,
+  );
   const { formatAmount } = useFormatAmount();
 
   useEffect(() => {
@@ -50,7 +58,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
       const timer = setTimeout(() => {
         handleClose();
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [items.length, itemCount, isMounted]);
@@ -65,8 +73,9 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
   if (!isMounted) return null;
 
   const subtotal = items.reduce(
-    (acc: number, item: { price: number; quantity: number }) => acc + item.price * item.quantity,
-    0
+    (acc: number, item: { price: number; quantity: number }) =>
+      acc + item.price * item.quantity,
+    0,
   );
 
   return (
@@ -75,7 +84,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
       <div
         className={cn(
           "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
-          isVisible ? "opacity-100" : "opacity-0"
+          isVisible ? "opacity-100" : "opacity-0",
         )}
         onClick={handleClose}
       />
@@ -85,7 +94,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
         className={cn(
           "fixed inset-y-0 right-0 z-50 bg-background w-full max-w-lg h-full shadow-2xl border-l overflow-hidden flex flex-col",
           "transition-transform duration-300 ease-out",
-          isVisible ? "translate-x-0" : "translate-x-full"
+          isVisible ? "translate-x-0" : "translate-x-full",
         )}
       >
         {/* Header */}
@@ -115,7 +124,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-2">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-muted flex items-center justify-center">
@@ -133,11 +142,11 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
             <div className="space-y-4">
               {items.map((item) => {
                 const itemKey = getCartItemKey(item.id, item.selectedVariant);
-                
+
                 return (
                   <Card
                     key={itemKey}
-                    className="border-2 hover:border-primary/50 transition-all overflow-hidden"
+                    className="border-2 hover:border-primary/50 transition-all overflow-hidden p-0"
                   >
                     <CardContent className="p-4">
                       <div className="flex gap-4">
@@ -153,41 +162,51 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
+                          <div className="items-start justify-between gap-2 mb-2">
+                            <div className=" flex flex-1 min-w-0 items-center justify-between">
+                              <h3 className="font-semibold text-foreground line-clamp-1 leading-tight">
                                 {item.name}
                               </h3>
-                              
-                              {/* Display variant info if available */}
-                              {item.selectedVariant && (item.selectedVariant.color || item.selectedVariant.size) && (
-                                <div className="flex flex-wrap gap-1 mt-1">
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-red-700 hover:bg-destructive/10 h-8 w-8 rounded-lg flex-shrink-0"
+                                onClick={() => removeFromCart(item.id, itemKey)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {/* Display variant info if available */}
+                            {item.selectedVariant &&
+                              (item.selectedVariant.color ||
+                                item.selectedVariant.size) && (
+                                <div className="flex gap-1 mt-1">
                                   {item.selectedVariant.color && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <div 
-                                        className="w-2 h-2 rounded-full mr-1" 
-                                        style={{ backgroundColor: item.selectedVariant.color.hex }}
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      <div
+                                        className="w-2 h-2 rounded-full mr-1"
+                                        style={{
+                                          backgroundColor:
+                                            item.selectedVariant.color.hex,
+                                        }}
                                       />
                                       {item.selectedVariant.color.name}
                                     </Badge>
                                   )}
                                   {item.selectedVariant.size && (
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
                                       Size: {item.selectedVariant.size}
                                     </Badge>
                                   )}
                                 </div>
                               )}
-                            </div>
-                            
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-red-700 hover:bg-destructive/10 h-8 w-8 rounded-lg flex-shrink-0"
-                              onClick={() => removeFromCart(item.id, itemKey)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
                           </div>
 
                           <div className="flex items-center justify-between mt-3">
@@ -197,7 +216,13 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-none hover:bg-primary/10"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1, itemKey)}
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.id,
+                                    item.quantity - 1,
+                                    itemKey,
+                                  )
+                                }
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-3 w-3" />
@@ -209,7 +234,13 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-none hover:bg-primary/10"
-                                onClick={() => updateQuantity(item.id, item.quantity + 1, itemKey)}
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.id,
+                                    item.quantity + 1,
+                                    itemKey,
+                                  )
+                                }
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
@@ -217,7 +248,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
                             {/* Price */}
                             <div className="text-right">
-                              <p className="text-lg font-bold text-primary">
+                              <p className="text-sm font-bold text-primary">
                                 {formatAmount(item.price * item.quantity)}
                               </p>
 
