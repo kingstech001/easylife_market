@@ -572,14 +572,14 @@ export function SiteHeader() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="">
                     <Link
                       href="/auth/login"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Button
                         variant="outline"
-                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500"
+                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200] mb-3"
                       >
                         <LogIn className="mr-3 h-4 w-4" />
                         Login

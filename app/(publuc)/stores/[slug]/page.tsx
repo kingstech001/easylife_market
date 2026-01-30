@@ -389,7 +389,7 @@ export default async function StorePage({ params }: StorePageProps) {
                   </div>
 
                   {/* Store Details */}
-                  <div className="flex-1 min-w-0 space-y-4">
+                  <div className="flex-1 min-w-0">
                     {/* Store Description */}
                     {store.description && (
                       <div>
