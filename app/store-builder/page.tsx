@@ -1251,7 +1251,7 @@ export default function StoreBuilderPage() {
                           >
                             {supportsVariants ? (
                               <>
-                                <div className="flex flex-col sm:flex-row items-center justify-between pb-4 border-b">
+                                <div className="flex flex-col sm:flex-row iitems-start sm:items-center justify-between pb-4 border-b">
                                   <div className="space-y-1 mb-2 sm:mb-0">
                                     <div className="flex items-center">
                                       <div className="p-2 rounded-lg bg-[#c0a146]/10">
@@ -1278,6 +1278,7 @@ export default function StoreBuilderPage() {
                                           <Switch
                                             checked={field.value}
                                             onCheckedChange={field.onChange}
+                                            style={{margin:"0"}}
                                           />
                                         </FormControl>
                                       </FormItem>
