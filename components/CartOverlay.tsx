@@ -149,7 +149,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
                     className="border-2 hover:border-primary/50 transition-all overflow-hidden p-0"
                   >
                     <CardContent className="p-4">
-                      <div className="flex gap-4">
+                      <div className="flex items-center gap-4">
                         {/* Product Image */}
                         <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-muted">
                           <Image
