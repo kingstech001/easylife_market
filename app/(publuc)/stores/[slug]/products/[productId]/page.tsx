@@ -412,7 +412,7 @@ export default function ProductPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-12 max-w-7xl mx-auto">
           {/* Product Images Section - Left Side */}
-          <div className=" lg:max-w-[600px] mx-auto w-full">
+          <div className="lg:max-w-[600px] mx-auto w-full">
             <AnimatedContainer animation="slideIn" className="space-y-4 sticky top-8">
               {/* Main Image */}
               <Card className="overflow-hidden border-2">
@@ -436,7 +436,7 @@ export default function ProductPage({
                   )}
                   {currentStock < 10 && currentStock > 0 && (
                     <div className="absolute top-6 right-6">
-                      <Badge className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-4 py-2 shadow-lg ">
+                      <Badge className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-4 py-2 shadow-lg">
                         Only {currentStock} left!
                       </Badge>
                     </div>
@@ -452,7 +452,7 @@ export default function ProductPage({
                       key={image.id}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`relative aspect-square w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl  transition-all ${
+                      className={`relative aspect-square w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl transition-all ${
                         selectedImage === index
                           ? "ring-2 ring-[#e1a200] border-primary shadow-lg"
                           : "border-border hover:border-primary/50"
@@ -503,7 +503,7 @@ export default function ProductPage({
             <AnimatedContainer animation="slideUp" className="space-y-3">
               {/* Store Badge */}
               <Card className="border-0 shadow-sm">
-                <CardContent className="p-0">
+                <CardContent className="p-3">
                   <div className="flex items-center gap-3">
                     {store.logo_url ? (
                       <Image
@@ -597,70 +597,75 @@ export default function ProductPage({
 
               {/* Color & Size Selection */}
               {product.hasVariants && parsedVariants && parsedVariants.length > 0 && (
-                <Card className="border-2">
-                  <CardContent className="p-6 space-y-4">
+                <Card className="border-2 overflow-hidden">
+                  <CardContent className="p-4 sm:p-6 space-y-4">
                     <div>
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-sm sm:text-lg">Select Color</h3>
                       </div>
-                      <div className="flex flex-wrap gap-3">
-                        {parsedVariants.map((variant: ProductVariant) => (
-                          <motion.button
-                            key={variant._id || variant.color.name}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              setSelectedColor(variant.color.name);
-                              // Reset size selection when color changes
-                              if (variant.sizes.length > 0) {
-                                setSelectedSize(variant.sizes[0].size);
-                              }
-                            }}
-                            className={`flex items-center gap-2 px-2 py-2 rounded-xl border-2 transition-all ${
-                              selectedColor === variant.color.name
-                                ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                                : "border-border hover:border-primary/50"
-                            }`}
-                          >
-                            <div
-                              className="w-6 h-6 rounded-full border-2 border-muted-foreground/30"
-                              style={{ backgroundColor: variant.color.hex }}
-                            />
-                            
-                          </motion.button>
-                        ))}
+                      {/* Horizontal scrollable row for colors */}
+                      <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
+                        <div className="flex gap-2 sm:gap-3 min-w-max">
+                          {parsedVariants.map((variant: ProductVariant) => (
+                            <motion.button
+                              key={variant._id || variant.color.name}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                setSelectedColor(variant.color.name);
+                                // Reset size selection when color changes
+                                if (variant.sizes.length > 0) {
+                                  setSelectedSize(variant.sizes[0].size);
+                                }
+                              }}
+                              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border-2 transition-all flex-shrink-0 ${
+                                selectedColor === variant.color.name
+                                  ? "border-[#e1a200] bg-[#e1a200]/10 ring-1 ring-[#e1a200]/30"
+                                  : "border-border hover:border-[#e1a200]/50"
+                              }`}
+                            >
+                              <div
+                                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-muted-foreground/30 flex-shrink-0"
+                                style={{ backgroundColor: variant.color.hex }}
+                              />
+                              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{variant.color.name}</span>
+                            </motion.button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     {/* Size Selection */}
                     {selectedColor && availableSizes.length > 0 && (
                       <div>
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-sm sm:text-lg">Select Size</h3>
-                         
                         </div>
-                        <div className="flex flex-wrap gap-3">
-                          {availableSizes.map((sizeData: VariantSize) => (
-                            <motion.button
-                              key={sizeData.size}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setSelectedSize(sizeData.size)}
-                              disabled={sizeData.quantity === 0}
-                              className={`px-3 py-2 rounded-xl border-2 font-medium transition-all ${
-                                selectedSize === sizeData.size
-                                  ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/30"
-                                  : sizeData.quantity === 0
-                                  ? "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                                  : "border-border hover:border-primary/50"
-                              }`}
-                            >
-                              {sizeData.size}
-                              {sizeData.quantity === 0 && (
-                                <span className="block text-xs">Out of stock</span>
-                              )}
-                            </motion.button>
-                          ))}
+                        {/* Horizontal scrollable row for sizes */}
+                        <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
+                          <div className="flex gap-2 sm:gap-3 min-w-max">
+                            {availableSizes.map((sizeData: VariantSize) => (
+                              <motion.button
+                                key={sizeData.size}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setSelectedSize(sizeData.size)}
+                                disabled={sizeData.quantity === 0}
+                                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-2 font-medium transition-all flex-shrink-0 ${
+                                  selectedSize === sizeData.size
+                                    ? "border-[#e1a200] bg-[#e1a200]/10 text-primary ring-1 ring-[#e1a200]/30"
+                                    : sizeData.quantity === 0
+                                    ? "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                                    : "border-border hover:border-[#e1a200]/50"
+                                }`}
+                              >
+                                <span className="text-sm sm:text-base">{sizeData.size}</span>
+                                {sizeData.quantity === 0 && (
+                                  <span className="block text-[10px] sm:text-xs">Out of stock</span>
+                                )}
+                              </motion.button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -948,7 +953,7 @@ export default function ProductPage({
                         {relatedProduct.name}
                       </h3>
                       <div className="flex items-center justify-between text-sm">
-                        <span className=" font-bold text-primary">
+                        <span className="font-bold text-primary">
                           {formatAmount(relatedProduct.price)}
                         </span>
                         {relatedProduct.compare_at_price && (

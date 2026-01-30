@@ -45,8 +45,8 @@ const PREDEFINED_COLORS = [
   { name: "Navy", hex: "#1E3A5F" },
   { name: "Beige", hex: "#D4C4A8" },
   { name: "Cream", hex: "#FFFDD0" },
-  { name: "Maroon", hex: "#800000" },
   { name: "Teal", hex: "#14B8A6" },
+  { name: "Maroon", hex: "#800000" },
 ];
 
 // Predefined sizes
@@ -225,13 +225,13 @@ export default function ProductVariantsEditor({
 
       {/* Quick Add Colors */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="p-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Palette className="h-4 w-4" />
             Add Color Variant
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-3">
           <div className="flex flex-wrap gap-2">
             {PREDEFINED_COLORS.map((color) => {
               const isAdded = variants.some(
@@ -420,7 +420,7 @@ export default function ProductVariantsEditor({
                         {variant.sizes.map((sizeVariant, sizeIndex) => (
                           <div
                             key={`size-${variantIndex}-${sizeIndex}`}
-                            className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30"
+                            className="flex items-center gap-2 rounded-lg border bg-muted/30"
                           >
                             <Badge variant="secondary" className="font-mono">
                               {sizeVariant.size}

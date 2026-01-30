@@ -485,7 +485,7 @@ export default function EditProductPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
+      <div className="container p-0 max-w-4xl mx-auto py-4 sm:py-8 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -500,7 +500,7 @@ export default function EditProductPage() {
             <span className="hidden sm:inline">Back to Products</span>
             <span className="sm:hidden">Back</span>
           </Button>
-          <div className="sm:flex items-start gap-3 sm:gap-4 justify-between">
+          <div className="sm:flex items-start gap-3 sm:gap-4 justify-between p-0">
             <div>
               <div className="flex gap-2 items-center">
                 <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20 flex-shrink-0">
@@ -883,8 +883,8 @@ export default function EditProductPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <Card className="border-0 shadow-sm bg-card/50 dark:bg-card/20">
-                    <CardHeader className="pb-4 sm:pb-6">
-                      <div className="flex items-center justify-between">
+                    <CardHeader className="pb-4 px-0 sm:pb-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                           <Palette className="h-4 w-4 sm:h-5 sm:w-5" />
                           Color & Size Variants
@@ -894,10 +894,10 @@ export default function EditProductPage() {
                             control={form.control}
                             name="hasVariants"
                             render={({ field }) => (
-                              <FormItem className="flex items-center gap-2">
+                              <FormItem className="flex items-center gap-2 mt-2">
                                 <FormLabel className="text-sm font-normal">Enable variants</FormLabel>
                                 <FormControl>
-                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  <Switch checked={field.value} onCheckedChange={field.onChange} style={{ margin:"0"}} />
                                 </FormControl>
                               </FormItem>
                             )}
@@ -905,7 +905,7 @@ export default function EditProductPage() {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+                    <CardContent className="space-y-4 p-0">
                       {supportsVariants ? (
                         watchedHasVariants ? (
                           <ProductVariantsEditor
