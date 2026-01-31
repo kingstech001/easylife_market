@@ -40,21 +40,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import ProductVariantsEditor, { type ProductVariant } from "@/components/ProductVariantsEditor";
+import {VARIANT_CATEGORIES} from "@/lib/variant-categories";
 
-// Categories that support variants
-const VARIANT_CATEGORIES = [
-  "Clothing",
-  "Fashion",
-  "Apparel",
-  "Shoes",
-  "Footwear",
-  "Accessories",
-  "Jewelry",
-  "Bags",
-  "Sportswear",
-  "Underwear",
-  "Swimwear",
-];
 
 function categorySupportsVariants(category: string | undefined): boolean {
   if (!category) return false;

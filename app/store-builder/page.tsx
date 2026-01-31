@@ -63,6 +63,11 @@ const VARIANT_CATEGORIES = [
   "Sportswear",
   "Underwear",
   "Swimwear",
+  "Beauty",
+  "Fragrance",
+  "PersonalCare",
+  "Cosmetics",
+  "Beauty",
 ];
 
 function categorySupportsVariants(category: string | undefined): boolean {
@@ -1278,7 +1283,7 @@ export default function StoreBuilderPage() {
                                           <Switch
                                             checked={field.value}
                                             onCheckedChange={field.onChange}
-                                            style={{margin:"0"}}
+                                            style={{ margin: "0" }}
                                           />
                                         </FormControl>
                                       </FormItem>

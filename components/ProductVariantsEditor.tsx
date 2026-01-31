@@ -36,17 +36,21 @@ const PREDEFINED_COLORS = [
   { name: "Red", hex: "#EF4444" },
   { name: "Blue", hex: "#3B82F6" },
   { name: "Green", hex: "#22C55E" },
+  { name: "Gray", hex: "#6B7280" },
   { name: "Yellow", hex: "#EAB308" },
   { name: "Orange", hex: "#F97316" },
+  { name: "Teal", hex: "#14B8A6" },
   { name: "Purple", hex: "#A855F7" },
   { name: "Pink", hex: "#EC4899" },
-  { name: "Gray", hex: "#6B7280" },
   { name: "Brown", hex: "#92400E" },
   { name: "Navy", hex: "#1E3A5F" },
   { name: "Beige", hex: "#D4C4A8" },
   { name: "Cream", hex: "#FFFDD0" },
-  { name: "Teal", hex: "#14B8A6" },
   { name: "Maroon", hex: "#800000" },
+  { name: "Gold", hex: "#FFD700" },
+  { name: "Silver", hex: "#C0C0C0" },
+  { name: "Rose Gold", hex: "#B76E79" },
+  { name: "Champagne", hex: "#F7E7CE" },
 ];
 
 // Predefined sizes
@@ -54,6 +58,8 @@ const SIZE_PRESETS = {
   clothing: ["XS", "S", "M", "L", "XL", "XXL", "3XL"],
   shoes: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"],
   numeric: ["6", "8", "10", "12", "14", "16", "18", "20"],
+  perfume: ["30ml", "50ml", "75ml", "100ml", "150ml", "200ml"],
+  perfumeOz: ["1oz", "1.7oz", "2.5oz", "3.4oz", "5oz", "6.8oz"],
 };
 
 export interface SizeVariant {
@@ -207,24 +213,26 @@ export default function ProductVariantsEditor({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center items-start justify-between">
-        <div className="space-y-1 mb-4 sm:mb-0">
-          <div className="flex items-center">
-            <div className="p-2 rounded-lg bg-[#c0a146]/10">
-              <Palette className="h-5 w-5 text-[#c0a146]" />
+        <div className="space-y-1 mb-4 sm:mb-0 w-full">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="p-2 rounded-lg bg-[#c0a146]/10">
+                <Palette className="h-5 w-5 text-[#c0a146]" />
+              </div>
+              <h3 className="text-lg font-semibold">Product Variants</h3>
             </div>
-            <h3 className="text-lg font-semibold">Product Variants</h3>
+            <Badge variant="secondary" className="text-[10px]">
+              Total: {getTotalQuantity()} items
+            </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             Add color and size options for your {category || "product"}
           </p>
         </div>
-        <Badge variant="secondary" className="text-[10px]">
-          Total: {getTotalQuantity()} items
-        </Badge>
       </div>
 
       {/* Quick Add Colors */}
-      <Card>
+      <Card className="p-0" style={{ padding: "0" }}>
         <CardHeader className="p-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Palette className="h-4 w-4" />
@@ -244,7 +252,7 @@ export default function ProductVariantsEditor({
                   onClick={() => !isAdded && addVariant(color)}
                   disabled={isAdded}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all text-sm",
+                    "flex items-center gap-2 px-2 py-1.5 rounded-full border transition-all text-sm",
                     isAdded
                       ? "opacity-50 cursor-not-allowed border-muted"
                       : "hover:border-[#c0a146] hover:bg-[#c0a146]/5 cursor-pointer",
@@ -266,8 +274,8 @@ export default function ProductVariantsEditor({
           </div>
 
           {/* Custom Color */}
-          <div className="flex items-end gap-3 pt-2 border-t">
-            <div className="flex-1">
+          <div className="flex justify-between items-end gap-3 pt-2 border-t">
+            <div>
               <Label className="text-sm">Custom Color Name</Label>
               <Input
                 value={customColor.name}
@@ -278,29 +286,31 @@ export default function ProductVariantsEditor({
                 className="mt-1"
               />
             </div>
-            <div className="w-24">
-              <Label className="text-sm">Color</Label>
-              <div className="relative mt-1">
-                <Input
-                  type="color"
-                  value={customColor.hex}
-                  onChange={(e) =>
-                    setCustomColor({ ...customColor, hex: e.target.value })
-                  }
-                  className="h-10 p-1 cursor-pointer"
-                />
+            <div className="flex justify-between items-end">
+              <div className="">
+                <Label className="text-sm">Color</Label>
+                <div className="relative mt-1">
+                  <Input
+                    type="color"
+                    value={customColor.hex}
+                    onChange={(e) =>
+                      setCustomColor({ ...customColor, hex: e.target.value })
+                    }
+                    className="h-10 p-1 cursor-pointer w-25"
+                  />
+                </div>
               </div>
+              <Button
+                type="button"
+                onClick={addCustomColor}
+                disabled={!customColor.name.trim()}
+                size="sm"
+                className="bg-[#c0a146] hover:bg-[#c0a146]/90"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
             </div>
-            <Button
-              type="button"
-              onClick={addCustomColor}
-              disabled={!customColor.name.trim()}
-              size="sm"
-              className="bg-[#c0a146] hover:bg-[#c0a146]/90"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -314,13 +324,15 @@ export default function ProductVariantsEditor({
             setSelectedSizePreset(value as keyof typeof SIZE_PRESETS)
           }
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="clothing">Clothing (XS-3XL)</SelectItem>
             <SelectItem value="shoes">Shoes (36-46)</SelectItem>
             <SelectItem value="numeric">Numeric (6-20)</SelectItem>
+            <SelectItem value="perfume">Perfume ml (30-200ml)</SelectItem>
+            <SelectItem value="perfumeOz">Perfume oz (1-6.8oz)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -395,7 +407,7 @@ export default function ProductVariantsEditor({
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="p-3 space-y-4 ">
+                  <CardContent className="p-3 space-y-4">
                     {/* Size Management */}
                     <div className="space-y-3">
                       <div className="flex flex-col gap-2 items-start sm:items-center justify-between">
@@ -416,13 +428,16 @@ export default function ProductVariantsEditor({
                       </div>
 
                       {/* Sizes Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      <div className="flex flex-wrap gap-3">
                         {variant.sizes.map((sizeVariant, sizeIndex) => (
                           <div
                             key={`size-${variantIndex}-${sizeIndex}`}
-                            className="flex items-center gap-2 rounded-lg border bg-muted/30"
+                            className="flex items-center justify-between gap-2 p-2 rounded-lg border bg-muted/30"
                           >
-                            <Badge variant="secondary" className="font-mono">
+                            <Badge
+                              variant="secondary"
+                              className="font-mono text-xs"
+                            >
                               {sizeVariant.size}
                             </Badge>
                             <Input
@@ -436,7 +451,7 @@ export default function ProductVariantsEditor({
                                   parseInt(e.target.value) || 0,
                                 )
                               }
-                              className="h-8 w-16 text-center"
+                              className="h-8 w-16 "
                             />
                             <Button
                               type="button"
