@@ -107,3 +107,34 @@ body {
 .animate-badge {
   animation: badgePop 0.2s ease-out;
 }
+
+@keyframes marquee-left {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+
+        @keyframes marquee-right {
+          from {
+            transform: translateX(-50%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+
+        .animate-marquee-left {
+          animation: marquee-left linear infinite;
+        }
+
+        .animate-marquee-right {
+          animation: marquee-right linear infinite;
+        }
+
+        .pause-animation {
+          animation-play-state: paused;
+        }
+      

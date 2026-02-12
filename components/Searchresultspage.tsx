@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Package, Loader2, Filter, X } from "lucide-react";
+import { Search, Package, Loader2, X } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,15 @@ const PRODUCTS_PER_PAGE = 12;
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || searchParams.get("q") || "";
-  const categoryQuery = searchParams.get("category") || "";
+  
+  // Memoize category parameters to prevent infinite re-renders
+  const categoryParams = useMemo(() => {
+    return searchParams.getAll("category");
+  }, [searchParams]);
+  
+  const categoryQuery = useMemo(() => {
+    return categoryParams.join(" ");
+  }, [categoryParams]);
   
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -69,7 +77,7 @@ export default function SearchResultsPage() {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Transform API product to Product type
-  const transformProduct = (p: ApiProduct): Product => {
+  const transformProduct = useCallback((p: ApiProduct): Product => {
     let productImages = p.images || [];
     if (productImages.length === 0 && p.primaryImage) {
       productImages = [{ 
@@ -101,7 +109,7 @@ export default function SearchResultsPage() {
       created_at: p.createdAt || p.created_at || new Date().toISOString(),
       updated_at: p.updatedAt || p.updated_at || new Date().toISOString(),
     };
-  };
+  }, []);
 
   // Fetch all products
   useEffect(() => {
@@ -128,7 +136,7 @@ export default function SearchResultsPage() {
     }
 
     fetchProducts();
-  }, []);
+  }, [transformProduct]);
 
   // Filter products based on search/category
   useEffect(() => {
@@ -138,9 +146,10 @@ export default function SearchResultsPage() {
       return;
     }
 
-    const query = (searchQuery || categoryQuery).toLowerCase().trim();
+    const searchTerm = searchQuery.toLowerCase().trim();
+    const categories = categoryParams.map(c => c.toLowerCase().trim()).filter(Boolean);
     
-    if (!query) {
+    if (!searchTerm && categories.length === 0) {
       setFilteredProducts(allProducts);
       setDisplayedProducts(allProducts.slice(0, PRODUCTS_PER_PAGE));
       setHasMore(allProducts.length > PRODUCTS_PER_PAGE);
@@ -150,19 +159,37 @@ export default function SearchResultsPage() {
 
     // Filter products
     const filtered = allProducts.filter((product) => {
-      const nameMatch = product.name.toLowerCase().includes(query);
-      const descriptionMatch = product.description?.toLowerCase().includes(query) || false;
+      // Search term matching
+      if (searchTerm) {
+        const nameMatch = product.name.toLowerCase().includes(searchTerm);
+        const descriptionMatch = product.description?.toLowerCase().includes(searchTerm) || false;
+        
+        if (!nameMatch && !descriptionMatch) return false;
+      }
       
-      return nameMatch || descriptionMatch;
+      // Category matching (if categories are provided)
+      if (categories.length > 0) {
+        const productName = product.name.toLowerCase();
+        const productDesc = product.description?.toLowerCase() || "";
+        
+        // Check if any category matches the product
+        const categoryMatch = categories.some(cat => 
+          productName.includes(cat) || productDesc.includes(cat)
+        );
+        
+        if (!categoryMatch) return false;
+      }
+      
+      return true;
     });
 
-    console.log(`🔍 Search for "${query}": Found ${filtered.length} products`);
+    console.log(`🔍 Search - Term: "${searchTerm}", Categories: [${categories.join(', ')}], Found: ${filtered.length} products`);
 
     setFilteredProducts(filtered);
     setDisplayedProducts(filtered.slice(0, PRODUCTS_PER_PAGE));
     setHasMore(filtered.length > PRODUCTS_PER_PAGE);
     setPage(1);
-  }, [searchQuery, categoryQuery, allProducts]);
+  }, [searchQuery, categoryParams, allProducts]);
 
   // Load more products
   const loadMoreProducts = useCallback(() => {
@@ -222,7 +249,8 @@ export default function SearchResultsPage() {
     window.location.href = '/Search';
   };
 
-  const currentQuery = searchQuery || categoryQuery;
+  // Display query for badge
+  const currentQuery = searchQuery || (categoryParams.length > 0 ? categoryParams[0] : "");
 
   if (loading) {
     return (
@@ -315,9 +343,11 @@ export default function SearchResultsPage() {
                   </Badge>
                 </div>
               )}
-              {/* <div className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{filteredProducts.length}</span> products found
-              </div> */}
+              {categoryParams.length > 1 && (
+                <Badge variant="outline" className="text-xs">
+                  +{categoryParams.length - 1} more categories
+                </Badge>
+              )}
             </div>
           </div>
         </div>
@@ -348,15 +378,8 @@ export default function SearchResultsPage() {
           </div>
         ) : (
           <>
-            {/* Products Count
-            <div className="mb-6">
-              <p className="text-sm text-muted-foreground">
-                Showing {displayedProducts.length} of {filteredProducts.length} products
-              </p>
-            </div> */}
-
             {/* Products Grid */}
-            <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid gap-6 grid-cols-2 sm:grid-cols-auto-fill">
               {displayedProducts.map((product) => (
                 <ProductCard
                   key={product.id}

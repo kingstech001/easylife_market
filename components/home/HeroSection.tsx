@@ -9,29 +9,13 @@ import {
   Search,
   ShoppingBag,
   Store,
-  Smartphone,
-  Laptop,
-  Home,
-  Car,
-  Shirt,
-  Package,
   ShieldCheck,
   UserCheck,
   Headset,
-  ChefHat,
 } from "lucide-react";
 import { Reveal } from "../Reveal";
 import { cn } from "@/lib/utils";
-
-const CATEGORIES = [
-  { name: "Electronics", icon: Smartphone, color: "text-blue-600" },
-  { name: "Vehicles", icon: Car, color: "text-orange-600" },
-  { name: "Fashion", icon: Shirt, color: "text-purple-600" },
-  { name: "Home & furniture", icon: Home, color: "text-green-600" },
-  { name: "Computing", icon: Laptop, color: "text-indigo-600" },
-  { name: "More", icon: Package, color: "text-gray-600" },
-  { name: "Food & Agriculture", icon: ChefHat, color: "text-green-600" }
-];
+import { CategoryGrid } from "@/components/CategoryGrid"
 
 export default function HeroSection() {
   const router = useRouter();
@@ -125,7 +109,6 @@ export default function HeroSection() {
                   <UserCheck className="text-emerald-500 w-5 h-5" />
                   <span>Verified Sellers</span>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-500" />
                   <span>Secure Payments</span>
@@ -141,32 +124,8 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Category Grid */}
-            <div className="mb-10 sm:mb-12 mt-10 sm:mt-12 pt-8 border-t border-border">
-              <h2 className="text-sm font-semibold text-muted-foreground text-center mb-4 uppercase tracking-wide">
-                Browse by Category
-              </h2>
-              <div className="grid grid-cols-3 sm:grid-cols-7 gap-3 sm:gap-4 max-w-5xl mx-auto">
-                {CATEGORIES.map((category) => (
-                  <Link
-                    key={category.name}
-                    href={`/Search?category=${encodeURIComponent(category.name.toLowerCase())}`}
-                    className="group"
-                  >
-                    <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/30 border border-border hover:border-[#e1a200]/50 hover:bg-muted/50 transition-all">
-                      <div className="p-3 rounded-full bg-background border border-border group-hover:border-[#e1a200]/30 transition-all">
-                        <category.icon
-                          className={cn("h-5 w-5", category.color)}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground text-center">
-                        {category.name}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            {/* Category Grid - Now using the new component */}
+            <CategoryGrid />
           </div>
         </div>
       </section>

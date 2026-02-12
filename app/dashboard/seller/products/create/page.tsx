@@ -1,5 +1,5 @@
 "use client";
-import type React from "react";
+import React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -51,7 +51,7 @@ import ProductVariantsEditor, {
   type ProductVariant,
 } from "@/components/ProductVariantsEditor";
 import { VARIANT_CATEGORIES } from "@/lib/variant-categories";
-import {categories} from "@/lib/variant-categories";
+import { categories } from "@/lib/variant-categories";
 
 function categorySupportsVariants(category: string | undefined): boolean {
   if (!category) return false;
@@ -546,7 +546,7 @@ export default function CreateProductPage() {
                         control={form.control}
                         name="name"
                         render={({ field }) => (
-                          <FormItem >
+                          <FormItem>
                             <FormLabel className="text-sm sm:text-base">
                               Product Name *
                             </FormLabel>
@@ -675,29 +675,35 @@ export default function CreateProductPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {categories.map((category) => (
-                                  <SelectItem
-                                    key={category}
-                                    value={category}
-                                    className="text-sm sm:text-base"
-                                  >
-                                    {category}
-                                    {VARIANT_CATEGORIES.some(
-                                      (vc) =>
-                                        category
-                                          .toLowerCase()
-                                          .includes(vc.toLowerCase()) ||
-                                        vc
-                                          .toLowerCase()
-                                          .includes(category.toLowerCase()),
-                                    ) && (
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        (Has variants)
-                                      </span>
-                                    )}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
+  {categories.map((category) => (
+    <React.Fragment key={category.name}>
+      <SelectItem
+        value={category.name}
+        className="text-sm sm:text-base font-bold pl-2"
+      >
+        {category.name}
+      </SelectItem>
+
+      {category.subcategories.map((sub) => (
+        <SelectItem
+          key={sub}
+          value={sub}
+          className="text-sm pl-6" // indented for visual nesting
+        >
+          {sub}
+          {VARIANT_CATEGORIES.some(
+            (vc) => sub.toLowerCase().includes(vc.toLowerCase())
+          ) && (
+            <span className="ml-2 text-xs text-muted-foreground">
+              (Has variants)
+            </span>
+          )}
+        </SelectItem>
+      ))}
+    </React.Fragment>
+  ))}
+</SelectContent>
+
                             </Select>
                             <FormDescription className="text-xs sm:text-sm">
                               {supportsVariants ? (
@@ -958,7 +964,7 @@ export default function CreateProductPage() {
                                   <Switch
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
-                                    style={{margin:"0"}}
+                                    style={{ margin: "0" }}
                                   />
                                 </FormControl>
                               </FormItem>
