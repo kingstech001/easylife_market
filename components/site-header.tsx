@@ -5,17 +5,15 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   ShoppingCart,
-  User,
-  Menu,
-  X,
   Heart,
-  LogOut,
-  LogIn,
   LayoutDashboard,
   Search,
-  Bell,
   Store,
   Package,
+  Home,
+  User,
+  LogIn,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +31,6 @@ import { Card } from "@/components/ui/card";
 export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,18 +108,6 @@ export function SiteHeader() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchOpen]);
-
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [mobileMenuOpen]);
 
   async function handleLogout() {
     const res = await fetch("/api/auth/logout", {
@@ -220,7 +205,7 @@ export function SiteHeader() {
                   </>
                 )}
 
-                {/* Notifications - Only for authenticated users */}
+                {/* Notifications - Only for authenticated users
                 {authenticated && (
                   <Button
                     variant="ghost"
@@ -230,7 +215,7 @@ export function SiteHeader() {
                     <Bell className="h-4 w-4" />
                     <span className="sr-only">Notifications</span>
                   </Button>
-                )}
+                )} */}
 
                 {/* Auth Actions */}
                 {authenticated ? (
@@ -275,50 +260,9 @@ export function SiteHeader() {
             </div>
 
             {/* Mobile Toggle */}
-            <div className="flex items-start md:hidden justify-center space-x-2">
-              {/* mobile Search */}
-              <Button
-                aria-label="search"
-                className="w-full justify-start bg-transparent hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] p-0"
-                onClick={() => {
-                  setSearchOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <Search className=" !h-6 !w-6" />
-              </Button>
-              <Button
-                aria-label="cart"
-                className="relative w-full justify-start bg-transparent hover:bg-[#c0a146]/10 hover:border-[#c0a146]/50 hover:text-[#c0a146] p-0"
-                onClick={() => {
-                  setCartOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <ShoppingCart className=" !h-6 !w-6" />
-                {itemCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute bottom-5 left-3 ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-gradient-to-br from-[#c0a146] to-[#d4b55e]"
-                  >
-                    {itemCount > 99 ? "99+" : itemCount}
-                  </Badge>
-                )}
-              </Button>
-              <Button
-                aria-label="menu"
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 flex items-center justify-center hover:bg-[#c0a146]/10 hover:text-[#c0a146] transition-colors"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? (
-                  <X className="!h-6 !w-6" />
-                ) : (
-                  <Menu className="!h-6 !w-6" />
-                )}
-                <span className="sr-only">Toggle menu</span>
-              </Button>
+            <div className="flex items-center md:hidden justify-center space-x-2">
+              {/* Theme Toggle */}
+              <ThemeToggle />
             </div>
           </div>
 
@@ -330,7 +274,7 @@ export function SiteHeader() {
             )}
           >
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search for stores or products..."
@@ -452,175 +396,116 @@ export function SiteHeader() {
               </Card>
             )}
           </div>
-
-          {/* Mobile Menu - IMPROVED SMOOTH TRANSITION */}
-          <div
-            className={cn(
-              "fixed inset-x-0 top-16 z-40 h-[calc(100vh-4rem)] bg-background backdrop-blur-xl border-b md:hidden",
-              "transition-all duration-300 ease-out",
-              mobileMenuOpen
-                ? "translate-y-0 opacity-100 visible"
-                : "-translate-y-4 opacity-0 invisible"
-            )}
-          >
-            <div
-              className={cn(
-                "container mx-auto px-4 py-6 h-full overflow-y-auto z-50",
-                "transition-all duration-300 delay-75",
-                mobileMenuOpen
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-2 opacity-0"
-              )}
-            >
-              {/* Navigation Links */}
-              <div className="space-y-1 mb-6">
-                <Link
-                  href="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/stores"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
-                >
-                  Stores
-                </Link>
-                <Link
-                  href="#"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
-                >
-                  Products
-                </Link>
-                <Link
-                  href="/about"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-base font-medium rounded-md hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
-                >
-                  About
-                </Link>
-              </div>
-
-              <Separator className="my-6" />
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                {/* Shopping Features - Only for non-sellers */}
-                {showShoppingFeatures && (
-                  <div>
-                    <Link
-                      href="/wishlist"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start h-11 relative bg-transparent border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200]"
-                      >
-                        <Heart className="mr-3 h-4 w-4" />
-                        Wishlist
-                        {wishlistCount > 0 && (
-                          <Badge
-                            variant="destructive"
-                            className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-gradient-to-br from-[#e1a200] to-[#d4b55e] border-0"
-                          >
-                            {wishlistCount > 99 ? "99+" : wishlistCount}
-                          </Badge>
-                        )}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Auth Actions */}
-                {authenticated ? (
-                  <div className="space-y-3">
-                    {authenticated && (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200]"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <Bell className="mr-3 h-4 w-4" />
-                        Notifications
-                      </Button>
-                    )}
-                    <Link
-                      href={dashboardLink}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200]"
-                      >
-                        <LayoutDashboard className="mr-3 h-4 w-4" />
-                        Dashboard
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="destructive"
-                      className="w-full justify-start h-11 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        handleLogout();
-                      }}
-                    >
-                      <LogOut className="mr-3 h-4 w-4" />
-                      Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="">
-                    <Link
-                      href="/auth/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start h-11 bg-transparent border-border/50 hover:bg-[#e1a200]/10 hover:border-[#e1a200]/50 hover:text-[#e1a200] mb-3"
-                      >
-                        <LogIn className="mr-3 h-4 w-4" />
-                        Login
-                      </Button>
-                    </Link>
-                    <Link
-                      href="/auth/register"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Button className="w-full justify-start h-11 bg-[#e1a200] hover:from-[#e1a200] hover:to-[#e1a200]">
-                        <User className="mr-3 h-4 w-4" />
-                        Sign Up
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-
-                <Separator className="my-4" />
-
-                {/* Theme Toggle */}
-                <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm font-medium">Theme</span>
-                  <ThemeToggle />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </header>
 
       {/* Cart Overlay */}
       {cartOpen && <CartOverlay onClose={() => setCartOpen(false)} />}
 
-      {/* Mobile Menu Backdrop - IMPROVED */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden transition-all duration-300 ease-out",
-          mobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        )}
-        onClick={() => setMobileMenuOpen(false)}
-      />
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border/40 pb-safe">
+        <div className={cn("grid h-16", showShoppingFeatures ? "grid-cols-5" : "grid-cols-4")}>
+          {/* Home */}
+          <Link
+            href="/"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 transition-colors",
+              pathname === "/"
+                ? "text-[#e1a200]"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Home className="h-5 w-5" />
+            <span className="text-xs font-medium">Home</span>
+          </Link>
+
+          {/* Stores */}
+          <Link
+            href="/stores"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 transition-colors",
+              pathname === "/stores" || pathname?.startsWith("/stores/")
+                ? "text-[#e1a200]"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Store className="h-5 w-5" />
+            <span className="text-xs font-medium">Stores</span>
+          </Link>
+
+          {/* Wishlist - Only for non-sellers */}
+          {showShoppingFeatures && (
+            <Link
+              href="/wishlist"
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 transition-colors relative",
+                pathname === "/wishlist"
+                  ? "text-[#e1a200]"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Heart className="h-5 w-5" />
+              <span className="text-xs font-medium">Wishlist</span>
+              {wishlistCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+                >
+                  {wishlistCount > 9 ? "9+" : wishlistCount}
+                </Badge>
+              )}
+            </Link>
+          )}
+
+          {/* Cart - Only for non-sellers */}
+          {showShoppingFeatures ? (
+            <button
+              onClick={() => setCartOpen(true)}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 transition-colors relative"
+              )}
+            >
+              <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Cart</span>
+              {itemCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+                >
+                  {itemCount > 9 ? "9+" : itemCount}
+                </Badge>
+              )}
+            </button>
+          ) : (
+            /* Profile for sellers (replaces cart) */
+            <Link
+              href={dashboardLink}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 transition-colors",
+                pathname?.startsWith("/dashboard")
+                  ? "text-[#e1a200]"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <User className="h-5 w-5" />
+              <span className="text-xs font-medium">Profile</span>
+            </Link>
+          )}
+          {/* Search - Button that opens search */}
+          <Link
+              href='/auth/login'
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 transition-colors",
+                pathname?.startsWith("/dashboard")
+                  ? "text-[#e1a200]"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LogIn className="h-5 w-5" />
+              <span className="text-xs font-medium">Login</span>
+            </Link>
+        </div>
+      </nav>
     </>
   );
 }

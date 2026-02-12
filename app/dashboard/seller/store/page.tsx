@@ -141,8 +141,8 @@ export default function StoreViewPage() {
                   </div>
 
                   <div className="flex-1">
-                    <h2 className="text-3xl font-bold mb-2">{store.name}</h2>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-2">{store.name}</h2>
+                    <div className="flex items-center gap-4 text-[10px] md:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
                         <span>/{store.slug}</span>
@@ -208,7 +208,7 @@ export default function StoreViewPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                  <code className="flex-1 text-sm">
+                  <code className="flex-1 text-[13px] md:text-sm">
                     /stores/{store.slug}
                   </code>
                   <Button

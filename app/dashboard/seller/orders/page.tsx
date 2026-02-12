@@ -183,7 +183,7 @@ export default function SellerOrdersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container px-4 py-8">
+      <div className="container">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex space-x-4">

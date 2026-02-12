@@ -205,15 +205,15 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
             </motion.div>
           </div>
 
-          <CardContent className="p-4 flex-1 flex flex-col">
+          <CardContent className="p-2 flex-1 flex flex-col">
             <div className=" flex-1">
               <h3 className="text-base line-clamp-1 group-hover:text-primary transition-colors">
                 {product.name}
               </h3>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-primary">{formatAmount(product.price)}</span>
+                <span className="text-lg font-bold text-primary">{formatAmount(product.price)}</span>
                 {hasDiscount && (
-                  <span className="text-sm text-muted-foreground line-through">
+                  <span className="text-xs text-muted-foreground line-through">
                     {formatAmount(product.compare_at_price!)}
                   </span>
                 )}

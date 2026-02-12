@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getUserFromCookies } from "@/lib/auth"
+import { connectToDB } from "@/lib/db"
+import Product from "@/models/Product"
 
 
 // Helper to get the correct base URL for all environments
@@ -23,6 +25,76 @@ function generateReference() {
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(2, 11)
   return `REF_${timestamp}_${random}`.toUpperCase()
+}
+
+async function verifyAndCalculateOrderAmount(orders: any[], deliveryFee: number = 0) {
+  let calculatedTotal = 0
+  const verifiedOrders = []
+
+  for (const orderGroup of orders) {
+    const { storeId, items } = orderGroup
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      throw new Error(`Invalid items for store ${storeId}`)
+    }
+
+    let storeTotal = 0
+    const verifiedItems = []
+
+    for (const item of items) {
+      const product = await Product.findById(item.productId).lean()
+
+      if (!product) {
+        throw new Error(`Product ${item.productId} not found`)
+      }
+
+      if (product.isDeleted) {
+        throw new Error(`Product "${product.name}" is no longer available`)
+      }
+
+      if (!product.isActive) {
+        throw new Error(`Product "${product.name}" is currently unavailable`)
+      }
+
+      if (product.inventoryQuantity < item.quantity) {
+        throw new Error(
+          `Insufficient stock for "${product.name}". Available: ${product.inventoryQuantity}`
+        )
+      }
+
+      const actualPrice = Number(product.price)
+      const quantity = Number(item.quantity)
+      const itemTotal = actualPrice * quantity
+
+      verifiedItems.push({
+        productId: product._id,
+        productName: product.name,
+        quantity,
+        priceAtPurchase: actualPrice,
+        itemTotal,
+      })
+
+      storeTotal = Number(storeTotal) + Number(itemTotal)
+    }
+
+    verifiedOrders.push({
+      storeId,
+      items: verifiedItems,
+      totalPrice: Number(storeTotal),
+    })
+
+    calculatedTotal = Number(calculatedTotal) + Number(storeTotal)
+  }
+
+  const numericDeliveryFee = Number(deliveryFee) || 0
+  const grandTotal = Number(calculatedTotal) + numericDeliveryFee
+
+  return {
+    verifiedOrders,
+    subtotal: Number(calculatedTotal),
+    deliveryFee: numericDeliveryFee,
+    grandTotal: Number(grandTotal),
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -99,15 +171,16 @@ export async function POST(request: NextRequest) {
       }
 
       callback_url = `${baseUrl}/dashboard/seller/subscriptions/success?plan=${plan}&storeId=${storeId}`
+
       metadata = { 
-        plan, 
-        storeId,
-        userId: user.id, // ✅ Include authenticated user ID
-        userEmail: user.email, // ✅ Include user email for verification
         type: "subscription",
-        reference: paymentReference, // ✅ Include reference in metadata
-        callback_url: `${baseUrl}/dashboard/seller/subscriptions/success`
+        plan: plan,
+        storeId: storeId,
+        userId: user.id,
+        userEmail: user.email,
       }
+      
+      console.log("[Paystack Initialize] Subscription metadata:", JSON.stringify(metadata, null, 2))
       
     } else if (type === "checkout") {
       // 🛒 Handle Regular Checkout Payments
@@ -126,36 +199,54 @@ export async function POST(request: NextRequest) {
       }
 
       callback_url = `${baseUrl}/checkout/payment-success`
+      
       metadata = {
+        type: "checkout",
         orders,
         shippingInfo,
         paymentMethod: paymentMethod || "card",
         deliveryFee: deliveryFee || 0,
-        userId: user.id, // ✅ Include authenticated user ID
-        userEmail: user.email, // ✅ Include user email for verification
-        type: "checkout",
-        reference: paymentReference, // ✅ Include reference in metadata
+        userId: user.id,
+        userEmail: user.email,
       }
+      
+      console.log("[Paystack Initialize] Checkout metadata keys:", Object.keys(metadata))
+    }
+
+    // ✅ For checkout payments, calculate server-verified amount
+    let finalAmount = Number(amount)
+    if (type === "checkout") {
+      await connectToDB()
+      const verifiedOrderData = await verifyAndCalculateOrderAmount(orders, deliveryFee || 0)
+      finalAmount = verifiedOrderData.grandTotal
+      
+      console.log("[Paystack Initialize] Amount verification:", {
+        clientAmount: amount,
+        verifiedAmount: finalAmount,
+        match: amount === finalAmount
+      })
     }
 
     // ✅ Convert Naira to Kobo (Paystack uses smallest currency unit)
-    const amountInKobo = Math.round(amount * 100)
+    const amountInKobo = Math.round(finalAmount * 100)
     
     const paystackPayload = {
       email,
       amount: amountInKobo,
-      reference: paymentReference, // ✅ Set custom reference
+      reference: paymentReference,
       callback_url,
       metadata,
     }
 
-    console.log("[Paystack Initialize] Payload:", {
+    console.log("[Paystack Initialize] Final Payload Summary:", {
       email,
       amount: amountInKobo,
+      amountInNaira: finalAmount,
       reference: paymentReference,
       userId: user.id,
       type,
       callback_url,
+      metadataKeys: Object.keys(metadata),
     })
 
     // 🚀 Initialize payment with Paystack
@@ -192,13 +283,14 @@ export async function POST(request: NextRequest) {
       reference: paystackData.data.reference,
       authorization_url: paystackData.data.authorization_url,
       userId: user.id,
+      type,
     })
 
     return NextResponse.json({
       success: true,
       authorization_url: paystackData.data.authorization_url,
       access_code: paystackData.data.access_code,
-      reference: paystackData.data.reference, // This will be our custom reference
+      reference: paystackData.data.reference,
       type,
     })
   } catch (error: any) {

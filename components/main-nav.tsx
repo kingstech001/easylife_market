@@ -22,7 +22,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
       <Link href="/" className="inline-flex items-center group">
         <Image alt="EasyLife Logo" src={"/logo.png"} width={70} height={70} className="drop-shadow-lg"/>
         <div className="">
-          <span className="font-bold text-xl bg-gradient-to-r from-[#e1a200] via-[#e1a200] to-[#e1a200] bg-clip-text text-transparent">
+          <span className="text-sm md:text-xl md:font-bold bg-gradient-to-r from-[#e1a200] via-[#e1a200] to-[#e1a200] bg-clip-text text-transparent">
             EasyLife
           </span>
         </div>
@@ -35,7 +35,7 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
               key={link.href}
               href={link.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-[#e1a200]",
+                "text-sm transition-colors hover:text-[#e1a200]",
                 isActive
                   ? "text-[#e1a200] font-semibold"
                   : "text-muted-foreground"

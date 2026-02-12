@@ -29,7 +29,7 @@ function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const reference = searchParams.get("reference") || searchParams.get("trxref")
-  const { clearCart } = useCart() // ✅ Get clearCart from context
+  const { clearCart } = useCart()
 
   const [verificationState, setVerificationState] = useState<
     "verifying" | "polling" | "success" | "error"
@@ -37,12 +37,12 @@ function PaymentSuccessContent() {
   const [result, setResult] = useState<VerificationResult | null>(null)
   const [error, setError] = useState<string>("")
   const [pollAttempts, setPollAttempts] = useState(0)
-  const [countdown, setCountdown] = useState(5)
+  const [countdown, setCountdown] = useState(10)
 
-  const MAX_POLL_ATTEMPTS = 20
+  const MAX_POLL_ATTEMPTS = 30 // Increased to 60 seconds for webhook processing
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const attemptCountRef = useRef(0)
-  const cartClearedRef = useRef(false) // ✅ Track if cart was already cleared
+  const cartClearedRef = useRef(false)
 
   // Verify payment and poll for order creation
   useEffect(() => {
@@ -52,10 +52,11 @@ function PaymentSuccessContent() {
       return
     }
 
-    const verifyPayment = async () => {
+    const checkOrderStatus = async () => {
       try {
-        console.log(`[Poll Attempt ${attemptCountRef.current + 1}] Verifying payment...`)
+        console.log(`[Poll Attempt ${attemptCountRef.current + 1}] Checking order status...`)
         
+        // ✅ Call webhook GET endpoint to check if order was created
         const response = await fetch(
           `/api/webhooks/paystack?reference=${reference}`,
           {
@@ -66,14 +67,22 @@ function PaymentSuccessContent() {
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || "Payment verification failed")
+          
+          // If payment not successful, show error immediately
+          if (response.status === 400 && errorData.error?.includes("not successful")) {
+            throw new Error(errorData.error || "Payment was not successful")
+          }
+          
+          // Other errors - keep polling (webhook might still be processing)
+          console.log("⏳ Webhook still processing...", errorData)
+          return false
         }
 
         const data: VerificationResult = await response.json()
-        console.log("[Verification Response]", data)
+        console.log("[Order Status Response]", data)
         setResult(data)
 
-        // Handle subscription payments
+        // Handle subscription payments (if any subscription payments go through checkout)
         if (data.data.type === "subscription") {
           if (data.data.subscriptionUpdated) {
             console.log("✅ Subscription updated successfully")
@@ -83,7 +92,6 @@ function PaymentSuccessContent() {
               pollIntervalRef.current = null
             }
             
-            // ✅ Clear cart for subscription payments (silently)
             if (!cartClearedRef.current) {
               clearCart()
               cartClearedRef.current = true
@@ -91,7 +99,7 @@ function PaymentSuccessContent() {
             }
             
             setTimeout(() => {
-              router.push("/seller/dashboard")
+              router.push("/dashboard/seller/subscriptions")
             }, 3000)
             return true
           } else {
@@ -101,7 +109,7 @@ function PaymentSuccessContent() {
           }
         }
 
-        // Handle order payments
+        // Handle order payments - check if webhook created the order
         if (data.data.orderExists && data.data.orderNumber) {
           console.log("✅ Order created successfully:", data.data.orderNumber)
           setVerificationState("success")
@@ -110,7 +118,6 @@ function PaymentSuccessContent() {
             pollIntervalRef.current = null
           }
           
-          // ✅ Clear cart after successful order creation (silently)
           if (!cartClearedRef.current) {
             clearCart()
             cartClearedRef.current = true
@@ -122,13 +129,16 @@ function PaymentSuccessContent() {
             router.push(`/dashboard/buyer/orders`)
           }, 3000)
           return true
-        } else {
-          console.log("⏳ Order not yet created, continuing to poll...")
+        } else if (data.data.paymentStatus === "success") {
+          // Payment verified but order not yet created - webhook is still processing
+          console.log("⏳ Payment verified, waiting for webhook to create order...")
           setVerificationState("polling")
           return false
+        } else {
+          throw new Error("Payment verification failed")
         }
       } catch (err: any) {
-        console.error("❌ Verification error:", err)
+        console.error("❌ Status check error:", err)
         setError(err.message || "Failed to verify payment")
         setVerificationState("error")
         if (pollIntervalRef.current) {
@@ -140,12 +150,14 @@ function PaymentSuccessContent() {
     }
 
     const startPolling = async () => {
-      const shouldStop = await verifyPayment()
+      // First check
+      const shouldStop = await checkOrderStatus()
       if (shouldStop) return
 
       attemptCountRef.current = 1
       setPollAttempts(1)
 
+      // Poll every 2 seconds
       pollIntervalRef.current = setInterval(async () => {
         attemptCountRef.current += 1
         setPollAttempts(attemptCountRef.current)
@@ -157,13 +169,13 @@ function PaymentSuccessContent() {
             pollIntervalRef.current = null
           }
           setError(
-            "Order creation is taking longer than expected. Your payment was successful. Please check your orders page or contact support with the reference below."
+            "Order creation is taking longer than expected. Your payment was successful. Please check your orders page in a few minutes or contact support."
           )
           setVerificationState("error")
           return
         }
 
-        const shouldStop = await verifyPayment()
+        const shouldStop = await checkOrderStatus()
         if (shouldStop && pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current)
           pollIntervalRef.current = null
@@ -179,29 +191,30 @@ function PaymentSuccessContent() {
         pollIntervalRef.current = null
       }
     }
-  }, [reference, router])
+  }, [reference, router, clearCart])
 
   // Separate countdown effect for error state
   useEffect(() => {
     let countdownInterval: NodeJS.Timeout | undefined
-    
+
     if (verificationState === "error") {
+      setCountdown(10) // Give more time for checkout errors
       countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            if (countdownInterval) clearInterval(countdownInterval)
-            router.push("/checkout")
-            return 0
-          }
-          return prev - 1
-        })
+        setCountdown((prev) => Math.max(prev - 1, 0))
       }, 1000)
     }
 
     return () => {
       if (countdownInterval) clearInterval(countdownInterval)
     }
-  }, [verificationState, router])
+  }, [verificationState])
+
+  // Navigate after countdown reaches zero
+  useEffect(() => {
+    if (verificationState === "error" && countdown === 0) {
+      router.push("/dashboard/buyer/orders") // Go to orders page instead of checkout
+    }
+  }, [verificationState, countdown, router])
 
   if (!reference) {
     return (
@@ -281,10 +294,10 @@ function PaymentSuccessContent() {
             </h1>
           </div>
           <p className="text-muted-foreground mb-2 text-lg">
-            Creating your {result?.data.type === "subscription" ? "subscription" : "order"}...
+            Creating your order...
           </p>
           <p className="text-sm text-muted-foreground/70 mb-6">
-            This may take a few moments...
+            Our secure payment system is processing your order. This may take a few moments...
           </p>
           
           <div className="bg-muted/30 rounded-xl p-4 mb-6 border border-border/30">
@@ -349,7 +362,7 @@ function PaymentSuccessContent() {
 
           <div className="space-y-3">
             <button
-              onClick={() => router.push("/orders")}
+              onClick={() => router.push("/dashboard/buyer/orders")}
               className="w-full bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#c0a146]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             >
               <Package className="w-5 h-5" />
@@ -366,7 +379,7 @@ function PaymentSuccessContent() {
 
           <div className="mt-6 p-4 bg-muted/20 rounded-lg border border-border/30">
             <p className="text-sm text-muted-foreground">
-              Redirecting to checkout in <span className="font-bold text-[#c0a146]">{countdown}</span> seconds...
+              Redirecting to orders in <span className="font-bold text-[#c0a146]">{countdown}</span> seconds...
             </p>
           </div>
         </div>
@@ -393,68 +406,45 @@ function PaymentSuccessContent() {
         </div>
 
         <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-          {result?.data.type === "subscription" 
-            ? "Subscription Activated!" 
-            : "Order Confirmed!"}
+          Order Confirmed!
         </h1>
         
-        {result?.data.type === "subscription" ? (
+        <p className="text-muted-foreground mb-6 text-lg">
+          Your order has been successfully placed and payment confirmed.
+        </p>
+        
+        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded-xl p-6 mb-6 space-y-4 border border-emerald-500/30">
           <div>
-            <p className="text-muted-foreground mb-6 text-lg">
-              Your {result.data.plan} subscription has been activated successfully.
-            </p>
-            <div className="bg-gradient-to-br from-[#c0a146]/10 to-primary/10 rounded-xl p-6 mb-6 border border-[#c0a146]/30">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Sparkles className="w-5 h-5 text-[#c0a146]" />
-                <p className="text-sm font-semibold text-muted-foreground">Your Plan</p>
-              </div>
-              <p className="text-2xl font-bold bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent capitalize">
-                {result.data.plan}
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Package className="w-5 h-5 text-emerald-500" />
+              <p className="text-sm font-semibold text-muted-foreground">
+                Order Number
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
-              <Loader2 className="w-4 h-4 animate-spin text-[#c0a146]" />
-              <span>Redirecting to your store dashboard...</span>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <p className="text-muted-foreground mb-6 text-lg">
-              Your order has been successfully placed and payment confirmed.
+            <p className="text-2xl font-bold text-emerald-600">
+              {result?.data.orderNumber}
             </p>
-            <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded-xl p-6 mb-6 space-y-4 border border-emerald-500/30">
-              <div>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Package className="w-5 h-5 text-emerald-500" />
-                  <p className="text-sm font-semibold text-muted-foreground">
-                    Order Number
-                  </p>
-                </div>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {result?.data.orderNumber}
-                </p>
-              </div>
-              <div className="border-t border-border/30 pt-4 space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Total Amount:</span>
-                  <span className="font-bold text-lg bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
-                    ₦{result?.data.grandTotal?.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Items:</span>
-                  <span className="font-semibold text-foreground">
-                    {result?.data.subOrderCount} store(s)
-                  </span>
-                </div>
-              </div>
+          </div>
+          <div className="border-t border-border/30 pt-4 space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Total Amount:</span>
+              <span className="font-bold text-lg bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
+                ₦{result?.data.grandTotal?.toLocaleString()}
+              </span>
             </div>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin text-[#c0a146]" />
-              <span>Redirecting to order details...</span>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Items:</span>
+              <span className="font-semibold text-foreground">
+                {result?.data.subOrderCount} store(s)
+              </span>
             </div>
           </div>
-        )}
+        </div>
+        
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin text-[#c0a146]" />
+          <span>Redirecting to order details...</span>
+        </div>
       </div>
     </div>
   )

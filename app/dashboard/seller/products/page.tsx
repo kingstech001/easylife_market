@@ -8,8 +8,6 @@ import {
   Edit,
   Trash2,
   PlusCircle,
-  Search,
-  Filter,
   ArrowUpDown,
   Loader2,
   Crown,
@@ -25,7 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
