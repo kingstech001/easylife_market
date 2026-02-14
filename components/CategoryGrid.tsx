@@ -26,7 +26,7 @@ export const CATEGORIES: Category[] = [
   {
     name: "Electronics",
     icon: Tv,
-    subcategories: ["Television", "Cameras & Photo", "Home Audio"],
+    subcategories: ["Television", "Cameras & Photo", "Home Audio","Tv"],
   },
   {
     name: "Vehicles",
