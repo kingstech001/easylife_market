@@ -143,7 +143,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                   <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                   {/* Featured badge for middle card */}
-                  {index === 1 && (
+                  {index === 2 && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
                       <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white shadow-lg px-3 py-1">
                         <Star className="w-3 h-3 mr-1 fill-current" />

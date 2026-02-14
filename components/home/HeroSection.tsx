@@ -35,7 +35,7 @@ export default function HeroSection() {
         {/* Minimal background accent
         <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-background to-background" /> */}
 
-        <div className="container relative z-10 pt-12 px-4 sm:px-6 md:px-8 sm:pt-16 lg:pt-20">
+        <div className="container relative z-10 pt-12 px-4 sm:px-6 md:px-8 sm:pt-16 lg:pt-10">
           <div className="max-w-6xl mx-auto">
             {/* Main Content */}
             <div className="text-center space-y-6 sm:space-y-8 mb-10 sm:mb-12">
@@ -105,7 +105,7 @@ export default function HeroSection() {
             {/* Trust Indicators */}
             <div className=" mb-10">
               <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center  gap-2">
                   <UserCheck className="text-emerald-500 w-5 h-5" />
                   <span>Verified Sellers</span>
                 </div>

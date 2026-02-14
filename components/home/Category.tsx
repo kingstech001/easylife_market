@@ -1,13 +1,20 @@
+// components/Category.tsx
+
 import { CategoryGrid, CategorySidebar } from "../CategoryGrid";
+import NewProductsSection from "../NewProductsSection";
+// import NewProductsSection from "./NewProductsSection";
 
 function Category() {
   return (
-    <div className="lg:flex p-2">
+    <div className="lg:flex">
+      {/* Sidebar - Desktop only */}
       <CategorySidebar />
-      <CategoryGrid/>
-      <div className="flex-1 flex items-center flex-col">
-        <h1>New Products</h1>
-      </div>
+      
+      
+      {/* Main Content - New Products */}
+      <NewProductsSection />
+      {/* Mobile Category Grid */}
+      <CategoryGrid />
     </div>
   );
 }
