@@ -124,7 +124,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
         </div>
 
         {/* Cart Items */}
-        <div className="flex overflow-y-auto p-2 h-[50%]">
+        <div className="flex overflow-y-auto p-2 h-[55%]">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-muted flex items-center justify-center">
