@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import SearchResultsPage from "@/components/Searchresultspage"
+import SearchResultsPage from "@/components/Searchresultspage";
+import { CategorySidebar } from "@/components/CategoryGrid";
 import { Search } from "lucide-react";
 
 export const metadata = {
@@ -19,9 +20,7 @@ function SearchLoading() {
         </div>
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">Loading search...</h3>
-          <p className="text-sm text-muted-foreground">
-            Please wait a moment
-          </p>
+          <p className="text-sm text-muted-foreground">Please wait a moment</p>
         </div>
       </div>
     </div>
@@ -30,8 +29,16 @@ function SearchLoading() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<SearchLoading />}>
-      <SearchResultsPage />
-    </Suspense>
+    <div className="flex min-h-screen">
+      {/* Sidebar - Desktop only */}
+      <CategorySidebar />
+
+      {/* Main Content */}
+      <main className="flex-1">
+        <Suspense fallback={<SearchLoading />}>
+          <SearchResultsPage />
+        </Suspense>
+      </main>
+    </div>
   );
 }

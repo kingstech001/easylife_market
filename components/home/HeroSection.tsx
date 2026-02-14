@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Reveal } from "../Reveal";
 import { cn } from "@/lib/utils";
-import { CategoryGrid } from "@/components/CategoryGrid"
+import { CategoryGrid, CategorySidebar } from "@/components/CategoryGrid"
 
 export default function HeroSection() {
   const router = useRouter();
@@ -31,9 +31,9 @@ export default function HeroSection() {
   return (
     <Reveal>
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center bg-background">
-        {/* Minimal background accent */}
-        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-background to-background" />
+      <section className="relativex flex items-center justify-center bg-background">
+        {/* Minimal background accent
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-background to-background" /> */}
 
         <div className="container relative z-10 pt-12 px-4 sm:px-6 md:px-8 sm:pt-16 lg:pt-20">
           <div className="max-w-6xl mx-auto">
@@ -61,7 +61,7 @@ export default function HeroSection() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search for products, stores, or categories..."
-                    className="h-14 pl-5 pr-29 text-[13px] rounded-full border-2 border-border focus-visible:border-[#e1a200] focus-visible:ring-[#e1a200]/20 shadow-sm"
+                    className="h-14 pl-5 pr-29 text-[13px] rounded-full border-2 border-border focus-visible:border-[#e1a200] focus-visible:ring-0 shadow-sm"
                   />
                   <Button
                     type="submit"
@@ -103,7 +103,7 @@ export default function HeroSection() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="">
+            <div className=" mb-10">
               <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <UserCheck className="text-emerald-500 w-5 h-5" />
@@ -123,9 +123,6 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-
-            {/* Category Grid - Now using the new component */}
-            <CategoryGrid />
           </div>
         </div>
       </section>

@@ -18,101 +18,40 @@ export const VARIANT_CATEGORIES = [
 
 export const categories = [
   {
-    name: "Electronics & Gadgets",
-    subcategories: [
-      "Phones",
-      "Laptops",
-      "Audio & Headphones",
-      "Cameras",
-      "Accessories"
-    ]
+    name: "Electronics",
+    subcategories: ["Television", "Cameras & Photo", "Home Audio"],
   },
   {
-    name: "Fashion & Apparel",
-    subcategories: [
-      "Men",
-      "Women",
-      "Kids",
-      "Shoes",
-      "Bags",
-      "Swimwear",
-      "Underwear"
-    ]
+    name: "Fashion",
+    subcategories: ["Clothing", "Shoes", "Accessories", "Jewelry", "Bags"],
   },
   {
-    name: "Jewelry & Accessories",
-    subcategories: [
-      "Jewelry",
-      "Watches",
-      "Belts",
-      "Hats & Caps",
-      "Scarves"
-    ]
+    name: "Phones & Tablets",
+    subcategories: ["Mobile Phones", "Phone Accessories", "Tablets"],
   },
-  {
+   {
     name: "Health & Beauty",
-    subcategories: [
-      "Cosmetics",
-      "Skincare",
-      "Fragrance",
-      "Personal Care"
-    ]
+    subcategories: ["Groceries", "Fresh Produce", "Farm Tools", "Food", "Beverages"],
   },
   {
-    name: "Home & Garden",
-    subcategories: [
-      "Furniture",
-      "Decor",
-      "Kitchenware",
-      "Gardening",
-      "Lighting"
-    ]
+    name: "Home & Office",
+    subcategories: ["Furniture", "Decor", "Kitchen", "Garden Tools","Office Product"],
   },
   {
-    name: "Sports & Outdoors",
-    subcategories: [
-      "Sports Equipment",
-      "Fitness",
-      "Outdoor Gear",
-      "Sportswear"
-    ]
+    name: "Computing",
+    subcategories: ["Laptops", "Desktops", "Peripherals", "Software"],
   },
   {
-    name: "Toys & Games",
-    subcategories: [
-      "Kids Toys",
-      "Board Games",
-      "Puzzles",
-      "Video Games"
-    ]
+    name: "Vehicles",
+    subcategories: ["Cars", "Motorbikes", "Trucks", "Spare Parts"],
   },
   {
-    name: "Books & Stationery",
-    subcategories: [
-      "Books",
-      "Notebooks",
-      "Office Supplies"
-    ]
+    name: "Supermarket",
+    subcategories: ["Groceries", "Fresh Produce", "Farm Tools", "Food", "Beverages"],
   },
   {
-    name: "Automotive & Tools",
-    subcategories: [
-      "Car Accessories",
-      "Tools",
-      "Spare Parts"
-    ]
+    name: "Other Categories",
+    subcategories: ["Books", "Toys", "Other"],
   },
-  {
-    name: "Food & Beverages",
-    subcategories: [
-      "Packaged Foods",
-      "Snacks",
-      "Drinks"
-    ]
-  },
-  {
-    name: "Other",
-    subcategories: []
-  }
 ];
 
