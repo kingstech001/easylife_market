@@ -8,11 +8,9 @@ import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Star,
   Package,
-  ChevronRight,
   Store as StoreIcon,
   TrendingUp,
   Award,
@@ -24,18 +22,17 @@ import { connectToDB } from "@/lib/db";
 import Store from "@/models/Store";
 import Product from "@/models/Product";
 import { StoreStatusBadge } from "@/components/store-status-badge";
-import { ProductGrid } from "@/components/ProductGrid"; // New component
 
-// ✅ Allow dynamic params
-export const dynamicParams = true;
+// ✅ CRITICAL: Force dynamic rendering to avoid ISR size limit
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-// ✅ Add revalidate to enable ISR
-export const revalidate = 3600; // Revalidate every hour
+// ✅ Remove generateStaticParams to prevent pre-rendering
+// export async function generateStaticParams() { ... } // REMOVE THIS
 
-// ✅ Limit initial products to prevent oversized pages
-const INITIAL_PRODUCTS_LIMIT = 20; // Only load 20 products initially
+// ✅ Limit products to prevent oversized responses
+const PRODUCTS_LIMIT = 12; // Only show 12 products per page
 
-// Types remain the same...
 interface StoreData {
   id: string;
   name: string;
@@ -61,67 +58,27 @@ interface ProductData {
   created_at: string;
   updated_at: string;
   hasVariants?: boolean;
-  variants?: Array<{
-    color: { 
-      name: string;
-      hex: string;
-      _id?: string;
-    };
-    sizes: Array<{ 
-      size: string;
-      quantity: number;
-      _id?: string;
-    }>;
-    priceAdjustment?: number;
-    _id?: string;
-  }>;
+  variants?: any;
 }
 
 interface StorePageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Generate static paths - same as before
-export async function generateStaticParams() {
-  if (process.env.NODE_ENV === "development") {
-    console.log("⚠️ [Dev] Skipping generateStaticParams in development");
-    return [];
-  }
-
-  try {
-    console.log("🔍 [Build] Fetching stores directly from database");
-    await connectToDB();
-    const stores = await Store.find({ isPublished: true })
-      .select("slug")
-      .lean();
-    console.log("🏪 [Build] Stores found:", stores.length);
-
-    const params = stores.map((store: any) => ({ slug: store.slug }));
-    console.log("✅ [Build] Generated params:", params.length);
-    return params;
-  } catch (error) {
-    console.error("💥 [Build] Error generating static params:", error);
-    return [];
-  }
-}
-
-// Fetch store data - same as before
 async function getStore(slug: string): Promise<StoreData | null> {
   try {
-    console.log("🔍 Fetching store from database:", slug);
     await connectToDB();
 
-    const store = (await Store.findOne({
+    const store = await Store.findOne({
       slug: slug,
       isPublished: true,
-    }).lean()) as any;
+    })
+    .select('name slug description logo_url banner_url sellerId createdAt updatedAt') // ✅ Only needed fields
+    .lean();
 
     if (!store) {
-      console.log("❌ Store not found:", slug);
       return null;
     }
-
-    console.log("✅ Store fetched successfully:", store.name);
 
     return {
       id: store._id?.toString() || "",
@@ -140,41 +97,30 @@ async function getStore(slug: string): Promise<StoreData | null> {
   }
 }
 
-// ✅ UPDATED: Fetch limited products with total count
+// ✅ Optimized product fetching with strict limits
 async function getStoreProducts(
   storeId: string,
-  storeSlug: string,
-  limit: number = INITIAL_PRODUCTS_LIMIT
+  limit: number = PRODUCTS_LIMIT
 ): Promise<{ products: ProductData[]; total: number }> {
   try {
-    console.log("🔍 Fetching products from database for store:", storeId);
     await connectToDB();
 
-    const store = (await Store.findOne({ slug: storeSlug }).lean()) as any;
-    if (!store) {
-      console.log("⚠️ Store not found for products lookup:", storeSlug);
-      return { products: [], total: 0 };
-    }
-
-    // ✅ Get total count
+    // Get total count
     const totalCount = await Product.countDocuments({
       isActive: true,
-      storeId: store._id,
+      storeId: storeId,
     });
 
-    console.log(`📊 Total products in store: ${totalCount}`);
-
-    // ✅ Only fetch limited products with minimal fields
-    let products: any[] = await Product.find({
+    // ✅ Fetch ONLY limited products with MINIMAL fields
+    const products = await Product.find({
       isActive: true,
-      storeId: store._id,
+      storeId: storeId,
     })
-      .select('name price compareAtPrice images inventoryQuantity hasVariants variants createdAt updatedAt') // ✅ Only select needed fields
-      .limit(limit) // ✅ Limit products
-      .sort({ createdAt: -1 }) // ✅ Sort by newest first
+      .select('name price compareAtPrice inventoryQuantity hasVariants variants') // ✅ Minimal fields only
+      .select('images') // Only first image
+      .limit(limit)
+      .sort({ createdAt: -1 })
       .lean();
-
-    console.log(`✅ Fetched ${products.length} out of ${totalCount} products`);
 
     const transformedProducts = products.map((product: any) => {
       const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
@@ -182,12 +128,11 @@ async function getStoreProducts(
       return {
         id: product._id?.toString() || "",
         name: product.name || "Unnamed Product",
-        description: product.description || null,
+        description: null, // ✅ Don't include description to save space
         price: product.price || 0,
         compare_at_price: product.compareAtPrice || null,
-        category_id: product.categoryId?.toString() || undefined,
         inventory_quantity: product.inventoryQuantity || 0,
-        images: (product.images || []).map((img: any) => ({
+        images: (product.images || []).slice(0, 1).map((img: any) => ({ // ✅ Only first image
           id: img._id?.toString() || "",
           url: img.url || "",
           alt_text: img.altText || null,
@@ -196,20 +141,7 @@ async function getStoreProducts(
         created_at: product.createdAt?.toISOString() || new Date().toISOString(),
         updated_at: product.updatedAt?.toISOString() || new Date().toISOString(),
         hasVariants: hasVariants,
-        variants: hasVariants ? product.variants.map((variant: any) => ({
-          color: {
-            name: variant.color?.name || '',
-            hex: variant.color?.hex || '#000000',
-            _id: variant.color?._id?.toString()
-          },
-          sizes: (variant.sizes || []).map((size: any) => ({
-            size: size.size || '',
-            quantity: size.quantity || 0,
-            _id: size._id?.toString()
-          })),
-          priceAdjustment: variant.priceAdjustment || 0,
-          _id: variant._id?.toString()
-        })) : undefined
+        variants: hasVariants ? JSON.parse(JSON.stringify(product.variants)) : undefined,
       };
     });
 
@@ -223,7 +155,6 @@ async function getStoreProducts(
   }
 }
 
-// Generate metadata - same as before
 export async function generateMetadata({
   params,
 }: StorePageProps): Promise<Metadata> {
@@ -240,8 +171,7 @@ export async function generateMetadata({
 
     return {
       title: `${store.name} | EasyLife Market`,
-      description:
-        store.description || `Shop at ${store.name} on EasyLife Market`,
+      description: store.description || `Shop at ${store.name} on EasyLife Market`,
       openGraph: {
         title: store.name,
         description: store.description || `Shop at ${store.name}`,
@@ -257,33 +187,25 @@ export async function generateMetadata({
   }
 }
 
-// ✅ UPDATED: Main page component
 export default async function StorePage({ params }: StorePageProps) {
   try {
     const { slug } = await params;
-    console.log("🎯 Rendering store page for slug:", slug);
-
     const store = await getStore(slug);
 
     if (!store) {
-      console.log("❌ Store not found, showing 404");
       notFound();
     }
 
-    // ✅ Get limited products and total count
     const { products: storeProducts, total: totalProducts } = await getStoreProducts(
-      store.id, 
-      slug, 
-      INITIAL_PRODUCTS_LIMIT
+      store.id,
+      PRODUCTS_LIMIT
     );
-
-    console.log(`📦 Rendering ${storeProducts.length} of ${totalProducts} products`);
 
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-muted/20">
         <VisitTracker storeId={store.id} />
 
-        {/* Store Banner - same as before */}
+        {/* Store Banner */}
         <div className="relative h-56 md:h-72 lg:h-80 w-full overflow-hidden">
           {store.banner_url ? (
             <>
@@ -308,14 +230,14 @@ export default async function StorePage({ params }: StorePageProps) {
           )}
         </div>
 
-        {/* Store Header Section - same as before */}
+        {/* Store Header */}
         <div className="relative -mt-16 md:-mt-20">
           <div className="container mx-auto lg:px-8">
             <Card className="border-none md:border-2 shadow-xl">
-              <CardContent className=" p-2 md:p-8">
+              <CardContent className="p-2 md:p-8">
                 <div className="flex flex-col gap-6 md:gap-8">
                   <div className="flex md:flex-row items-start md:items-center gap-6">
-                    <div className="relative flex-shrink-0 mx-0 md:mx-0">
+                    <div className="relative flex-shrink-0">
                       {store.logo_url ? (
                         <div className="relative">
                           <Image
@@ -344,15 +266,10 @@ export default async function StorePage({ params }: StorePageProps) {
                           </h1>
                           <div className="flex items-center gap-2 flex-wrap">
                             <StoreStatusBadge openTime={7} closeTime={21} />
-                            <Badge
-                              variant="default"
-                              className="flex items-center gap-1.5 px-3 py-1"
-                            >
+                            <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1">
                               <Star className="h-3.5 w-3.5 fill-current" />
                               <span className="font-semibold">4.8</span>
-                              <span className="text-xs opacity-80">
-                                (127 reviews)
-                              </span>
+                              <span className="text-xs opacity-80">(127 reviews)</span>
                             </Badge>
                           </div>
                         </div>
@@ -362,16 +279,14 @@ export default async function StorePage({ params }: StorePageProps) {
 
                   <div className="flex-1 min-w-0">
                     {store.description && (
-                      <div>
-                        <ExpandableText text={store.description} limit={180} />
-                      </div>
+                      <ExpandableText text={store.description} limit={180} />
                     )}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Store Stats - ✅ Updated to show total products */}
+            {/* Store Stats */}
             <div className="flex gap-1 sm:gap-4 justify-between px-2">
               <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 flex-1 flex items-center justify-center py-2">
                 <CardContent className="p-0 items-center justify-center text-center">
@@ -387,10 +302,9 @@ export default async function StorePage({ params }: StorePageProps) {
                 </CardContent>
               </Card>
 
-              {/* Other stats remain the same */}
               <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 flex-1 flex items-center justify-center py-2">
                 <CardContent className="p-0 text-center">
-                  <div className="flex items-center justify-center ">
+                  <div className="flex items-center justify-center">
                     <Star className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div className="text-[10px] sm:text-xl font-bold text-green-900 dark:text-green-100">
@@ -433,7 +347,7 @@ export default async function StorePage({ params }: StorePageProps) {
           </div>
         </div>
 
-        {/* Products Section - ✅ Updated with pagination */}
+        {/* Products Section */}
         <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
           <div className="container mx-auto max-w-screen-xl">
             <div className="flex items-center justify-between mb-8">
@@ -448,12 +362,15 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
 
             {storeProducts.length > 0 ? (
-              <ProductGrid 
-                initialProducts={storeProducts}
-                totalProducts={totalProducts}
-                storeId={store.id}
-                storeSlug={store.slug}
-              />
+              <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {storeProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    storeSlug={store.slug}
+                  />
+                ))}
+              </div>
             ) : (
               <Card className="border-2 border-dashed">
                 <CardContent className="text-center py-16">
