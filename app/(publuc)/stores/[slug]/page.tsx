@@ -1,3 +1,5 @@
+// app/stores/[slug]/page.tsx
+
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -22,11 +24,18 @@ import { connectToDB } from "@/lib/db";
 import Store from "@/models/Store";
 import Product from "@/models/Product";
 import { StoreStatusBadge } from "@/components/store-status-badge";
+import { ProductGrid } from "@/components/ProductGrid"; // New component
 
 // ✅ Allow dynamic params
 export const dynamicParams = true;
 
-// ✅ Types
+// ✅ Add revalidate to enable ISR
+export const revalidate = 3600; // Revalidate every hour
+
+// ✅ Limit initial products to prevent oversized pages
+const INITIAL_PRODUCTS_LIMIT = 20; // Only load 20 products initially
+
+// Types remain the same...
 interface StoreData {
   id: string;
   name: string;
@@ -72,7 +81,7 @@ interface StorePageProps {
   params: Promise<{ slug: string }>;
 }
 
-// ✅ Generate static paths - DIRECT DATABASE ACCESS (NO HTTP)
+// Generate static paths - same as before
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === "development") {
     console.log("⚠️ [Dev] Skipping generateStaticParams in development");
@@ -96,7 +105,7 @@ export async function generateStaticParams() {
   }
 }
 
-// ✅ Fetch store data - DIRECT DATABASE ACCESS
+// Fetch store data - same as before
 async function getStore(slug: string): Promise<StoreData | null> {
   try {
     console.log("🔍 Fetching store from database:", slug);
@@ -131,11 +140,12 @@ async function getStore(slug: string): Promise<StoreData | null> {
   }
 }
 
-// ✅ Fetch products - DIRECT DATABASE ACCESS
+// ✅ UPDATED: Fetch limited products with total count
 async function getStoreProducts(
   storeId: string,
-  storeSlug: string
-): Promise<ProductData[]> {
+  storeSlug: string,
+  limit: number = INITIAL_PRODUCTS_LIMIT
+): Promise<{ products: ProductData[]; total: number }> {
   try {
     console.log("🔍 Fetching products from database for store:", storeId);
     await connectToDB();
@@ -143,78 +153,31 @@ async function getStoreProducts(
     const store = (await Store.findOne({ slug: storeSlug }).lean()) as any;
     if (!store) {
       console.log("⚠️ Store not found for products lookup:", storeSlug);
-      return [];
+      return { products: [], total: 0 };
     }
 
-    let products: any[] = [];
-
-    products = (await Product.find({
+    // ✅ Get total count
+    const totalCount = await Product.countDocuments({
       isActive: true,
       storeId: store._id,
-      isPublished: true,
+    });
+
+    console.log(`📊 Total products in store: ${totalCount}`);
+
+    // ✅ Only fetch limited products with minimal fields
+    let products: any[] = await Product.find({
+      isActive: true,
+      storeId: store._id,
     })
-      .populate("images")
-      .lean()) as any[];
+      .select('name price compareAtPrice images inventoryQuantity hasVariants variants createdAt updatedAt') // ✅ Only select needed fields
+      .limit(limit) // ✅ Limit products
+      .sort({ createdAt: -1 }) // ✅ Sort by newest first
+      .lean();
 
-    console.log(
-      "🔍 Try 1 (with isActive & isPublished): Found",
-      products.length,
-      "products"
-    );
+    console.log(`✅ Fetched ${products.length} out of ${totalCount} products`);
 
-    if (!products || products.length === 0) {
-      console.log(
-        "🔍 Try 2: Fetching with isActive, without isPublished filter..."
-      );
-      products = (await Product.find({
-        isActive: true,
-        storeId: store._id,
-      })
-        .populate("images")
-        .lean()) as any[];
-      console.log(
-        "🔍 Try 2 (with isActive, without isPublished): Found",
-        products.length,
-        "products"
-      );
-    }
-
-    if (!products || products.length === 0) {
-      console.log(
-        "🔍 Try 3: Fetching with isActive and string storeId comparison..."
-      );
-      products = (await Product.find({
-        isActive: true,
-        storeId: store._id.toString(),
-      })
-        .populate("images")
-        .lean()) as any[];
-      console.log(
-        "🔍 Try 3 (isActive + string comparison): Found",
-        products.length,
-        "products"
-      );
-    }
-
-    if (!products || products.length === 0) {
-      console.log(
-        "⚠️ No active products found for store after all attempts:",
-        storeSlug
-      );
-      return [];
-    }
-
-    console.log("✅ Active products fetched successfully:", products.length);
-
-    return products.map((product: any) => {
-      // Check if product has variants
+    const transformedProducts = products.map((product: any) => {
       const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
-      
-      // Log variant data for debugging
-      if (hasVariants) {
-        console.log(`📦 Product "${product.name}" has ${product.variants.length} variant(s)`);
-        console.log('Variants:', JSON.stringify(product.variants, null, 2));
-      }
 
       return {
         id: product._id?.toString() || "",
@@ -232,7 +195,6 @@ async function getStoreProducts(
         store_id: product.storeId?.toString() || "",
         created_at: product.createdAt?.toISOString() || new Date().toISOString(),
         updated_at: product.updatedAt?.toISOString() || new Date().toISOString(),
-        // ⭐ ADD VARIANTS HERE ⭐
         hasVariants: hasVariants,
         variants: hasVariants ? product.variants.map((variant: any) => ({
           color: {
@@ -250,13 +212,18 @@ async function getStoreProducts(
         })) : undefined
       };
     });
+
+    return {
+      products: transformedProducts,
+      total: totalCount
+    };
   } catch (error) {
     console.error("❌ Error fetching products:", error);
-    return [];
+    return { products: [], total: 0 };
   }
 }
 
-// ✅ Generate metadata
+// Generate metadata - same as before
 export async function generateMetadata({
   params,
 }: StorePageProps): Promise<Metadata> {
@@ -290,7 +257,7 @@ export async function generateMetadata({
   }
 }
 
-// ✅ Main page component
+// ✅ UPDATED: Main page component
 export default async function StorePage({ params }: StorePageProps) {
   try {
     const { slug } = await params;
@@ -303,14 +270,20 @@ export default async function StorePage({ params }: StorePageProps) {
       notFound();
     }
 
-    const storeProducts = await getStoreProducts(store.id, slug);
+    // ✅ Get limited products and total count
+    const { products: storeProducts, total: totalProducts } = await getStoreProducts(
+      store.id, 
+      slug, 
+      INITIAL_PRODUCTS_LIMIT
+    );
+
+    console.log(`📦 Rendering ${storeProducts.length} of ${totalProducts} products`);
 
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-muted/20">
-        {/* Visit Tracker */}
         <VisitTracker storeId={store.id} />
 
-        {/* Store Banner with Overlay Effect */}
+        {/* Store Banner - same as before */}
         <div className="relative h-56 md:h-72 lg:h-80 w-full overflow-hidden">
           {store.banner_url ? (
             <>
@@ -335,13 +308,12 @@ export default async function StorePage({ params }: StorePageProps) {
           )}
         </div>
 
-        {/* Store Header Section */}
+        {/* Store Header Section - same as before */}
         <div className="relative -mt-16 md:-mt-20">
           <div className="container mx-auto lg:px-8">
             <Card className="border-none md:border-2 shadow-xl">
               <CardContent className=" p-2 md:p-8">
                 <div className="flex flex-col gap-6 md:gap-8">
-                  {/* Store Logo */}
                   <div className="flex md:flex-row items-start md:items-center gap-6">
                     <div className="relative flex-shrink-0 mx-0 md:mx-0">
                       {store.logo_url ? (
@@ -388,9 +360,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     </div>
                   </div>
 
-                  {/* Store Details */}
                   <div className="flex-1 min-w-0">
-                    {/* Store Description */}
                     {store.description && (
                       <div>
                         <ExpandableText text={store.description} limit={180} />
@@ -401,7 +371,7 @@ export default async function StorePage({ params }: StorePageProps) {
               </CardContent>
             </Card>
 
-            {/* Store Stats */}
+            {/* Store Stats - ✅ Updated to show total products */}
             <div className="flex gap-1 sm:gap-4 justify-between px-2">
               <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 flex-1 flex items-center justify-center py-2">
                 <CardContent className="p-0 items-center justify-center text-center">
@@ -409,7 +379,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="text-[10px] sm:text-xl font-bold text-blue-900 dark:text-blue-100">
-                    {storeProducts.length}
+                    {totalProducts}
                   </div>
                   <div className="text-[10px] text-blue-700 dark:text-blue-300 font-medium">
                     Total Products
@@ -417,6 +387,7 @@ export default async function StorePage({ params }: StorePageProps) {
                 </CardContent>
               </Card>
 
+              {/* Other stats remain the same */}
               <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 flex-1 flex items-center justify-center py-2">
                 <CardContent className="p-0 text-center">
                   <div className="flex items-center justify-center ">
@@ -462,7 +433,7 @@ export default async function StorePage({ params }: StorePageProps) {
           </div>
         </div>
 
-        {/* Products Section */}
+        {/* Products Section - ✅ Updated with pagination */}
         <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
           <div className="container mx-auto max-w-screen-xl">
             <div className="flex items-center justify-between mb-8">
@@ -471,22 +442,18 @@ export default async function StorePage({ params }: StorePageProps) {
                   Featured Products
                 </h2>
                 <p className="text-muted-foreground">
-                  Discover our carefully curated collection
+                  Showing {storeProducts.length} of {totalProducts} products
                 </p>
               </div>
-              
             </div>
 
             {storeProducts.length > 0 ? (
-              <div className="grid gap-6 grid-cols-2 sm:grid-cols-auto-fill">
-                {storeProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    storeSlug={store.slug}
-                  />
-                ))}
-              </div>
+              <ProductGrid 
+                initialProducts={storeProducts}
+                totalProducts={totalProducts}
+                storeId={store.id}
+                storeSlug={store.slug}
+              />
             ) : (
               <Card className="border-2 border-dashed">
                 <CardContent className="text-center py-16">
