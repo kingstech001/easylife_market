@@ -3,6 +3,9 @@
 import { Suspense } from "react";
 import { FeaturedStoresClient } from "./FeaturedStoresClient";
 import { FeaturedStoresLoading } from "./FeaturedStoresLoading";
+import { connectToDB } from "@/lib/db";
+import Store from "@/models/Store";
+import Product from "@/models/Product";
 
 // Define the StoreData interface
 interface StoreData {
@@ -21,23 +24,43 @@ interface StoreData {
 
 async function getFeaturedStores(): Promise<StoreData[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/featured-stores`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    await connectToDB();
+    
+    // Fetch only 4 published and approved stores
+    const stores = await Store.find({ 
+      isPublished: true, 
+      isApproved: true 
+    })
+    .sort({ createdAt: -1 })
+    .limit(4)
+    .lean();
 
-    if (!res.ok) {
-      console.error('Failed to fetch featured stores:', res.statusText);
-      return [];
-    }
+    // Count products for each store in parallel
+    const storesWithProductCount = await Promise.all(
+      stores.map(async (store: any) => {
+        const productCount = await Product.countDocuments({ 
+          storeId: store._id 
+        });
+        
+        return {
+          _id: store._id.toString(), // Convert MongoDB ObjectId to string
+          name: store.name,
+          slug: store.slug,
+          description: store.description,
+          logo_url: store.logo_url,
+          banner_url: store.banner_url,
+          sellerId: store.sellerId?.toString() || store.sellerId,
+          isPublished: store.isPublished,
+          productCount,
+          createdAt: store.createdAt?.toISOString() || new Date().toISOString(),
+          updatedAt: store.updatedAt?.toISOString() || new Date().toISOString(),
+        };
+      })
+    );
 
-    const data = await res.json();
-    return data.stores || [];
+    return storesWithProductCount;
   } catch (error) {
-    console.error('Error fetching featured stores:', error);
+    console.error('[FeaturedStores] Error fetching stores:', error);
     return [];
   }
 }
