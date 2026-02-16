@@ -23,13 +23,11 @@ interface StoreCardProps {
 
 export function StoreCard({ store }: StoreCardProps) {
   return (
-    //   </Card>
-    // </Link>
-     <Link href="#" className="block h-full">
+    <Link href={`/stores/${store.slug}`} className="block h-full">
       <Card className="relative h-full flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:border-primary/50 group p-0">
 
         {/* Banner */}
-        <div className="relative w-full h-40 bg-muted overflow-hidden">
+        <div className="relative w-full h-20 md:h-40 bg-muted overflow-hidden">
           {store.banner_url ? (
             <Image
               src={store.banner_url}
@@ -51,7 +49,7 @@ export function StoreCard({ store }: StoreCardProps) {
 
         {/* Logo */}
         {store.logo_url && (
-          <div className="absolute z-20 top-28 left-4 w-20 h-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden">
+          <div className="absolute z-20 top-14 md:top-28 left-4 h-16 w-16 md:w-20 md:h-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden">
             <Image
               src={store.logo_url}
               alt={`${store.name} logo`}
@@ -68,6 +66,16 @@ export function StoreCard({ store }: StoreCardProps) {
             {store.description || "No description available."}
           </CardDescription>
         </CardHeader>
+
+        {/* Optional: Product Count Footer */}
+        {store.productCount !== undefined && (
+          <CardContent className="pt-0 pb-4 mt-auto">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Package className="w-4 h-4" />
+              <span>{store.productCount} {store.productCount === 1 ? 'product' : 'products'}</span>
+            </div>
+          </CardContent>
+        )}
 
       </Card>
     </Link>

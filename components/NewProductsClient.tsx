@@ -16,6 +16,21 @@ type ProductData = {
   store_slug?: string;
   created_at: string;
   updated_at: string;
+  hasVariants?: boolean;
+  variants?: Array<{
+    color: {
+      name: string;
+      hex: string;
+      _id?: string;
+    };
+    sizes: Array<{
+      size: string;
+      quantity: number;
+      _id?: string;
+    }>;
+    priceAdjustment?: number;
+    _id?: string;
+  }>;
 };
 
 interface NewProductsClientProps {
@@ -41,19 +56,6 @@ export function NewProductsClient({ products }: NewProductsClientProps) {
 
   return (
     <div className="flex-1 p-4 lg:p-6">
-      {/* Header */}
-      <div className="mb-8 text-center lg:text-left">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-2">
-          <span className="bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
-            New{" "}
-          </span>
-          <span className="text-foreground">Products</span>
-        </h1>
-        <p className="text-muted-foreground text-sm sm:text-base">
-          Discover the latest additions from our sellers
-        </p>
-      </div>
-
       {/* Products Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
         {products.map((product) => (
@@ -69,8 +71,11 @@ export function NewProductsClient({ products }: NewProductsClientProps) {
               inventory_quantity: product.inventory_quantity,
               images: product.images,
               store_id: product.store_id,
+            //   store_slug: product.store_slug,
               created_at: product.created_at,
               updated_at: product.updated_at,
+              hasVariants: product.hasVariants, // ✅ Pass variants flag
+              variants: product.variants, // ✅ Pass variants data
             }}
             storeSlug={product.store_slug || ""}
           />

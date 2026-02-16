@@ -13,8 +13,8 @@ export default function Home() {
       <HeroSection />
       {/* <FeaturesSection />
        */}
-       <Category/>
        <FeaturedStoresSection/>
+       <Category/>
        <TestimonialsSection />
     </div>
   )

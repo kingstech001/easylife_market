@@ -23,7 +23,7 @@ export const categories = [
   },
   {
     name: "Fashion",
-    subcategories: ["Clothing", "Shoes", "Accessories", "Jewelry", "Bags"],
+    subcategories: ["Clothing", "Shoes", "Accessories", "Jewelry", "Bags","sportswear"],
   },
   {
     name: "Phones & Tablets",

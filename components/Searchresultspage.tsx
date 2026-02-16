@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/product-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CATEGORIES } from "@/components/CategoryGrid";
 
 // Product type
 type Product = {
@@ -15,6 +16,7 @@ type Product = {
   description: string | null;
   price: number;
   compare_at_price: number | null;
+  category?: string;
   category_id?: string;
   inventory_quantity: number;
   images: { id: string; url: string; alt_text: string | null }[];
@@ -22,6 +24,8 @@ type Product = {
   store_slug?: string;
   created_at: string;
   updated_at: string;
+  hasVariants?: boolean;
+  variants?: any;
 };
 
 // API Product type
@@ -30,12 +34,15 @@ type ApiProduct = {
   name: string;
   description?: string | null;
   price: number;
+  category?: string;
   compareAtPrice?: number | null;
   compare_at_price?: number | null;
   primaryImage?: string;
   images?: { id?: string; _id?: string; url: string; alt_text?: string | null; altText?: string | null }[];
   inventoryQuantity?: number;
   inventory_quantity?: number;
+  hasVariants?: boolean;
+  variants?: any;
   storeId?:
     | string
     | {
@@ -51,11 +58,33 @@ type ApiProduct = {
 
 const PRODUCTS_PER_PAGE = 12;
 
+// Helper function to expand categories to include subcategories
+function expandCategories(categoryNames: string[]): string[] {
+  const expandedCategories = new Set<string>();
+  
+  categoryNames.forEach((catName) => {
+    const categoryLower = catName.toLowerCase().trim();
+    expandedCategories.add(categoryLower);
+    
+    // Find matching category and add all its subcategories
+    const matchedCategory = CATEGORIES.find(
+      (cat) => cat.name.toLowerCase() === categoryLower
+    );
+    
+    if (matchedCategory) {
+      matchedCategory.subcategories.forEach((sub) => {
+        expandedCategories.add(sub.toLowerCase());
+      });
+    }
+  });
+  
+  return Array.from(expandedCategories);
+}
+
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || searchParams.get("q") || "";
   
-  // Memoize category parameters to prevent infinite re-renders
   const categoryParams = useMemo(() => {
     return searchParams.getAll("category");
   }, [searchParams]);
@@ -97,6 +126,7 @@ export default function SearchResultsPage() {
       name: p.name,
       description: p.description || null,
       price: p.price,
+      category: p.category,
       compare_at_price: p.compareAtPrice || p.compare_at_price || null,
       inventory_quantity: p.inventoryQuantity ?? p.inventory_quantity ?? 0,
       images: productImages.map((img: any) => ({
@@ -108,6 +138,8 @@ export default function SearchResultsPage() {
       store_slug: storeSlug,
       created_at: p.createdAt || p.created_at || new Date().toISOString(),
       updated_at: p.updatedAt || p.updated_at || new Date().toISOString(),
+      hasVariants: p.hasVariants,
+      variants: p.variants,
     };
   }, []);
 
@@ -138,7 +170,7 @@ export default function SearchResultsPage() {
     fetchProducts();
   }, [transformProduct]);
 
-  // Filter products based on search/category
+  // ✅ Filter products based on search/category - IMPROVED VERSION
   useEffect(() => {
     if (allProducts.length === 0) {
       setFilteredProducts([]);
@@ -147,9 +179,9 @@ export default function SearchResultsPage() {
     }
 
     const searchTerm = searchQuery.toLowerCase().trim();
-    const categories = categoryParams.map(c => c.toLowerCase().trim()).filter(Boolean);
+    const expandedCategories = expandCategories(categoryParams);
     
-    if (!searchTerm && categories.length === 0) {
+    if (!searchTerm && expandedCategories.length === 0) {
       setFilteredProducts(allProducts);
       setDisplayedProducts(allProducts.slice(0, PRODUCTS_PER_PAGE));
       setHasMore(allProducts.length > PRODUCTS_PER_PAGE);
@@ -157,33 +189,57 @@ export default function SearchResultsPage() {
       return;
     }
 
-    // Filter products
+    // ✅ Filter products - Check name, description, AND category
     const filtered = allProducts.filter((product) => {
-      // Search term matching
+      const productName = product.name.toLowerCase();
+      const productDesc = (product.description || "").toLowerCase();
+      const productCategory = (product.category || "").toLowerCase();
+      
+      // ✅ Search term matching (searches in name, description, AND category)
       if (searchTerm) {
-        const nameMatch = product.name.toLowerCase().includes(searchTerm);
-        const descriptionMatch = product.description?.toLowerCase().includes(searchTerm) || false;
+        const nameMatch = productName.includes(searchTerm);
+        const descriptionMatch = productDesc.includes(searchTerm);
+        const categoryMatch = productCategory.includes(searchTerm);
         
-        if (!nameMatch && !descriptionMatch) return false;
+        // Must match at least one field
+        if (!nameMatch && !descriptionMatch && !categoryMatch) {
+          return false;
+        }
       }
       
-      // Category matching (if categories are provided)
-      if (categories.length > 0) {
-        const productName = product.name.toLowerCase();
-        const productDesc = product.description?.toLowerCase() || "";
+      // ✅ Category filter matching (when user clicks a category)
+      if (expandedCategories.length > 0) {
+        const categoryMatches = expandedCategories.some(cat => {
+          // Check all three fields: category, name, and description
+          return (
+            productCategory.includes(cat) ||
+            productName.includes(cat) ||
+            productDesc.includes(cat)
+          );
+        });
         
-        // Check if any category matches the product
-        const categoryMatch = categories.some(cat => 
-          productName.includes(cat) || productDesc.includes(cat)
-        );
-        
-        if (!categoryMatch) return false;
+        if (!categoryMatches) {
+          return false;
+        }
       }
       
       return true;
     });
 
-    console.log(`🔍 Search - Term: "${searchTerm}", Categories: [${categories.join(', ')}], Found: ${filtered.length} products`);
+    console.log(`🔍 Search Results:`, {
+      searchTerm,
+      expandedCategories,
+      foundProducts: filtered.length,
+      sampleMatches: filtered.slice(0, 3).map(p => ({
+        name: p.name,
+        category: p.category,
+        matchedIn: {
+          name: p.name.toLowerCase().includes(searchTerm || expandedCategories[0] || ''),
+          category: (p.category || '').toLowerCase().includes(searchTerm || expandedCategories[0] || ''),
+          description: (p.description || '').toLowerCase().includes(searchTerm || expandedCategories[0] || '')
+        }
+      }))
+    });
 
     setFilteredProducts(filtered);
     setDisplayedProducts(filtered.slice(0, PRODUCTS_PER_PAGE));
@@ -249,7 +305,6 @@ export default function SearchResultsPage() {
     window.location.href = '/Search';
   };
 
-  // Display query for badge
   const currentQuery = searchQuery || (categoryParams.length > 0 ? categoryParams[0] : "");
 
   if (loading) {
@@ -296,7 +351,6 @@ export default function SearchResultsPage() {
       {/* Search Header */}
       <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          {/* Search Bar */}
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -326,7 +380,6 @@ export default function SearchResultsPage() {
             </div>
           </form>
 
-          {/* Results Info */}
           <div className="flex items-center justify-between max-w-7xl mx-auto">
             <div className="flex items-center gap-3 flex-wrap">
               {currentQuery && (
@@ -343,19 +396,12 @@ export default function SearchResultsPage() {
                   </Badge>
                 </div>
               )}
-              {categoryParams.length > 1 && (
-                <Badge variant="outline" className="text-xs">
-                  +{categoryParams.length - 1} more categories
-                </Badge>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Products Grid */}
         {displayedProducts.length === 0 ? (
           <div className="max-w-md mx-auto text-center py-16">
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -378,8 +424,7 @@ export default function SearchResultsPage() {
           </div>
         ) : (
           <>
-            {/* Products Grid */}
-            <div className="grid gap-6 grid-cols-2 sm:grid-cols-auto-fill">
+            <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {displayedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -389,7 +434,6 @@ export default function SearchResultsPage() {
               ))}
             </div>
 
-            {/* Loading More Indicator */}
             <div ref={observerTarget} className="py-8">
               {loadingMore && (
                 <div className="flex flex-col items-center justify-center space-y-3">

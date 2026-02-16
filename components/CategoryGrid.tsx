@@ -26,7 +26,7 @@ export const CATEGORIES: Category[] = [
   {
     name: "Electronics",
     icon: Tv,
-    subcategories: ["Television", "Cameras & Photo", "Home Audio","Tv"],
+    subcategories: ["Television", "Cameras & Photo", "Home Audio","Tv","electronics"],
   },
   {
     name: "Vehicles",
@@ -36,7 +36,7 @@ export const CATEGORIES: Category[] = [
   {
     name: "Fashion",
     icon: Shirt,
-    subcategories: ["Clothing", "Shoes", "Accessories", "Jewelry", "Bags"],
+    subcategories: ["Clothing", "Shoes", "Accessories", "Jewelry", "Bags","game wear","sportswear"],
   },
   {
     name: "Home & Office",

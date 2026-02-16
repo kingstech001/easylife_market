@@ -3,10 +3,9 @@
 import { Suspense } from "react";
 import { connectToDB } from "@/lib/db";
 import Product from "@/models/Product";
+import Store from "@/models/Store";
 import { NewProductsLoading } from "./NewProductsLoading";
 import { NewProductsClient } from "./NewProductsClient";
-// import { NewProductsClient } from "./NewProductsClient";
-// import { NewProductsLoading } from "./NewProductsLoading";
 
 // Product type
 type ProductData = {
@@ -21,7 +20,42 @@ type ProductData = {
   store_slug?: string;
   created_at: string;
   updated_at: string;
+  hasVariants?: boolean;
+  variants?: Array<{
+    color: {
+      name: string;
+      hex: string;
+      _id?: string;
+    };
+    sizes: Array<{
+      size: string;
+      quantity: number;
+      _id?: string;
+    }>;
+    priceAdjustment?: number;
+    _id?: string;
+  }>;
 };
+
+// Helper function to serialize variants (convert ObjectIds to strings)
+function serializeVariants(variants: any[]): ProductData['variants'] {
+  if (!variants || !Array.isArray(variants)) return undefined;
+
+  return variants.map((variant) => ({
+    color: {
+      name: variant.color.name,
+      hex: variant.color.hex,
+      _id: variant.color._id?.toString(), // ✅ Convert ObjectId to string
+    },
+    sizes: variant.sizes.map((size: any) => ({
+      size: size.size,
+      quantity: size.quantity,
+      _id: size._id?.toString(), // ✅ Convert ObjectId to string
+    })),
+    priceAdjustment: variant.priceAdjustment || 0,
+    _id: variant._id?.toString(), // ✅ Convert ObjectId to string
+  }));
+}
 
 // Fetch new products directly from database
 async function getNewProducts(): Promise<ProductData[]> {
@@ -30,11 +64,12 @@ async function getNewProducts(): Promise<ProductData[]> {
 
     // Fetch 10 newest products with populated store data
     const products = await Product.find({})
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .sort({ createdAt: -1 })
       .limit(10)
       .populate({
         path: "storeId",
         select: "slug name",
+        model: Store,
       })
       .lean();
 
@@ -55,6 +90,8 @@ async function getNewProducts(): Promise<ProductData[]> {
       store_slug: typeof p.storeId === "object" ? p.storeId.slug : undefined,
       created_at: p.createdAt || new Date().toISOString(),
       updated_at: p.updatedAt || new Date().toISOString(),
+      hasVariants: p.hasVariants || false,
+      variants: serializeVariants(p.variants), // ✅ Serialize variants
     }));
 
     return transformedProducts;

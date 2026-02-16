@@ -45,8 +45,14 @@ export function SiteHeader() {
   const { items } = useCart();
   const { state: wishlistState } = useWishlist();
 
-  const itemCount = items?.reduce((total: number, item: { quantity: number }) => total + item.quantity, 0) ?? 0;
-  const wishlistCount = wishlistState?.wishlist ? wishlistState.wishlist.length : 0;
+  const itemCount =
+    items?.reduce(
+      (total: number, item: { quantity: number }) => total + item.quantity,
+      0,
+    ) ?? 0;
+  const wishlistCount = wishlistState?.wishlist
+    ? wishlistState.wishlist.length
+    : 0;
 
   // Don't show cart and wishlist for sellers
   const showShoppingFeatures = userRole !== "seller";
@@ -77,7 +83,7 @@ export function SiteHeader() {
         setIsSearching(true);
         try {
           const response = await fetch(
-            `/api/search?q=${encodeURIComponent(searchQuery)}`
+            `/api/search?q=${encodeURIComponent(searchQuery)}`,
           );
           if (response.ok) {
             const data = await response.json();
@@ -243,14 +249,6 @@ export function SiteHeader() {
                         Login
                       </Button>
                     </Link>
-                    {/* <Link href="/auth/register">
-                      <Button
-                        size="sm"
-                        className="h-9 px-3 bg-[#e1a200] hover:from-[#e1a200] hover:to-[#c0a146] transition-all duration-300"
-                      >
-                        Sign Up
-                      </Button>
-                    </Link> */}
                   </div>
                 )}
 
@@ -261,6 +259,38 @@ export function SiteHeader() {
 
             {/* Mobile Toggle */}
             <div className="flex items-center md:hidden justify-center space-x-2">
+              {/* Cart - Only for non-sellers */}
+          {showShoppingFeatures ? (
+            <button
+              onClick={() => setCartOpen(true)}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 transition-colors relative hover:text-foreground",
+              )}
+            >
+              <ShoppingCart className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+              {itemCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+                >
+                  {itemCount > 9 ? "9+" : itemCount}
+                </Badge>
+              )}
+            </button>
+          ) : (
+            /* Profile for sellers (replaces cart) */
+            <Link
+              href={dashboardLink}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 transition-colors",
+                pathname?.startsWith("/dashboard")
+                  ? "text-[#e1a200]"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <User className="h-5 w-5" />
+            </Link>
+          )}
               {/* Theme Toggle */}
               <ThemeToggle />
             </div>
@@ -270,7 +300,7 @@ export function SiteHeader() {
           <div
             className={cn(
               "search-container overflow-hidden transition-all duration-300 ease-in-out",
-              searchOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+              searchOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0",
             )}
           >
             <div className="relative">
@@ -404,7 +434,12 @@ export function SiteHeader() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border/40 pb-safe">
-        <div className={cn("grid h-16", showShoppingFeatures ? "grid-cols-5" : "grid-cols-4")}>
+        <div
+          className={cn(
+            "grid h-16",
+            showShoppingFeatures ? "grid-cols-4" : "grid-cols-4",
+          )}
+        >
           {/* Home */}
           <Link
             href="/"
@@ -412,7 +447,7 @@ export function SiteHeader() {
               "flex flex-col items-center justify-center gap-1 transition-colors",
               pathname === "/"
                 ? "text-[#e1a200]"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Home className="h-5 w-5" />
@@ -426,7 +461,7 @@ export function SiteHeader() {
               "flex flex-col items-center justify-center gap-1 transition-colors",
               pathname === "/stores" || pathname?.startsWith("/stores/")
                 ? "text-[#e1a200]"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Store className="h-5 w-5" />
@@ -441,7 +476,7 @@ export function SiteHeader() {
                 "flex flex-col items-center justify-center gap-1 transition-colors relative",
                 pathname === "/wishlist"
                   ? "text-[#e1a200]"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Heart className="h-5 w-5" />
@@ -457,53 +492,36 @@ export function SiteHeader() {
             </Link>
           )}
 
-          {/* Cart - Only for non-sellers */}
-          {showShoppingFeatures ? (
-            <button
-              onClick={() => setCartOpen(true)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors relative"
-              )}
-            >
-              <ShoppingCart className="h-5 w-5 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Cart</span>
-              {itemCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+          
+          {authenticated ? (
+            <div className="flex items-center justify-center">
+              <Link href={dashboardLink}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground"
                 >
-                  {itemCount > 9 ? "9+" : itemCount}
-                </Badge>
-              )}
-            </button>
+                  <LayoutDashboard className="h-5 w-5" />
+                  <span className="text-xs font-medium">Dashboard</span>
+                </Button>
+              </Link>
+            </div>
           ) : (
-            /* Profile for sellers (replaces cart) */
-            <Link
-              href={dashboardLink}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors",
-                pathname?.startsWith("/dashboard")
-                  ? "text-[#e1a200]"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <User className="h-5 w-5" />
-              <span className="text-xs font-medium">Profile</span>
-            </Link>
+            <div className="m-auto">
+              <Link
+                href="/auth/login"
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 transition-colors",
+                  pathname?.startsWith("/dashboard")
+                    ? "text-[#e1a200]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <LogIn className="h-5 w-5" />
+                <span className="text-xs font-medium">Login</span>
+              </Link>
+            </div>
           )}
-          {/* Search - Button that opens search */}
-          <Link
-              href='/auth/login'
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors",
-                pathname?.startsWith("/dashboard")
-                  ? "text-[#e1a200]"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <LogIn className="h-5 w-5" />
-              <span className="text-xs font-medium">Login</span>
-            </Link>
         </div>
       </nav>
     </>

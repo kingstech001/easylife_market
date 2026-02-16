@@ -28,9 +28,9 @@ interface FeaturedStoresClientProps {
 
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
-    <section className="relative w-full py-12 sm:py-16 lg:py-24 overflow-hidden">
+    <section className="relative w-full py-12 sm:py-16  overflow-hidden">
       {/* Simplified background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/20 to-background" />
+      
       
       {/* Reduced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -39,9 +39,8 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
       </div>
 
       {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_110%)] opacity-10" />
 
-      <div className="container relative z-10 px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
+      <div className="container relative z-10 px-4 sm:px-6 mx-auto max-w-7xl">
         {/* Header Section */}
         <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
           {/* Badge */}
@@ -53,53 +52,6 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
             Top Performing Stores
           </Badge>
 
-          {/* Main heading */}
-          <div className="space-y-4 max-w-4xl">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                Featured{" "}
-              </span>
-              <span className="bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
-                Success Stories
-              </span>
-            </h2>
-            <p className="max-w-2xl mx-auto text-muted-foreground text-lg leading-relaxed">
-              Discover amazing stores built by entrepreneurs like you. Get inspired and start your journey today.
-            </p>
-          </div>
-
-          {/* Stats bar */}
-          <div className="w-full max-w-4xl">
-            <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-6">
-              {[
-                { icon: Store, label: "Live stores", value: "2,847", color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-                { icon: TrendingUp, label: "Avg. growth", value: "+156%", color: "text-[#e1a200]", bgColor: "bg-[#e1a200]/10" },
-                { icon: Users, label: "Happy customers", value: "50K+", color: "text-blue-500", bgColor: "bg-blue-500/10" },
-              ].map((stat, index) => (
-                <div
-                  key={index}
-                  className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 hover:border-[#e1a200]/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                >
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
-                    <div className={cn(
-                      "p-2.5 sm:p-3 rounded-xl transition-transform duration-300 group-hover:scale-110",
-                      stat.bgColor
-                    )}>
-                      <stat.icon className={cn("w-5 h-5 sm:w-6 sm:h-6", stat.color)} />
-                    </div>
-                    <div className="text-center sm:text-left flex-1">
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
-                        {stat.value}
-                      </p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {stat.label}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Store Cards Grid */}
@@ -130,7 +82,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="container flex overflow-hidden overflow-x-auto md:overflow-x-hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {stores.map((store, index) => (
                 <div
                   key={store._id}
@@ -143,14 +95,14 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                   <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                   {/* Featured badge for middle card */}
-                  {index === 2 && (
+                  {/* {index === 2 && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
                       <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white shadow-lg px-3 py-1">
                         <Star className="w-3 h-3 mr-1 fill-current" />
                         <span className="text-xs sm:text-sm font-semibold">Featured</span>
                       </Badge>
                     </div>
-                  )}
+                  )} */}
 
                   {/* Store card wrapper */}
                   <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl p-1 transition-all duration-300 group-hover:from-card/90 group-hover:to-card/60 group-hover:border-[#e1a200]/30 group-hover:shadow-2xl hover:scale-[1.02] sm:hover:scale-105">
@@ -174,7 +126,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
           </div>
 
           {/* CTA Content */}
-          <div className="text-center space-y-4 sm:space-y-5 max-w-2xl px-4">
+          <div className="text-center space-y-4 sm:space-y-5 max-w-2xl">
             <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground via-[#e1a200] to-foreground bg-clip-text text-transparent">
               Ready to Join These Success Stories?
             </h3>
