@@ -271,7 +271,7 @@ export function SiteHeader() {
               {itemCount > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+                  className="absolute bottom-3 left-3 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
                 >
                   {itemCount > 9 ? "9+" : itemCount}
                 </Badge>
