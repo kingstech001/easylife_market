@@ -28,9 +28,8 @@ interface FeaturedStoresClientProps {
 
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
-    <section className="relative w-full py-12 sm:py-16  overflow-hidden">
+    <section className="relative w-full py-12 sm:py-16 overflow-hidden">
       {/* Simplified background */}
-      
       
       {/* Reduced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -40,7 +39,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
       {/* Subtle grid pattern */}
 
-      <div className="container relative z-10 px-4 sm:px-6 mx-auto max-w-7xl">
+      <div className="container relative z-10 px-4 sm:px-6 mx-auto">
         {/* Header Section */}
         <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
           {/* Badge */}
@@ -51,7 +50,6 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
             <Award className="w-4 h-4 mr-2 text-[#e1a200]" />
             Top Performing Stores
           </Badge>
-
         </div>
 
         {/* Store Cards Grid */}
@@ -82,30 +80,22 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
               </Link>
             </div>
           ) : (
-            <div className="container flex overflow-hidden overflow-x-auto md:overflow-x-hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex gap-4 overflow-x-auto md:overflow-x-visible md:grid md:grid-cols-2 lg:grid-cols-4 pb-4 md:pb-0 snap-x snap-mandatory md:snap-none">
               {stores.map((store, index) => (
                 <div
                   key={store._id}
                   className={cn(
-                    "group relative transition-all duration-500 hover:z-10",
-                    index === 1 && "md:scale-[1.02] lg:scale-105"
+                    "group relative transition-all duration-500",
+                    // Mobile: fixed width for horizontal scroll
+                    "min-w-[280px] sm:min-w-[320px] snap-center",
+                    // Desktop: auto width from grid
+                    "md:min-w-0 md:w-auto",
+                    // Hover effects
+                    "hover:z-10"
                   )}
                 >
-                  {/* Glow effect on hover */}
-                  <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  {/* Featured badge for middle card */}
-                  {/* {index === 2 && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                      <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white shadow-lg px-3 py-1">
-                        <Star className="w-3 h-3 mr-1 fill-current" />
-                        <span className="text-xs sm:text-sm font-semibold">Featured</span>
-                      </Badge>
-                    </div>
-                  )} */}
-
                   {/* Store card wrapper */}
-                  <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl p-1 transition-all duration-300 group-hover:from-card/90 group-hover:to-card/60 group-hover:border-[#e1a200]/30 group-hover:shadow-2xl hover:scale-[1.02] sm:hover:scale-105">
+                  <div className="relative rounded-2xl sm:rounded-3xl p-1 transition-all duration-300 group-hover:shadow-2xl hover:scale-[1.02]">
                     <StoreCard store={store} />
                   </div>
                 </div>
