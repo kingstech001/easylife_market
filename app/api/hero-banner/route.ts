@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 
 // Large curated collection of fallback banners
-// These will be used if the Unsplash API fails or key is missing
 const FALLBACK_BANNERS = [
   // Shopping & Retail
   {
@@ -133,11 +132,6 @@ const FALLBACK_BANNERS = [
   },
 ]
 
-// Cache for storing the API banner
-let cachedBanner: any = null
-let cacheTime: number = 0
-const CACHE_DURATION = 3600000 // 1 hour in milliseconds
-
 // Helper function to get a random fallback banner
 function getRandomFallbackBanner() {
   const randomIndex = Math.floor(Math.random() * FALLBACK_BANNERS.length)
@@ -152,25 +146,18 @@ export async function GET() {
   try {
     const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY
 
-    // If no API key, use fallback immediately
+    // If no API key, use random fallback
     if (!unsplashAccessKey) {
-      console.log("⚠️ No Unsplash API key - using fallback banner")
+      console.log("⚠️ No Unsplash API key - using random fallback banner")
       const fallbackBanner = getRandomFallbackBanner()
       return NextResponse.json({ 
         success: true, 
         banner: fallbackBanner,
         source: "fallback" 
-      })
-    }
-
-    // Check if we have a valid cached banner from API
-    const now = Date.now()
-    if (cachedBanner && (now - cacheTime) < CACHE_DURATION) {
-      console.log('✅ Returning cached API banner')
-      return NextResponse.json({ 
-        success: true, 
-        banner: cachedBanner,
-        source: "api-cache" 
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate', // Prevent caching
+        }
       })
     }
 
@@ -203,11 +190,7 @@ export async function GET() {
         buttonLink: "/allStoreProducts",
       }
 
-      // Cache the successful API response
-      cachedBanner = banner
-      cacheTime = now
-
-      console.log('✅ Fresh banner from API cached successfully')
+      console.log('✅ Fresh banner from Unsplash API:', banner.id)
 
       return NextResponse.json({ 
         success: true, 
@@ -215,24 +198,28 @@ export async function GET() {
         source: "api-fresh"
       }, {
         headers: {
-          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+          'Cache-Control': 'no-store, no-cache, must-revalidate', // Prevent caching
         }
       })
 
     } catch (apiError) {
-      // API failed - use fallback
-      console.warn('⚠️ Unsplash API failed, using fallback:', apiError)
+      // API failed - use random fallback
+      console.warn('⚠️ Unsplash API failed, using random fallback:', apiError)
       const fallbackBanner = getRandomFallbackBanner()
       
       return NextResponse.json({ 
         success: true, 
         banner: fallbackBanner,
         source: "fallback-after-api-error"
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate', // Prevent caching
+        }
       })
     }
 
   } catch (error) {
-    // Any other error - use fallback
+    // Any other error - use random fallback
     console.error("❌ Error in hero banner route:", error)
     const fallbackBanner = getRandomFallbackBanner()
     
@@ -240,9 +227,14 @@ export async function GET() {
       success: true, 
       banner: fallbackBanner,
       source: "fallback-after-error"
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate', // Prevent caching
+      }
     })
   }
 }
 
-// Make it dynamic to allow API calls
+// Make it dynamic and disable caching
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
