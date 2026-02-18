@@ -124,17 +124,17 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
         </div>
 
         {/* Cart Items */}
-        <div className="flex overflow-y-auto p-2 h-[50%]">
+        <div className="flex justify-center overflow-y-auto p-2 h-[50%]">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-muted flex items-center justify-center">
+              <div className="p-3 mx-auto mb-6 rounded-2xl bg-muted flex items-center justify-center">
                 <Package className="h-12 w-12 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
               <p className="text-muted-foreground mb-6 max-w-sm">
                 Looks like you haven't added anything to your cart yet
               </p>
-              <Button className="rounded-xl" onClick={handleClose} size="lg">
+              <Button className="rounded-xl p-4" onClick={handleClose} size="lg">
                 Continue Shopping
               </Button>
             </div>
