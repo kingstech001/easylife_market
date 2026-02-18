@@ -216,7 +216,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
       </div>
 
       {/* Main Content - Rest of your existing code */}
-      <div className="container mx-auto px-4 py-8 lg:px-8" id="stores">
+      <div className="container mx-auto px-4 py-8" id="stores">
         <div className="flex gap-6">
           {/* Sidebar - Filters & Ads */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
