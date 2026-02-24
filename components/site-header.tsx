@@ -151,7 +151,7 @@ export function SiteHeader() {
             <div className="hidden md:flex items-center space-x-2">
               <nav className="flex items-center space-x-1">
                 {/* Search Button */}
-                {/* <Button
+                <Button
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
@@ -159,7 +159,7 @@ export function SiteHeader() {
                 >
                   <Search className="h-4 w-4" />
                   <span className="sr-only">Search</span>
-                </Button> */}
+                </Button>
 
                 {/* Shopping Features - Only for non-sellers */}
                 {showShoppingFeatures && (

@@ -10,9 +10,6 @@ import {
   Search,
   ShoppingBag,
   Store,
-  ShieldCheck,
-  UserCheck,
-  Headset,
 } from "lucide-react";
 import { Reveal } from "../Reveal";
 import { cn } from "@/lib/utils";
@@ -160,8 +157,17 @@ export default function HeroSection() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search for products, stores, or categories..."
-                    className="h-14 pl-5 pr-29 text-[13px] rounded-full border-2 border-border focus-visible:border-[#e1a200] focus-visible:ring-0 shadow-lg bg-white/10 backdrop-blur-sm"
-                  />
+                    className={cn(
+                        "h-14 pl-5 pr-29 text-[13px] rounded-full shadow-lg",
+                        "border-0 border-transparent",
+                        "outline-none",
+                        "ring-0 ring-offset-0",
+                        "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
+                        "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
+                        "[box-shadow:none]",
+                        "bg-white/10 backdrop-blur-sm text-white placeholder:text-white/60",
+                      )}
+                      />
                   <Button
                     type="submit"
                     size="lg"

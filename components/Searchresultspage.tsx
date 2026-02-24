@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Package, Loader2, X } from "lucide-react";
+import { Search, Package, Loader2, X, Store } from "lucide-react";
+import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,84 +44,68 @@ type ApiProduct = {
   inventory_quantity?: number;
   hasVariants?: boolean;
   variants?: any;
-  storeId?:
-    | string
-    | {
-        _id: string;
-        name: string;
-        slug: string;
-      };
+  storeId?: string | { _id: string; name: string; slug: string };
   createdAt?: string;
   created_at?: string;
   updatedAt?: string;
   updated_at?: string;
 };
 
+// Store type (from /api/search)
+type StoreResult = {
+  _id: string;
+  businessName: string;
+  description?: string;
+  location?: string;
+  logo?: string;
+  slug?: string;
+};
+
 const PRODUCTS_PER_PAGE = 12;
 
-// Helper function to expand categories to include subcategories
 function expandCategories(categoryNames: string[]): string[] {
   const expandedCategories = new Set<string>();
-  
   categoryNames.forEach((catName) => {
     const categoryLower = catName.toLowerCase().trim();
     expandedCategories.add(categoryLower);
-    
-    // Find matching category and add all its subcategories
     const matchedCategory = CATEGORIES.find(
       (cat) => cat.name.toLowerCase() === categoryLower
     );
-    
     if (matchedCategory) {
       matchedCategory.subcategories.forEach((sub) => {
         expandedCategories.add(sub.toLowerCase());
       });
     }
   });
-  
   return Array.from(expandedCategories);
 }
 
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || searchParams.get("q") || "";
-  
-  const categoryParams = useMemo(() => {
-    return searchParams.getAll("category");
-  }, [searchParams]);
-  
-  const categoryQuery = useMemo(() => {
-    return categoryParams.join(" ");
-  }, [categoryParams]);
-  
+
+  const categoryParams = useMemo(() => searchParams.getAll("category"), [searchParams]);
+
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
+  const [storeResults, setStoreResults] = useState<StoreResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-  
+
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Transform API product to Product type
   const transformProduct = useCallback((p: ApiProduct): Product => {
     let productImages = p.images || [];
     if (productImages.length === 0 && p.primaryImage) {
-      productImages = [{ 
-        id: '1', 
-        _id: '1',
-        url: p.primaryImage, 
-        alt_text: null,
-        altText: null 
-      }];
+      productImages = [{ id: "1", _id: "1", url: p.primaryImage, alt_text: null, altText: null }];
     }
-
-    const storeId = typeof p.storeId === 'string' ? p.storeId : p.storeId?._id || '';
-    const storeSlug = typeof p.storeId === 'object' && p.storeId?.slug ? p.storeId.slug : '';
-
+    const storeId = typeof p.storeId === "string" ? p.storeId : p.storeId?._id || "";
+    const storeSlug = typeof p.storeId === "object" && p.storeId?.slug ? p.storeId.slug : "";
     return {
       id: p._id,
       name: p.name,
@@ -130,8 +115,8 @@ export default function SearchResultsPage() {
       compare_at_price: p.compareAtPrice || p.compare_at_price || null,
       inventory_quantity: p.inventoryQuantity ?? p.inventory_quantity ?? 0,
       images: productImages.map((img: any) => ({
-        id: img.id || img._id?.toString() || '',
-        url: img.url || '',
+        id: img.id || img._id?.toString() || "",
+        url: img.url || "",
         alt_text: img.alt_text || img.altText || null,
       })),
       store_id: storeId,
@@ -143,34 +128,48 @@ export default function SearchResultsPage() {
     };
   }, []);
 
-  // Fetch all products
+  // Fetch all products (for category browsing / full catalogue)
   useEffect(() => {
     async function fetchProducts() {
       try {
         setLoading(true);
         const response = await fetch("/api/allStoreProducts");
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
+        if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         const transformedProducts: Product[] = (data.products || []).map(transformProduct);
-        
         setAllProducts(transformedProducts);
         setError(null);
       } catch (err: any) {
-        console.error("Error fetching products:", err);
         setError(err.message || "Failed to load products");
       } finally {
         setLoading(false);
       }
     }
-
     fetchProducts();
   }, [transformProduct]);
 
-  // ✅ Filter products based on search/category - IMPROVED VERSION
+  // When there's a search query, also hit /api/search for stores + products
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setStoreResults([]);
+      return;
+    }
+
+    async function fetchSearchResults() {
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setStoreResults(data.stores || []);
+      } catch (err) {
+        console.error("Search API error:", err);
+      }
+    }
+
+    fetchSearchResults();
+  }, [searchQuery]);
+
+  // Filter products based on search/category
   useEffect(() => {
     if (allProducts.length === 0) {
       setFilteredProducts([]);
@@ -180,7 +179,7 @@ export default function SearchResultsPage() {
 
     const searchTerm = searchQuery.toLowerCase().trim();
     const expandedCategories = expandCategories(categoryParams);
-    
+
     if (!searchTerm && expandedCategories.length === 0) {
       setFilteredProducts(allProducts);
       setDisplayedProducts(allProducts.slice(0, PRODUCTS_PER_PAGE));
@@ -189,56 +188,30 @@ export default function SearchResultsPage() {
       return;
     }
 
-    // ✅ Filter products - Check name, description, AND category
     const filtered = allProducts.filter((product) => {
       const productName = product.name.toLowerCase();
       const productDesc = (product.description || "").toLowerCase();
       const productCategory = (product.category || "").toLowerCase();
-      
-      // ✅ Search term matching (searches in name, description, AND category)
+
       if (searchTerm) {
-        const nameMatch = productName.includes(searchTerm);
-        const descriptionMatch = productDesc.includes(searchTerm);
-        const categoryMatch = productCategory.includes(searchTerm);
-        
-        // Must match at least one field
-        if (!nameMatch && !descriptionMatch && !categoryMatch) {
-          return false;
-        }
+        if (
+          !productName.includes(searchTerm) &&
+          !productDesc.includes(searchTerm) &&
+          !productCategory.includes(searchTerm)
+        ) return false;
       }
-      
-      // ✅ Category filter matching (when user clicks a category)
+
       if (expandedCategories.length > 0) {
-        const categoryMatches = expandedCategories.some(cat => {
-          // Check all three fields: category, name, and description
-          return (
+        const categoryMatches = expandedCategories.some(
+          (cat) =>
             productCategory.includes(cat) ||
             productName.includes(cat) ||
             productDesc.includes(cat)
-          );
-        });
-        
-        if (!categoryMatches) {
-          return false;
-        }
+        );
+        if (!categoryMatches) return false;
       }
-      
-      return true;
-    });
 
-    console.log(`🔍 Search Results:`, {
-      searchTerm,
-      expandedCategories,
-      foundProducts: filtered.length,
-      sampleMatches: filtered.slice(0, 3).map(p => ({
-        name: p.name,
-        category: p.category,
-        matchedIn: {
-          name: p.name.toLowerCase().includes(searchTerm || expandedCategories[0] || ''),
-          category: (p.category || '').toLowerCase().includes(searchTerm || expandedCategories[0] || ''),
-          description: (p.description || '').toLowerCase().includes(searchTerm || expandedCategories[0] || '')
-        }
-      }))
+      return true;
     });
 
     setFilteredProducts(filtered);
@@ -247,30 +220,25 @@ export default function SearchResultsPage() {
     setPage(1);
   }, [searchQuery, categoryParams, allProducts]);
 
-  // Load more products
+  // Load more products (infinite scroll)
   const loadMoreProducts = useCallback(() => {
     if (loadingMore || !hasMore) return;
-
     setLoadingMore(true);
-
     setTimeout(() => {
       const startIndex = page * PRODUCTS_PER_PAGE;
       const endIndex = startIndex + PRODUCTS_PER_PAGE;
       const newProducts = filteredProducts.slice(startIndex, endIndex);
-
       if (newProducts.length > 0) {
-        setDisplayedProducts(prev => [...prev, ...newProducts]);
-        setPage(prev => prev + 1);
+        setDisplayedProducts((prev) => [...prev, ...newProducts]);
+        setPage((prev) => prev + 1);
         setHasMore(endIndex < filteredProducts.length);
       } else {
         setHasMore(false);
       }
-
       setLoadingMore(false);
     }, 300);
   }, [page, filteredProducts, hasMore, loadingMore]);
 
-  // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -278,22 +246,13 @@ export default function SearchResultsPage() {
           loadMoreProducts();
         }
       },
-      { threshold: 0.1, rootMargin: '100px' }
+      { threshold: 0.1, rootMargin: "100px" }
     );
-
     const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
+    if (currentTarget) observer.observe(currentTarget);
+    return () => { if (currentTarget) observer.unobserve(currentTarget); };
   }, [hasMore, loadingMore, loadMoreProducts]);
 
-  // Handle local search form submission
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (localSearchQuery.trim()) {
@@ -301,11 +260,11 @@ export default function SearchResultsPage() {
     }
   };
 
-  const clearSearch = () => {
-    window.location.href = '/Search';
-  };
+  const clearSearch = () => { window.location.href = "/Search"; };
 
   const currentQuery = searchQuery || (categoryParams.length > 0 ? categoryParams[0] : "");
+  const hasStores = storeResults.length > 0;
+  const hasProducts = displayedProducts.length > 0;
 
   if (loading) {
     return (
@@ -318,10 +277,8 @@ export default function SearchResultsPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Searching products...</h3>
-            <p className="text-sm text-muted-foreground">
-              Finding the best matches for you
-            </p>
+            <h3 className="text-xl font-semibold">Searching...</h3>
+            <p className="text-sm text-muted-foreground">Finding the best matches for you</p>
           </div>
         </div>
       </div>
@@ -333,7 +290,7 @@ export default function SearchResultsPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="max-w-md w-full space-y-4 text-center">
           <Package className="h-16 w-16 text-destructive mx-auto" />
-          <h3 className="text-xl font-semibold">Error Loading Products</h3>
+          <h3 className="text-xl font-semibold">Error Loading Results</h3>
           <p className="text-muted-foreground">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -358,7 +315,7 @@ export default function SearchResultsPage() {
                 type="text"
                 value={localSearchQuery}
                 onChange={(e) => setLocalSearchQuery(e.target.value)}
-                placeholder="Search for products..."
+                placeholder="Search for products or stores..."
                 className="pl-12 pr-12 h-12 text-base rounded-full border-2 border-border focus-visible:border-[#e1a200] focus-visible:ring-[#e1a200]/20"
               />
               {localSearchQuery && (
@@ -384,13 +341,10 @@ export default function SearchResultsPage() {
             <div className="flex items-center gap-3 flex-wrap">
               {currentQuery && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Searching for:</span>
+                  <span className="text-sm text-muted-foreground">Results for:</span>
                   <Badge variant="secondary" className="text-sm">
                     {currentQuery}
-                    <button
-                      onClick={clearSearch}
-                      className="ml-2 hover:text-destructive transition-colors"
-                    >
+                    <button onClick={clearSearch} className="ml-2 hover:text-destructive transition-colors">
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -401,29 +355,60 @@ export default function SearchResultsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {displayedProducts.length === 0 ? (
-          <div className="max-w-md mx-auto text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <Package className="h-10 w-10 text-primary" />
+      <div className="container mx-auto px-4 py-8 space-y-10">
+
+        {/* ── Stores Section ── */}
+        {hasStores && (
+          <section>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Store className="h-5 w-5 text-[#e1a200]" />
+              Stores
+              <Badge variant="secondary" className="text-xs">{storeResults.length}</Badge>
+            </h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {storeResults.map((store) => (
+                <Link
+                  key={store._id}
+                  href={`/stores/${store.slug || store._id}`}
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-[#e1a200]/50 hover:bg-[#e1a200]/5 transition-all group"
+                >
+                  {store.logo ? (
+                    <img
+                      src={store.logo}
+                      alt={store.businessName}
+                      className="h-14 w-14 rounded-xl object-cover flex-shrink-0 border border-border"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#e1a200]/20 to-[#d4b55e]/20 flex items-center justify-center flex-shrink-0">
+                      <Store className="h-7 w-7 text-[#e1a200]" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate group-hover:text-[#e1a200] transition-colors">
+                      {store.businessName}
+                    </p>
+                    {(store.description || store.location) && (
+                      <p className="text-sm text-muted-foreground truncate mt-0.5">
+                        {store.description || store.location}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ))}
             </div>
-            <h3 className="text-2xl font-bold mb-2">No products found</h3>
-            <p className="text-muted-foreground mb-6">
-              {currentQuery 
-                ? `We couldn't find any products matching "${currentQuery}"`
-                : "Try searching for something else"
-              }
-            </p>
-            <Button
-              onClick={clearSearch}
-              variant="outline"
-              className="border-2 hover:border-[#e1a200]/50"
-            >
-              Clear Search
-            </Button>
-          </div>
-        ) : (
-          <>
+          </section>
+        )}
+
+        {/* ── Products Section ── */}
+        {hasProducts ? (
+          <section>
+            {hasStores && (
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Package className="h-5 w-5 text-[#e1a200]" />
+                Products
+                <Badge variant="secondary" className="text-xs">{filteredProducts.length}</Badge>
+              </h2>
+            )}
             <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {displayedProducts.map((product) => (
                 <ProductCard
@@ -441,19 +426,32 @@ export default function SearchResultsPage() {
                   <p className="text-sm text-muted-foreground">Loading more products...</p>
                 </div>
               )}
-              
               {!hasMore && displayedProducts.length > 0 && (
                 <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground">
-                    You've reached the end of the results
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {displayedProducts.length} products total
-                  </p>
+                  <p className="text-sm text-muted-foreground">You've reached the end of the results</p>
+                  <p className="text-xs text-muted-foreground mt-1">{displayedProducts.length} products total</p>
                 </div>
               )}
             </div>
-          </>
+          </section>
+        ) : (
+          /* No results at all */
+          !hasStores && (
+            <div className="max-w-md mx-auto text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <Package className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">No results found</h3>
+              <p className="text-muted-foreground mb-6">
+                {currentQuery
+                  ? `We couldn't find any stores or products matching "${currentQuery}"`
+                  : "Try searching for something"}
+              </p>
+              <Button onClick={clearSearch} variant="outline" className="border-2 hover:border-[#e1a200]/50">
+                Clear Search
+              </Button>
+            </div>
+          )
         )}
       </div>
     </div>

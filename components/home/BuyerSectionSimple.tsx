@@ -61,7 +61,7 @@ export function BuyerSection() {
           <div className="flex justify-center mb-6">
             <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
               <Sparkles className="w-4 h-4 mr-2" />
-              For Shoppers
+              For Customers
             </Badge>
           </div>
 
