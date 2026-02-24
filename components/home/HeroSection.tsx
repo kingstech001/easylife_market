@@ -128,7 +128,7 @@ export default function HeroSection() {
               <div className="space-y-3 sm:space-y-4">
                 <h1
                   className={cn(
-                    "text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight",
+                    "text-3xl md:text-6xl lg:text-7xl font-bold tracking-tight",
                     heroBanner?.imageUrl
                       ? "text-white drop-shadow-lg"
                       : "text-foreground"
@@ -141,7 +141,7 @@ export default function HeroSection() {
                 </h1>
                 <p
                   className={cn(
-                    "text-lg sm:text-xl max-w-2xl mx-auto",
+                    "text-sm sm:text-xl max-w-2xl mx-auto",
                     heroBanner?.imageUrl
                       ? "text-white/90 drop-shadow-md"
                       : "text-muted-foreground"
@@ -181,7 +181,7 @@ export default function HeroSection() {
                       "w-full sm:w-auto h-12 px-8 text-base font-semibold",
                       "bg-gradient-to-r from-[#e1a200] to-[#d4b55e]",
                       "hover:from-[#d4b55e] hover:to-[#e1a200]",
-                      "shadow-xl hover:shadow-2xl transition-all",
+                      "shadow-xl hover:shadow-2xl transition-all rounded-full",
                     )}
                   >
                     Browse Products
@@ -193,7 +193,7 @@ export default function HeroSection() {
                     variant="outline"
                     size="lg"
                     className={cn(
-                      "w-full sm:w-auto h-12 px-8 text-base font-semibold border-2 transition-all shadow-lg",
+                      "w-full sm:w-auto h-12 px-8 text-base font-semibold border-2 transition-all shadow-lg rounded-full",
                       heroBanner?.imageUrl
                         ? "bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:border-white/50"
                         : "bg-background hover:bg-muted/50 hover:border-[#e1a200]/50"
@@ -203,35 +203,6 @@ export default function HeroSection() {
                     <Store className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-              </div>
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="mb-10">
-              <div
-                className={cn(
-                  "flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm",
-                  heroBanner?.imageUrl
-                    ? "text-white/90"
-                    : "text-muted-foreground"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <UserCheck className="text-emerald-400 w-5 h-5" />
-                  <span>Verified Sellers</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                  <span>Secure Payments</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                  <span>Buyer Protection</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Headset className="w-5 h-5 text-emerald-400" />
-                  <span>Fast Support</span>
-                </div>
               </div>
             </div>
           </div>

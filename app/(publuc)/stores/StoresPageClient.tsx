@@ -66,7 +66,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             setHeroBanner(bannerData.banner);
             setIsTransitioning(false);
             console.log("✅ New banner loaded:", bannerData.source);
-          }, 300);
+          }, 100);
         }
       }
     } catch (err) {
@@ -132,14 +132,14 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 {/* Main Heading */}
                 <div className="space-y-4 max-w-3xl">
                   <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                    <span className="block text-3xl md:text-4xl lg:text-6xl font-bold mb-3 tracking-tight drop-shadow-lg">
+                    <span className="block text-xl md:text-4xl lg:text-6xl font-bold mb-3 tracking-tight drop-shadow-lg">
                       {heroBanner.title || "Discover Premium"}
                     </span>
-                    <span className="block mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
+                    <span className="block text-xl mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
                       {heroBanner.subtitle || "Online Stores"}
                     </span>
                   </h1>
-                  <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+                  <p className="text-sm md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto drop-shadow-md">
                     Browse through a curated collection of trusted shops. Find
                     quality products and support independent entrepreneurs
                     building their dreams.
@@ -147,7 +147,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 </div>
 
                 {/* Optional CTA Button from banner */}
-                {heroBanner.buttonText && heroBanner.buttonLink && (
+                {/* {heroBanner.buttonText && heroBanner.buttonLink && (
                   <Link href={heroBanner.buttonLink}>
                     <Button
                       size="lg"
@@ -156,7 +156,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                       {heroBanner.buttonText}
                     </Button>
                   </Link>
-                )}
+                )} */}
               </div>
             </div>
 
@@ -190,7 +190,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                   className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
                 >
                   <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
-                  Explore Our Marketplace
+                  Explore Our Marketplac
                 </Badge>
 
                 {/* Main Heading */}
@@ -203,7 +203,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                       Online Stores
                     </span>
                   </h1>
-                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+                  <p className="text-sm md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
                     Browse through a curated collection of trusted shops. Find
                     quality products and support independent entrepreneurs
                     building their dreams.
@@ -266,24 +266,24 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           {/* Stores Grid */}
           <main className="flex-1 min-w-0">
             {/* Banner Ad Space */}
-            <div className="border-0 shadow-lg rounded-2xl p-6 md:p-8 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
+            <div className="border-0 shadow-lg rounded-2xl p-3 md:p-8 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold mb-2 text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                  <div className="text-[10px] font-bold mb-2 text-blue-700 dark:text-blue-300 uppercase tracking-wide">
                     SPECIAL PROMOTION
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold mb-2 text-blue-900 dark:text-blue-100">
+                  <h2 className="text-xl md:text-3xl font-bold mb-2 text-blue-900 dark:text-blue-100">
                     Advertise Your Business Here
                   </h2>
-                  <p className="text-blue-700 dark:text-blue-300 mb-4">
+                  {/* <p className="text-blue-700 dark:text-blue-300 mb-4">
                     Get maximum visibility to thousands of shoppers
-                  </p>
+                  </p> */}
                   <Link
                     href="https://wa.me/2348071427831"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <button className="bg-[#e1a200] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#e1a200]/90 transition shadow-lg">
+                    <button className="bg-[#e1a200] text-sm text-white px-3 py-2 rounded-xl font-bold hover:bg-[#e1a200]/90 transition shadow-lg">
                       Contact Us
                     </button>
                   </Link>

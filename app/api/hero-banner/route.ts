@@ -190,7 +190,6 @@ export async function GET() {
         buttonLink: "/allStoreProducts",
       }
 
-      console.log('✅ Fresh banner from Unsplash API:', banner.id)
 
       return NextResponse.json({ 
         success: true, 

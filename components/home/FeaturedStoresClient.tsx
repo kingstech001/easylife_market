@@ -2,7 +2,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Star, TrendingUp, Users, Store, Award, Sparkles, CheckCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Star,
+  TrendingUp,
+  Users,
+  Store,
+  Award,
+  Sparkles,
+  CheckCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StoreCard } from "@/components/store-card";
@@ -30,7 +39,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
     <section className="relative w-full py-12 sm:py-16 overflow-hidden">
       {/* Simplified background */}
-      
+
       {/* Reduced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-[#e1a200]/5 rounded-full blur-3xl opacity-60" />
@@ -41,15 +50,22 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
       <div className="container relative z-10 px-4 sm:px-6 mx-auto">
         {/* Header Section */}
-        <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
+        <div className="flex items-center justify-between text-center mb-16">
           {/* Badge */}
           <Badge
             variant="secondary"
             className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 transition-all duration-300 hover:shadow-md"
           >
-            <Award className="w-4 h-4 mr-2 text-[#e1a200]" />
-            Top Performing Stores
+            <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
+            New Featured Stores
           </Badge>
+          <Link
+            href="/stores"
+            className="flex items-center text-xs md:text-sm font-medium text-[#e1a200] hover:text-[#d4b55e] transition-colors"
+          >
+            View All
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
         </div>
 
         {/* Store Cards Grid */}
@@ -64,7 +80,8 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                   No Featured Stores Yet
                 </h3>
                 <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto px-4">
-                  We're working on highlighting our best stores. Check back soon or be the first to get featured!
+                  We're working on highlighting our best stores. Check back soon
+                  or be the first to get featured!
                 </p>
               </div>
               <Link href="/auth/register" className="inline-block">
@@ -91,7 +108,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                     // Desktop: auto width from grid
                     "md:min-w-0 md:w-auto",
                     // Hover effects
-                    "hover:z-10"
+                    "hover:z-10",
                   )}
                 >
                   {/* Store card wrapper */}
@@ -126,17 +143,19 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
             {/* Trust badges */}
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-3">
-              {["Free Trial", "Easy Setup", "24/7 Support"].map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50"
-                >
-                  <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">
-                    {item}
-                  </span>
-                </div>
-              ))}
+              {["Free Trial", "Easy Setup", "24/7 Support"].map(
+                (item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50"
+                  >
+                    <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
+                    <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                      {item}
+                    </span>
+                  </div>
+                ),
+              )}
             </div>
 
             {/* CTA Buttons */}
@@ -145,7 +164,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50 hover:bg-muted/50 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50 hover:bg-muted/50 hover:shadow-lg transition-all rounded-full"
                 >
                   <span className="flex items-center justify-center gap-2">
                     Explore All Stores
@@ -156,7 +175,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
               <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] shadow-lg hover:shadow-xl transition-all"
+                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] shadow-lg hover:shadow-xl transition-all rounded-full"
                 >
                   <span className="flex items-center justify-center gap-2">
                     Start Your Store
