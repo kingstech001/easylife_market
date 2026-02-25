@@ -37,7 +37,7 @@ interface FeaturedStoresClientProps {
 
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
-    <section className="relative w-full py-12 sm:py-16 overflow-hidden">
+    <section className="relative w-full  overflow-hidden">
       {/* Simplified background */}
 
       {/* Reduced animated background elements */}

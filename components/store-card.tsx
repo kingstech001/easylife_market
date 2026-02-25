@@ -51,7 +51,7 @@ export function StoreCard({ store }: StoreCardProps) {
 
         {/* Logo */}
         {store.logo_url && (
-          <div className="absolute z-20 top-20 sm:top-28 left-4 h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden flex-shrink-0">
+          <div className="absolute z-20 top-24 sm:top-28 left-4 h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden flex-shrink-0">
             <Image
               src={store.logo_url}
               alt={`${store.name} logo`}

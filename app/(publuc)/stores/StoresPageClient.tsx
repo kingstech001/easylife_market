@@ -4,15 +4,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { StoreCard } from "@/components/store-card";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Store,
   Sparkles,
+  Search,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { FaWhatsapp } from "react-icons/fa";
 
 interface StoreData {
@@ -43,53 +46,46 @@ interface StoresPageClientProps {
 }
 
 export default function StoresPageClient({ initialStores }: StoresPageClientProps) {
+  const router = useRouter();
   const stores = initialStores;
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Function to fetch a new banner
   const fetchNewBanner = async () => {
     try {
-      console.log("🔄 Fetching new banner...");
       setIsTransitioning(true);
-
       const bannerRes = await fetch("/api/hero-banner", {
         signal: AbortSignal.timeout(10000),
-        cache: "no-store", // Always fetch fresh banner
+        cache: "no-store",
       });
-
       if (bannerRes.ok) {
         const bannerData = await bannerRes.json();
         if (bannerData.banner) {
-          // Small delay for smooth transition
           setTimeout(() => {
             setHeroBanner(bannerData.banner);
             setIsTransitioning(false);
-            console.log("✅ New banner loaded:", bannerData.source);
           }, 100);
         }
       }
     } catch (err) {
-      console.log("⚠️ Banner fetch failed, keeping current banner");
       setIsTransitioning(false);
     }
   };
 
-  // Initial banner fetch
-  useEffect(() => {
-    fetchNewBanner();
-  }, []);
+  useEffect(() => { fetchNewBanner(); }, []);
 
-  // Set up interval to change banner every minute (60000ms)
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("⏰ 1 minute passed, fetching new banner...");
-      fetchNewBanner();
-    }, 60000); // 60 seconds = 1 minute
-
-    // Cleanup interval on unmount
+    const interval = setInterval(fetchNewBanner, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/Search?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
@@ -104,7 +100,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               }`}
             >
               <Image
-                key={heroBanner.id} // Force re-render on banner change
+                key={heroBanner.id}
                 src={heroBanner.imageUrl}
                 alt={heroBanner.title || "Hero Banner"}
                 fill
@@ -113,14 +109,13 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 sizes="100vw"
               />
             </div>
-            
+
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30" />
 
             {/* Content */}
-            <div className="relative container mx-auto px-4 py-12 h-full flex flex-col items-center justify-center text-center text-white">
-              <div className="flex flex-col items-center justify-center space-y-6 text-center">
-                {/* Badge */}
+            <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center text-center text-white">
+              <div className="flex flex-col items-center justify-center space-y-6 max-w-3xl w-full">
                 <Badge
                   variant="secondary"
                   className="px-4 py-2 text-sm font-medium bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 transition-all duration-300 shadow-lg"
@@ -129,38 +124,46 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                   Explore Our Marketplace
                 </Badge>
 
-                {/* Main Heading */}
-                <div className="space-y-4 max-w-3xl">
-                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                    <span className="block text-xl md:text-4xl lg:text-6xl font-bold mb-3 tracking-tight drop-shadow-lg">
-                      {heroBanner.title || "Discover Premium"}
-                    </span>
-                    <span className="block text-xl mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
-                      {heroBanner.subtitle || "Online Stores"}
-                    </span>
+                <div className="space-y-2">
+                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight drop-shadow-lg">
+                    {heroBanner.title || "Discover Premium"}
                   </h1>
-                  <p className="text-sm md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto drop-shadow-md">
-                    Browse through a curated collection of trusted shops. Find
-                    quality products and support independent entrepreneurs
-                    building their dreams.
+                  <p className="text-lg md:text-xl bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg font-semibold">
+                    {heroBanner.subtitle || "Online Stores"}
                   </p>
                 </div>
 
-                {/* Optional CTA Button from banner */}
-                {/* {heroBanner.buttonText && heroBanner.buttonLink && (
-                  <Link href={heroBanner.buttonLink}>
+                {/* Search Bar */}
+                <div className="w-full max-w-2xl">
+                  <form onSubmit={handleSearch} className="relative">
+                    <Input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for stores, products, or categories..."
+                      className={cn(
+                        "h-14 pl-5 pr-32 text-[13px] rounded-full shadow-lg",
+                        "border-0 border-transparent",
+                        "outline-none ring-0 ring-offset-0",
+                        "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
+                        "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
+                        "[box-shadow:none]",
+                        "bg-white/10 backdrop-blur-sm text-white placeholder:text-white/60",
+                      )}
+                    />
                     <Button
+                      type="submit"
                       size="lg"
-                      className="bg-[#e1a200] hover:bg-[#e1a200]/90 text-white shadow-xl"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded-full bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
                     >
-                      {heroBanner.buttonText}
+                      <Search className="pointer-events-none" />
                     </Button>
-                  </Link>
-                )} */}
+                  </form>
+                </div>
               </div>
             </div>
 
-            {/* Banner Change Indicator (optional) */}
+            {/* Banner Change Indicator */}
             <div className="absolute bottom-4 right-4 flex gap-1">
               {[...Array(3)].map((_, i) => (
                 <div
@@ -173,7 +176,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             </div>
           </>
         ) : (
-          // Fallback gradient design (shown while banner loads)
+          // Fallback gradient design
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-[#e1a200]/30 via-[#e1a200]/10 to-primary/5">
               <div className="absolute inset-0 opacity-10">
@@ -182,32 +185,53 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               </div>
             </div>
 
-            <div className="relative container mx-auto px-4 py-12 h-full flex flex-col items-center justify-center">
-              <div className="flex flex-col items-center justify-center space-y-6 text-center">
-                {/* Badge */}
+            <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center space-y-6 text-center max-w-3xl w-full">
                 <Badge
                   variant="secondary"
                   className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
                 >
                   <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
-                  Explore Our Marketplac
+                  Explore Our Marketplace
                 </Badge>
 
-                {/* Main Heading */}
-                <div className="space-y-4 max-w-3xl">
-                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-bold tracking-tight sm:text-4xl md:text-5xl">
                     <span className="block bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
                       Discover Premium
                     </span>
-                    <span className="block mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
+                    <span className="block mt-1 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
                       Online Stores
                     </span>
                   </h1>
-                  <p className="text-sm md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                    Browse through a curated collection of trusted shops. Find
-                    quality products and support independent entrepreneurs
-                    building their dreams.
-                  </p>
+                </div>
+
+                {/* Search Bar - Fallback */}
+                <div className="w-full max-w-2xl">
+                  <form onSubmit={handleSearch} className="relative">
+                    <Input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for stores, products, or categories..."
+                      className={cn(
+                        "h-14 pl-5 pr-32 text-[13px] rounded-full shadow-lg",
+                        "border-0 border-transparent",
+                        "outline-none ring-0 ring-offset-0",
+                        "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
+                        "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
+                        "[box-shadow:none]",
+                        "bg-white/10 backdrop-blur-sm",
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded-full bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
+                    >
+                      <Search className="pointer-events-none" />
+                    </Button>
+                  </form>
                 </div>
               </div>
             </div>
@@ -215,7 +239,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
         )}
       </div>
 
-      {/* Main Content - Rest of your existing code */}
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8" id="stores">
         <div className="flex gap-6">
           {/* Sidebar - Filters & Ads */}
@@ -275,9 +299,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                   <h2 className="text-xl md:text-3xl font-bold mb-2 text-blue-900 dark:text-blue-100">
                     Advertise Your Business Here
                   </h2>
-                  {/* <p className="text-blue-700 dark:text-blue-300 mb-4">
-                    Get maximum visibility to thousands of shoppers
-                  </p> */}
                   <Link
                     href="https://wa.me/2348071427831"
                     target="_blank"
@@ -327,7 +348,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               </div>
             ) : (
               <>
-                {/* Stores Grid */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
                   {stores.map((store, index) => (
                     <div
@@ -342,9 +362,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                     </div>
                   ))}
                 </div>
-
-                {/* Rest of the content (ads, CTA, etc.) - Keep your existing code */}
-                {/* ... */}
               </>
             )}
           </main>
