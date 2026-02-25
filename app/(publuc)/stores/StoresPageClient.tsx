@@ -142,7 +142,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search for stores, products, or categories..."
                       className={cn(
-                        "h-14 pl-5 pr-32 text-[13px] rounded-full shadow-lg",
+                        "h-14 pl-5 pr-20 text-[13px] rounded-full shadow-lg",
                         "border-0 border-transparent",
                         "outline-none ring-0 ring-offset-0",
                         "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",

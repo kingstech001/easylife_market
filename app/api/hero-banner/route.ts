@@ -4,6 +4,30 @@ import { NextResponse } from "next/server"
 const FALLBACK_BANNERS = [
   // Shopping & Retail
   {
+  id: "21",
+  imageUrl: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
+  title: "Discover Great Restaurants",
+  subtitle: "Order from your favorite local spots",
+},
+{
+  id: "22",
+  imageUrl: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
+  title: "Fresh & Delicious",
+  subtitle: "Explore meals prepared with care",
+},
+{
+  id: "23",
+  imageUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+  title: "Grocery & Food Stores",
+  subtitle: "Shop fresh produce and essentials",
+},
+{
+  id: "24",
+  imageUrl: "https://images.unsplash.com/photo-1555992336-03a23c7b20ee",
+  title: "Cafe & Bakery Picks",
+  subtitle: "Find your daily coffee and treats",
+},
+  {
     id: "1",
     imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
     title: "Discover Quality Products",
@@ -166,14 +190,14 @@ export async function GET() {
     // Try to fetch from Unsplash API
     try {
       const response = await fetch(
-        `https://api.unsplash.com/photos/random?query=shopping,ecommerce,marketplace,retail,store,fashion,lifestyle&orientation=landscape&content_filter=high`,
-        {
-          headers: {
-            Authorization: `Client-ID ${unsplashAccessKey}`,
-          },
-          signal: AbortSignal.timeout(5000), // 5 second timeout
-        },
-      )
+  `https://api.unsplash.com/photos/random?query=shopping,ecommerce,marketplace,retail,store,fashion,lifestyle,restaurant,food,supermarket,grocery,cafe,bakery,fastfood,dining&orientation=landscape&content_filter=high`,
+  {
+    headers: {
+      Authorization: `Client-ID ${unsplashAccessKey}`,
+    },
+    signal: AbortSignal.timeout(5000),
+  }
+)
 
       if (!response.ok) {
         throw new Error(`Unsplash API returned ${response.status}`)
