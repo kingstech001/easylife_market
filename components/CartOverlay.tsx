@@ -139,7 +139,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {items.map((item) => {
                 const itemKey = getCartItemKey(item.id, item.selectedVariant);
 

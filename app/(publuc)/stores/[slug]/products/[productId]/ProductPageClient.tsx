@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
   ShoppingCart,
@@ -23,6 +23,8 @@ import {
   Plus,
   MapPin,
   Award,
+  UtensilsCrossed,
+  ChefHat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,14 +32,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AnimatedContainer } from "@/components/ui/animated-container";
-import { use } from "react";
 import { useCart } from "@/context/cart-context";
 import { useWishlist } from "@/context/wishlist-context";
 import { toast } from "sonner";
 import { useFormatAmount } from "@/hooks/useFormatAmount";
 import ExpandableText from "@/components/ExpandableText";
+import ModifierSection, { type ModifierGroup } from "@/components/Modifiersection";
 
+// ─────────────────────────────────────────────
 // Types
+// ─────────────────────────────────────────────
+
 interface VariantColor {
   name: string;
   hex: string;
@@ -71,6 +76,8 @@ interface Product {
   updated_at: string;
   hasVariants?: boolean;
   variants?: ProductVariant[] | string;
+  hasModifiers?: boolean;
+  modifierGroups?: ModifierGroup[] | string;
 }
 
 interface Store {
@@ -79,6 +86,7 @@ interface Store {
   slug: string;
   description?: string;
   logo_url?: string;
+  categories?: string[];
 }
 
 interface ProductPageClientProps {
@@ -86,6 +94,20 @@ interface ProductPageClientProps {
   initialStore: Store;
   initialRelatedProducts: Product[];
 }
+
+// ─────────────────────────────────────────────
+// Helper: is this store a restaurant?
+// ─────────────────────────────────────────────
+function isRestaurantStore(store: Store): boolean {
+  if (!store.categories || store.categories.length === 0) return false;
+  return store.categories.some(
+    (c) => c.toLowerCase() === "restaurant" || c.toLowerCase() === "restaurants"
+  );
+}
+
+// ─────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────
 
 export default function ProductPageClient({
   initialProduct,
@@ -102,6 +124,9 @@ export default function ProductPageClient({
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
+  // Modifier selections: Record<groupKey, optionKey[]>
+  const [modifierSelections, setModifierSelections] = useState<Record<string, string[]>>({});
+
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
@@ -109,47 +134,46 @@ export default function ProductPageClient({
   const store = initialStore;
   const relatedProducts = initialRelatedProducts;
 
-  // ⭐ Parse variants if they come as a string
+  const isRestaurant = isRestaurantStore(store);
+
+  // ── Parse variants ───────────────────────────────────────────────────────
   const getParsedVariants = (): ProductVariant[] | undefined => {
     if (!product?.variants) return undefined;
-    
     try {
-      if (typeof product.variants === 'string') {
-        console.log('⚠️ [ProductPage] Variants is a STRING, attempting to parse...');
-        const parsed = JSON.parse(product.variants) as ProductVariant[];
-        console.log('✅ [ProductPage] Successfully parsed variants:', parsed);
-        return parsed;
+      if (typeof product.variants === "string") {
+        return JSON.parse(product.variants) as ProductVariant[];
       } else if (Array.isArray(product.variants)) {
-        console.log('✅ [ProductPage] Variants is already an array:', product.variants);
         return product.variants;
       }
     } catch (error) {
-      console.error('❌ [ProductPage] Error parsing variants:', error);
-      console.log('Raw variants value:', product.variants);
+      console.error("❌ [ProductPage] Error parsing variants:", error);
     }
-    
     return undefined;
   };
 
-  // Get parsed variants
-  const parsedVariants = getParsedVariants();
-
-  // Debug logging
-  useEffect(() => {
-    if (product) {
-      console.log('🎨 [parsedVariants] Product updated');
-      console.log('🎨 [parsedVariants] hasVariants:', product.hasVariants);
-      console.log('🎨 [parsedVariants] raw variants:', product.variants);
-      console.log('🎨 [parsedVariants] parsed variants:', parsedVariants);
-      console.log('🎨 [parsedVariants] parsed length:', parsedVariants?.length);
+  // ── Parse modifierGroups ─────────────────────────────────────────────────
+  const getParsedModifierGroups = (): ModifierGroup[] => {
+    if (!product?.modifierGroups) return [];
+    try {
+      if (typeof product.modifierGroups === "string") {
+        return JSON.parse(product.modifierGroups) as ModifierGroup[];
+      } else if (Array.isArray(product.modifierGroups)) {
+        return product.modifierGroups;
+      }
+    } catch (error) {
+      console.error("❌ [ProductPage] Error parsing modifierGroups:", error);
     }
-  }, [product, parsedVariants]);
+    return [];
+  };
 
-  // Auto-select first variant when parsed variants become available
+  const parsedVariants = getParsedVariants();
+  const parsedModifierGroups = getParsedModifierGroups();
+  const showModifiers = isRestaurant && product.hasModifiers && parsedModifierGroups.length > 0;
+
+  // Auto-select first variant
   useEffect(() => {
     if (product?.hasVariants && parsedVariants && parsedVariants.length > 0 && !selectedColor) {
       const firstVariant = parsedVariants[0];
-      console.log('🎯 [ProductPage] Auto-selecting first variant:', firstVariant);
       setSelectedColor(firstVariant.color.name);
       if (firstVariant.sizes.length > 0) {
         setSelectedSize(firstVariant.sizes[0].size);
@@ -157,65 +181,133 @@ export default function ProductPageClient({
     }
   }, [product?.hasVariants, parsedVariants, selectedColor]);
 
-  // Get available sizes for selected color
+  // ── Modifier toggle handler ──────────────────────────────────────────────
+  const handleModifierToggle = (
+    groupKey: string,
+    optionKey: string,
+    selectionType: "single" | "multiple",
+    maxSelection: number
+  ) => {
+    setModifierSelections((prev) => {
+      const current = prev[groupKey] || [];
+
+      if (selectionType === "single") {
+        // Radio behaviour — replace selection
+        if (current.includes(optionKey)) {
+          // Allow de-select only if not required (handled at validation time)
+          return { ...prev, [groupKey]: [] };
+        }
+        return { ...prev, [groupKey]: [optionKey] };
+      }
+
+      // Multiple / checkbox behaviour
+      if (current.includes(optionKey)) {
+        return { ...prev, [groupKey]: current.filter((id) => id !== optionKey) };
+      }
+      if (current.length >= maxSelection) {
+        toast.error(`You can only pick up to ${maxSelection} option${maxSelection > 1 ? "s" : ""} here`);
+        return prev;
+      }
+      return { ...prev, [groupKey]: [...current, optionKey] };
+    });
+  };
+
+  // ── Validate required modifier groups ────────────────────────────────────
+  const validateModifiers = (): boolean => {
+    if (!showModifiers) return true;
+    for (const group of parsedModifierGroups) {
+      if (!group.required) continue;
+      const groupKey = group._id || group.name;
+      const selected = modifierSelections[groupKey] || [];
+      if (selected.length < group.minSelection) {
+        toast.error(`Please select at least ${group.minSelection} option${group.minSelection > 1 ? "s" : ""} for "${group.name}"`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // ── Compute modifier price additions ─────────────────────────────────────
+  const getModifierPriceAddition = (): number => {
+    if (!showModifiers) return 0;
+    let total = 0;
+    for (const group of parsedModifierGroups) {
+      const groupKey = group._id || group.name;
+      const selectedIds = modifierSelections[groupKey] || [];
+      for (const optId of selectedIds) {
+        const option = group.options.find((o) => (o._id || o.name) === optId);
+        if (option) total += option.priceAdjustment;
+      }
+    }
+    return total;
+  };
+
+  // ── Getters ───────────────────────────────────────────────────────────────
   const getAvailableSizes = (): VariantSize[] => {
     if (!product?.hasVariants || !parsedVariants || !selectedColor) return [];
-    
-    const variant = parsedVariants.find((v: ProductVariant) => v.color.name === selectedColor);
+    const variant = parsedVariants.find((v) => v.color.name === selectedColor);
     return variant?.sizes || [];
   };
 
-  // Get current stock based on selection
   const getCurrentStock = (): number => {
     if (!product?.hasVariants || !selectedColor || !selectedSize) {
       return product?.inventory_quantity || 0;
     }
-
-    const variant = parsedVariants?.find((v: ProductVariant) => v.color.name === selectedColor);
-    const sizeData = variant?.sizes.find((s: VariantSize) => s.size === selectedSize);
+    const variant = parsedVariants?.find((v) => v.color.name === selectedColor);
+    const sizeData = variant?.sizes.find((s) => s.size === selectedSize);
     return sizeData?.quantity || 0;
   };
 
-  // Get current price with variant adjustment
   const getCurrentPrice = (): number => {
     if (!product) return 0;
-    
-    if (!product.hasVariants || !selectedColor) {
-      return product.price;
+    let base = product.price;
+    if (product.hasVariants && selectedColor) {
+      const variant = parsedVariants?.find((v) => v.color.name === selectedColor);
+      base += variant?.priceAdjustment || 0;
     }
-
-    const variant = parsedVariants?.find((v: ProductVariant) => v.color.name === selectedColor);
-    return product.price + (variant?.priceAdjustment || 0);
+    return base + getModifierPriceAddition();
   };
 
+  // ── Add to cart ──────────────────────────────────────────────────────────
   const handleAddToCart = () => {
     if (!product) return;
 
-    // Check if variants are selected
     if (product.hasVariants) {
-      if (!selectedColor) {
-        toast.error("Please select a color");
-        return;
-      }
-      if (!selectedSize) {
-        toast.error("Please select a size");
-        return;
-      }
+      if (!selectedColor) { toast.error("Please select a color"); return; }
+      if (!selectedSize)  { toast.error("Please select a size");  return; }
     }
 
+    if (!validateModifiers()) return;
+
     const currentStock = getCurrentStock();
-    if (currentStock === 0) {
-      toast.error("This variant is out of stock");
-      return;
-    }
+    if (currentStock === 0) { toast.error("This variant is out of stock"); return; }
 
     setIsAddingToCart(true);
     setTimeout(() => {
       setIsAddingToCart(false);
-      
-      // Get the hex color for the selected color
-      const selectedVariant = parsedVariants?.find((v: ProductVariant) => v.color.name === selectedColor);
-      
+      const selectedVariant = parsedVariants?.find((v) => v.color.name === selectedColor);
+
+      // Build selected modifiers summary for cart
+      const selectedModifiers = showModifiers
+        ? parsedModifierGroups
+            .map((group) => {
+              const groupKey = group._id || group.name;
+              const selectedIds = modifierSelections[groupKey] || [];
+              const chosenOptions = group.options.filter((o) =>
+                selectedIds.includes(o._id || o.name)
+              );
+              if (chosenOptions.length === 0) return null;
+              return {
+                groupName: group.name,
+                options: chosenOptions.map((o) => ({
+                  name: o.name,
+                  priceAdjustment: o.priceAdjustment,
+                })),
+              };
+            })
+            .filter(Boolean)
+        : undefined;
+
       addToCart({
         id: product.id,
         name: product.name,
@@ -224,15 +316,17 @@ export default function ProductPageClient({
         image: product.images[0]?.url || "/placeholder.svg",
         storeId: product.store_id,
         productId: product.id,
-        selectedVariant: product.hasVariants && selectedColor && selectedSize ? {
-          color: {
-            name: selectedColor,
-            hex: selectedVariant?.color.hex || '#000000',
-          },
-          size: selectedSize,
-        } : undefined,
+        selectedVariant:
+          product.hasVariants && selectedColor && selectedSize
+            ? {
+                color: { name: selectedColor, hex: selectedVariant?.color.hex || "#000000" },
+                size: selectedSize,
+              }
+            : undefined,
+        // @ts-ignore — extend your cart type to include this if needed
+        selectedModifiers: selectedModifiers ?? undefined,
       });
-      
+
       toast.success("Added to cart", {
         description: `${product.name} has been added to your cart`,
       });
@@ -241,7 +335,6 @@ export default function ProductPageClient({
 
   const toggleWishlist = () => {
     if (!product || !store) return;
-
     const wishlistItem = {
       id: product.id,
       name: product.name,
@@ -249,7 +342,6 @@ export default function ProductPageClient({
       image: product.images[0]?.url || "/placeholder.svg",
       storeSlug: store.slug,
     };
-
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
       toast.success("Removed from wishlist");
@@ -261,32 +353,26 @@ export default function ProductPageClient({
 
   const incrementQuantity = () => {
     const currentStock = getCurrentStock();
-    if (quantity < currentStock) {
-      setQuantity((prev) => prev + 1);
-    }
+    if (quantity < currentStock) setQuantity((prev) => prev + 1);
   };
-
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
-  const hasDiscount =
-    product.compare_at_price && product.compare_at_price > product.price;
+  const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
   const discountPercentage = hasDiscount
-    ? Math.round(
-        ((product.compare_at_price! - product.price) /
-          product.compare_at_price!) *
-          100
-      )
+    ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
     : 0;
 
   const currentStock = getCurrentStock();
   const currentPrice = getCurrentPrice();
+  const modifierPriceAddition = getModifierPriceAddition();
   const availableSizes = getAvailableSizes();
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <div className="container py-8 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <AnimatedContainer animation="fadeIn" className="">
+        {/* Back button */}
+        <AnimatedContainer animation="fadeIn">
           <Button
             variant="ghost"
             onClick={() => router.back()}
@@ -298,17 +384,14 @@ export default function ProductPageClient({
         </AnimatedContainer>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-12 max-w-7xl mx-auto">
-          {/* Product Images Section - Left Side */}
+          {/* ── LEFT: Images ─────────────────────────────────────────────── */}
           <div className="lg:max-w-[600px] mx-auto w-full">
             <AnimatedContainer animation="slideIn" className="space-y-4 sticky top-8">
               {/* Main Image */}
               <Card className="overflow-hidden border-2">
                 <div className="relative aspect-square bg-muted">
                   <Image
-                    src={
-                      product.images[selectedImage]?.url ||
-                      "/placeholder.svg?height=800&width=800"
-                     || "/placeholder.svg"}
+                    src={product.images[selectedImage]?.url || "/placeholder.svg?height=800&width=800"}
                     alt={product.images[selectedImage]?.alt_text || product.name}
                     fill
                     className="object-cover"
@@ -318,6 +401,15 @@ export default function ProductPageClient({
                     <div className="absolute top-6 left-6">
                       <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 text-sm font-bold shadow-lg">
                         -{discountPercentage}% OFF
+                      </Badge>
+                    </div>
+                  )}
+                  {/* Restaurant badge */}
+                  {isRestaurant && (
+                    <div className="absolute bottom-4 left-4">
+                      <Badge className="bg-orange-500/90 backdrop-blur-sm text-white gap-1.5 px-3 py-1.5 shadow-lg">
+                        <UtensilsCrossed className="h-3.5 w-3.5" />
+                        Restaurant
                       </Badge>
                     </div>
                   )}
@@ -331,7 +423,7 @@ export default function ProductPageClient({
                 </div>
               </Card>
 
-              {/* Thumbnail Gallery */}
+              {/* Thumbnails */}
               {product.images.length > 1 && (
                 <div className="flex gap-3 pb-2">
                   {product.images.map((image, index) => (
@@ -369,9 +461,15 @@ export default function ProductPageClient({
                     </div>
                     <div className="text-center">
                       <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                        <Truck className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        {isRestaurant ? (
+                          <UtensilsCrossed className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        ) : (
+                          <Truck className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        )}
                       </div>
-                      <p className="text-[10px] sm:text-sm font-medium">Fast Delivery</p>
+                      <p className="text-[10px] sm:text-sm font-medium">
+                        {isRestaurant ? "Fresh Food" : "Fast Delivery"}
+                      </p>
                     </div>
                     <div className="text-center">
                       <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
@@ -385,7 +483,7 @@ export default function ProductPageClient({
             </AnimatedContainer>
           </div>
 
-          {/* Product Info Section - Right Side */}
+          {/* ── RIGHT: Info ───────────────────────────────────────────────── */}
           <div className="lg:max-w-[600px] mx-auto w-full">
             <AnimatedContainer animation="slideUp" className="space-y-3">
               {/* Store Badge */}
@@ -394,7 +492,7 @@ export default function ProductPageClient({
                   <div className="flex items-center gap-3">
                     {store.logo_url ? (
                       <Image
-                        src={store.logo_url || "/placeholder.svg"}
+                        src={store.logo_url}
                         alt={store.name}
                         width={48}
                         height={48}
@@ -402,11 +500,17 @@ export default function ProductPageClient({
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <StoreIcon className="h-6 w-6 text-primary" />
+                        {isRestaurant ? (
+                          <UtensilsCrossed className="h-6 w-6 text-primary" />
+                        ) : (
+                          <StoreIcon className="h-6 w-6 text-primary" />
+                        )}
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Sold by</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isRestaurant ? "Prepared by" : "Sold by"}
+                      </p>
                       <p className="font-semibold">{store.name}</p>
                     </div>
                     <Badge variant="secondary" className="gap-1">
@@ -417,12 +521,11 @@ export default function ProductPageClient({
                 </CardContent>
               </Card>
 
-              {/* Product Title & Rating */}
+              {/* Title & Rating */}
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold leading-tight mb-4">
                   {product.name}
                 </h1>
-
                 <div className="flex items-center gap-4 mb-4">
                   <div className="flex items-center gap-2">
                     <div className="flex">
@@ -430,9 +533,7 @@ export default function ProductPageClient({
                         <Star
                           key={i}
                           className={`h-5 w-5 ${
-                            i < 4
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-muted-foreground fill-muted-foreground/20"
+                            i < 4 ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground fill-muted-foreground/20"
                           }`}
                         />
                       ))}
@@ -440,16 +541,12 @@ export default function ProductPageClient({
                     <span className="text-sm font-medium">4.8</span>
                   </div>
                   <Separator orientation="vertical" className="h-5" />
-                  <span className="text-sm text-muted-foreground">
-                    24 reviews
-                  </span>
+                  <span className="text-sm text-muted-foreground">24 reviews</span>
                   <Separator orientation="vertical" className="h-5" />
-                  <span className="text-sm text-muted-foreground">
-                    156 sold
-                  </span>
+                  <span className="text-sm text-muted-foreground">156 sold</span>
                 </div>
 
-                {/* Price Section */}
+                {/* Price */}
                 <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between relative">
@@ -466,9 +563,22 @@ export default function ProductPageClient({
                         </div>
                         {hasDiscount && (
                           <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
-                            You save {formatAmount(product.compare_at_price! - currentPrice)}
+                            You save {formatAmount(product.compare_at_price! - product.price)}
                           </p>
                         )}
+                        {/* Modifier additions summary */}
+                        <AnimatePresence>
+                          {modifierPriceAddition > 0 && (
+                            <motion.p
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="text-xs text-[#e1a200] font-medium mt-1"
+                            >
+                              Includes +{formatAmount(modifierPriceAddition)} in add-ons
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
                       </div>
                       {hasDiscount && (
                         <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white text-sm right-0 shadow-lg absolute top-0">
@@ -482,28 +592,25 @@ export default function ProductPageClient({
 
               <Separator />
 
-              {/* Color & Size Selection */}
-              {product.hasVariants && parsedVariants && parsedVariants.length > 0 && (
+              {/* ── VARIANTS (non-restaurant only) ─────────────────────── */}
+              {!isRestaurant && product.hasVariants && parsedVariants && parsedVariants.length > 0 && (
                 <Card className="border-2 overflow-hidden">
                   <CardContent className="p-4 sm:p-6 space-y-4">
+                    {/* Color */}
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-sm sm:text-lg">Select Color</h3>
                       </div>
-                      {/* Horizontal scrollable row for colors */}
                       <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
                         <div className="flex gap-2 sm:gap-3 min-w-max">
-                          {parsedVariants.map((variant: ProductVariant) => (
+                          {parsedVariants.map((variant) => (
                             <motion.button
                               key={variant._id || variant.color.name}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => {
                                 setSelectedColor(variant.color.name);
-                                // Reset size selection when color changes
-                                if (variant.sizes.length > 0) {
-                                  setSelectedSize(variant.sizes[0].size);
-                                }
+                                if (variant.sizes.length > 0) setSelectedSize(variant.sizes[0].size);
                               }}
                               className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border-2 transition-all flex-shrink-0 ${
                                 selectedColor === variant.color.name
@@ -515,23 +622,24 @@ export default function ProductPageClient({
                                 className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-muted-foreground/30 flex-shrink-0"
                                 style={{ backgroundColor: variant.color.hex }}
                               />
-                              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{variant.color.name}</span>
+                              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">
+                                {variant.color.name}
+                              </span>
                             </motion.button>
                           ))}
                         </div>
                       </div>
                     </div>
 
-                    {/* Size Selection */}
+                    {/* Size */}
                     {selectedColor && availableSizes.length > 0 && (
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-sm sm:text-lg">Select Size</h3>
                         </div>
-                        {/* Horizontal scrollable row for sizes */}
                         <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-2">
                           <div className="flex gap-2 sm:gap-3 min-w-max">
-                            {availableSizes.map((sizeData: VariantSize) => (
+                            {availableSizes.map((sizeData) => (
                               <motion.button
                                 key={sizeData.size}
                                 whileHover={{ scale: 1.05 }}
@@ -560,6 +668,25 @@ export default function ProductPageClient({
                 </Card>
               )}
 
+              {/* ── MODIFIERS (restaurant only) ────────────────────────── */}
+              <AnimatePresence>
+                {showModifiers && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <ModifierSection
+                      groups={parsedModifierGroups}
+                      selections={modifierSelections}
+                      onToggle={handleModifierToggle}
+                      formatAmount={formatAmount}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Stock Status */}
               <Card
                 className={`border-2 ${
@@ -577,35 +704,35 @@ export default function ProductPageClient({
                           : "bg-red-100 text-red-600 dark:bg-red-900/30"
                       }`}
                     >
-                      {currentStock > 0 ? (
-                        <Check className="h-5 w-5" />
-                      ) : (
-                        <Info className="h-5 w-5" />
-                      )}
+                      {currentStock > 0 ? <Check className="h-5 w-5" /> : <Info className="h-5 w-5" />}
                     </div>
                     <div className="flex-1">
                       {currentStock > 0 ? (
                         <>
                           <p className="font-semibold text-green-900 dark:text-green-100">
-                            In Stock
+                            {isRestaurant ? "Available" : "In Stock"}
                           </p>
                           <p className="text-sm text-green-700 dark:text-green-300">
-                            {currentStock} units available
-                            {product.hasVariants && selectedColor && selectedSize && 
-                              ` (${selectedColor} - ${selectedSize})`
-                            }
+                            {isRestaurant
+                              ? `${currentStock} portions available`
+                              : `${currentStock} units available${
+                                  product.hasVariants && selectedColor && selectedSize
+                                    ? ` (${selectedColor} - ${selectedSize})`
+                                    : ""
+                                }`}
                           </p>
                         </>
                       ) : (
                         <>
                           <p className="font-semibold text-red-900 dark:text-red-100">
-                            Out of Stock
+                            {isRestaurant ? "Not Available" : "Out of Stock"}
                           </p>
                           <p className="text-sm text-red-700 dark:text-red-300">
-                            {product.hasVariants && selectedColor && selectedSize
+                            {isRestaurant
+                              ? "This item is currently unavailable"
+                              : product.hasVariants && selectedColor && selectedSize
                               ? `This variant (${selectedColor} - ${selectedSize}) is currently unavailable`
-                              : "Currently unavailable"
-                            }
+                              : "Currently unavailable"}
                           </p>
                         </>
                       )}
@@ -627,9 +754,7 @@ export default function ProductPageClient({
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <div className="w-16 text-center font-semibold text-lg">
-                      {quantity}
-                    </div>
+                    <div className="w-16 text-center font-semibold text-lg">{quantity}</div>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -653,11 +778,15 @@ export default function ProductPageClient({
                         Adding...
                       </>
                     ) : currentStock === 0 ? (
-                      "Out of Stock"
+                      isRestaurant ? "Not Available" : "Out of Stock"
                     ) : (
                       <>
-                        <ShoppingCart className="mr-2 h-5 w-5" />
-                        Add to Cart
+                        {isRestaurant ? (
+                          <UtensilsCrossed className="mr-2 h-5 w-5" />
+                        ) : (
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                        )}
+                        {isRestaurant ? "Order Now" : "Add to Cart"}
                       </>
                     )}
                   </Button>
@@ -671,9 +800,7 @@ export default function ProductPageClient({
                   >
                     <Heart
                       className={`mr-2 h-5 w-5 transition-colors ${
-                        isInWishlist(product.id)
-                          ? "fill-red-500 text-red-500"
-                          : ""
+                        isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
                       }`}
                     />
                     {isInWishlist(product.id) ? "Saved" : "Save"}
@@ -687,17 +814,13 @@ export default function ProductPageClient({
 
               <Separator />
 
-              {/* Product Tabs */}
+              {/* Tabs */}
               <Tabs defaultValue="description" className="w-full">
                 <TabsList className="w-full h-12 rounded-xl">
-                  <TabsTrigger value="description" className="flex-1 rounded-lg">
-                    Description
-                  </TabsTrigger>
-                  <TabsTrigger value="details" className="flex-1 rounded-lg">
-                    Details
-                  </TabsTrigger>
+                  <TabsTrigger value="description" className="flex-1 rounded-lg">Description</TabsTrigger>
+                  <TabsTrigger value="details" className="flex-1 rounded-lg">Details</TabsTrigger>
                   <TabsTrigger value="shipping" className="flex-1 rounded-lg">
-                    Shipping
+                    {isRestaurant ? "Delivery" : "Shipping"}
                   </TabsTrigger>
                 </TabsList>
 
@@ -705,10 +828,7 @@ export default function ProductPageClient({
                   <Card className="border-0 shadow-sm">
                     <CardContent className="p-6">
                       <ExpandableText
-                        text={
-                          product.description ||
-                          "No description available for this product."
-                        }
+                        text={product.description || "No description available for this product."}
                         limit={100}
                       />
                     </CardContent>
@@ -723,32 +843,35 @@ export default function ProductPageClient({
                           <Package className="h-4 w-4 text-primary" />
                           SKU
                         </span>
-                        <span className="text-muted-foreground font-mono">
-                          SKU-{product.id.slice(0, 8)}
-                        </span>
+                        <span className="text-muted-foreground font-mono">SKU-{product.id.slice(0, 8)}</span>
                       </div>
                       <div className="flex justify-between py-3 border-b">
                         <span className="font-medium flex items-center gap-2">
                           <StoreIcon className="h-4 w-4 text-primary" />
-                          Store
+                          {isRestaurant ? "Restaurant" : "Store"}
                         </span>
                         <span className="text-muted-foreground">{store.name}</span>
                       </div>
                       <div className="flex justify-between py-3 border-b">
                         <span className="font-medium flex items-center gap-2">
                           <Clock className="h-4 w-4 text-primary" />
-                          Stock
+                          {isRestaurant ? "Portions" : "Stock"}
                         </span>
-                        <Badge variant="secondary">
-                          {currentStock} units
-                        </Badge>
+                        <Badge variant="secondary">{currentStock} {isRestaurant ? "available" : "units"}</Badge>
                       </div>
-                      {product.hasVariants && (
+                      {!isRestaurant && product.hasVariants && (
                         <div className="flex justify-between py-3 border-b">
                           <span className="font-medium">Variants</span>
-                          <Badge variant="secondary">
-                            {parsedVariants?.length || 0} colors available
-                          </Badge>
+                          <Badge variant="secondary">{parsedVariants?.length || 0} colors available</Badge>
+                        </div>
+                      )}
+                      {isRestaurant && showModifiers && (
+                        <div className="flex justify-between py-3 border-b">
+                          <span className="font-medium flex items-center gap-2">
+                            <ChefHat className="h-4 w-4 text-primary" />
+                            Customisations
+                          </span>
+                          <Badge variant="secondary">{parsedModifierGroups.length} options</Badge>
                         </div>
                       )}
                       <div className="flex justify-between py-3">
@@ -756,9 +879,7 @@ export default function ProductPageClient({
                           <BadgeCheck className="h-4 w-4 text-primary" />
                           Category
                         </span>
-                        <span className="text-muted-foreground">
-                          {product.category_id || "Uncategorized"}
-                        </span>
+                        <span className="text-muted-foreground">{product.category_id || "Uncategorized"}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -768,21 +889,22 @@ export default function ProductPageClient({
                   <Card className="border-0 shadow-sm">
                     <CardContent className="p-6 space-y-6">
                       <Separator />
-
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
                           <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                          <p className="font-semibold text-lg mb-1">Fast Delivery</p>
+                          <p className="font-semibold text-lg mb-1">
+                            {isRestaurant ? "Preparation Time" : "Fast Delivery"}
+                          </p>
                           <p className="text-sm text-muted-foreground">
-                            Estimated delivery: 24 hours
+                            {isRestaurant
+                              ? "Estimated preparation: 15–30 minutes"
+                              : "Estimated delivery: 24 hours"}
                           </p>
                         </div>
                       </div>
-
                       <Separator />
-
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
                           <MapPin className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -790,7 +912,7 @@ export default function ProductPageClient({
                         <div>
                           <p className="font-semibold text-lg mb-1">Track Your Order</p>
                           <p className="text-sm text-muted-foreground">
-                            Real-time tracking available after dispatch
+                            Real-time tracking available after {isRestaurant ? "dispatch" : "dispatch"}
                           </p>
                         </div>
                       </div>
@@ -807,25 +929,14 @@ export default function ProductPageClient({
           <AnimatedContainer animation="fadeIn" delay={0.3} className="mt-20">
             <div className="mb-8">
               <h2 className="text-3xl font-bold mb-2">You might also like</h2>
-              <p className="text-muted-foreground">
-                More great products from {store.name}
-              </p>
+              <p className="text-muted-foreground">More great {isRestaurant ? "dishes" : "products"} from {store.name}</p>
             </div>
-
             <div className="grid gap-6 grid-cols-2 sm:grid-cols-auto-fill">
               {relatedProducts.map((relatedProduct) => (
-                <motion.div
-                  key={relatedProduct.id}
-                  whileHover={{ y: -8 }}
-                  transition={{ duration: 0.2 }}
-                >
+                <motion.div key={relatedProduct.id} whileHover={{ y: -8 }} transition={{ duration: 0.2 }}>
                   <Card
                     className="overflow-hidden h-full flex flex-col cursor-pointer border-1 hover:border-primary/50 hover:shadow-sm transition-all"
-                    onClick={() =>
-                      router.push(
-                        `/stores/${store.slug}/products/${relatedProduct.id}`
-                      )
-                    }
+                    onClick={() => router.push(`/stores/${store.slug}/products/${relatedProduct.id}`)}
                   >
                     <div className="relative aspect-square overflow-hidden bg-muted">
                       <Image
@@ -836,13 +947,9 @@ export default function ProductPageClient({
                       />
                     </div>
                     <CardContent className="p-4 flex-1">
-                      <h3 className="font-semibold text-base line-clamp-1 mb-2">
-                        {relatedProduct.name}
-                      </h3>
+                      <h3 className="font-semibold text-base line-clamp-1 mb-2">{relatedProduct.name}</h3>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-bold text-primary">
-                          {formatAmount(relatedProduct.price)}
-                        </span>
+                        <span className="font-bold text-primary">{formatAmount(relatedProduct.price)}</span>
                         {relatedProduct.compare_at_price && (
                           <span className="text-[10px] text-muted-foreground line-through">
                             {formatAmount(relatedProduct.compare_at_price)}

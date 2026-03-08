@@ -180,7 +180,7 @@ export default function HeroSection() {
 
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-2">
-                <Link href="/allStoreProducts" className="w-full sm:w-auto">
+                <Link href="/stores" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     className={cn(
@@ -190,7 +190,7 @@ export default function HeroSection() {
                       "shadow-xl hover:shadow-2xl transition-all rounded-full",
                     )}
                   >
-                    Browse Products
+                    Go to Market
                     <ShoppingBag className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

@@ -140,12 +140,16 @@ export async function PUT(
     product.images = updates.images ?? product.images
     product.hasVariants = updates.hasVariants ?? product.hasVariants
     product.variants = updates.variants ?? product.variants
+    // ── Food modifier groups ──────────────────────────────────────────────────
+    product.hasModifiers = updates.hasModifiers ?? product.hasModifiers
+    product.modifierGroups = updates.modifierGroups ?? product.modifierGroups
     product.updatedAt = new Date()
 
     await product.save()
 
     console.log(`✅ PUT Product: Product ${id} updated successfully by store ${userStore._id}.`)
     console.log(`[v0] Variants updated: hasVariants=${product.hasVariants}, variantCount=${product.variants?.length || 0}`)
+    console.log(`[v0] Modifiers updated: hasModifiers=${product.hasModifiers}, modifierGroupCount=${product.modifierGroups?.length || 0}`)
 
     return NextResponse.json(
       { success: true, message: "Product updated successfully", data: product },
@@ -186,7 +190,6 @@ export async function DELETE(
       console.log(
         "Sample stores in DB (sellerId field):",
         allStores.map((s) => ({ id: s._id, sellerId: s.sellerId, name: s.name }))
-
       )
 
       return NextResponse.json(

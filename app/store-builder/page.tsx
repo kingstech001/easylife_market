@@ -24,6 +24,14 @@ import {
   LucideImage,
   Check,
   Palette,
+  UtensilsCrossed,
+  ChevronDown,
+  ChevronUp,
+  GripVertical,
+  AlertCircle,
+  CheckCircle2,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -44,13 +52,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Image from "next/image";
 import ExpandableText from "@/components/ExpandableText";
 import ProductVariantsEditor, {
   type ProductVariant,
 } from "@/components/ProductVariantsEditor";
+import { cn } from "@/lib/utils";
 
-// Categories that support variants
+// ─────────────────────────────────────────────────────────────────────────────
+// Modifier types
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ModifierOption {
+  _id?: string;
+  name: string;
+  priceAdjustment: number;
+  inventoryQuantity?: number;
+  isActive: boolean;
+}
+
+interface ModifierGroup {
+  _id?: string;
+  name: string;
+  required: boolean;
+  selectionType: "single" | "multiple";
+  minSelection: number;
+  maxSelection: number;
+  options: ModifierOption[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Categories that support variants — unchanged from original
+// ─────────────────────────────────────────────────────────────────────────────
+
 const VARIANT_CATEGORIES = [
   "Clothing",
   "Fashion",
@@ -79,6 +121,10 @@ function categorySupportsVariants(category: string | undefined): boolean {
       vc.toLowerCase().includes(normalizedCategory),
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Schemas — original + hasModifiers added
+// ─────────────────────────────────────────────────────────────────────────────
 
 const variantSchema = z.object({
   color: z.object({
@@ -124,9 +170,381 @@ const productSchema = z.object({
     .optional(),
   hasVariants: z.boolean().optional(),
   variants: z.array(variantSchema).optional(),
+  // ── NEW ──
+  hasModifiers: z.boolean().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Modifier helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function newOption(): ModifierOption {
+  return { name: "", priceAdjustment: 0, isActive: true };
+}
+
+function newGroup(): ModifierGroup {
+  return {
+    name: "",
+    required: false,
+    selectionType: "single",
+    minSelection: 0,
+    maxSelection: 1,
+    options: [newOption()],
+  };
+}
+
+function groupIsValid(g: ModifierGroup): boolean {
+  if (!g.name.trim()) return false;
+  if (g.options.length === 0) return false;
+  if (g.options.some((o) => !o.name.trim())) return false;
+  if (g.minSelection > g.maxSelection) return false;
+  if (g.selectionType === "single" && g.maxSelection !== 1) return false;
+  return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ModifierGroupCard — inline sub-component (keeps file self-contained)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ModifierGroupCard({
+  group,
+  isOpen,
+  onToggle,
+  onRemove,
+  onUpdateGroup,
+  onAddOption,
+  onRemoveOption,
+  onUpdateOption,
+}: {
+  group: ModifierGroup;
+  isOpen: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+  onUpdateGroup: (patch: Partial<ModifierGroup>) => void;
+  onAddOption: () => void;
+  onRemoveOption: (oi: number) => void;
+  onUpdateOption: (oi: number, patch: Partial<ModifierOption>) => void;
+}) {
+  const valid = groupIsValid(group);
+
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border transition-all duration-200",
+        isOpen
+          ? "border-orange-300 dark:border-orange-700 shadow-md shadow-orange-100 dark:shadow-orange-950/30"
+          : "border-border hover:border-orange-200 dark:hover:border-orange-800",
+      )}
+    >
+      {/* ── Header ── */}
+      <div
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 cursor-pointer select-none rounded-2xl transition-colors",
+          isOpen ? "bg-orange-50/60 dark:bg-orange-950/20" : "bg-card",
+        )}
+        onClick={onToggle}
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+
+        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-sm truncate">
+            {group.name || (
+              <span className="text-muted-foreground font-normal italic">
+                Untitled group
+              </span>
+            )}
+          </span>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {group.required ? (
+              <Badge className="text-[10px] h-4 px-1.5 bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-0">
+                Required
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                Optional
+              </Badge>
+            )}
+            <Badge
+              variant="outline"
+              className="text-[10px] h-4 px-1.5 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400"
+            >
+              {group.selectionType === "single"
+                ? "Pick 1"
+                : `Pick ${group.minSelection}–${group.maxSelection}`}
+            </Badge>
+            {group.options.length > 0 && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                {group.options.length} option
+                {group.options.length !== 1 ? "s" : ""}
+              </Badge>
+            )}
+          </div>
+
+          {valid ? (
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+          ) : (
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+          )}
+        </div>
+
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+          {isOpen ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-2 space-y-5 border-t border-border/50">
+              {/* Group name */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Group Name
+                </Label>
+                <Input
+                  placeholder='e.g. "Choose your soup", "Add-ons", "Drink"'
+                  value={group.name}
+                  onChange={(e) => onUpdateGroup({ name: e.target.value })}
+                  className="h-10 text-sm focus:border-orange-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+
+              {/* Rules row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* Required */}
+                <div className="col-span-2 sm:col-span-1 flex items-center justify-between sm:flex-col sm:items-start gap-2 rounded-xl border border-border/60 px-3 py-2.5 bg-muted/20">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Required?
+                  </Label>
+                  <Switch
+                    checked={group.required}
+                    onCheckedChange={(v) => onUpdateGroup({ required: v })}
+                    className="data-[state=checked]:bg-orange-500"
+                  />
+                </div>
+
+                {/* Selection type */}
+                <div className="col-span-2 sm:col-span-1 space-y-1.5 rounded-xl border border-border/60 px-3 py-2.5 bg-muted/20">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Selection
+                  </Label>
+                  <Select
+                    value={group.selectionType}
+                    onValueChange={(v: "single" | "multiple") =>
+                      onUpdateGroup({ selectionType: v })
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs border-0 bg-transparent p-0 focus:ring-0 shadow-none">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single" className="text-xs">
+                        Single (pick 1)
+                      </SelectItem>
+                      <SelectItem value="multiple" className="text-xs">
+                        Multiple (pick many)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Min */}
+                <div className="space-y-1.5 rounded-xl border border-border/60 px-3 py-2.5 bg-muted/20">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Min picks
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={group.maxSelection}
+                    value={group.minSelection}
+                    disabled={group.selectionType === "single"}
+                    onChange={(e) =>
+                      onUpdateGroup({
+                        minSelection: Math.max(0, Number(e.target.value)),
+                      })
+                    }
+                    className="h-8 text-xs border-0 bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+
+                {/* Max */}
+                <div className="space-y-1.5 rounded-xl border border-border/60 px-3 py-2.5 bg-muted/20">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Max picks
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={group.maxSelection}
+                    disabled={group.selectionType === "single"}
+                    onChange={(e) =>
+                      onUpdateGroup({
+                        maxSelection: Math.max(1, Number(e.target.value)),
+                      })
+                    }
+                    className="h-8 text-xs border-0 bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+              </div>
+
+              {group.selectionType === "single" && (
+                <p className="text-[11px] text-muted-foreground -mt-2">
+                  Single selection locks max to 1. Switch to{" "}
+                  <strong>Multiple</strong> to allow 2+ picks.
+                </p>
+              )}
+
+              {/* Options list */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Options
+                </Label>
+
+                <div className="space-y-2">
+                  <AnimatePresence initial={false}>
+                    {group.options.map((opt, oi) => (
+                      <motion.div
+                        key={oi}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-center gap-2"
+                      >
+                        {/* Available toggle */}
+                        <button
+                          type="button"
+                          title={
+                            opt.isActive ? "Mark unavailable" : "Mark available"
+                          }
+                          onClick={() =>
+                            onUpdateOption(oi, { isActive: !opt.isActive })
+                          }
+                          className="flex-shrink-0"
+                        >
+                          {opt.isActive ? (
+                            <ToggleRight className="w-5 h-5 text-emerald-500" />
+                          ) : (
+                            <ToggleLeft className="w-5 h-5 text-muted-foreground/40" />
+                          )}
+                        </button>
+
+                        {/* Name */}
+                        <Input
+                          placeholder="Option name (e.g. Ofe Onugbu)"
+                          value={opt.name}
+                          onChange={(e) =>
+                            onUpdateOption(oi, { name: e.target.value })
+                          }
+                          className={cn(
+                            "flex-1 h-9 text-sm focus:border-orange-400 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors",
+                            !opt.isActive && "opacity-50 line-through",
+                          )}
+                        />
+
+                        {/* Price adjustment */}
+                        <div className="relative w-24 flex-shrink-0">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                            ₦
+                          </span>
+                          <Input
+                            type="number"
+                            step="50"
+                            title="Extra charge (0 = no extra charge)"
+                            placeholder="0"
+                            value={
+                              opt.priceAdjustment === 0
+                                ? ""
+                                : opt.priceAdjustment
+                            }
+                            onChange={(e) =>
+                              onUpdateOption(oi, {
+                                priceAdjustment: Number(e.target.value),
+                              })
+                            }
+                            className="pl-6 h-9 text-sm focus:border-orange-400 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+
+                        {/* Remove */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={group.options.length === 1}
+                          onClick={() => onRemoveOption(oi)}
+                          className="h-9 w-9 p-0 flex-shrink-0 hover:bg-destructive/10 hover:text-destructive disabled:opacity-20"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onAddOption}
+                  className="w-full h-8 border-dashed border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-300 text-xs gap-1.5 mt-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Option
+                </Button>
+              </div>
+
+              {/* Inline validation hint */}
+              {!valid && (
+                <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 px-3 py-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    {!group.name.trim()
+                      ? "Give this group a name."
+                      : group.options.some((o) => !o.name.trim())
+                        ? "All options need a name."
+                        : "Check your min/max settings."}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function StoreBuilderPage() {
   const router = useRouter();
@@ -141,6 +559,13 @@ export default function StoreBuilderPage() {
   const [activeTab, setActiveTab] = useState("details");
   const [editingProduct, setEditingProduct] =
     useState<ProductFormValues | null>(null);
+
+  // ── NEW: modifier state ──────────────────────────────────────────────────
+  const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
+  const [expandedGroupIndex, setExpandedGroupIndex] = useState<number | null>(
+    null,
+  );
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pauseSave = useRef(false);
   const formSectionRef = useRef<HTMLDivElement>(null);
@@ -157,6 +582,7 @@ export default function StoreBuilderPage() {
       images: [],
       hasVariants: false,
       variants: [],
+      hasModifiers: false, // ← NEW
     },
   });
 
@@ -164,6 +590,7 @@ export default function StoreBuilderPage() {
   const watchedCategory = form.watch("category");
   const watchedHasVariants = form.watch("hasVariants");
   const watchedVariants = form.watch("variants");
+  const watchedHasModifiers = form.watch("hasModifiers"); // ← NEW
 
   // Check if current category supports variants
   const supportsVariants = useMemo(() => {
@@ -178,6 +605,14 @@ export default function StoreBuilderPage() {
     }
   }, [supportsVariants, watchedHasVariants, form]);
 
+  // Clear modifier groups when hasModifiers is toggled off
+  useEffect(() => {
+    if (!watchedHasModifiers) {
+      setModifierGroups([]);
+      setExpandedGroupIndex(null);
+    }
+  }, [watchedHasModifiers]);
+
   // Load draft on mount
   useEffect(() => {
     try {
@@ -187,13 +622,17 @@ export default function StoreBuilderPage() {
         if (parsed?.values) {
           form.reset(parsed.values);
         }
+        // ← NEW: restore modifier groups from draft
+        if (parsed?.modifierGroups) {
+          setModifierGroups(parsed.modifierGroups);
+        }
       }
     } catch (err) {
       console.warn("Failed to load product draft:", err);
     }
   }, []);
 
-  // Auto-save draft
+  // Auto-save draft — now also saves modifierGroups
   useEffect(() => {
     const subscription = form.watch((values) => {
       if (pauseSave.current) return;
@@ -202,7 +641,7 @@ export default function StoreBuilderPage() {
         try {
           localStorage.setItem(
             DRAFT_KEY,
-            JSON.stringify({ values, updatedAt: Date.now() }),
+            JSON.stringify({ values, modifierGroups, updatedAt: Date.now() }),
           );
         } catch (err) {
           console.warn("Failed to save product draft:", err);
@@ -213,7 +652,7 @@ export default function StoreBuilderPage() {
       subscription.unsubscribe();
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [form]);
+  }, [form, modifierGroups]);
 
   // Fetch store and products
   useEffect(() => {
@@ -256,13 +695,100 @@ export default function StoreBuilderPage() {
     fetchData();
   }, []);
 
+  // ── Modifier group mutations ───────────────────────────────────────────────
+
+  const addModifierGroup = () => {
+    const updated = [...modifierGroups, newGroup()];
+    setModifierGroups(updated);
+    setExpandedGroupIndex(updated.length - 1);
+  };
+
+  const removeModifierGroup = (gi: number) => {
+    setModifierGroups((prev) => prev.filter((_, i) => i !== gi));
+    if (expandedGroupIndex === gi) setExpandedGroupIndex(null);
+    else if (expandedGroupIndex !== null && expandedGroupIndex > gi)
+      setExpandedGroupIndex(expandedGroupIndex - 1);
+  };
+
+  const updateModifierGroup = (gi: number, patch: Partial<ModifierGroup>) => {
+    setModifierGroups((prev) =>
+      prev.map((g, i) => {
+        if (i !== gi) return g;
+        const next = { ...g, ...patch };
+        // Auto-enforce: single → max must be 1
+        if (patch.selectionType === "single") {
+          next.maxSelection = 1;
+          next.minSelection = next.required
+            ? 1
+            : Math.min(next.minSelection, 1);
+        }
+        // required + single → min = 1
+        if (patch.required && next.selectionType === "single")
+          next.minSelection = 1;
+        if (patch.required === false && next.selectionType === "single")
+          next.minSelection = 0;
+        // keep min ≤ max
+        if (
+          patch.minSelection !== undefined &&
+          next.minSelection > next.maxSelection
+        )
+          next.maxSelection = next.minSelection;
+        if (
+          patch.maxSelection !== undefined &&
+          next.maxSelection < next.minSelection
+        )
+          next.minSelection = next.maxSelection;
+        return next;
+      }),
+    );
+  };
+
+  const addModifierOption = (gi: number) => {
+    setModifierGroups((prev) =>
+      prev.map((g, i) =>
+        i === gi ? { ...g, options: [...g.options, newOption()] } : g,
+      ),
+    );
+  };
+
+  const removeModifierOption = (gi: number, oi: number) => {
+    setModifierGroups((prev) =>
+      prev.map((g, i) =>
+        i === gi
+          ? { ...g, options: g.options.filter((_, j) => j !== oi) }
+          : g,
+      ),
+    );
+  };
+
+  const updateModifierOption = (
+    gi: number,
+    oi: number,
+    patch: Partial<ModifierOption>,
+  ) => {
+    setModifierGroups((prev) =>
+      prev.map((g, i) =>
+        i === gi
+          ? {
+              ...g,
+              options: g.options.map((o, j) =>
+                j === oi ? { ...o, ...patch } : o,
+              ),
+            }
+          : g,
+      ),
+    );
+  };
+
+  // ── Original handlers — unchanged except handleEdit / handleDelete /
+  //    handleSubmit which now also manage modifierGroups ─────────────────────
+
   const handleEdit = (p: ProductFormValues) => {
     pauseSave.current = true;
 
     const { id, _id, ...productData } = p;
     setEditingProduct(p);
 
-    // Reset form with the product data
     form.reset({
       ...productData,
       category: productData.category || "",
@@ -271,16 +797,19 @@ export default function StoreBuilderPage() {
       images: productData.images || [],
       hasVariants: productData.hasVariants || false,
       variants: productData.variants || [],
+      hasModifiers: (p as any).hasModifiers || false, // ← NEW
     });
 
-    // Clear localStorage draft
+    // Restore modifier groups for this product
+    setModifierGroups((p as any).modifierGroups || []);
+    setExpandedGroupIndex(null);
+
     try {
       localStorage.removeItem(DRAFT_KEY);
     } catch (err) {
       console.warn("Failed to clear draft:", err);
     }
 
-    // Resume auto-save after a delay
     setTimeout(() => {
       pauseSave.current = false;
       formSectionRef.current?.scrollIntoView({
@@ -321,9 +850,12 @@ export default function StoreBuilderPage() {
             images: [],
             hasVariants: false,
             variants: [],
+            hasModifiers: false, // ← NEW
           },
           { keepValues: false },
         );
+        setModifierGroups([]); // ← NEW
+        setExpandedGroupIndex(null); // ← NEW
         setActiveTab("details");
       }
     } catch (error: any) {
@@ -335,7 +867,6 @@ export default function StoreBuilderPage() {
   };
 
   const handleSubmit = async (data: ProductFormValues) => {
-    // Validate form before proceeding
     const isValid = await form.trigger();
     if (!isValid) {
       toast.error("Please fix all validation errors before saving");
@@ -360,7 +891,6 @@ export default function StoreBuilderPage() {
     setIsSavingProduct(true);
 
     try {
-      // Calculate total inventory from variants if hasVariants is true
       let totalInventory = data.inventoryQuantity;
       if (data.hasVariants && data.variants && data.variants.length > 0) {
         totalInventory = data.variants.reduce((total, variant) => {
@@ -384,6 +914,9 @@ export default function StoreBuilderPage() {
         storeId: store._id,
         hasVariants: data.hasVariants || false,
         variants: data.hasVariants ? data.variants || [] : [],
+        // ── NEW ──
+        hasModifiers: data.hasModifiers || false,
+        modifierGroups: data.hasModifiers ? modifierGroups : [],
       };
 
       let resultProduct: ProductFormValues;
@@ -453,9 +986,13 @@ export default function StoreBuilderPage() {
           images: [],
           hasVariants: false,
           variants: [],
+          hasModifiers: false, // ← NEW
         },
         { keepValues: false },
       );
+
+      setModifierGroups([]); // ← NEW
+      setExpandedGroupIndex(null); // ← NEW
 
       try {
         const uploadInput = document.getElementById(
@@ -660,7 +1197,10 @@ export default function StoreBuilderPage() {
                         images: [],
                         hasVariants: false,
                         variants: [],
+                        hasModifiers: false, // ← NEW
                       });
+                      setModifierGroups([]); // ← NEW
+                      setExpandedGroupIndex(null); // ← NEW
                       setActiveTab("details");
                       try {
                         localStorage.removeItem(DRAFT_KEY);
@@ -733,7 +1273,7 @@ export default function StoreBuilderPage() {
                                   </div>
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                     <span className="flex items-center gap-1 font-medium text-foreground">
-                                      <span className="text-base">N</span>
+                                      <span className="text-base">₦</span>
                                       {p.price.toFixed(2)}
                                     </span>
                                     <span className="flex items-center gap-1">
@@ -757,7 +1297,14 @@ export default function StoreBuilderPage() {
                                         className="text-xs"
                                       >
                                         <Palette className="w-2 h-2 mr-1" />
-                                        {p.variants?.length || 0} variants
+                                        {(p as any).variants?.length || 0} variants
+                                      </Badge>
+                                    )}
+                                    {/* ── NEW: modifiers badge ── */}
+                                    {(p as any).hasModifiers && (
+                                      <Badge className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-0">
+                                        <UtensilsCrossed className="w-2 h-2 mr-1" />
+                                        Modifiers
                                       </Badge>
                                     )}
                                   </div>
@@ -836,7 +1383,10 @@ export default function StoreBuilderPage() {
                                 images: [],
                                 hasVariants: false,
                                 variants: [],
+                                hasModifiers: false, // ← NEW
                               });
+                              setModifierGroups([]); // ← NEW
+                              setExpandedGroupIndex(null); // ← NEW
                               setActiveTab("details");
                               try {
                                 localStorage.removeItem(DRAFT_KEY);
@@ -862,7 +1412,8 @@ export default function StoreBuilderPage() {
                           onValueChange={setActiveTab}
                           className="space-y-8"
                         >
-                          <TabsList className="grid w-full grid-cols-4 bg-muted p-1 rounded-xl h-12">
+                          {/* ── Tab bar: now 5 tabs ── */}
+                          <TabsList className="grid w-full grid-cols-5 bg-muted p-1 rounded-xl h-12">
                             <TabsTrigger
                               value="details"
                               className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg"
@@ -894,9 +1445,17 @@ export default function StoreBuilderPage() {
                               <Palette className="w-4 h-4 mr-2" />
                               <span className="hidden sm:inline">Variants</span>
                             </TabsTrigger>
+                            {/* ── NEW tab ── */}
+                            <TabsTrigger
+                              value="modifiers"
+                              className="data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-orange-600 rounded-lg"
+                            >
+                              <UtensilsCrossed className="w-4 h-4 mr-2" />
+                              <span className="hidden sm:inline">Modifiers</span>
+                            </TabsTrigger>
                           </TabsList>
 
-                          {/* Details Tab */}
+                          {/* ── Details Tab — UNCHANGED ── */}
                           <TabsContent
                             value="details"
                             className="space-y-6 mt-8"
@@ -1008,7 +1567,7 @@ export default function StoreBuilderPage() {
                             />
                           </TabsContent>
 
-                          {/* Images Tab */}
+                          {/* ── Images Tab — UNCHANGED ── */}
                           <TabsContent
                             value="images"
                             className="space-y-6 mt-8"
@@ -1086,7 +1645,6 @@ export default function StoreBuilderPage() {
 
                             <Separator />
 
-                            {/* Image Gallery */}
                             {(watchedImages ?? []).length > 0 ? (
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                 {(watchedImages ?? []).map((img, idx) => (
@@ -1151,7 +1709,7 @@ export default function StoreBuilderPage() {
                             )}
                           </TabsContent>
 
-                          {/* Inventory Tab */}
+                          {/* ── Inventory Tab — UNCHANGED ── */}
                           <TabsContent
                             value="inventory"
                             className="space-y-6 mt-8"
@@ -1249,7 +1807,7 @@ export default function StoreBuilderPage() {
                             </div>
                           </TabsContent>
 
-                          {/* Variants Tab */}
+                          {/* ── Variants Tab — UNCHANGED ── */}
                           <TabsContent
                             value="variants"
                             className="space-y-6 mt-8"
@@ -1355,6 +1913,171 @@ export default function StoreBuilderPage() {
                                     </Badge>
                                   ))}
                                 </div>
+                              </div>
+                            )}
+                          </TabsContent>
+
+                          {/* ── Modifiers Tab — NEW ── */}
+                          <TabsContent
+                            value="modifiers"
+                            className="space-y-5 mt-8"
+                          >
+                            {/* Header with enable toggle */}
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b">
+                              <div className="flex items-start gap-3 mb-3 sm:mb-0">
+                                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/30">
+                                  <UtensilsCrossed className="h-5 w-5 text-orange-500" />
+                                </div>
+                                <div>
+                                  <h3 className="text-lg font-semibold">
+                                    Food Modifier Groups
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    Let customers customise their order —
+                                    soups, proteins, extras, drinks
+                                  </p>
+                                </div>
+                              </div>
+                              <FormField
+                                control={form.control}
+                                name="hasModifiers"
+                                render={({ field }) => (
+                                  <FormItem className="flex items-center gap-2 flex-shrink-0">
+                                    <FormLabel className="text-sm font-normal">
+                                      Enable modifiers
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        className="data-[state=checked]:bg-orange-500"
+                                        style={{ margin: "0" }}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            {watchedHasModifiers ? (
+                              <div className="space-y-3">
+                                {/* Hint banner */}
+                                <div className="flex items-start gap-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 px-4 py-3">
+                                  <UtensilsCrossed className="h-4 w-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                                  <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
+                                    Example for <strong>Akpu</strong>: add a
+                                    group <em>"Choose your soup"</em> →
+                                    Required, Multiple, min{" "}
+                                    <strong>1</strong>, max{" "}
+                                    <strong>2</strong> → options like{" "}
+                                    <em>Ofe Onugbu, Egusi, Oha</em> with
+                                    optional extra charges.
+                                  </p>
+                                </div>
+
+                                {/* Empty state */}
+                                {modifierGroups.length === 0 && (
+                                  <div className="border-2 border-dashed border-orange-200 dark:border-orange-800/40 rounded-2xl p-10 text-center bg-orange-50/30 dark:bg-orange-950/10">
+                                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center">
+                                      <UtensilsCrossed className="w-7 h-7 text-orange-400" />
+                                    </div>
+                                    <h3 className="text-base font-semibold mb-1">
+                                      No modifier groups yet
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
+                                      Add groups like "Choose your soup",
+                                      "Extra protein", "Drink options"
+                                    </p>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20 gap-2"
+                                      onClick={addModifierGroup}
+                                    >
+                                      <Plus className="w-4 h-4" /> Add First
+                                      Group
+                                    </Button>
+                                  </div>
+                                )}
+
+                                {/* Group cards */}
+                                <AnimatePresence initial={false}>
+                                  {modifierGroups.map((group, gi) => (
+                                    <motion.div
+                                      key={gi}
+                                      initial={{ opacity: 0, y: -8 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -8 }}
+                                      transition={{ duration: 0.18 }}
+                                    >
+                                      <ModifierGroupCard
+                                        group={group}
+                                        isOpen={expandedGroupIndex === gi}
+                                        onToggle={() =>
+                                          setExpandedGroupIndex(
+                                            expandedGroupIndex === gi
+                                              ? null
+                                              : gi,
+                                          )
+                                        }
+                                        onRemove={() =>
+                                          removeModifierGroup(gi)
+                                        }
+                                        onUpdateGroup={(patch) =>
+                                          updateModifierGroup(gi, patch)
+                                        }
+                                        onAddOption={() =>
+                                          addModifierOption(gi)
+                                        }
+                                        onRemoveOption={(oi) =>
+                                          removeModifierOption(gi, oi)
+                                        }
+                                        onUpdateOption={(oi, patch) =>
+                                          updateModifierOption(gi, oi, patch)
+                                        }
+                                      />
+                                    </motion.div>
+                                  ))}
+                                </AnimatePresence>
+
+                                {/* Add another group */}
+                                {modifierGroups.length > 0 && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addModifierGroup}
+                                    className="w-full h-10 border-dashed border-orange-300 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-400 gap-2"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Add Another Group
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              /* Disabled placeholder */
+                              <div className="border-2 border-dashed border-orange-200 dark:border-orange-800/40 rounded-2xl p-12 text-center bg-orange-50/30 dark:bg-orange-950/10">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center">
+                                  <UtensilsCrossed className="w-8 h-8 text-orange-300" />
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">
+                                  Modifiers Disabled
+                                </h3>
+                                <p className="text-muted-foreground text-sm mb-4 max-w-sm mx-auto">
+                                  Enable modifiers to let customers pick soups,
+                                  proteins, sides, drinks and more when
+                                  ordering food items.
+                                </p>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                                  onClick={() =>
+                                    form.setValue("hasModifiers", true)
+                                  }
+                                >
+                                  <UtensilsCrossed className="w-4 h-4 mr-2" />
+                                  Enable Modifiers
+                                </Button>
                               </div>
                             )}
                           </TabsContent>

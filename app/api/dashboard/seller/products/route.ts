@@ -71,10 +71,25 @@ export async function POST(req: Request) {
       hasImages: !!body.images,
       imageCount: body.images?.length,
       hasVariants: body.hasVariants,
-      variantCount: body.variants?.length
+      variantCount: body.variants?.length,
+      hasModifiers: body.hasModifiers,
+      modifierGroupCount: body.modifierGroups?.length,
     })
 
-    const { name, description, price, compareAtPrice, category, inventoryQuantity, images, storeId, hasVariants, variants } = body
+    const {
+      name,
+      description,
+      price,
+      compareAtPrice,
+      category,
+      inventoryQuantity,
+      images,
+      storeId,
+      hasVariants,
+      variants,
+      hasModifiers,
+      modifierGroups,
+    } = body
 
     // ✅ Detailed validation with specific error messages
     if (!name) {
@@ -95,6 +110,38 @@ export async function POST(req: Request) {
     if (!storeId) {
       console.error("❌ Missing storeId")
       return NextResponse.json({ message: "Store ID is required" }, { status: 400 })
+    }
+
+    // ✅ Validate modifier groups when hasModifiers is true
+    if (hasModifiers) {
+      if (!modifierGroups || modifierGroups.length === 0) {
+        console.error("❌ hasModifiers is true but no modifierGroups provided")
+        return NextResponse.json(
+          { message: "At least one modifier group is required when hasModifiers is true" },
+          { status: 400 }
+        )
+      }
+
+      for (const group of modifierGroups) {
+        if (!group.options || group.options.length === 0) {
+          return NextResponse.json(
+            { message: `Modifier group "${group.name}" must have at least one option` },
+            { status: 400 }
+          )
+        }
+        if (group.selectionType === "single" && group.maxSelection !== 1) {
+          return NextResponse.json(
+            { message: `Modifier group "${group.name}" is single-select but maxSelection is not 1` },
+            { status: 400 }
+          )
+        }
+        if (group.minSelection > group.maxSelection) {
+          return NextResponse.json(
+            { message: `Modifier group "${group.name}" has minSelection greater than maxSelection` },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // ✅ Find store with better error messages
@@ -153,7 +200,6 @@ export async function POST(req: Request) {
 
     console.log(`✅ Product limit check passed: ${productCount}/${isUnlimited ? '∞' : productLimit}`)
 
-
     // ✅ Create product
     console.log("🚀 Creating product...")
     
@@ -167,12 +213,16 @@ export async function POST(req: Request) {
       images: images || [],
       hasVariants: hasVariants || false,
       variants: hasVariants ? variants || [] : [],
+      // ── Food modifier groups ──────────────────────────────────────────────
+      hasModifiers: hasModifiers || false,
+      modifierGroups: hasModifiers ? modifierGroups || [] : [],
       storeId: store._id,
       sellerId: user.id,
     }
     
     console.log("📝 Product data:", productData)
     console.log(`[v0] Creating product with variants: hasVariants=${productData.hasVariants}, variantCount=${productData.variants.length}`)
+    console.log(`[v0] Creating product with modifiers: hasModifiers=${productData.hasModifiers}, modifierGroupCount=${productData.modifierGroups.length}`)
     
     const product = await Product.create(productData)
 

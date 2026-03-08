@@ -29,7 +29,7 @@ function SearchLoading() {
 
 export default function SearchPage() {
   return (
-    <div className="flex min-h-screen">
+    <div className="md:flex min-h-screen">
       {/* Sidebar - Desktop only */}
       <CategorySidebar />
 

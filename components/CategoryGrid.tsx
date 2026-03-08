@@ -83,7 +83,7 @@ function buildCategorySearchUrl(category: Category): string {
 // Mobile Grid Component (for homepage)
 export function CategoryGrid() {
   return (
-    <div className="block lg:hidden mb-10 sm:mb-12 mt-10 sm:mt-12 pt-8 border-t border-border">
+    <div className="block lg:hidden">
       <h2 className="text-sm font-semibold text-muted-foreground text-center mb-6 uppercase tracking-wide">
         Browse by Category
       </h2>

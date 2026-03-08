@@ -446,7 +446,7 @@ export function SiteHeader() {
             className={cn(
               "flex flex-col items-center justify-center gap-1 transition-colors",
               pathname === "/"
-                ? "text-[#e1a200]"
+                ? "text-[#e0ac29]"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

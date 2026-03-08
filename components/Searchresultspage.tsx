@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/product-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORIES } from "@/components/CategoryGrid";
+import { CATEGORIES, CategoryGrid } from "@/components/CategoryGrid";
 
 // Product type
 type Product = {
@@ -271,7 +271,7 @@ export default function SearchResultsPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto"></div>
+            <div className="w-20 h-20 border-4  border-muted border-t-[#e1a200] rounded-full animate-spin mx-auto"></div>
             <div className="absolute inset-0 flex items-center justify-center">
               <Search className="w-8 h-8 text-primary animate-pulse" />
             </div>
@@ -316,7 +316,7 @@ export default function SearchResultsPage() {
                 value={localSearchQuery}
                 onChange={(e) => setLocalSearchQuery(e.target.value)}
                 placeholder="Search for products or stores..."
-                className="pl-12 pr-12 h-12 text-base rounded-full border-2 border-border focus-visible:border-[#e1a200] focus-visible:ring-[#e1a200]/20"
+                className="pl-12 pr-12 h-12 text-base rounded-full border-2 border-border focus-visible:border-[#e1a200] focus-visible:ring-0 focus-visible:outline-none focus:outline-none  focus-visible:[box-shadow:none]"
               />
               {localSearchQuery && (
                 <button
@@ -336,7 +336,7 @@ export default function SearchResultsPage() {
               </Button>
             </div>
           </form>
-
+          <CategoryGrid/>
           <div className="flex items-center justify-between max-w-7xl mx-auto">
             <div className="flex items-center gap-3 flex-wrap">
               {currentQuery && (

@@ -23,19 +23,46 @@ import { toast } from "sonner"
 import { useState, useEffect } from "react"
 import Image from "next/image"
 
+// ── Plan badge config ────────────────────────────────────────────────────────
+const PLAN_BADGE: Record<
+  string,
+  { label: string; className: string }
+> = {
+  free:     { label: "Free",     className: "bg-muted text-muted-foreground border border-border/60" },
+  basic:    { label: "Basic",    className: "bg-blue-500/10 text-blue-500 border border-blue-500/20" },
+  standard: { label: "Standard", className: "bg-[#e1a200]/10 text-[#e1a200] border border-[#e1a200]/30" },
+  premium:  { label: "Premium",  className: "bg-purple-500/10 text-purple-500 border border-purple-500/20" },
+}
+
+function PlanBadge({ plan }: { plan: string }) {
+  const config = PLAN_BADGE[plan?.toLowerCase()] ?? PLAN_BADGE.free
+  return (
+    <span
+      className={`
+        inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider leading-none
+        ${config.className}
+      `}
+    >
+      {config.label}
+    </span>
+  )
+}
+
+// ── Nav items ────────────────────────────────────────────────────────────────
 const sidebarNavItems = [
-  { title: "Overview", href: "/dashboard/seller", icon: LayoutDashboard },
-  { title: "My Store", href: "/dashboard/seller/store", icon: Store },
-  { title: "Products", href: "/dashboard/seller/products", icon: ShoppingBag },
-  { title: "Orders", href: "/dashboard/seller/orders", icon: Package },
-  { title: "Subscriptions", href: "/dashboard/seller/subscriptions", icon: Package },
+  { title: "Overview",      href: "/dashboard/seller",               icon: LayoutDashboard },
+  { title: "My Store",      href: "/dashboard/seller/store",         icon: Store },
+  { title: "Products",      href: "/dashboard/seller/products",      icon: ShoppingBag },
+  { title: "Orders",        href: "/dashboard/seller/orders",        icon: Package },
+  { title: "Subscriptions", href: "/dashboard/seller/subscriptions", icon: Package, showPlan: true },
 ]
 
 export function SellerSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { toggleSidebar } = useSidebar()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser]   = useState<any>(null)
+  const [plan, setPlan]   = useState<string>("free")
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -49,7 +76,23 @@ export function SellerSidebar() {
         console.error("Error fetching user:", error)
       }
     }
+
+    const fetchStore = async () => {
+      try {
+        const res = await fetch("/api/dashboard/seller/products", { credentials: "include" })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.store?.subscriptionPlan) {
+            setPlan(data.store.subscriptionPlan)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching store:", error)
+      }
+    }
+
     fetchUser()
+    fetchStore()
   }, [])
 
   const handleLogout = async () => {
@@ -90,12 +133,6 @@ export function SellerSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard/seller" className="flex items-center group">
-              {/* <div className="relative">
-                <div className="w-9 h-9 bg-gradient-to-br from-[#e1a200] via-[#d4b55e] to-[#e1a200] rounded-xl flex items-center justify-center shadow-lg shadow-[#e1a200]/20 transition-transform group-hover:scale-105">
-                  <ShoppingBag className="h-4 w-4 text-white" strokeWidth={2.5} />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
-              </div> */}
               <Image src={'/logo.png'} alt="logo" width={70} height={36} />
               <div className="flex flex-col">
                 <span className="font-bold text-base tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
@@ -108,7 +145,7 @@ export function SellerSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent >
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
             Navigation
@@ -125,8 +162,8 @@ export function SellerSidebar() {
                       onClick={handleSidebarClick}
                       className={`
                         relative h-9 px-2.5 rounded-lg transition-all duration-200
-                        ${isActive 
-                          ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold shadow-sm hover:bg-[#e1a200]/15' 
+                        ${isActive
+                          ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold shadow-sm hover:bg-[#e1a200]/15'
                           : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                         }
                       `}
@@ -135,6 +172,9 @@ export function SellerSidebar() {
                         <div className="flex items-center gap-2.5">
                           <item.icon className="h-4 w-4 flex-shrink-0" strokeWidth={isActive ? 2.5 : 2} />
                           <span className="text-[13px]">{item.title}</span>
+                          {item.showPlan && (
+                            <PlanBadge plan={plan} />
+                          )}
                         </div>
                         {isActive && (
                           <ChevronRight className="h-3.5 w-3.5 text-[#e1a200] flex-shrink-0" strokeWidth={2.5} />
