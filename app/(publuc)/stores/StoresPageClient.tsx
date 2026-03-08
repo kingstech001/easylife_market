@@ -90,7 +90,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Hero Section with Dynamic Banner */}
-      <div className="relative h-64 md:h-80 lg:h-96 w-full overflow-hidden">
+      <div className="relative h-64  w-full overflow-hidden">
         {heroBanner?.imageUrl ? (
           <>
             {/* Background Image with transition */}

@@ -27,7 +27,7 @@ export function StoreCard({ store }: StoreCardProps) {
     <Link href={`/stores/${store.slug}`} className="block h-full w-full">
       <Card className="relative h-full w-full flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:border-primary/50 group">
         {/* Banner */}
-        <div className="relative w-full h-32 sm:h-40 bg-muted overflow-hidden flex-shrink-0">
+        <div className="relative w-full h-28 bg-muted overflow-hidden flex-shrink-0">
           {store.banner_url ? (
             <Image
               src={store.banner_url}
@@ -51,7 +51,7 @@ export function StoreCard({ store }: StoreCardProps) {
 
         {/* Logo */}
         {store.logo_url && (
-          <div className="absolute z-20 top-24 sm:top-28 left-4 h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-card bg-card shadow-md overflow-hidden flex-shrink-0">
+          <div className="absolute z-20 top-20 left-4 h-16 w-16  rounded-full border-4 border-card bg-card shadow-md overflow-hidden flex-shrink-0">
             <Image
               src={store.logo_url}
               alt={`${store.name} logo`}
@@ -63,7 +63,7 @@ export function StoreCard({ store }: StoreCardProps) {
         )}
 
         {/* Store Info */}
-        <CardHeader className="pt-10 pb-4 flex-grow">
+        <CardHeader className="pt-10 pb-4 flex-grow px-3">
           <CardTitle 
             className="text-lg sm:text-xl font-bold truncate w-full"
             title={store.name} // Shows full name on hover
@@ -77,7 +77,7 @@ export function StoreCard({ store }: StoreCardProps) {
 
         {/* Optional: Product Count Footer */}
         {store.productCount !== undefined && (
-          <CardContent className="pt-0 pb-4 mt-auto flex-shrink-0">
+          <CardContent className="pt-0 pb-4 mt-auto flex-shrink-0 px-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Package className="w-4 h-4" />
               <span>{store.productCount} {store.productCount === 1 ? 'product' : 'products'}</span>

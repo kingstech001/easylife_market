@@ -12,6 +12,7 @@ import {
   Tv,
   HeartPulse,
   Apple,
+  CookingPot,
 } from "lucide-react";
 
 // Category type definition
@@ -23,6 +24,11 @@ type Category = {
 
 // Categories data
 export const CATEGORIES: Category[] = [
+  {
+    name: "Restaurants",
+    icon: CookingPot,
+    subcategories: ["Fast Food", "Fine Dining", "Cafes", "Bakeries","food"],
+  },
   {
     name: "Electronics",
     icon: Tv,

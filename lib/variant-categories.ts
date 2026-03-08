@@ -53,5 +53,9 @@ export const categories = [
     name: "Other Categories",
     subcategories: ["Books", "Toys", "Other"],
   },
+  {
+    name: "Restaurants",
+    subcategories: ["Fast Food", "Fine Dining", "Cafes", "Bakeries","food"],
+  }
 ];
 

@@ -207,7 +207,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
 
           <CardContent className="p-2 flex-1 flex flex-col">
             <div className=" flex-1">
-              <h3 className="text-base line-clamp-1 group-hover:text-primary transition-colors">
+              <h3 className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
                 {product.name}
               </h3>
               <div className="flex items-center gap-2">

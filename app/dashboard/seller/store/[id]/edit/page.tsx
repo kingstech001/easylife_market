@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save, Upload } from "lucide-react";
+import { Loader2, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  BusinessHoursEditor,
+  BusinessHours,
+  DEFAULT_BUSINESS_HOURS,
+} from "@/components/business-hours-editor";
 
 interface StoreData {
   _id: string;
@@ -25,6 +30,7 @@ interface StoreData {
   description?: string;
   logo_url?: string;
   banner_url?: string;
+  businessHours?: BusinessHours;
 }
 
 export default function StoreSettingsPage() {
@@ -43,6 +49,11 @@ export default function StoreSettingsPage() {
   const [bannerUrl, setBannerUrl] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // ✅ Business hours state — pre-filled from DB or default
+  const [businessHours, setBusinessHours] = useState<BusinessHours>(
+    DEFAULT_BUSINESS_HOURS
+  );
+
   // Fetch store data
   useEffect(() => {
     const fetchStore = async () => {
@@ -50,9 +61,7 @@ export default function StoreSettingsPage() {
       try {
         const response = await fetch("/api/dashboard/seller/store");
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch store");
-        }
+        if (!response.ok) throw new Error("Failed to fetch store");
 
         const data = await response.json();
         const store: StoreData = data.store;
@@ -62,6 +71,13 @@ export default function StoreSettingsPage() {
         setDescription(store.description || "");
         setLogoUrl(store.logo_url || "");
         setBannerUrl(store.banner_url || "");
+
+        // ✅ Use DB hours if valid, otherwise fall back to defaults
+        if (store.businessHours && isValidBusinessHours(store.businessHours)) {
+          setBusinessHours(store.businessHours);
+        } else {
+          setBusinessHours(DEFAULT_BUSINESS_HOURS);
+        }
       } catch (error) {
         console.error("Error fetching store:", error);
         toast.error("Failed to load store settings");
@@ -71,6 +87,18 @@ export default function StoreSettingsPage() {
     };
     fetchStore();
   }, []);
+
+  // ✅ Same validation logic as page.tsx — check if at least one day has real data
+  function isValidBusinessHours(bh: any): boolean {
+    if (!bh || typeof bh !== "object") return false;
+    const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+    return days.some(
+      (day) =>
+        bh[day] &&
+        typeof bh[day].openTime === "string" &&
+        bh[day].openTime.includes(":")
+    );
+  }
 
   // Auto-generate slug from name
   const handleNameChange = (value: string) => {
@@ -88,9 +116,8 @@ export default function StoreSettingsPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (name.length < 3) {
+    if (name.length < 3)
       newErrors.name = "Store name must be at least 3 characters.";
-    }
 
     if (slug.length < 3) {
       newErrors.slug = "Store slug must be at least 3 characters.";
@@ -107,7 +134,6 @@ export default function StoreSettingsPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -122,11 +148,7 @@ export default function StoreSettingsPage() {
         method: "POST",
         body: formData,
       });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
+      if (!response.ok) throw new Error("Upload failed");
       const result = await response.json();
       setLogoUrl(result.secure_url);
       toast.success("Logo uploaded successfully!");
@@ -142,7 +164,6 @@ export default function StoreSettingsPage() {
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -157,11 +178,7 @@ export default function StoreSettingsPage() {
         method: "POST",
         body: formData,
       });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
+      if (!response.ok) throw new Error("Upload failed");
       const result = await response.json();
       setBannerUrl(result.secure_url);
       toast.success("Banner uploaded successfully!");
@@ -173,7 +190,7 @@ export default function StoreSettingsPage() {
     }
   };
 
-  // Submit handler
+  // Submit handler — now includes businessHours
   const handleSave = async () => {
     if (!validateForm()) {
       toast.error("Please fix the errors before saving");
@@ -191,6 +208,7 @@ export default function StoreSettingsPage() {
           description,
           logo_url: logoUrl,
           banner_url: bannerUrl,
+          businessHours, // ✅ Include updated hours in the save payload
         }),
       });
 
@@ -242,9 +260,11 @@ export default function StoreSettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="hours">Business Hours</TabsTrigger>{/* ✅ New tab */}
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
 
+        {/* ── General Tab ───────────────────────────────────────────────────── */}
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
@@ -254,7 +274,6 @@ export default function StoreSettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="name">Store Name</Label>
                 <Input
@@ -271,7 +290,6 @@ export default function StoreSettingsPage() {
                 </p>
               </div>
 
-              {/* Slug */}
               <div className="space-y-2">
                 <Label htmlFor="slug">Store URL</Label>
                 <div className="flex items-center">
@@ -293,7 +311,6 @@ export default function StoreSettingsPage() {
                 </p>
               </div>
 
-              {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">Store Description</Label>
                 <Textarea
@@ -309,6 +326,43 @@ export default function StoreSettingsPage() {
           </Card>
         </TabsContent>
 
+        {/* ✅ Business Hours Tab ────────────────────────────────────────────── */}
+        <TabsContent value="hours" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Hours</CardTitle>
+              <CardDescription>
+                Set your opening and closing times for each day of the week
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BusinessHoursEditor
+                value={businessHours}
+                onChange={setBusinessHours}
+                showHeading={false}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Save shortcut inside this tab */}
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Hours
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* ── Appearance Tab ────────────────────────────────────────────────── */}
         <TabsContent value="appearance" className="space-y-4">
           <Card>
             <CardHeader>
