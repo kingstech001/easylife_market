@@ -27,7 +27,7 @@ export const CATEGORIES: Category[] = [
   {
     name: "Restaurants",
     icon: CookingPot,
-    subcategories: ["Fast Food", "Fine Dining", "Cafes", "Bakeries","food"],
+    subcategories: ["Fast Food", "Fine Dining", "Cafes", "Bakeries","food","restaurants"],
   },
   {
     name: "Electronics",
