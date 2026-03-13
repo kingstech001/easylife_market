@@ -31,7 +31,6 @@ export default function CheckoutPage() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { formatAmount } = useFormatAmount()
 
-  // Form state for information step
   const [info, setInfo] = useState({
     firstName: "",
     lastName: "",
@@ -72,27 +71,21 @@ export default function CheckoutPage() {
   // Restore checkout state after login redirect
   useEffect(() => {
     if (!isHydrated) return
-
     try {
-      const savedRedirectData = localStorage.getItem('checkout_redirect_data')
+      const savedRedirectData = localStorage.getItem("checkout_redirect_data")
       if (savedRedirectData) {
         const data = JSON.parse(savedRedirectData)
-        
-        // Check if data is recent (within last 30 minutes)
         const age = Date.now() - data.timestamp
         if (age < 30 * 60 * 1000) {
           setInfo(data.info || info)
           setShipping(data.shipping || 0)
-          setActiveStep(data.activeStep || 'information')
-          
-          toast.success('Welcome back! Your checkout is ready.')
-          
-          // Clean up
-          localStorage.removeItem('checkout_redirect_data')
+          setActiveStep(data.activeStep || "information")
+          toast.success("Welcome back! Your checkout is ready.")
+          localStorage.removeItem("checkout_redirect_data")
         }
       }
     } catch (error) {
-      console.error('Failed to restore checkout data:', error)
+      console.error("Failed to restore checkout data:", error)
     }
   }, [isHydrated])
 
@@ -109,93 +102,137 @@ export default function CheckoutPage() {
       }
     }
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     saveTimeoutRef.current = setTimeout(saveToStorage, 500)
 
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") saveToStorage()
     }
-    const handleBeforeUnload = () => {
-      saveToStorage()
-    }
+    const handleBeforeUnload = () => saveToStorage()
+
     document.addEventListener("visibilitychange", handleVisibility)
     window.addEventListener("beforeunload", handleBeforeUnload)
 
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
       document.removeEventListener("visibilitychange", handleVisibility)
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   }, [info, activeStep, shipping, isHydrated])
 
-  const isInfoValid =
-    info.firstName.trim() &&
-    info.lastName.trim() &&
-    info.email.trim() &&
-    info.address.trim() &&
-    info.state.trim() &&
-    info.area.trim()
+  // ✅ Check for Paystack callback on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const reference = urlParams.get("reference")
+    const trxref = urlParams.get("trxref")
+    const status = urlParams.get("status")
+    const paymentReference = reference || trxref
 
-  const subtotal = getTotalPrice()
-  const total = subtotal + shipping
+    if (!paymentReference) return
 
-  // ✅ Initialize payment with authentication check
+    // ✅ Handle explicit cancellation status from Paystack
+    if (status === "cancelled" || status === "cancel") {
+      toast.error("Payment was cancelled. You can try again.")
+      window.history.replaceState({}, "", "/checkout")
+      sessionStorage.removeItem("paystack_redirect_initiated")
+      return
+    }
+
+    // ✅ Only verify if we actually initiated a Paystack redirect from this browser
+    const wasRedirected = sessionStorage.getItem("paystack_redirect_initiated")
+    if (!wasRedirected) {
+      // Stale or unexpected URL params — clean up silently
+      window.history.replaceState({}, "", "/checkout")
+      return
+    }
+
+    sessionStorage.removeItem("paystack_redirect_initiated")
+    handlePaymentCallback(paymentReference)
+  }, [])
+
+  const handlePaymentCallback = async (reference: string) => {
+    setIsProcessing(true)
+    try {
+      const verifyResponse = await fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ reference }),
+      })
+
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json().catch(() => ({ error: "Unknown error" }))
+        throw new Error(errorData.error || "Failed to verify payment")
+      }
+
+      const verifyData = await verifyResponse.json()
+
+      // ✅ Handle abandoned/cancelled payments returned from Paystack
+      const paystackStatus = verifyData?.data?.status || verifyData?.status
+      if (
+        paystackStatus === "abandoned" ||
+        paystackStatus === "cancelled" ||
+        paystackStatus === "failed"
+      ) {
+        toast.error("Payment was not completed. You can try again.")
+        window.history.replaceState({}, "", "/checkout")
+        setIsProcessing(false)
+        return
+      }
+
+      // ✅ Payment successful
+      console.log("✅ Payment verified successfully, clearing cart...")
+      clearCart()
+      localStorage.removeItem(CHECKOUT_STORAGE_KEY)
+      localStorage.removeItem("checkout_redirect_data")
+      sessionStorage.removeItem("pending_payment_reference")
+
+      toast.success("Payment successful! Your order has been placed.")
+      router.push(`/checkout/payment-success?reference=${reference}`)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
+      console.error("❌ Payment verification error:", errorMessage)
+      toast.error(errorMessage)
+      // ✅ Use replaceState instead of router.replace to avoid re-triggering the useEffect
+      window.history.replaceState({}, "", "/checkout")
+      setIsProcessing(false)
+    }
+  }
+
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
-      // ✅ STEP 1: Check authentication using your /api/me endpoint
-      const userResponse = await fetch('/api/me', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // Check authentication
+      const userResponse = await fetch("/api/me", {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       })
-      
-      // Parse response
+
       const userData = await userResponse.json()
-      
-      // Check if user is authenticated
-      // Your API returns { user: null } when not authenticated
+
       if (!userResponse.ok || !userData.user) {
-        console.error('Authentication check failed:', userResponse.status, userData)
-        
-        // Save current checkout state before redirecting
         try {
-          localStorage.setItem('checkout_redirect_data', JSON.stringify({
-            info,
-            shipping,
-            activeStep,
-            timestamp: Date.now()
-          }))
+          localStorage.setItem(
+            "checkout_redirect_data",
+            JSON.stringify({ info, shipping, activeStep, timestamp: Date.now() })
+          )
         } catch (e) {
-          console.error('Failed to save checkout state:', e)
+          console.error("Failed to save checkout state:", e)
         }
-        
-        toast.error('Please log in to complete your purchase')
-        
-        // Redirect to login (adjust this path to match your login route)
-        router.push('/auth/login?redirect=/checkout')
-        setIsInitializing(false)
-        return
-      }
-      
-      // Extract user ID - your API returns user._id
-      const userId = userData.user._id || userData.user.id
-      
-      if (!userId) {
-        console.error('User ID not found in response:', userData)
-        toast.error('User ID not found. Please log in again.')
-        router.push('/auth/login?redirect=/checkout')
+        toast.error("Please log in to complete your purchase")
+        router.push("/auth/login?redirect=/checkout")
         setIsInitializing(false)
         return
       }
 
-      console.log('✅ User authenticated:', userId)
-      console.log('User data:', userData.user)
+      const userId = userData.user._id || userData.user.id
+
+      if (!userId) {
+        toast.error("User ID not found. Please log in again.")
+        router.push("/auth/login?redirect=/checkout")
+        setIsInitializing(false)
+        return
+      }
 
       // Group items by store
       const groupedByStore: Record<string, typeof cartItems> = {}
@@ -204,8 +241,6 @@ export default function CheckoutPage() {
         groupedByStore[item.storeId].push(item)
       })
 
-      // Prepare orders with ONLY productId and quantity
-      // Server will fetch prices and validate
       const orders = Object.entries(groupedByStore).map(([storeId, storeItems]) => ({
         storeId,
         items: storeItems.map((item) => ({
@@ -214,18 +249,14 @@ export default function CheckoutPage() {
         })),
       }))
 
-      console.log('📦 Prepared orders:', orders)
-
       // Initialize payment
       const initResponse = await fetch("/api/paystack/initialize", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include', // Include cookies
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: info.email,
-          amount: total, // For display/validation only - server recalculates
+          amount: total,
           type: "checkout",
           orders,
           shippingInfo: {
@@ -239,7 +270,7 @@ export default function CheckoutPage() {
           },
           deliveryFee: shipping,
           paymentMethod: "card",
-          userId, // ✅ CRITICAL: Include userId for webhook
+          userId,
         }),
       })
 
@@ -249,113 +280,54 @@ export default function CheckoutPage() {
         throw new Error(initData.error || "Failed to initialize payment")
       }
 
-      console.log('✅ Payment initialized:', initData.reference)
+      console.log("✅ Payment initialized:", initData.reference)
 
-      // Store reference for verification after payment
       sessionStorage.setItem("pending_payment_reference", initData.reference)
+      // ✅ Flag that we're intentionally leaving for Paystack
+      sessionStorage.setItem("paystack_redirect_initiated", "true")
+      localStorage.removeItem("checkout_redirect_data")
 
-      // Clear checkout form data since we're proceeding
-      localStorage.removeItem('checkout_redirect_data')
-
-      // Redirect to Paystack
+      // Navigate to Paystack — page unloads here
       window.location.href = initData.authorization_url
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to initialize payment"
-      console.error('❌ Payment initialization error:', errorMessage)
+      console.error("❌ Payment initialization error:", errorMessage)
       toast.error(errorMessage)
+      // ✅ Always reset on error
       setIsInitializing(false)
     }
   }
 
-  // Check for payment callback on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const reference = urlParams.get("reference")
-    const trxref = urlParams.get("trxref")
-    
-    const paymentReference = reference || trxref
-
-    if (paymentReference) {
-      // Payment callback detected
-      handlePaymentCallback(paymentReference)
-    }
-  }, [])
-
-  const handlePaymentCallback = async (reference: string) => {
-    setIsProcessing(true)
-    try {
-      // SECURE: Only send reference - server has everything else
-      const verifyResponse = await fetch("/api/payment/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          reference, // ✅ Only reference - no orderData!
-        }),
-      })
-
-      if (!verifyResponse.ok) {
-        const errorData = await verifyResponse.json().catch(() => ({ error: "Unknown error" }))
-        throw new Error(errorData.error || "Failed to verify payment")
-      }
-
-      const verifyData = await verifyResponse.json()
-
-      // ✅ Clear cart immediately after successful payment verification
-      console.log('✅ Payment verified successfully, clearing cart...')
-      clearCart()
-      
-      // Clear saved checkout data
-      localStorage.removeItem(CHECKOUT_STORAGE_KEY)
-      localStorage.removeItem('checkout_redirect_data')
-      sessionStorage.removeItem("pending_payment_reference")
-
-      toast.success("Payment successful! Your order has been placed.")
-
-      // Redirect to confirmation
-      router.push(`/checkout/payment-success?reference=${reference}`)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
-      console.error('❌ Payment verification error:', errorMessage)
-      toast.error(errorMessage)
-      // Clean up URL
-      router.replace("/checkout")
-      setIsProcessing(false)
-    }
-  }
-
   const handleContinue = () => {
-    if (activeStep === "information") {
-      if (isInfoValid) setActiveStep("payment")
-    }
+    if (activeStep === "information" && isInfoValid) setActiveStep("payment")
   }
 
   const handleBack = () => {
-    if (activeStep === "payment") {
-      setActiveStep("information")
-    }
+    if (activeStep === "payment") setActiveStep("information")
   }
 
   const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedArea = e.target.value
     setInfo({ ...info, area: selectedArea })
-
     switch (selectedArea) {
-      case "Enugu":
-        setShipping(5000)
-        break
-      case "Nsukka":
-        setShipping(3000)
-        break
-      case "Enugu Ezike":
-        setShipping(2000)
-        break
-      default:
-        setShipping(0)
+      case "Enugu":       setShipping(5000); break
+      case "Nsukka":      setShipping(3000); break
+      case "Enugu Ezike": setShipping(2000); break
+      default:            setShipping(0)
     }
   }
+
+  const isInfoValid =
+    info.firstName.trim() &&
+    info.lastName.trim() &&
+    info.email.trim() &&
+    info.address.trim() &&
+    info.state.trim() &&
+    info.area.trim()
+
+  const subtotal = getTotalPrice()
+  const total = subtotal + shipping
 
   if (cartItems.length === 0 && !isProcessing) {
     return (
@@ -401,6 +373,7 @@ export default function CheckoutPage() {
           </div>
         </AnimatedContainer>
 
+        {/* Payment verification overlay */}
         {isProcessing && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
             <Card className="p-8 max-w-md mx-4">
@@ -468,6 +441,7 @@ export default function CheckoutPage() {
                 </TabsTrigger>
               </TabsList>
 
+              {/* Information Step */}
               <TabsContent value="information" className="space-y-6 mt-0">
                 <AnimatedContainer animation="fadeIn">
                   <Card className="border-2 shadow-lg">
@@ -560,12 +534,8 @@ export default function CheckoutPage() {
                             className="w-full h-11 rounded-xl border-2 px-3 py-2 text-sm bg-transparent"
                             disabled={isProcessing || isInitializing}
                           >
-                            <option className="bg-background text-foreground" value="">
-                              Select a state
-                            </option>
-                            <option className="bg-background text-foreground" value="Enugu">
-                              Enugu
-                            </option>
+                            <option className="bg-background text-foreground" value="">Select a state</option>
+                            <option className="bg-background text-foreground" value="Enugu">Enugu</option>
                           </select>
                         </div>
                         <div className="space-y-2">
@@ -577,18 +547,10 @@ export default function CheckoutPage() {
                             className="w-full h-11 rounded-xl border-2 px-3 py-2 text-sm bg-transparent"
                             disabled={isProcessing || isInitializing}
                           >
-                            <option className="bg-background text-foreground" value="">
-                              Select delivery area
-                            </option>
-                            <option className="bg-background text-foreground" value="Enugu">
-                              Enugu town - ₦5,000
-                            </option>
-                            <option className="bg-background text-foreground" value="Nsukka">
-                              Nsukka - ₦3,000
-                            </option>
-                            <option className="bg-background text-foreground" value="Enugu Ezike">
-                              Enugu Ezike - ₦2,000
-                            </option>
+                            <option className="bg-background text-foreground" value="">Select delivery area</option>
+                            <option className="bg-background text-foreground" value="Enugu">Enugu town - ₦5,000</option>
+                            <option className="bg-background text-foreground" value="Nsukka">Nsukka - ₦3,000</option>
+                            <option className="bg-background text-foreground" value="Enugu Ezike">Enugu Ezike - ₦2,000</option>
                           </select>
                         </div>
                       </div>
@@ -622,6 +584,7 @@ export default function CheckoutPage() {
                 </div>
               </TabsContent>
 
+              {/* Payment Step */}
               <TabsContent value="payment" className="space-y-6 mt-0">
                 <AnimatedContainer animation="fadeIn">
                   <Card className="border-2 shadow-lg">
@@ -640,7 +603,7 @@ export default function CheckoutPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between space-x-2 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4 transition-all duration-200">
                           <div className="flex items-center space-x-4">
-                            <Image src={"/paystack.jpeg"} alt="paystack-logo" width={50} height={50}></Image>
+                            <Image src="/paystack.jpeg" alt="paystack-logo" width={50} height={50} />
                             <div>
                               <p className="text-[12px] font-semibold md:text-base">Paystack Payment</p>
                               <p className="text-[10px] md:text-sm text-muted-foreground">
@@ -731,10 +694,12 @@ export default function CheckoutPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 p-6">
-                {/* Cart Items */}
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
                   {cartItems.map((item) => (
-                    <Card key={`${item.id}-${item.selectedVariant?.color?.hex || ''}-${item.selectedVariant?.size || ''}`} className="border-2 hover:border-primary/50 transition-all overflow-hidden">
+                    <Card
+                      key={`${item.id}-${item.selectedVariant?.color?.hex || ""}-${item.selectedVariant?.size || ""}`}
+                      className="border-2 hover:border-primary/50 transition-all overflow-hidden"
+                    >
                       <CardContent className="p-3">
                         <div className="flex gap-3">
                           <div className="relative h-20 w-20 overflow-hidden rounded-xl border-2 flex-shrink-0 bg-muted">
@@ -758,7 +723,9 @@ export default function CheckoutPage() {
                                           style={{ backgroundColor: item.selectedVariant.color.hex }}
                                           title={item.selectedVariant.color.name}
                                         />
-                                        <span className="text-xs text-muted-foreground">{item.selectedVariant.color.name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {item.selectedVariant.color.name}
+                                        </span>
                                       </div>
                                     )}
                                     {item.selectedVariant.size && (
@@ -790,7 +757,9 @@ export default function CheckoutPage() {
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
-                                <span className="px-3 text-xs font-bold min-w-[2rem] text-center">{item.quantity}</span>
+                                <span className="px-3 text-xs font-bold min-w-[2rem] text-center">
+                                  {item.quantity}
+                                </span>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -814,7 +783,6 @@ export default function CheckoutPage() {
 
                 <Separator className="my-4" />
 
-                {/* Totals */}
                 <Card className="border-0 bg-muted/50">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between text-sm">
