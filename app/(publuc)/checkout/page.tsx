@@ -41,6 +41,12 @@ export default function CheckoutPage() {
     area: "",
   })
 
+  // ✅ Safety reset — clears any stuck loading states on every fresh mount
+  useEffect(() => {
+    setIsInitializing(false)
+    setIsProcessing(false)
+  }, [])
+
   // Load saved checkout data on mount
   useEffect(() => {
     try {
@@ -120,36 +126,7 @@ export default function CheckoutPage() {
     }
   }, [info, activeStep, shipping, isHydrated])
 
-  // ✅ Check for Paystack callback on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const reference = urlParams.get("reference")
-    const trxref = urlParams.get("trxref")
-    const status = urlParams.get("status")
-    const paymentReference = reference || trxref
-
-    if (!paymentReference) return
-
-    // ✅ Handle explicit cancellation status from Paystack
-    if (status === "cancelled" || status === "cancel") {
-      toast.error("Payment was cancelled. You can try again.")
-      window.history.replaceState({}, "", "/checkout")
-      sessionStorage.removeItem("paystack_redirect_initiated")
-      return
-    }
-
-    // ✅ Only verify if we actually initiated a Paystack redirect from this browser
-    const wasRedirected = sessionStorage.getItem("paystack_redirect_initiated")
-    if (!wasRedirected) {
-      // Stale or unexpected URL params — clean up silently
-      window.history.replaceState({}, "", "/checkout")
-      return
-    }
-
-    sessionStorage.removeItem("paystack_redirect_initiated")
-    handlePaymentCallback(paymentReference)
-  }, [])
-
+  // ✅ Defined BEFORE the useEffect that calls it
   const handlePaymentCallback = async (reference: string) => {
     setIsProcessing(true)
     try {
@@ -167,7 +144,7 @@ export default function CheckoutPage() {
 
       const verifyData = await verifyResponse.json()
 
-      // ✅ Handle abandoned/cancelled payments returned from Paystack
+      // ✅ Handle abandoned/cancelled payments
       const paystackStatus = verifyData?.data?.status || verifyData?.status
       if (
         paystackStatus === "abandoned" ||
@@ -193,16 +170,43 @@ export default function CheckoutPage() {
       const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
       console.error("❌ Payment verification error:", errorMessage)
       toast.error(errorMessage)
-      // ✅ Use replaceState instead of router.replace to avoid re-triggering the useEffect
       window.history.replaceState({}, "", "/checkout")
       setIsProcessing(false)
     }
   }
 
+  // ✅ Check for Paystack callback on mount — AFTER handlePaymentCallback is defined
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const reference = urlParams.get("reference")
+    const trxref = urlParams.get("trxref")
+    const status = urlParams.get("status")
+    const paymentReference = reference || trxref
+
+    if (!paymentReference) return
+
+    // ✅ Handle explicit cancellation status
+    if (status === "cancelled" || status === "cancel") {
+      toast.error("Payment was cancelled. You can try again.")
+      window.history.replaceState({}, "", "/checkout")
+      sessionStorage.removeItem("paystack_redirect_initiated")
+      return
+    }
+
+    // ✅ Only verify if we actually initiated a redirect
+    const wasRedirected = sessionStorage.getItem("paystack_redirect_initiated")
+    if (!wasRedirected) {
+      window.history.replaceState({}, "", "/checkout")
+      return
+    }
+
+    sessionStorage.removeItem("paystack_redirect_initiated")
+    handlePaymentCallback(paymentReference)
+  }, [])
+
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
-      // Check authentication
       const userResponse = await fetch("/api/me", {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -234,6 +238,9 @@ export default function CheckoutPage() {
         return
       }
 
+      console.log("✅ User authenticated:", userId)
+      console.log("User data:", userData.user)
+
       // Group items by store
       const groupedByStore: Record<string, typeof cartItems> = {}
       cartItems.forEach((item) => {
@@ -249,7 +256,8 @@ export default function CheckoutPage() {
         })),
       }))
 
-      // Initialize payment
+      console.log("📦 Prepared orders:", orders)
+
       const initResponse = await fetch("/api/paystack/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -283,18 +291,16 @@ export default function CheckoutPage() {
       console.log("✅ Payment initialized:", initData.reference)
 
       sessionStorage.setItem("pending_payment_reference", initData.reference)
-      // ✅ Flag that we're intentionally leaving for Paystack
       sessionStorage.setItem("paystack_redirect_initiated", "true")
       localStorage.removeItem("checkout_redirect_data")
 
-      // Navigate to Paystack — page unloads here
+      // ✅ Page fully unloads here — isInitializing resets on return via the safety useEffect
       window.location.href = initData.authorization_url
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to initialize payment"
       console.error("❌ Payment initialization error:", errorMessage)
       toast.error(errorMessage)
-      // ✅ Always reset on error
       setIsInitializing(false)
     }
   }
@@ -373,7 +379,6 @@ export default function CheckoutPage() {
           </div>
         </AnimatedContainer>
 
-        {/* Payment verification overlay */}
         {isProcessing && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
             <Card className="p-8 max-w-md mx-4">
@@ -387,7 +392,6 @@ export default function CheckoutPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
           <div className="lg:col-span-2">
             <Tabs value={activeStep} className="w-full">
               <TabsList className="w-full grid grid-cols-2 mb-8 bg-muted/50 p-1.5 rounded-2xl h-auto">
@@ -441,7 +445,6 @@ export default function CheckoutPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Information Step */}
               <TabsContent value="information" className="space-y-6 mt-0">
                 <AnimatedContainer animation="fadeIn">
                   <Card className="border-2 shadow-lg">
@@ -584,7 +587,6 @@ export default function CheckoutPage() {
                 </div>
               </TabsContent>
 
-              {/* Payment Step */}
               <TabsContent value="payment" className="space-y-6 mt-0">
                 <AnimatedContainer animation="fadeIn">
                   <Card className="border-2 shadow-lg">
