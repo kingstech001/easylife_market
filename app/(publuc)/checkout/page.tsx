@@ -41,12 +41,6 @@ export default function CheckoutPage() {
     area: "",
   })
 
-  // ✅ Safety reset — clears any stuck loading states on every fresh mount
-  useEffect(() => {
-    setIsInitializing(false)
-    setIsProcessing(false)
-  }, [])
-
   // Load saved checkout data on mount
   useEffect(() => {
     try {
@@ -144,16 +138,15 @@ export default function CheckoutPage() {
 
       const verifyData = await verifyResponse.json()
 
-      // ✅ Handle abandoned/cancelled payments
       const paystackStatus = verifyData?.data?.status || verifyData?.status
       if (
         paystackStatus === "abandoned" ||
         paystackStatus === "cancelled" ||
         paystackStatus === "failed"
       ) {
-        toast.error("Payment was not completed. You can try again.")
-        window.history.replaceState({}, "", "/checkout")
-        setIsProcessing(false)
+        // ✅ Hard reload — cleanest way to reset all state
+        sessionStorage.setItem("checkout_cancelled_message", "Payment was not completed. You can try again.")
+        window.location.replace("/checkout")
         return
       }
 
@@ -169,34 +162,39 @@ export default function CheckoutPage() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
       console.error("❌ Payment verification error:", errorMessage)
-      toast.error(errorMessage)
-      window.history.replaceState({}, "", "/checkout")
-      setIsProcessing(false)
+      // ✅ Hard reload on error too
+      sessionStorage.setItem("checkout_cancelled_message", errorMessage)
+      window.location.replace("/checkout")
     }
   }
 
-  // ✅ Check for Paystack callback on mount — AFTER handlePaymentCallback is defined
+  // ✅ Check for Paystack callback on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const reference = urlParams.get("reference")
     const trxref = urlParams.get("trxref")
-    const status = urlParams.get("status")
     const paymentReference = reference || trxref
 
-    if (!paymentReference) return
-
-    // ✅ Handle explicit cancellation status
-    if (status === "cancelled" || status === "cancel") {
-      toast.error("Payment was cancelled. You can try again.")
-      window.history.replaceState({}, "", "/checkout")
+    if (!paymentReference) {
+      // ✅ Clean load — reset all loading states
+      setIsInitializing(false)
+      setIsProcessing(false)
       sessionStorage.removeItem("paystack_redirect_initiated")
+
+      // ✅ Show any pending toast from a previous cancelled/failed attempt
+      const pendingMessage = sessionStorage.getItem("checkout_cancelled_message")
+      if (pendingMessage) {
+        sessionStorage.removeItem("checkout_cancelled_message")
+        setTimeout(() => toast.error(pendingMessage), 100)
+      }
       return
     }
 
     // ✅ Only verify if we actually initiated a redirect
     const wasRedirected = sessionStorage.getItem("paystack_redirect_initiated")
     if (!wasRedirected) {
-      window.history.replaceState({}, "", "/checkout")
+      // Stale params — hard reload to clean page
+      window.location.replace("/checkout")
       return
     }
 
@@ -207,6 +205,7 @@ export default function CheckoutPage() {
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
+      // Check authentication
       const userResponse = await fetch("/api/me", {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -294,7 +293,10 @@ export default function CheckoutPage() {
       sessionStorage.setItem("paystack_redirect_initiated", "true")
       localStorage.removeItem("checkout_redirect_data")
 
-      // ✅ Page fully unloads here — isInitializing resets on return via the safety useEffect
+      // ✅ Stop spinner before leaving — mobile browsers may cache the page
+      setIsInitializing(false)
+
+      // ✅ Navigate to Paystack — page fully unloads
       window.location.href = initData.authorization_url
 
     } catch (error) {
@@ -445,6 +447,7 @@ export default function CheckoutPage() {
                 </TabsTrigger>
               </TabsList>
 
+              {/* Information Step */}
               <TabsContent value="information" className="space-y-6 mt-0">
                 <AnimatedContainer animation="fadeIn">
                   <Card className="border-2 shadow-lg">
@@ -587,6 +590,7 @@ export default function CheckoutPage() {
                 </div>
               </TabsContent>
 
+              {/* Payment Step */}
               <TabsContent value="payment" className="space-y-6 mt-0">
                 <AnimatedContainer animation="fadeIn">
                   <Card className="border-2 shadow-lg">
