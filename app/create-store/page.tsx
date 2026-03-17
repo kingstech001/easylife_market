@@ -52,8 +52,10 @@ import {
 // Schema
 // ─────────────────────────────────────────────────────────────────────────────
 
+const STORE_CATEGORIES = ["restaurants", "shop", "pharmacy"] as const
+type StoreCategory = typeof STORE_CATEGORIES[number]
+
 const storeFormSchema = z.object({
-  // Step 1
   name: z
     .string()
     .min(3, { message: "Store name must be at least 3 characters." }),
@@ -64,13 +66,9 @@ const storeFormSchema = z.object({
       message: "Slug can only contain lowercase letters, numbers, and hyphens.",
     }),
   description: z.string().optional(),
-  categories: z.string().optional(),
-
-  // Step 2
+  categories: z.enum(STORE_CATEGORIES).optional(),
   location: z.string().min(5, { message: "Please provide a valid address." }),
   phone: z.string().min(7).optional().or(z.literal("")),
-
-  // Step 3
   logo_url: z.string().optional(),
   banner_url: z.string().optional(),
 });
@@ -114,6 +112,36 @@ const STEPS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ✅ Category options with descriptions
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CATEGORY_OPTIONS: {
+  value: StoreCategory
+  label: string
+  emoji: string
+  description: string
+}[] = [
+  {
+    value: "restaurants",
+    label: "Restaurant",
+    emoji: "🍽️",
+    description: "Restaurants, cafés, food trucks, cloud kitchens ...",
+  },
+  {
+    value: "shop",
+    label: "Shop",
+    emoji: "🛍️",
+    description: "Mini marts, super markets, electronics, beauty stores ...",
+  },
+  {
+    value: "pharmacy",
+    label: "Pharmacy",
+    emoji: "💊",
+    description: "Pharmacies, drug stores, health retailers ...",
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -131,8 +159,7 @@ export default function CreateStorePage() {
     DEFAULT_BUSINESS_HOURS,
   );
 
-  // Tracks whether the seller tried to submit without uploading
-  const [logoError,   setLogoError]   = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [bannerError, setBannerError] = useState(false);
 
   const form = useForm<StoreFormValues>({
@@ -141,7 +168,7 @@ export default function CreateStorePage() {
       name: "",
       slug: "",
       description: "",
-      categories: "",
+      categories: undefined,
       location: "",
       phone: "",
       logo_url: "",
@@ -165,8 +192,8 @@ export default function CreateStorePage() {
       }
       if (savedPreviews) {
         const p = JSON.parse(savedPreviews);
-        if (p.logo)   { setLogoPreview(p.logo);     setLogoError(false);   }
-        if (p.banner) { setBannerPreview(p.banner);  setBannerError(false); }
+        if (p.logo)   { setLogoPreview(p.logo);    setLogoError(false);   }
+        if (p.banner) { setBannerPreview(p.banner); setBannerError(false); }
       }
       if (savedHours) setBusinessHours(JSON.parse(savedHours));
     } catch {}
@@ -276,12 +303,11 @@ export default function CreateStorePage() {
     reader.onload = (ev) => {
       const r = ev.target?.result as string;
       setPreview(r);
-      setError(false); // clear error once a file is chosen
+      setError(false);
       form.setValue(formField, "uploaded", { shouldDirty: true });
       toast.success(`${label} uploaded`);
     };
     reader.readAsDataURL(file);
-    // allow re-selecting the same file
     e.target.value = "";
   };
 
@@ -293,7 +319,6 @@ export default function CreateStorePage() {
       return;
     }
 
-    // ── Guard: both logo and banner must be uploaded ─────────────────────────
     const missingLogo   = !logoPreview;
     const missingBanner = !bannerPreview;
 
@@ -301,7 +326,6 @@ export default function CreateStorePage() {
     if (missingBanner) setBannerError(true);
 
     if (missingLogo || missingBanner) {
-      // Take seller to step 3 so they can see exactly what's missing
       if (currentStep !== 3) setCurrentStep(3);
       toast.error(
         missingLogo && missingBanner
@@ -327,12 +351,7 @@ export default function CreateStorePage() {
           ...data,
           logo_url: logoPreview,
           banner_url: bannerPreview,
-          categories: data.categories
-            ? data.categories
-                .split(",")
-                .map((c) => c.trim())
-                .filter(Boolean)
-            : [],
+          categories: data.categories ? [data.categories] : [],
           businessHours,
         }),
       });
@@ -344,9 +363,7 @@ export default function CreateStorePage() {
       [STORAGE_KEY, PREVIEW_STORAGE_KEY, HOURS_STORAGE_KEY].forEach((k) =>
         localStorage.removeItem(k),
       );
-      toast.success("Store created!", {
-        description: "Your store is now live.",
-      });
+      toast.success("Store created!", { description: "Your store is now live." });
       router.push("/store-builder");
     } catch {
       toast.error("An unexpected error occurred");
@@ -356,16 +373,10 @@ export default function CreateStorePage() {
   }
 
   const isLastStep = currentStep === STEPS.length;
-  // Launch button is visually dimmed until both images are ready
   const readyToLaunch = !!logoPreview && !!bannerPreview;
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-6 sm:py-10 px-3 sm:px-4 lg:px-8">
-      {/* Background blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#c0a146]/10 rounded-full blur-3xl" />
         <div className="absolute top-1/2 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
@@ -376,7 +387,7 @@ export default function CreateStorePage() {
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <AnimatedContainer animation="fadeIn" className="mb-8 p-5">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 sm:mb-10">
               <div className="relative">
                 <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-[#c0a146] to-[#d4b55e] flex items-center justify-center shadow-xl">
                   <StoreIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -399,12 +410,22 @@ export default function CreateStorePage() {
                 variant="outline"
                 size="sm"
                 onClick={clearDraft}
-                className="gap-1.5 text-xs border-destructive/50 text-destructive hover:bg-destructive/10"
+                className="gap-1.5 text-xs border-destructive/50 text-destructive hover:bg-destructive/10 hidden sm:flex mb-auto"
               >
                 <RotateCcw className="h-3 w-3" /> Clear Draft
               </Button>
             )}
           </div>
+          {hasDraft && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearDraft}
+                className="gap-1.5 text-xs border-destructive/50 text-destructive hover:bg-destructive/10 sm:hidden flex ml-auto mb-10"
+              >
+                <RotateCcw className="h-3 w-3" /> Clear Draft
+              </Button>
+            )}
 
           {/* Step indicator */}
           <div className="flex justify-between items-center m-auto">
@@ -490,6 +511,7 @@ export default function CreateStorePage() {
         {/* ── Form ───────────────────────────────────────────────────────────── */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+
             {/* STEP 1 — Store Identity */}
             {currentStep === 1 && (
               <AnimatedContainer animation="slideUp" delay={0.05}>
@@ -507,8 +529,7 @@ export default function CreateStorePage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Store Name{" "}
-                            <span className="text-destructive">*</span>
+                            Store Name <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <IconInput
@@ -528,8 +549,7 @@ export default function CreateStorePage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Store URL{" "}
-                            <span className="text-destructive">*</span>
+                            Store URL <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <div className="flex items-stretch overflow-hidden rounded-lg border border-border/50 focus-within:border-[#c0a146] transition-all">
@@ -574,21 +594,72 @@ export default function CreateStorePage() {
                       )}
                     />
 
+                    {/* ✅ Category card selector */}
                     <FormField
                       control={form.control}
                       name="categories"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Store Categories</FormLabel>
+                          <FormLabel>Store Category</FormLabel>
                           <FormControl>
-                            <IconInput
-                              icon={Tag}
-                              placeholder="Restaurants, Electronics, Fashion, Beauty..."
-                              field={field}
-                            />
+                            <div className="grid grid-cols-1 gap-3 mt-1">
+                              {CATEGORY_OPTIONS.map((opt) => {
+                                const isSelected = field.value === opt.value
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => field.onChange(opt.value)}
+                                    className={cn(
+                                      "flex items-center gap-4 w-full rounded-xl border-2 px-4 py-3.5 text-left transition-all duration-200",
+                                      isSelected
+                                        ? "border-[#c0a146] bg-[#c0a146]/5 shadow-sm"
+                                        : "border-border/50 hover:border-[#c0a146]/40 hover:bg-muted/30",
+                                    )}
+                                  >
+                                    {/* Emoji */}
+                                    <div
+                                      className={cn(
+                                        "h-11 w-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-colors",
+                                        isSelected ? "bg-[#c0a146]/15" : "bg-muted/50",
+                                      )}
+                                    >
+                                      {opt.emoji}
+                                    </div>
+
+                                    {/* Text */}
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn(
+                                        "text-sm font-semibold leading-tight",
+                                        isSelected ? "text-[#c0a146]" : "text-foreground",
+                                      )}>
+                                        {opt.label}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                        {opt.description}
+                                      </p>
+                                    </div>
+
+                                    {/* Radio indicator */}
+                                    <div
+                                      className={cn(
+                                        "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
+                                        isSelected
+                                          ? "border-[#c0a146] bg-[#c0a146]"
+                                          : "border-border",
+                                      )}
+                                    >
+                                      {isSelected && (
+                                        <Check className="h-3 w-3 text-white" />
+                                      )}
+                                    </div>
+                                  </button>
+                                )
+                              })}
+                            </div>
                           </FormControl>
                           <FormDescription className="text-xs">
-                            Separate with commas
+                            Choose the category that best describes your store
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -616,8 +687,7 @@ export default function CreateStorePage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Store Address{" "}
-                            <span className="text-destructive">*</span>
+                            Store Address <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <IconInput
@@ -661,7 +731,6 @@ export default function CreateStorePage() {
                       )}
                     />
 
-                    {/* Business Hours */}
                     <div className="border-t border-border/40 pt-5">
                       <BusinessHoursEditor
                         value={businessHours}
@@ -685,7 +754,6 @@ export default function CreateStorePage() {
                       subtitle="Logo & banner are required to launch"
                     />
 
-                    {/* Required notice banner */}
                     <div className="flex items-start gap-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 px-4 py-3">
                       <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                       <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
@@ -720,11 +788,7 @@ export default function CreateStorePage() {
                           >
                             {logoPreview ? (
                               <>
-                                <img
-                                  src={logoPreview}
-                                  alt="Logo"
-                                  className="h-full w-full object-cover"
-                                />
+                                <img src={logoPreview} alt="Logo" className="h-full w-full object-cover" />
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -739,18 +803,8 @@ export default function CreateStorePage() {
                               </>
                             ) : (
                               <div className="text-center p-2">
-                                <Upload
-                                  className={cn(
-                                    "h-6 w-6 mx-auto mb-1",
-                                    logoError ? "text-destructive/50" : "text-muted-foreground",
-                                  )}
-                                />
-                                <p
-                                  className={cn(
-                                    "text-[10px]",
-                                    logoError ? "text-destructive/70 font-medium" : "text-muted-foreground",
-                                  )}
-                                >
+                                <Upload className={cn("h-6 w-6 mx-auto mb-1", logoError ? "text-destructive/50" : "text-muted-foreground")} />
+                                <p className={cn("text-[10px]", logoError ? "text-destructive/70 font-medium" : "text-muted-foreground")}>
                                   {logoError ? "Required" : "Logo"}
                                 </p>
                               </div>
@@ -769,9 +823,7 @@ export default function CreateStorePage() {
                                 ? "border-destructive/50 text-destructive hover:border-destructive hover:bg-destructive/5"
                                 : "border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5",
                             )}
-                            onClick={() =>
-                              document.getElementById("logo-upload")?.click()
-                            }
+                            onClick={() => document.getElementById("logo-upload")?.click()}
                           >
                             <Upload className="mr-2 h-4 w-4" />
                             {logoPreview ? "Change Logo" : "Upload Logo"}
@@ -792,9 +844,7 @@ export default function CreateStorePage() {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) =>
-                          handleFileUpload(e, setLogoPreview, setLogoError, "logo_url", "Logo")
-                        }
+                        onChange={(e) => handleFileUpload(e, setLogoPreview, setLogoError, "logo_url", "Logo")}
                       />
                     </div>
 
@@ -826,11 +876,7 @@ export default function CreateStorePage() {
                         >
                           {bannerPreview ? (
                             <>
-                              <img
-                                src={bannerPreview}
-                                alt="Banner"
-                                className="h-full w-full object-cover"
-                              />
+                              <img src={bannerPreview} alt="Banner" className="h-full w-full object-cover" />
                               <button
                                 type="button"
                                 onClick={() => {
@@ -845,18 +891,8 @@ export default function CreateStorePage() {
                             </>
                           ) : (
                             <div className="text-center p-4">
-                              <ImageIcon
-                                className={cn(
-                                  "h-7 w-7 mx-auto mb-1.5",
-                                  bannerError ? "text-destructive/50" : "text-muted-foreground",
-                                )}
-                              />
-                              <p
-                                className={cn(
-                                  "text-xs",
-                                  bannerError ? "text-destructive/70 font-medium" : "text-muted-foreground",
-                                )}
-                              >
+                              <ImageIcon className={cn("h-7 w-7 mx-auto mb-1.5", bannerError ? "text-destructive/50" : "text-muted-foreground")} />
+                              <p className={cn("text-xs", bannerError ? "text-destructive/70 font-medium" : "text-muted-foreground")}>
                                 {bannerError ? "Banner is required" : "Click to upload banner"}
                               </p>
                             </div>
@@ -874,9 +910,7 @@ export default function CreateStorePage() {
                             ? "border-destructive/50 text-destructive hover:border-destructive hover:bg-destructive/5"
                             : "border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5",
                         )}
-                        onClick={() =>
-                          document.getElementById("banner-upload")?.click()
-                        }
+                        onClick={() => document.getElementById("banner-upload")?.click()}
                       >
                         <Upload className="mr-2 h-4 w-4" />
                         {bannerPreview ? "Change Banner" : "Upload Banner"}
@@ -896,9 +930,7 @@ export default function CreateStorePage() {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) =>
-                          handleFileUpload(e, setBannerPreview, setBannerError, "banner_url", "Banner")
-                        }
+                        onChange={(e) => handleFileUpload(e, setBannerPreview, setBannerError, "banner_url", "Banner")}
                       />
                     </div>
                   </CardContent>
@@ -957,7 +989,6 @@ export default function CreateStorePage() {
                 )}
               </div>
 
-              {/* Contextual hint below the button */}
               <p className="text-center text-xs mt-3">
                 {isLastStep ? (
                   !readyToLaunch ? (
@@ -992,7 +1023,7 @@ export default function CreateStorePage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Small local sub-components (private to this file)
+// Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SectionHeading({

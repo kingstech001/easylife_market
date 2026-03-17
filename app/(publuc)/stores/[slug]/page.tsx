@@ -38,13 +38,13 @@ const FOOD_CATEGORIES = [
 
 // ─── Fallback business hours ──────────────────────────────────────────────────
 const DEFAULT_BUSINESS_HOURS = {
-  monday:    { open: true,  openTime: "09:00", closeTime: "18:00" },
-  tuesday:   { open: true,  openTime: "09:00", closeTime: "18:00" },
-  wednesday: { open: true,  openTime: "09:00", closeTime: "18:00" },
-  thursday:  { open: true,  openTime: "09:00", closeTime: "18:00" },
-  friday:    { open: true,  openTime: "09:00", closeTime: "18:00" },
-  saturday:  { open: true,  openTime: "10:00", closeTime: "16:00" },
-  sunday:    { open: false, openTime: "10:00", closeTime: "16:00" },
+  monday:    { open: true,  openTime: "09:00", closeTime: "20:00" },
+  tuesday:   { open: true,  openTime: "09:00", closeTime: "20:00" },
+  wednesday: { open: true,  openTime: "09:00", closeTime: "20:00" },
+  thursday:  { open: true,  openTime: "09:00", closeTime: "20:00" },
+  friday:    { open: true,  openTime: "09:00", closeTime: "20:00" },
+  saturday:  { open: true,  openTime: "09:00", closeTime: "20:00" },
+  sunday:    { open: false, openTime: "09:00", closeTime: "20:00" },
 };
 
 type DayKey = keyof typeof DEFAULT_BUSINESS_HOURS;

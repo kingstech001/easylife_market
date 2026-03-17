@@ -11,12 +11,28 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight,
   Store,
   Sparkles,
   Search,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+
+// ✅ businessHours types added
+interface DaySchedule {
+  open: boolean
+  openTime: string
+  closeTime: string
+}
+
+interface BusinessHours {
+  monday:    DaySchedule
+  tuesday:   DaySchedule
+  wednesday: DaySchedule
+  thursday:  DaySchedule
+  friday:    DaySchedule
+  saturday:  DaySchedule
+  sunday:    DaySchedule
+}
 
 interface StoreData {
   _id: string;
@@ -30,6 +46,7 @@ interface StoreData {
   createdAt: string;
   updatedAt: string;
   productCount?: number;
+  businessHours?: BusinessHours; // ✅ added
 }
 
 interface HeroBanner {
@@ -90,10 +107,9 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Hero Section with Dynamic Banner */}
-      <div className="relative h-64  w-full overflow-hidden">
+      <div className="relative h-64 w-full overflow-hidden">
         {heroBanner?.imageUrl ? (
           <>
-            {/* Background Image with transition */}
             <div
               className={`absolute inset-0 transition-opacity duration-500 ${
                 isTransitioning ? "opacity-0" : "opacity-100"
@@ -110,10 +126,8 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               />
             </div>
 
-            {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30" />
 
-            {/* Content */}
             <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center text-center text-white">
               <div className="flex flex-col items-center justify-center space-y-6 max-w-3xl w-full">
                 <Badge
@@ -133,7 +147,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                   </p>
                 </div>
 
-                {/* Search Bar */}
                 <div className="w-full max-w-2xl">
                   <form onSubmit={handleSearch} className="relative">
                     <Input
@@ -163,7 +176,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               </div>
             </div>
 
-            {/* Banner Change Indicator */}
             <div className="absolute bottom-4 right-4 flex gap-1">
               {[...Array(3)].map((_, i) => (
                 <div
@@ -176,7 +188,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             </div>
           </>
         ) : (
-          // Fallback gradient design
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-[#e1a200]/30 via-[#e1a200]/10 to-primary/5">
               <div className="absolute inset-0 opacity-10">
@@ -206,7 +217,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                   </h1>
                 </div>
 
-                {/* Search Bar - Fallback */}
                 <div className="w-full max-w-2xl">
                   <form onSubmit={handleSearch} className="relative">
                     <Input
@@ -242,10 +252,9 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8" id="stores">
         <div className="flex gap-6">
-          {/* Sidebar - Filters & Ads */}
+          {/* Sidebar */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
             <div className="sticky top-8 space-y-6">
-              {/* Ad Space 1 */}
               <div className="border-0 shadow-sm rounded-2xl p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
                 <div className="text-xs font-bold mb-1 text-orange-700 dark:text-orange-300 uppercase tracking-wide">
                   PROMOTE HERE
@@ -267,7 +276,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 </Link>
               </div>
 
-              {/* Ad Space 2 */}
               <div className="border-0 shadow-sm rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20">
                 <div className="text-xs font-bold mb-1 text-purple-700 dark:text-purple-300 uppercase tracking-wide">
                   FEATURED
@@ -289,7 +297,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
 
           {/* Stores Grid */}
           <main className="flex-1 min-w-0">
-            {/* Banner Ad Space */}
             <div className="border-0 shadow-lg rounded-2xl p-3 md:p-8 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
               <div className="flex items-center justify-between">
                 <div>
@@ -313,7 +320,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               </div>
             </div>
 
-            {/* Stores */}
             {stores.length === 0 ? (
               <div className="text-center py-20 space-y-6 max-w-2xl mx-auto">
                 <div className="inline-flex p-4 rounded-full bg-muted/50">
@@ -347,22 +353,20 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 </Link>
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-                  {stores.map((store, index) => (
-                    <div
-                      key={store._id}
-                      className="group relative transition-all duration-300 hover:scale-[1.02]"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="relative bg-card border-2 border-border rounded-xl overflow-hidden transition-all duration-300 group-hover:border-[#e1a200]/50 group-hover:shadow-xl group-hover:shadow-[#e1a200]/10">
-                        <StoreCard store={store} />
-                      </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+                {stores.map((store, index) => (
+                  <div
+                    key={store._id}
+                    className="group relative transition-all duration-300 hover:scale-[1.02]"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative bg-card border-2 border-border rounded-xl overflow-hidden transition-all duration-300 group-hover:border-[#e1a200]/50 group-hover:shadow-xl group-hover:shadow-[#e1a200]/10">
+                      <StoreCard store={store} />
                     </div>
-                  ))}
-                </div>
-              </>
+                  </div>
+                ))}
+              </div>
             )}
           </main>
         </div>

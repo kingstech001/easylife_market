@@ -10,7 +10,6 @@ async function getStoresData() {
     
     await connectToDB();
 
-    // Fetch all published and approved stores
     const stores = await Store.find({
       isPublished: true,
       isApproved: true,
@@ -20,7 +19,6 @@ async function getStoresData() {
 
     console.log("✅ [Server] Stores found:", stores.length);
 
-    // Count products for each store in parallel
     const storesWithProductCount = await Promise.all(
       stores.map(async (store: any) => {
         const productCount = await Product.countDocuments({
@@ -39,6 +37,7 @@ async function getStoresData() {
           createdAt: store.createdAt?.toISOString() || new Date().toISOString(),
           updatedAt: store.updatedAt?.toISOString() || new Date().toISOString(),
           productCount,
+          businessHours: store.businessHours || null, // ✅ included
         };
       })
     );
@@ -52,6 +51,5 @@ async function getStoresData() {
 
 export default async function StoresPage() {
   const stores = await getStoresData();
-
   return <StoresPageClient initialStores={stores} />;
 }

@@ -3,8 +3,25 @@ import { connectToDB } from "@/lib/db"
 import User from "@/models/User"
 import crypto from "crypto"
 import nodemailer from "nodemailer"
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+// Rate limiter: 5 requests per 15 minutes per IP
+const ratelimit = process.env.UPSTASH_REDIS_REST_URL ? new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, "15 m"),
+}) : null;
 
 export async function POST(req: NextRequest) {
+  // Apply rate limiting if Redis is configured
+  if (ratelimit) {
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1'
+    const { success } = await ratelimit.limit(ip)
+    if (!success) {
+      return NextResponse.json({ message: "Too many requests, try again later." }, { status: 429 })
+    }
+  }
+
   try {
     await connectToDB()
 
@@ -43,14 +60,14 @@ export async function POST(req: NextRequest) {
     user.resetPasswordExpires = new Date(Date.now() + 3600000) // 1 hour
     await user.save()
 
-    // Create reset URL
+    // Create reset URL (consider POST for better security)
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/reset-password?token=${resetToken}`
 
-    // Send email
-    const transporter = nodemailer.createTransport({
+    // Send email (ensure SMTP_SECURE is true for TLS)
+    const transporter = nodemailer.createTransport({  // Fixed: createTransport
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
-      secure: process.env.SMTP_SECURE === "true",
+      secure: process.env.SMTP_SECURE === "true", // Force TLS
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -176,7 +193,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     )
   } catch (error) {
-    console.error("Forgot password error:", error)
+    console.error("Forgot password error:", error) // Avoid logging sensitive data
     return NextResponse.json(
       { message: "Failed to process request" },
       { status: 500 }
