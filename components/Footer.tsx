@@ -354,10 +354,10 @@ export function ModernFooter() {
             variant="outline"
             size="sm"
             onClick={scrollToTop}
-            className="bg-background/80 backdrop-blur-sm border-border/50 hover:border-[#c0a146]/50 hover:bg-background transition-all duration-300 hover:scale-105 group"
+            className="absolute bottom-32 sm:bottom-6 right-5 sm:right-20 bg-background/80 backdrop-blur-sm border-border/50 bg-[#c0a146] hover:bg-background transition-all duration-300 hover:scale-105 group"
           >
-            <ArrowUp className="h-4 w-4 mr-2 group-hover:-translate-y-0.5 transition-transform" />
-            Back to top
+            <ArrowUp className="h-4 w-4 group-hover:-translate-y-0.5 transition-transform" />
+            
           </Button>
         </motion.div>
       )}
