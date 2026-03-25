@@ -149,7 +149,7 @@
             <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button
                 size="lg"
-                className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] hover:from-[#d4b55e] hover:via-[#e1a200] hover:to-[#d4b55e] text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full group"
+                className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] hover:from-[#d4b55e] hover:via-[#e1a200] hover:to-[#d4b55e] text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
                 >
                 Create Your Store
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -160,7 +160,7 @@
                 <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto h-14 px-8 text-lg font-bold border-2 hover:border-[#e1a200] hover:bg-[#e1a200]/5 rounded-full transition-all duration-300"
+                className="w-full sm:w-auto h-14 px-8 text-lg font-bold border-2 hover:border-[#e1a200] hover:bg-[#e1a200]/5 transition-all duration-300"
                 >
                 See Success Stories
                 </Button>

@@ -120,7 +120,7 @@ export default function AboutPage() {
 
         {/* Content sits above the background */}
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+          <div className=" gap-12 items-center max-w-6xl mx-auto">
 
             {/* Left — Text over background */}
             <motion.div
@@ -169,69 +169,7 @@ export default function AboutPage() {
             </motion.div>
 
             {/* ✅ Right — Side image panel (separate cycling card) */}
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="hidden lg:block"
-            >
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] border border-white/20">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`side-${currentImageIndex}`}
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -30 }}
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                    className="absolute inset-0"
-                  >
-                    {/* Shows the NEXT image so bg and side panel are different */}
-                    <Image
-                      src={COMMUNITY_IMAGES[(currentImageIndex + 1) % COMMUNITY_IMAGES.length].url}
-                      alt="EasyLife community"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 0vw, 40vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Caption badge */}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`caption-${currentImageIndex}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.5 }}
-                    className="absolute bottom-4 left-4 right-4 z-10"
-                  >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur-sm shadow-lg">
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {COMMUNITY_IMAGES[(currentImageIndex + 1) % COMMUNITY_IMAGES.length].caption}
-                      </span>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* ✅ Dot indicators */}
-              <div className="flex justify-center gap-2 mt-4">
-                {COMMUNITY_IMAGES.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentImageIndex(i)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i === currentImageIndex
-                        ? "w-6 bg-[#e1a200]"
-                        : "w-1.5 bg-white/40 hover:bg-white/70"
-                    }`}
-                  />
-                ))}
-              </div>
-            </motion.div>
+            
           </div>
 
           {/* ✅ Image caption shown on mobile (bottom of hero) */}
