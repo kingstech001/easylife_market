@@ -1,17 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Package, Search } from "lucide-react";
+import { ArrowRight, Package, Search, Sparkles, Store } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { CATEGORIES, buildCategorySearchUrl } from "@/components/CategoryGrid";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type Product = {
   id: string;
   name: string;
@@ -60,7 +59,16 @@ type ApiProduct = {
   updated_at?: string;
 };
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+const HERO_ROTATION_MS = 60000;
+const HERO_SWAP_DELAY_MS = 100;
+
+function formatProductCount(count: number) {
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1).replace(".0", "")}k+`;
+  }
+  return `${count}+`;
+}
+
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
@@ -70,7 +78,12 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Banner fetch
+  const categoryPreview = useMemo(() => CATEGORIES.slice(0, 8), []);
+  const productCountLabel = useMemo(
+    () => formatProductCount(products.length || 0),
+    [products.length]
+  );
+
   const fetchNewBanner = async () => {
     try {
       setIsTransitioning(true);
@@ -78,50 +91,63 @@ export default function ProductsPage() {
         signal: AbortSignal.timeout(10000),
         cache: "no-store",
       });
+
       if (bannerRes.ok) {
         const bannerData = await bannerRes.json();
         if (bannerData.banner) {
           setTimeout(() => {
             setHeroBanner(bannerData.banner);
             setIsTransitioning(false);
-          }, 50);
+          }, HERO_SWAP_DELAY_MS);
         }
+      } else {
+        setIsTransitioning(false);
       }
     } catch {
       setIsTransitioning(false);
     }
   };
 
-  useEffect(() => { fetchNewBanner(); }, []);
   useEffect(() => {
-    const interval = setInterval(fetchNewBanner, 60000);
+    fetchNewBanner();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(fetchNewBanner, HERO_ROTATION_MS);
     return () => clearInterval(interval);
   }, []);
 
-  // Products fetch
   useEffect(() => {
     async function fetchProducts() {
       try {
         setLoading(true);
         const productsRes = await fetch("/api/allStoreProducts");
-        if (!productsRes.ok) throw new Error("Failed to fetch products");
+        if (!productsRes.ok) {
+          throw new Error("Failed to fetch products");
+        }
+
         const productsData = await productsRes.json();
 
         const transformedProducts: Product[] = (productsData.products || []).map(
           (p: ApiProduct) => {
             let productImages = p.images || [];
             if (productImages.length === 0 && p.primaryImage) {
-              productImages = [{
-                id: "1", _id: "1", url: p.primaryImage,
-                alt_text: null, altText: null,
-              }];
+              productImages = [
+                {
+                  id: "1",
+                  _id: "1",
+                  url: p.primaryImage,
+                  alt_text: null,
+                  altText: null,
+                },
+              ];
             }
+
             const storeId =
               typeof p.storeId === "string" ? p.storeId : p.storeId?._id || "";
             const storeSlug =
-              typeof p.storeId === "object" && p.storeId?.slug
-                ? p.storeId.slug
-                : "";
+              typeof p.storeId === "object" && p.storeId?.slug ? p.storeId.slug : "";
+
             return {
               id: p._id,
               name: p.name,
@@ -150,30 +176,32 @@ export default function ProductsPage() {
         setLoading(false);
       }
     }
+
     fetchProducts();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/Search?search=${encodeURIComponent(searchQuery.trim())}`);
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      router.push(`/Search?search=${encodeURIComponent(trimmedQuery)}`);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-6">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Package className="w-8 h-8 text-primary animate-pulse" />
+      <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.06),transparent_32%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
+        <div className="mx-auto flex min-h-screen max-w-md items-center justify-center px-6">
+          <div className="w-full rounded-[28px] border border-border/60 bg-background/90 p-8 text-center shadow-xl backdrop-blur">
+            <div className="relative mx-auto mb-6 h-20 w-20">
+              <div className="h-20 w-20 rounded-full border-4 border-[#e1a200]/20 border-t-[#e1a200] animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Package className="h-8 w-8 text-[#e1a200]" />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Loading products...</h3>
-            <p className="text-sm text-muted-foreground">
-              Please wait while we fetch the latest products
+            <h3 className="text-lg font-semibold text-foreground">Loading products</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Pulling the latest products and preparing a better browsing experience.
             </p>
           </div>
         </div>
@@ -183,183 +211,226 @@ export default function ProductsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="max-w-md w-full space-y-4 text-center">
-          <Package className="h-16 w-16 text-destructive mx-auto" />
-          <h3 className="text-xl font-semibold">Error Loading Products</h3>
-          <p className="text-muted-foreground">{error}</p>
-          <button
+      <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.04),transparent_30%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.12))] px-4 py-10">
+        <div className="mx-auto max-w-md rounded-[28px] border border-border/70 bg-background p-8 text-center shadow-lg">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+            <Package className="h-8 w-8 text-destructive" />
+          </div>
+          <h3 className="text-xl font-semibold text-foreground">Unable to load products</h3>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{error}</p>
+          <Button
             onClick={() => window.location.reload()}
-            className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition"
+            className="mt-6 h-11 rounded-full bg-[#e1a200] px-6 text-white hover:bg-[#c89100]"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-
-      {/* ── Hero Banner ───────────────────────────────────────────────────── */}
-      <div className="relative h-64 w-full overflow-hidden">
-        {heroBanner?.imageUrl ? (
-          <>
-            <div
-              className={`absolute inset-0 transition-opacity duration-300 ${
-                isTransitioning ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              <Image
-                key={heroBanner.id}
-                src={heroBanner.imageUrl}
-                alt={heroBanner.title || "Hero Banner"}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30" />
-            <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center">
-              <div className="max-w-3xl text-center space-y-6">
-                <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight drop-shadow-lg text-white">
-                  {heroBanner.title || "Discover Quality Products"}
-                </h1>
-                <p className="text-lg md:text-xl text-white/90 drop-shadow-md">
-                  {heroBanner.subtitle || "Browse our curated collection from trusted sellers"}
-                </p>
-               {/* Search Bar */}
-                <div className="max-w-2xl mx-auto">
-                  <form onSubmit={handleSearch} className="relative">
-                    <Input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search for products..."
-                      className={cn(
-                        "h-14 pl-5 pr-29 text-[13px] rounded-full shadow-lg",
-                        "border-0 border-transparent",
-                        "outline-none",
-                        "ring-0 ring-offset-0",
-                        "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
-                        "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
-                        "[box-shadow:none]",
-                        "bg-white/10 backdrop-blur-sm text-white placeholder:text-white/60",
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded-full bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
-                    >
-                      <Search className="pointer-events-none" />
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-1">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                    !isTransitioning ? "bg-white/50" : "bg-white/20"
-                  }`}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#e1a200]/30 via-[#e1a200]/10 to-primary/5">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-[#e1a200] rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-10 right-10 w-40 h-40 bg-primary rounded-full blur-3xl animate-pulse" />
-              </div>
-            </div>
-            <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center">
-              <div className="max-w-3xl text-center space-y-6">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-                  Discover Quality Products
-                </h1>
-                <p className="text-lg text-muted-foreground">
-                  Browse our curated collection from trusted sellers
-                </p>
-                <div className="max-w-2xl mx-auto">
-                  <form onSubmit={handleSearch} className="relative">
-                    <Input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search for products..."
-                      className={cn(
-                        "h-14 pl-5 pr-29 text-[13px] rounded-full shadow-lg",
-                        "border-0 border-transparent outline-none ring-0 ring-offset-0",
-                        "focus:border-0 focus:outline-none focus:ring-0 focus-visible:ring-0",
-                        "bg-white/10 backdrop-blur-sm",
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded-full bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
-                    >
-                      <Search className="pointer-events-none" />
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* ── Category Grid — all screen sizes ─────────────────────────────── */}
-      <div className="container mx-auto px-4 lg:px-8 pt-6">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 md:text-center">
-          Browse Products by Category
-        </p>
-        {/* Scrollable on mobile, wrapping on desktop */}
-        <div className="flex gap-3 overflow-x-auto pb-2 lg:overflow-visible lg:flex-wrap scrollbar-hide md:justify-center">
-          {CATEGORIES.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Link
-                key={category.name}
-                href={buildCategorySearchUrl(category)}
-                className="group flex-shrink-0 lg:flex-shrink"
+    <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.06),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          {heroBanner?.imageUrl ? (
+            <>
+              <div
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-500",
+                  isTransitioning ? "opacity-0" : "opacity-100"
+                )}
               >
-                <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#e1a200]/50 hover:bg-[#e1a200]/5 hover:shadow-md transition-all duration-300 w-[72px] lg:w-[80px] mb-2">
-                  <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#e1a200]/40 group-hover:bg-[#e1a200]/10 group-hover:scale-110 transition-all duration-300">
-                    <Icon className="h-4 w-4 lg:h-5 lg:w-5 text-[#e1a200]" />
-                  </div>
-                </div>
-                  <span className="text-[9px] lg:text-[10px] font-semibold text-foreground text-center leading-tight line-clamp-2">
-                    {category.name}
-                  </span>
-              </Link>
-            );
-          })}
+                <Image
+                  key={heroBanner.id}
+                  src={heroBanner.imageUrl}
+                  alt={heroBanner.title || "Hero banner"}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.78)_0%,rgba(8,8,8,0.6)_48%,rgba(8,8,8,0.78)_100%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(225,162,0,0.22),transparent_34%)]" />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(225,162,0,0.18),rgba(255,255,255,0.02)_35%,rgba(0,0,0,0.02)_100%)]" />
+              <div className="absolute left-[-10%] top-[-8%] h-48 w-48 rounded-full bg-[#e1a200]/20 blur-3xl sm:h-64 sm:w-64" />
+              <div className="absolute bottom-[-12%] right-[-8%] h-56 w-56 rounded-full bg-foreground/10 blur-3xl sm:h-72 sm:w-72" />
+            </>
+          )}
         </div>
-      </div>
 
-      {/* ── Products ──────────────────────────────────────────────────────── */}
-      <div className="container mx-auto px-4 py-6 lg:px-8" id="products">
-        {products.length === 0 ? (
-          <div className="border-2 border-dashed rounded-2xl shadow-sm p-12 text-center bg-card">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <Package className="h-10 w-10 text-primary" />
+        <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 lg:px-8 lg:pb-14 lg:pt-8">
+          <div className="mx-auto max-w-4xl">
+            {/* <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85 backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 text-[#f6cf66]" />
+              Curated marketplace
+            </div> */}
+
+            <div className="mt-5 space-y-4 sm:mt-7 sm:space-y-5">
+              <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-6xl">
+                {heroBanner?.title || "Discover quality products"}
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7 lg:text-lg">
+                {heroBanner?.subtitle ||
+                  "Browse products from trusted sellers, food spots, and growing local businesses in one polished marketplace."}
+              </p>
             </div>
-            <h3 className="text-xl font-bold mb-2">No products found</h3>
-            <p className="text-muted-foreground">
-              Try adding some products to your stores or check back later
+
+            <div className="mt-6 rounded-[28px] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
+              <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+                  <Input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products, food, gadgets, fashion..."
+                    className={cn(
+                      "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-white/55",
+                      "focus-visible:ring-2 focus-visible:ring-[#f0c14b] focus-visible:ring-offset-0",
+                      "sm:h-14 sm:text-[15px]"
+                    )}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="h-12 rounded-full bg-[#e1a200] px-5 text-sm font-semibold text-white hover:bg-[#c89100] sm:h-14 sm:px-7"
+                >
+                  Search now
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </form>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["Restaurants", "Groceries", "Fashion", "Tech"].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => router.push(`/Search?search=${encodeURIComponent(term)}`)}
+                    className="rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/14"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:grid-cols-3">
+              <div className="rounded-3xl border border-white/12 bg-black/20 p-4 backdrop-blur-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  Products
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-white">{productCountLabel}</p>
+              </div>
+              <div className="rounded-3xl border border-white/12 bg-black/20 p-4 backdrop-blur-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  Categories
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-white">{CATEGORIES.length}+</p>
+              </div>
+              <div className="col-span-2 rounded-3xl border border-white/12 bg-black/20 p-4 backdrop-blur-sm sm:col-span-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  Discover
+                </p>
+                <p className="mt-2 text-sm leading-6 text-white/78">
+                  Explore products from retail stores, restaurants, cafes, and local brands.
+                </p>
+              </div>
+            </div> */}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="rounded-[30px] border border-border/70 bg-background/85 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a97500]">
+                Browse categories
+              </p>
+              <h2 className="mt-2 text-lg font-semibold text-foreground sm:text-xl">
+                Start with what you need most
+              </h2>
+            </div>
+            <Link
+              href="/Search"
+              className="hidden text-sm font-medium text-muted-foreground transition hover:text-foreground sm:inline-flex"
+            >
+              View all
+            </Link>
+          </div>
+
+          <div className="mt-5 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+            {categoryPreview.map((category) => {
+              const Icon = category.icon;
+
+              return (
+                <Link
+                  key={category.name}
+                  href={buildCategorySearchUrl(category)}
+                  className="min-w-[118px] snap-start rounded-3xl border border-border/70 bg-muted/30 p-4 transition hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.06] hover:shadow-md sm:min-w-[132px]"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/60">
+                    <Icon className="h-5 w-5 text-[#e1a200]" />
+                  </div>
+                  <p className="mt-4 text-sm font-semibold leading-5 text-foreground">
+                    {category.name}
+                  </p>
+                </Link>
+              );
+            })}
+
+            <Link
+              href="/Search"
+              className="min-w-[118px] snap-start rounded-3xl border border-dashed border-[#e1a200]/40 bg-[#e1a200]/[0.04] p-4 transition hover:bg-[#e1a200]/[0.08] sm:min-w-[132px]"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e1a200] text-white shadow-sm">
+                <ArrowRight className="h-5 w-5" />
+              </div>
+              <p className="mt-4 text-sm font-semibold leading-5 text-foreground">
+                Explore more
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14" id="products">
+        {products.length === 0 ? (
+          <div className="rounded-[30px] border border-dashed border-border bg-background p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#e1a200]/10">
+              <Package className="h-10 w-10 text-[#e1a200]" />
+            </div>
+            <h3 className="mt-6 text-xl font-semibold text-foreground">No products found</h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+              There are no products available right now. Check back shortly for new arrivals from stores and restaurants.
             </p>
           </div>
         ) : (
           <>
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a97500]">
+                  Product catalogue
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+                  Fresh picks across every category
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  Browse a growing collection of products from trusted stores, food vendors, and local businesses.
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                <Store className="h-4 w-4 text-[#e1a200]" />
+                {products.length} products available
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -369,28 +440,37 @@ export default function ProductsPage() {
               ))}
             </div>
 
-            {/* Newsletter */}
-            <div className="mt-8 border-0 shadow-lg rounded-2xl p-3 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 text-center">
-              <h3 className="text-2xl font-bold mb-2 text-green-900 dark:text-green-100">
-                Join Our Newsletter
-              </h3>
-              <p className="mb-4 text-green-700 dark:text-green-300">
-                Get exclusive deals and updates delivered to your inbox
-              </p>
-              <div className="max-w-md mx-auto flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 pl-2 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-                />
-                <button className="bg-primary text-primary-foreground px-2 py-3 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg">
-                  Subscribe
-                </button>
+            <div className="mt-8 rounded-[30px] border border-[#e1a200]/20 bg-[linear-gradient(135deg,rgba(225,162,0,0.12),rgba(225,162,0,0.03)_45%,rgba(255,255,255,0.6)_100%)] p-5 shadow-sm sm:p-6 lg:p-8">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="max-w-xl">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                    Stay updated
+                  </p>
+                  <h3 className="mt-2 text-2xl font-semibold text-foreground">
+                    Get weekly deals and new arrivals first
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Subscribe for product launches, restaurant specials, and standout marketplace offers.
+                  </p>
+                </div>
+
+                <div className="w-full max-w-xl">
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Input
+                      type="email"
+                      placeholder="Enter your email"
+                      className="h-12 rounded-full border-border bg-background/90 px-4"
+                    />
+                    <Button className="h-12 rounded-full bg-[#e1a200] px-6 text-white hover:bg-[#c89100]">
+                      Subscribe
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </>
         )}
-      </div>
+      </section>
     </div>
   );
 }

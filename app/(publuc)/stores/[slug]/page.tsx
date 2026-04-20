@@ -1,5 +1,3 @@
-// app/stores/[slug]/page.tsx
-
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -9,13 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Star,
+  Award,
   Package,
-  Utensils,
+  ShieldCheck,
+  Star,
   Store as StoreIcon,
   TrendingUp,
-  Award,
-  ShieldCheck,
+  Utensils,
 } from "lucide-react";
 import { VisitTracker } from "@/components/visit-tracker";
 import ExpandableText from "@/components/ExpandableText";
@@ -23,36 +21,57 @@ import { connectToDB } from "@/lib/db";
 import Store from "@/models/Store";
 import Product from "@/models/Product";
 import { StoreStatusBadge } from "@/components/store-status-badge";
+import StoreReview from "@/models/StoreReview";
+import {
+  StoreReviewsSection,
+  type StoreReviewItem,
+} from "@/components/store-reviews-section";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const PRODUCTS_LIMIT = 12;
 
-// ─── Restaurant / food category keywords ─────────────────────────────────────
 const FOOD_CATEGORIES = [
-  "restaurant", "restaurants", "food", "cafe", "cafes", "eatery",
-  "bakery", "bakeries", "fast food", "pizza", "grill", "bar",
-  "canteen", "kitchen", "bistro", "diner",
+  "restaurant",
+  "restaurants",
+  "food",
+  "cafe",
+  "cafes",
+  "eatery",
+  "bakery",
+  "bakeries",
+  "fast food",
+  "pizza",
+  "grill",
+  "bar",
+  "canteen",
+  "kitchen",
+  "bistro",
+  "diner",
 ];
 
-// ─── Fallback business hours ──────────────────────────────────────────────────
 const DEFAULT_BUSINESS_HOURS = {
-  monday:    { open: true,  openTime: "09:00", closeTime: "20:00" },
-  tuesday:   { open: true,  openTime: "09:00", closeTime: "20:00" },
-  wednesday: { open: true,  openTime: "09:00", closeTime: "20:00" },
-  thursday:  { open: true,  openTime: "09:00", closeTime: "20:00" },
-  friday:    { open: true,  openTime: "09:00", closeTime: "20:00" },
-  saturday:  { open: true,  openTime: "09:00", closeTime: "20:00" },
-  sunday:    { open: false, openTime: "09:00", closeTime: "20:00" },
+  monday: { open: true, openTime: "09:00", closeTime: "20:00" },
+  tuesday: { open: true, openTime: "09:00", closeTime: "20:00" },
+  wednesday: { open: true, openTime: "09:00", closeTime: "20:00" },
+  thursday: { open: true, openTime: "09:00", closeTime: "20:00" },
+  friday: { open: true, openTime: "09:00", closeTime: "20:00" },
+  saturday: { open: true, openTime: "09:00", closeTime: "20:00" },
+  sunday: { open: false, openTime: "09:00", closeTime: "20:00" },
 };
 
 type DayKey = keyof typeof DEFAULT_BUSINESS_HOURS;
 
 function getTodayKey(): DayKey {
   const days: DayKey[] = [
-    "sunday", "monday", "tuesday", "wednesday",
-    "thursday", "friday", "saturday",
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
   ];
   return days[new Date().getDay()];
 }
@@ -73,13 +92,13 @@ interface DaySchedule {
 }
 
 interface BusinessHours {
-  monday:    DaySchedule;
-  tuesday:   DaySchedule;
+  monday: DaySchedule;
+  tuesday: DaySchedule;
   wednesday: DaySchedule;
-  thursday:  DaySchedule;
-  friday:    DaySchedule;
-  saturday:  DaySchedule;
-  sunday:    DaySchedule;
+  thursday: DaySchedule;
+  friday: DaySchedule;
+  saturday: DaySchedule;
+  sunday: DaySchedule;
 }
 
 interface StoreData {
@@ -116,12 +135,17 @@ interface StorePageProps {
   params: Promise<{ slug: string }>;
 }
 
+interface ReviewStats {
+  averageRating: number;
+  reviewCount: number;
+}
+
 async function getStore(slug: string): Promise<StoreData | null> {
   try {
     await connectToDB();
 
     const store = await Store.findOne({
-      slug: slug,
+      slug,
       isPublished: true,
     })
       .select(
@@ -129,11 +153,15 @@ async function getStore(slug: string): Promise<StoreData | null> {
       )
       .lean();
 
-    if (!store) return null;
+    if (!store) {
+      return null;
+    }
 
     const bh = store.businessHours as BusinessHours | undefined;
     const todayKey = getTodayKey();
-    const resolvedBusinessHours: BusinessHours = isValidDaySchedule(bh?.[todayKey])
+    const resolvedBusinessHours: BusinessHours = isValidDaySchedule(
+      bh?.[todayKey],
+    )
       ? bh!
       : DEFAULT_BUSINESS_HOURS;
 
@@ -151,7 +179,7 @@ async function getStore(slug: string): Promise<StoreData | null> {
       categories: (store.categories as string[]) || [],
     };
   } catch (error) {
-    console.error("❌ Error fetching store:", error);
+    console.error("Error fetching store:", error);
     return null;
   }
 }
@@ -165,14 +193,16 @@ async function getStoreProducts(
 
     const totalCount = await Product.countDocuments({
       isActive: true,
-      storeId: storeId,
+      storeId,
     });
 
     const products = await Product.find({
       isActive: true,
-      storeId: storeId,
+      storeId,
     })
-      .select("name price compareAtPrice inventoryQuantity hasVariants variants images")
+      .select(
+        "name price compareAtPrice inventoryQuantity hasVariants variants images",
+      )
       .limit(limit)
       .sort({ createdAt: -1 })
       .lean();
@@ -196,9 +226,11 @@ async function getStoreProducts(
           alt_text: img.altText || null,
         })),
         store_id: product.storeId?.toString() || "",
-        created_at: product.createdAt?.toISOString() || new Date().toISOString(),
-        updated_at: product.updatedAt?.toISOString() || new Date().toISOString(),
-        hasVariants: hasVariants,
+        created_at:
+          product.createdAt?.toISOString() || new Date().toISOString(),
+        updated_at:
+          product.updatedAt?.toISOString() || new Date().toISOString(),
+        hasVariants,
         variants: hasVariants
           ? JSON.parse(JSON.stringify(product.variants))
           : undefined,
@@ -207,8 +239,66 @@ async function getStoreProducts(
 
     return { products: transformedProducts, total: totalCount };
   } catch (error) {
-    console.error("❌ Error fetching products:", error);
+    console.error("Error fetching products:", error);
     return { products: [], total: 0 };
+  }
+}
+
+async function getStoreReviews(
+  storeId: string,
+): Promise<{ reviews: StoreReviewItem[]; stats: ReviewStats }> {
+  try {
+    await connectToDB();
+
+    const [reviews, stats] = await Promise.all([
+      StoreReview.find({ storeId }).sort({ createdAt: -1 }).limit(10).lean(),
+      StoreReview.aggregate([
+        {
+          $match: {
+            storeId: StoreReview.db.base.Types.ObjectId.createFromHexString(storeId),
+          },
+        },
+        {
+          $group: {
+            _id: "$storeId",
+            averageRating: { $avg: "$rating" },
+            reviewCount: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const formattedReviews: StoreReviewItem[] = reviews.map((review: any) => ({
+      id: review._id?.toString() || "",
+      userId: review.userId?.toString() || "",
+      reviewerName: review.reviewerName || "Anonymous",
+      rating: review.rating || 0,
+      comment: review.comment || "",
+      createdAt: review.createdAt?.toISOString() || new Date().toISOString(),
+      updatedAt: review.updatedAt?.toISOString() || new Date().toISOString(),
+    }));
+
+    const summary = stats[0];
+
+    return {
+      reviews: formattedReviews,
+      stats: {
+        averageRating:
+          typeof summary?.averageRating === "number"
+            ? Number(summary.averageRating.toFixed(1))
+            : 0,
+        reviewCount: summary?.reviewCount || 0,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching store reviews:", error);
+    return {
+      reviews: [],
+      stats: {
+        averageRating: 0,
+        reviewCount: 0,
+      },
+    };
   }
 }
 
@@ -237,7 +327,7 @@ export async function generateMetadata({
       },
     };
   } catch (error) {
-    console.error("❌ Error generating metadata:", error);
+    console.error("Error generating metadata:", error);
     return {
       title: "Store | EasyLife Market",
       description: "Shop on EasyLife Market",
@@ -250,212 +340,175 @@ export default async function StorePage({ params }: StorePageProps) {
     const { slug } = await params;
     const store = await getStore(slug);
 
-    if (!store) notFound();
+    if (!store) {
+      notFound();
+    }
 
     const { products: storeProducts, total: totalProducts } =
       await getStoreProducts(store.id, PRODUCTS_LIMIT);
+    const { reviews: storeReviews, stats: reviewStats } =
+      await getStoreReviews(store.id);
 
-    // ✅ Resolve today's schedule
     const todayKey = getTodayKey();
     const rawSchedule = store.businessHours?.[todayKey];
     const todaySchedule = isValidDaySchedule(rawSchedule)
       ? rawSchedule
       : DEFAULT_BUSINESS_HOURS[todayKey];
 
-    const openHour    = todaySchedule.openTime;  // "09:00"
-    const closeHour   = todaySchedule.closeTime; // "18:00"
+    const openHour = todaySchedule.openTime;
+    const closeHour = todaySchedule.closeTime;
     const isOpenToday = todaySchedule.open;
 
-    // ✅ Detect restaurant/food store
     const isRestaurant = store.categories.some((cat) =>
-      FOOD_CATEGORIES.includes(cat.toLowerCase().trim())
+      FOOD_CATEGORIES.includes(cat.toLowerCase().trim()),
     );
 
-    // ✅ Dynamic section copy based on store type
-    const sectionTitle    = isRestaurant ? "Our Menu"         : "Featured Products";
-    const emptyTitle      = isRestaurant ? "Menu Coming Soon" : "Store Opening Soon";
-    const emptyMessage    = isRestaurant
-      ? `${store.name} is preparing their menu. Check back soon to see what's cooking!`
-      : `${store.name} is preparing an amazing collection of products. Check back soon to discover what's in store!`;
+    const sectionTitle = isRestaurant ? "Our Menu" : "Featured Products";
+    const sectionCaption = isRestaurant
+      ? "Fresh picks from today's menu and customer favorites."
+      : "A curated selection of products available from this store right now.";
+    const statOneLabel = isRestaurant ? "Menu Items" : "Total Products";
+    const statThreeLabel = isRestaurant ? "Orders Served" : "Orders Completed";
+    const emptyTitle = isRestaurant ? "Menu Coming Soon" : "Store Opening Soon";
+    const emptyMessage = isRestaurant
+      ? `${store.name} is preparing their menu. Check back soon to see what's cooking.`
+      : `${store.name} is preparing an amazing collection of products. Check back soon to discover what's in store.`;
     const emptyButtonText = isRestaurant
-      ? "Notify Me When Menu is Live"
+      ? "Notify Me When Menu Is Live"
       : "Notify Me When Available";
 
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.05),transparent_22%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
         <VisitTracker storeId={store.id} />
 
-        {/* Store Banner */}
-        <div className="relative h-56 md:h-72 lg:h-80 w-full overflow-hidden">
-          {store.banner_url ? (
-            <>
-              <Image
-                src={store.banner_url}
-                alt={`${store.name} banner`}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/5 to-background" />
-            </>
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-primary/30 via-primary/10 to-primary/5 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl" />
-                <div className="absolute bottom-10 right-10 w-40 h-40 bg-primary rounded-full blur-3xl" />
-              </div>
-              <StoreIcon className="h-24 w-24 md:h-32 md:w-32 text-primary/30" />
-            </div>
-          )}
-        </div>
+        <section className="relative overflow-hidden">
+          <div className="relative h-[220px] w-full sm:h-[280px] lg:h-[360px]">
+            {store.banner_url ? (
+              <>
+                <Image
+                  src={store.banner_url}
+                  alt={`${store.name} banner`}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="100vw"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.2)_0%,rgba(8,8,8,0.42)_55%,rgba(8,8,8,0.75)_100%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(225,162,0,0.16),transparent_34%)]" />
+              </>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(225,162,0,0.18),rgba(255,255,255,0.03)_35%,rgba(0,0,0,0.02)_100%)]" />
+                <div className="absolute left-[-8%] top-[10%] h-40 w-40 rounded-full bg-[#e1a200]/20 blur-3xl sm:h-56 sm:w-56" />
+                <div className="absolute bottom-[-10%] right-[-6%] h-44 w-44 rounded-full bg-primary/15 blur-3xl sm:h-64 sm:w-64" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <StoreIcon className="h-20 w-20 text-primary/25 sm:h-28 sm:w-28" />
+                </div>
+              </>
+            )}
+          </div>
 
-        {/* Store Header */}
-        <div className="relative -mt-16 md:-mt-20">
-          <div className="container mx-auto lg:px-8">
-            <Card className="border-none md:border-2 shadow-xl">
-              <CardContent className="p-2 md:p-8">
-                <div className="flex flex-col gap-6 md:gap-8">
-                  <div className="flex md:flex-row items-start md:items-center gap-6">
-                    <div className="relative flex-shrink-0">
+          <div className="relative mx-auto -mt-14 max-w-7xl px-4 pb-6 sm:-mt-16 sm:px-6 lg:-mt-20 lg:px-8">
+            <div className="overflow-hidden rounded-[28px] border border-border/70 bg-background/92 shadow-xl backdrop-blur-sm sm:rounded-[34px]">
+              <div className="p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex gap-4 sm:flex-row sm:items-start mb-4">
+                    <div className="relative shrink-0">
                       {store.logo_url ? (
-                        <div className="relative">
+                        <div className="relative sm:w-20 md:w-auto">
                           <Image
                             src={store.logo_url}
                             alt={`${store.name} logo`}
-                            width={96}
-                            height={96}
-                            className="w-16 h-16 md:w-32 md:h-32 rounded-2xl object-cover border-4 border-background shadow-2xl ring-2 ring-primary/10"
+                            width={112}
+                            height={112}
+                            className="h-20 w-20 rounded-[22px] border-4 border-background object-cover shadow-xl ring-1 ring-border/60 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
                           />
-                          <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
-                            <ShieldCheck className="h-3 w-3 md:h-4 md:w-4" />
+                          <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#e1a200] text-white shadow-lg">
+                            <ShieldCheck className="h-4 w-4" />
                           </div>
                         </div>
                       ) : (
                         <AvatarPlaceholder
                           name={store.name}
-                          className="h-24 w-24 md:h-32 md:w-32 text-2xl md:text-3xl border-4 border-background rounded-2xl shadow-2xl ring-2 ring-primary/10"
+                          className="h-20 w-20 rounded-[22px] border-4 border-background text-2xl shadow-xl ring-1 ring-border/60 sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-3xl"
                         />
                       )}
                     </div>
-                    <div className="space-y-3 w-full">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-                            {store.name}
-                          </h1>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <StoreStatusBadge
-                              openTime={openHour}
-                              closeTime={closeHour}
-                              isOpenToday={isOpenToday}
-                            />
-                            <Badge
-                              variant="default"
-                              className="flex items-center gap-1.5 px-3 py-1"
-                            >
-                              <Star className="h-3.5 w-3.5 fill-current" />
-                              <span className="font-semibold">4.8</span>
-                              <span className="text-xs opacity-80">
-                                (127 reviews)
-                              </span>
-                            </Badge>
-                          </div>
+
+                    <div className="min-w-0 space-y-3">
+                      <div className="space-y-2">
+
+                        <h1 className="max-w-3xl text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                          {store.name}
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StoreStatusBadge
+                            openTime={openHour}
+                            closeTime={closeHour}
+                            isOpenToday={isOpenToday}
+                          />
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex-1 min-w-0">
-                    {store.description && (
-                      <ExpandableText text={store.description} limit={180} />
-                    )}
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex items-center gap-1">
+                  <Badge
+                    variant="secondary"
+                    className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground"
+                  >
+                    <Star className="mr-1.5 h-3.5 w-3.5 fill-current text-[#e1a200]" />
+                    {reviewStats.reviewCount > 0
+                      ? `${reviewStats.averageRating.toFixed(1)} rating`
+                      : "New store"}
+                  </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground"
+                  >
+                    {reviewStats.reviewCount} review
+                    {reviewStats.reviewCount === 1 ? "" : "s"}
+                  </Badge>
+                  {store.categories.slice(0, 2).map((category) => (
+                    <Badge
+                      key={category}
+                      variant="secondary"
+                      className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground"
+                    >
+                      {category}
+                    </Badge>
+                  ))}
+                </div>
 
-            {/* Store Stats */}
-            <div className="flex gap-1 sm:gap-4 justify-between px-2">
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 flex-1 flex items-center justify-center py-2">
-                <CardContent className="p-0 items-center justify-center text-center">
-                  <div className="flex items-center justify-center">
-                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                {store.description && (
+                  <div className="mt-5 rounded-[24px] border border-border/70 bg-muted/20 p-4 sm:mt-6 sm:p-5">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                      About this {isRestaurant ? "place" : "store"}
+                    </p>
+                    <ExpandableText text={store.description} limit={180} />
                   </div>
-                  <div className="text-[10px] sm:text-xl font-bold text-blue-900 dark:text-blue-100">
-                    {totalProducts}
-                  </div>
-                  <div className="text-[10px] text-blue-700 dark:text-blue-300 font-medium">
-                    {/* ✅ Dynamic stat label */}
-                    {isRestaurant ? "Menu Items" : "Total Products"}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 flex-1 flex items-center justify-center py-2">
-                <CardContent className="p-0 text-center">
-                  <div className="flex items-center justify-center">
-                    <Star className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="text-[10px] sm:text-xl font-bold text-green-900 dark:text-green-100">
-                    4.8
-                  </div>
-                  <div className="text-[10px] text-green-700 dark:text-green-300 font-medium">
-                    Store Rating
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20 flex-1 flex items-center justify-center py-2">
-                <CardContent className="p-0 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div className="text-[10px] sm:text-xl font-bold text-purple-900 dark:text-purple-100">
-                    127
-                  </div>
-                  <div className="text-[10px] text-purple-700 dark:text-purple-300 font-medium">
-                    {/* ✅ Dynamic stat label */}
-                    {isRestaurant ? "Orders Served" : "Orders Completed"}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20 flex-1 flex items-center justify-center py-2">
-                <CardContent className="p-0 text-center">
-                  <div className="flex items-center justify-center">
-                    <Award className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div className="text-[10px] sm:text-xl font-bold text-orange-900 dark:text-orange-100">
-                    98%
-                  </div>
-                  <div className="text-[10px] text-orange-700 dark:text-orange-300 font-medium">
-                    Positive Reviews
-                  </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Products / Menu Section */}
-        <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
-          <div className="container mx-auto max-w-screen-xl">
-            <div className="flex items-center justify-between mb-8">
+        <section className="px-4 pb-12 pt-2 sm:px-6 lg:px-8 lg:pb-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                {/* ✅ Dynamic section title */}
-                <h2 className="text-2xl md:text-3xl font-bold mb-2">
+                <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                   {sectionTitle}
                 </h2>
-                <p className="text-muted-foreground">
-                  Showing {storeProducts.length} of {totalProducts}{" "}
-                  {isRestaurant ? "items" : "products"}
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                  {sectionCaption} Showing {storeProducts.length} of{" "}
+                  {totalProducts} {isRestaurant ? "items" : "products"}.
                 </p>
               </div>
             </div>
 
             {storeProducts.length > 0 ? (
-              <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {storeProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -465,33 +518,39 @@ export default async function StorePage({ params }: StorePageProps) {
                 ))}
               </div>
             ) : (
-              <Card className="border-2 border-dashed">
-                <CardContent className="text-center py-16">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    {/* ✅ Dynamic empty state icon */}
+              <Card className="rounded-[30px] border-2 border-dashed bg-background shadow-none">
+                <CardContent className="px-6 py-14 text-center sm:px-8 sm:py-16">
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#e1a200]/10">
                     {isRestaurant ? (
-                      <Utensils className="h-10 w-10 text-primary" />
+                      <Utensils className="h-10 w-10 text-[#e1a200]" />
                     ) : (
-                      <Package className="h-10 w-10 text-primary" />
+                      <Package className="h-10 w-10 text-[#e1a200]" />
                     )}
                   </div>
-                  {/* ✅ Dynamic empty state copy */}
-                  <h3 className="text-xl font-semibold mb-3">{emptyTitle}</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {emptyTitle}
+                  </h3>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
                     {emptyMessage}
                   </p>
-                  <Button variant="outline" className="rounded-xl">
+                  <Button variant="outline" className="mt-6 rounded-full px-6">
                     {emptyButtonText}
                   </Button>
                 </CardContent>
               </Card>
             )}
+
+            <StoreReviewsSection
+              storeSlug={store.slug}
+              initialReviews={storeReviews}
+              initialStats={reviewStats}
+            />
           </div>
-        </div>
+        </section>
       </div>
     );
   } catch (error) {
-    console.error("❌ Critical error in StorePage:", error);
+    console.error("Critical error in StorePage:", error);
     notFound();
   }
 }

@@ -501,8 +501,17 @@ export function SiteHeader() {
                   size="icon"
                   className="h-9 w-9 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground"
                 >
-                  <LayoutDashboard className="h-5 w-5" />
-                  <span className="text-xs font-medium">Dashboard</span>
+                  {showShoppingFeatures ? (
+                    <>
+                      <User className="h-5 w-5" />
+                      <span className="text-xs font-medium">Account</span>
+                    </>
+                  ) : (
+                    <>
+                      <LayoutDashboard className="h-5 w-5" />
+                      <span className="text-xs font-medium">Dashboard</span>
+                    </>
+                  )}
                 </Button>
               </Link>
             </div>

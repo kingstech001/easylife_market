@@ -1,37 +1,31 @@
-// app/stores/StoresPageClient.tsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StoreCard } from "@/components/store-card";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Store,
-  Sparkles,
-  Search,
-} from "lucide-react";
+import { ArrowRight, Megaphone, Search, Sparkles, Store, Users } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
-// ✅ businessHours types added
 interface DaySchedule {
-  open: boolean
-  openTime: string
-  closeTime: string
+  open: boolean;
+  openTime: string;
+  closeTime: string;
 }
 
 interface BusinessHours {
-  monday:    DaySchedule
-  tuesday:   DaySchedule
-  wednesday: DaySchedule
-  thursday:  DaySchedule
-  friday:    DaySchedule
-  saturday:  DaySchedule
-  sunday:    DaySchedule
+  monday: DaySchedule;
+  tuesday: DaySchedule;
+  wednesday: DaySchedule;
+  thursday: DaySchedule;
+  friday: DaySchedule;
+  saturday: DaySchedule;
+  sunday: DaySchedule;
 }
 
 interface StoreData {
@@ -46,7 +40,7 @@ interface StoreData {
   createdAt: string;
   updatedAt: string;
   productCount?: number;
-  businessHours?: BusinessHours; // ✅ added
+  businessHours?: BusinessHours;
 }
 
 interface HeroBanner {
@@ -62,12 +56,17 @@ interface StoresPageClientProps {
   initialStores: StoreData[];
 }
 
+const HERO_ROTATION_MS = 60000;
+const HERO_SWAP_DELAY_MS = 100;
+
 export default function StoresPageClient({ initialStores }: StoresPageClientProps) {
   const router = useRouter();
   const stores = initialStores;
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const featuredStores = useMemo(() => stores.slice(0, 4), [stores]);
 
   const fetchNewBanner = async () => {
     try {
@@ -76,301 +75,240 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
         signal: AbortSignal.timeout(10000),
         cache: "no-store",
       });
+
       if (bannerRes.ok) {
         const bannerData = await bannerRes.json();
         if (bannerData.banner) {
           setTimeout(() => {
             setHeroBanner(bannerData.banner);
             setIsTransitioning(false);
-          }, 100);
+          }, HERO_SWAP_DELAY_MS);
         }
+      } else {
+        setIsTransitioning(false);
       }
-    } catch (err) {
+    } catch {
       setIsTransitioning(false);
     }
   };
 
-  useEffect(() => { fetchNewBanner(); }, []);
+  useEffect(() => {
+    fetchNewBanner();
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(fetchNewBanner, 60000);
+    const interval = setInterval(fetchNewBanner, HERO_ROTATION_MS);
     return () => clearInterval(interval);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/Search?search=${encodeURIComponent(searchQuery.trim())}`);
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      router.push(`/Search?search=${encodeURIComponent(trimmedQuery)}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      {/* Hero Section with Dynamic Banner */}
-      <div className="relative h-64 w-full overflow-hidden">
-        {heroBanner?.imageUrl ? (
-          <>
-            <div
-              className={`absolute inset-0 transition-opacity duration-500 ${
-                isTransitioning ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              <Image
-                key={heroBanner.id}
-                src={heroBanner.imageUrl}
-                alt={heroBanner.title || "Hero Banner"}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-            </div>
-
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30" />
-
-            <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center text-center text-white">
-              <div className="flex flex-col items-center justify-center space-y-6 max-w-3xl w-full">
-                <Badge
-                  variant="secondary"
-                  className="px-4 py-2 text-sm font-medium bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 transition-all duration-300 shadow-lg"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Explore Our Marketplace
-                </Badge>
-
-                <div className="space-y-2">
-                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight drop-shadow-lg">
-                    {heroBanner.title || "Discover Premium"}
-                  </h1>
-                  <p className="text-lg md:text-xl bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg font-semibold">
-                    {heroBanner.subtitle || "Online Stores"}
-                  </p>
-                </div>
-
-                <div className="w-full max-w-2xl">
-                  <form onSubmit={handleSearch} className="relative">
-                    <Input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search for stores, products, or categories..."
-                      className={cn(
-                        "h-14 pl-5 pr-20 text-[13px] rounded-full shadow-lg",
-                        "border-0 border-transparent",
-                        "outline-none ring-0 ring-offset-0",
-                        "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
-                        "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
-                        "[box-shadow:none]",
-                        "bg-white/10 backdrop-blur-sm text-white placeholder:text-white/60",
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded-full bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
-                    >
-                      <Search className="pointer-events-none" />
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute bottom-4 right-4 flex gap-1">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                    !isTransitioning ? "bg-white/50" : "bg-white/20"
-                  }`}
+    <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.06),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          {heroBanner?.imageUrl ? (
+            <>
+              <div
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-500",
+                  isTransitioning ? "opacity-0" : "opacity-100"
+                )}
+              >
+                <Image
+                  key={heroBanner.id}
+                  src={heroBanner.imageUrl}
+                  alt={heroBanner.title || "Stores hero banner"}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover"
                 />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#e1a200]/30 via-[#e1a200]/10 to-primary/5">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-[#e1a200] rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-10 right-10 w-40 h-40 bg-primary rounded-full blur-3xl animate-pulse" />
               </div>
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.8)_0%,rgba(8,8,8,0.58)_46%,rgba(8,8,8,0.8)_100%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(225,162,0,0.22),transparent_34%)]" />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(225,162,0,0.18),rgba(255,255,255,0.02)_35%,rgba(0,0,0,0.02)_100%)]" />
+              <div className="absolute left-[-10%] top-[-8%] h-48 w-48 rounded-full bg-[#e1a200]/20 blur-3xl sm:h-64 sm:w-64" />
+              <div className="absolute bottom-[-12%] right-[-8%] h-56 w-56 rounded-full bg-foreground/10 blur-3xl sm:h-72 sm:w-72" />
+            </>
+          )}
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 lg:px-8 lg:pb-14 lg:pt-8">
+          <div className="mx-auto max-w-4xl">
+            <Badge className="inline-flex border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
+              <Sparkles className="mr-2 h-4 w-4 text-[#f6cf66]" />
+              Discover trusted stores
+            </Badge>
+
+            <div className="mt-5 space-y-4 sm:mt-7 sm:space-y-5">
+              <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-6xl">
+                {heroBanner?.title || "Explore standout stores across the marketplace"}
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7 lg:text-lg">
+                {heroBanner?.subtitle ||
+                  "Browse growing brands, neighborhood businesses, food vendors, and premium sellers in one polished shopping destination."}
+              </p>
             </div>
 
-            <div className="relative container mx-auto px-4 h-full flex flex-col items-center justify-center">
-              <div className="flex flex-col items-center justify-center space-y-6 text-center max-w-3xl w-full">
-                <Badge
-                  variant="secondary"
-                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 hover:from-[#e1a200]/20 hover:to-primary/20 transition-all duration-300 backdrop-blur-sm shadow-sm hover:shadow-md"
+            <div className="mt-6 rounded-[28px] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
+              <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+                  <Input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for stores, products, or categories..."
+                    className={cn(
+                      "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-white/55",
+                      "focus-visible:ring-2 focus-visible:ring-[#f0c14b] focus-visible:ring-offset-0",
+                      "sm:h-14 sm:text-[15px]"
+                    )}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="h-12 rounded-full bg-[#e1a200] px-5 text-sm font-semibold text-white hover:bg-[#c89100] sm:h-14 sm:px-7"
                 >
-                  <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
-                  Explore Our Marketplace
-                </Badge>
+                  Search stores
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </form>
 
-                <div className="space-y-2">
-                  <h1 className="text-2xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-                    <span className="block bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
-                      Discover Premium
-                    </span>
-                    <span className="block mt-1 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
-                      Online Stores
-                    </span>
-                  </h1>
-                </div>
-
-                <div className="w-full max-w-2xl">
-                  <form onSubmit={handleSearch} className="relative">
-                    <Input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search for stores, products, or categories..."
-                      className={cn(
-                        "h-14 pl-5 pr-32 text-[13px] rounded-full shadow-lg",
-                        "border-0 border-transparent",
-                        "outline-none ring-0 ring-offset-0",
-                        "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
-                        "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
-                        "[box-shadow:none]",
-                        "bg-white/10 backdrop-blur-sm",
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded-full bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
-                    >
-                      <Search className="pointer-events-none" />
-                    </Button>
-                  </form>
-                </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["Restaurants", "Fashion", "Groceries", "Beauty"].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => router.push(`/Search?search=${encodeURIComponent(term)}`)}
+                    className="rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/14"
+                  >
+                    {term}
+                  </button>
+                ))}
               </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8" id="stores">
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-8 space-y-6">
-              <div className="border-0 shadow-sm rounded-2xl p-6 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
-                <div className="text-xs font-bold mb-1 text-orange-700 dark:text-orange-300 uppercase tracking-wide">
-                  PROMOTE HERE
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-orange-900 dark:text-orange-100">
-                  Advertise Your Brand
-                </h3>
-                <p className="text-sm mb-4 text-orange-700 dark:text-orange-300">
-                  Reach thousands of customers
-                </p>
-                <Link
-                  href="https://wa.me/2348071427831"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <button className="bg-[#e1a200] text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#e1a200]/90 transition shadow-lg w-full">
-                    Get Started
-                  </button>
-                </Link>
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+          <div className="rounded-[28px] border border-[#e1a200]/15 bg-[linear-gradient(135deg,rgba(225,162,0,0.12),rgba(225,162,0,0.03)_45%,rgba(255,255,255,0.78)_100%)] p-5 shadow-sm sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e1a200] text-white shadow-sm">
+                <Megaphone className="h-5 w-5" />
               </div>
-
-              <div className="border-0 shadow-sm rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20">
-                <div className="text-xs font-bold mb-1 text-purple-700 dark:text-purple-300 uppercase tracking-wide">
-                  FEATURED
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-purple-900 dark:text-purple-100">
-                  Become a Seller
-                </h3>
-                <p className="text-sm mb-4 text-purple-700 dark:text-purple-300">
-                  Start your online store today
+              <div className="flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                  Promote here
                 </p>
-                <Link href="/auth/register">
-                  <button className="bg-[#e1a200] text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#e1a200]/90 transition shadow-lg w-full">
-                    Join Now
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </aside>
-
-          {/* Stores Grid */}
-          <main className="flex-1 min-w-0">
-            <div className="border-0 shadow-lg rounded-2xl p-3 md:p-8 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] font-bold mb-2 text-blue-700 dark:text-blue-300 uppercase tracking-wide">
-                    SPECIAL PROMOTION
-                  </div>
-                  <h2 className="text-xl md:text-3xl font-bold mb-2 text-blue-900 dark:text-blue-100">
-                    Advertise Your Business Here
-                  </h2>
+                <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+                  Advertise your business to active shoppers
+                </h2>
+                <div className="mt-4">
                   <Link
                     href="https://wa.me/2348071427831"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <button className="bg-[#e1a200] text-sm text-white px-3 py-2 rounded-xl font-bold hover:bg-[#e1a200]/90 transition shadow-lg">
-                      Contact Us
-                    </button>
+                    <Button className="h-11 rounded-full bg-[#e1a200] px-5 text-white hover:bg-[#c89100]">
+                      Contact us on WhatsApp
+                      <FaWhatsapp className="ml-2 h-4 w-4" />
+                    </Button>
                   </Link>
                 </div>
-                <div className="hidden md:block text-5xl">📢</div>
               </div>
             </div>
+          </div>
 
-            {stores.length === 0 ? (
-              <div className="text-center py-20 space-y-6 max-w-2xl mx-auto">
-                <div className="inline-flex p-4 rounded-full bg-muted/50">
-                  <Store className="h-16 w-16 text-muted-foreground" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-2xl md:text-3xl font-bold text-foreground">
-                    No Stores Available Yet
-                  </h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    Be the first to create a store on our platform. Start your
-                    entrepreneurial journey today and reach thousands of
-                    potential customers.
+          <div className="rounded-[28px] border border-border/70 bg-background/85 p-5 shadow-sm backdrop-blur sm:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+              Become a seller
+            </p>
+            <h3 className="mt-2 text-xl font-semibold text-foreground">Open your store on EasyLife</h3>
+            {/* <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-2 text-sm text-foreground">
+              <Users className="h-4 w-4 text-[#e1a200]" />
+              Join a growing seller community
+            </div> */}
+            <div className="mt-4">
+              <Link href="/auth/register">
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-full border-border bg-background px-5 hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.05]"
+                >
+                  Join now
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14" id="stores">
+        {stores.length === 0 ? (
+          <div className="rounded-[30px] border border-dashed border-border bg-background p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#e1a200]/10">
+              <Store className="h-10 w-10 text-[#e1a200]" />
+            </div>
+            <h3 className="mt-6 text-xl font-semibold text-foreground">No stores available yet</h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+              Be the first to launch a store on the platform and start reaching customers across the marketplace.
+            </p>
+            <div className="mt-6">
+              <Link href="/auth/register">
+                <Button className="h-11 rounded-full bg-[#e1a200] px-6 text-white hover:bg-[#c89100]">
+                  Launch your store
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-[30px] border border-border/70 bg-background/85 p-5 shadow-sm backdrop-blur sm:p-6">
+              {/* <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                    Store directory
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+                    Browse stores built for every kind of shopper
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    Explore standout stores from sellers in fashion, food, beauty, groceries, and more.
                   </p>
                 </div>
-                <Link href="/auth/register">
-                  <Button
-                    size="lg"
-                    className={cn(
-                      "group h-12 px-8 text-base font-semibold transition-all duration-300",
-                      "bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-size-200 bg-pos-0 hover:bg-pos-100",
-                      "shadow-lg hover:shadow-xl hover:shadow-[#e1a200]/30",
-                      "hover:scale-105 active:scale-95"
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      Launch Your Store
-                      <Store className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+              </div> */}
+
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {stores.map((store, index) => (
                   <div
                     key={store._id}
-                    className="group relative transition-all duration-300 hover:scale-[1.02]"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    className="group relative transition-all duration-300 hover:-translate-y-1"
+                    style={{ animationDelay: `${index * 40}ms` }}
                   >
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#e1a200]/20 via-transparent to-primary/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative bg-card border-2 border-border rounded-xl overflow-hidden transition-all duration-300 group-hover:border-[#e1a200]/50 group-hover:shadow-xl group-hover:shadow-[#e1a200]/10">
+                    <div className="absolute -inset-0.5 rounded-[22px] bg-gradient-to-r from-[#e1a200]/18 via-transparent to-[#d4b55e]/16 opacity-0 blur transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="relative overflow-hidden rounded-[22px] border border-border/70 bg-card transition-all duration-300 group-hover:border-[#e1a200]/40 group-hover:shadow-xl group-hover:shadow-[#e1a200]/10">
                       <StoreCard store={store} />
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-          </main>
-        </div>
-      </div>
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 }

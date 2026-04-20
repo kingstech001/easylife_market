@@ -18,15 +18,22 @@ const ratelimit = process.env.UPSTASH_REDIS_REST_URL
 export async function POST(req: NextRequest) {
   // Apply rate limiting if Redis is configured
   if (ratelimit) {
-    const ip =
-      req.headers.get("x-forwarded-for") ||
-      req.headers.get("x-real-ip") ||
-      "127.0.0.1";
-    const { success } = await ratelimit.limit(ip);
-    if (!success) {
-      return NextResponse.json(
-        { message: "Too many requests, try again later." },
-        { status: 429 },
+    try {
+      const ip =
+        req.headers.get("x-forwarded-for") ||
+        req.headers.get("x-real-ip") ||
+        "127.0.0.1";
+      const { success } = await ratelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json(
+          { message: "Too many requests, try again later." },
+          { status: 429 },
+        );
+      }
+    } catch (rateLimitError) {
+      console.error(
+        "Signup rate limit check failed, allowing request:",
+        rateLimitError,
       );
     }
   }

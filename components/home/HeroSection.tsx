@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,6 +11,7 @@ import {
   Search,
   ShoppingBag,
   Store,
+  Package,
 } from "lucide-react";
 import { Reveal } from "../Reveal";
 import { cn } from "@/lib/utils";
@@ -24,17 +25,36 @@ interface HeroBanner {
   buttonLink?: string;
 }
 
+interface StoreSuggestion {
+  _id: string;
+  businessName: string;
+  slug?: string;
+}
+
+interface ProductSuggestion {
+  _id: string;
+  name: string;
+  storeSlug?: string;
+  image?: string | null;
+}
+
+const HERO_BANNER_ROTATION_MS = 30000;
+const HERO_BANNER_SWAP_DELAY_MS = 300;
+
 export default function HeroSection() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [bannerKey, setBannerKey] = useState(0); // Used to trigger AnimatePresence
+  const [bannerKey, setBannerKey] = useState(0);
+  const [storeSuggestions, setStoreSuggestions] = useState<StoreSuggestion[]>([]);
+  const [productSuggestions, setProductSuggestions] = useState<ProductSuggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // Function to fetch a new banner
-  const fetchNewBanner = async () => {
+  const fetchNewBanner = useCallback(async () => {
     try {
-      console.log("🔄 Fetching new hero banner...");
       setIsTransitioning(true);
 
       const bannerRes = await fetch("/api/hero-banner", {
@@ -47,45 +67,106 @@ export default function HeroSection() {
         if (bannerData.banner) {
           setTimeout(() => {
             setHeroBanner(bannerData.banner);
-            setBannerKey((prev) => prev + 1); // Trigger AnimatePresence
+            setBannerKey((prev) => prev + 1);
             setIsTransitioning(false);
-            console.log("✅ New hero banner loaded:", bannerData.source);
-          }, 300);
+          }, HERO_BANNER_SWAP_DELAY_MS);
         }
       }
-    } catch (err) {
-      console.log("⚠️ Hero banner fetch failed, using fallback design");
+    } catch {
       setIsTransitioning(false);
     }
-  };
-
-  // Initial banner fetch
-  useEffect(() => {
-    fetchNewBanner();
   }, []);
 
-  // Refresh banner every minute
+  useEffect(() => {
+    fetchNewBanner();
+  }, [fetchNewBanner]);
+
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("⏰ 1 minute passed, fetching new hero banner...");
+      if (document.visibilityState !== "visible") {
+        return;
+      }
       fetchNewBanner();
-    }, 60000);
+    }, HERO_BANNER_ROTATION_MS);
+
     return () => clearInterval(interval);
+  }, [fetchNewBanner]);
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (trimmedQuery.length < 2) {
+      setStoreSuggestions([]);
+      setProductSuggestions([]);
+      setIsLoadingSuggestions(false);
+      return;
+    }
+
+    const debounce = setTimeout(async () => {
+      try {
+        setIsLoadingSuggestions(true);
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`);
+        if (!response.ok) {
+          setStoreSuggestions([]);
+          setProductSuggestions([]);
+          return;
+        }
+
+        const data = await response.json();
+        setStoreSuggestions((data.stores || []).slice(0, 4));
+        setProductSuggestions((data.products || []).slice(0, 4));
+      } catch {
+        setStoreSuggestions([]);
+        setProductSuggestions([]);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!searchContainerRef.current) {
+        return;
+      }
+
+      if (!searchContainerRef.current.contains(event.target as Node)) {
+        setIsSuggestionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/Search?search=${encodeURIComponent(searchQuery.trim())}`);
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      setIsSuggestionsOpen(false);
+      router.push(`/Search?search=${encodeURIComponent(trimmedQuery)}`);
     }
   };
 
+  const handleSuggestionClick = (path: string) => {
+    setIsSuggestionsOpen(false);
+    router.push(path);
+  };
+
+  const heroHeading = heroBanner?.title || "Buy and Sell";
+  const heroSubheading =
+    heroBanner?.subtitle ||
+    "Build, customize, and launch your online store in minutes. Join thousands of successful entrepreneurs who trust our platform to grow their business.";
+  const showSuggestions =
+    isSuggestionsOpen &&
+    searchQuery.trim().length >= 2 &&
+    (isLoadingSuggestions || storeSuggestions.length > 0 || productSuggestions.length > 0);
+
   return (
     <Reveal>
-      {/* Hero Section — matches About page style */}
       <section className="relative overflow-hidden min-h-[85vh] flex items-center">
-
-        {/* ── Background Image with AnimatePresence transition ── */}
         <AnimatePresence mode="wait">
           {heroBanner?.imageUrl ? (
             <motion.div
@@ -104,13 +185,10 @@ export default function HeroSection() {
                 priority
                 sizes="100vw"
               />
-              {/* Primary dark overlay — same as About */}
               <div className="absolute inset-0 bg-black/55" />
-              {/* Directional brand gradient — same as About */}
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
             </motion.div>
           ) : (
-            /* Fallback gradient when no banner is loaded */
             <motion.div
               key="fallback"
               initial={{ opacity: 0 }}
@@ -127,17 +205,14 @@ export default function HeroSection() {
           )}
         </AnimatePresence>
 
-        {/* ── Content — matches About page container & padding ── */}
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <div className="max-w-6xl mx-auto">
-
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="space-y-6 sm:space-y-8"
             >
-              {/* Headline */}
               <div className="space-y-3 sm:space-y-4">
                 <h1
                   className={cn(
@@ -147,7 +222,7 @@ export default function HeroSection() {
                       : "text-foreground"
                   )}
                 >
-                  Buy and Sell
+                  {heroHeading}
                   <span className="block sm:ml-4 sm:inline text-5xl sm:text-6xl lg:text-7xl mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
                     Seamlessly <span className="text-white">with</span> EasyLife
                   </span>
@@ -160,18 +235,17 @@ export default function HeroSection() {
                       : "text-muted-foreground"
                   )}
                 >
-                  Build, customize, and launch your online store in minutes. Join thousands of successful entrepreneurs
-                  who trust our platform to grow their business.
+                  {heroSubheading}
                 </p>
               </div>
 
-              {/* Search Bar */}
-              <div className="max-w-2xl">
+              <div ref={searchContainerRef} className="max-w-2xl relative">
                 <form onSubmit={handleSearch} className="relative">
                   <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSuggestionsOpen(true)}
                     placeholder="Search for products, stores, or categories..."
                     className={cn(
                       "h-14 pl-5 pr-29 text-[13px] rounded shadow-lg",
@@ -192,11 +266,70 @@ export default function HeroSection() {
                     <Search className="pointer-events-none" />
                   </Button>
                 </form>
+
+                {showSuggestions && (
+                  <div className="absolute mt-2 w-full rounded-xl border border-white/20 bg-black/80 backdrop-blur-md shadow-2xl overflow-hidden z-20">
+                    {isLoadingSuggestions ? (
+                      <div className="px-4 py-3 text-sm text-white/70">Searching...</div>
+                    ) : (
+                      <div className="max-h-72 overflow-y-auto">
+                        {storeSuggestions.length > 0 && (
+                          <div className="border-b border-white/10">
+                            <p className="px-4 pt-3 pb-2 text-xs uppercase tracking-wide text-white/60">Stores</p>
+                            {storeSuggestions.map((store) => (
+                              <button
+                                key={store._id}
+                                type="button"
+                                className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-2 text-white"
+                                onClick={() => handleSuggestionClick(`/stores/${store.slug || store._id}`)}
+                              >
+                                <Store className="h-4 w-4 text-[#e1a200]" />
+                                <span className="truncate">{store.businessName}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {productSuggestions.length > 0 && (
+                          <div>
+                            <p className="px-4 pt-3 pb-2 text-xs uppercase tracking-wide text-white/60">Products</p>
+                            {productSuggestions.map((product) => (
+                              <button
+                                key={product._id}
+                                type="button"
+                                className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                                onClick={() =>
+                                  handleSuggestionClick(
+                                    product.storeSlug
+                                      ? `/stores/${product.storeSlug}/products/${product._id}`
+                                      : `/Search?search=${encodeURIComponent(product.name)}`
+                                  )
+                                }
+                              >
+                                {product.image ? (
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="h-8 w-8 rounded object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="h-8 w-8 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
+                                    <Package className="h-4 w-4 text-[#e1a200]" />
+                                  </div>
+                                )}
+                                <span className="truncate">{product.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start pt-2">
-                <Link href="/stores" className="w-full sm:w-auto">
+                {/* <Link href="/stores" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     className={cn(
@@ -208,7 +341,7 @@ export default function HeroSection() {
                     Go to Market
                     <ShoppingBag className="ml-2 h-5 w-5" />
                   </Button>
-                </Link>
+                </Link> */}
                 <Link href="/auth/login" className="w-full sm:w-auto">
                   <Button
                     variant="outline"
@@ -224,12 +357,23 @@ export default function HeroSection() {
                     <Store className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
+                {heroBanner?.buttonLink && heroBanner?.buttonText && (
+                  <Link href={heroBanner.buttonLink} className="w-full sm:w-auto">
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full sm:w-auto h-12 px-8 text-base font-semibold"
+                    >
+                      {heroBanner.buttonText}
+                      <ShoppingBag className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                )}
               </div>
             </motion.div>
           </div>
         </div>
 
-        {/* ── Dot indicators (same style as About page mobile dots) ── */}
         {heroBanner && (
           <div className="absolute bottom-6 right-6 flex gap-1.5 z-10">
             {[...Array(3)].map((_, i) => (
