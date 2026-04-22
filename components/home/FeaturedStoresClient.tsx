@@ -164,7 +164,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50 hover:bg-muted/50 hover:shadow-lg transition-all "
+                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50 hover:bg-muted/50 hover:shadow-lg transition-all rounded-full"
                 >
                   <span className="flex items-center justify-center gap-2">
                     Explore All Stores
@@ -175,7 +175,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
               <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] shadow-lg hover:shadow-xl transition-all"
+                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] shadow-lg hover:shadow-xl transition-all rounded-full"
                 >
                   <span className="flex items-center justify-center gap-2">
                     Start Your Store

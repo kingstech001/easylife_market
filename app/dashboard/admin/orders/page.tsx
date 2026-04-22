@@ -42,7 +42,7 @@ import {
 import { toast } from "sonner"
 
 // Define types for orders
-type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled"
+type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled"
 
 type OrderItem = {
   productId: string
@@ -79,8 +79,8 @@ const statusConfig = {
     icon: Clock,
     dotColor: "bg-amber-500",
   },
-  confirmed: {
-    label: "Confirmed",
+  processing: {
+    label: "Processing",
     color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
     icon: CheckCircle,
     dotColor: "bg-blue-500",
@@ -128,6 +128,30 @@ export default function AdminOrdersPage() {
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
+  const normalizeOrderStatus = (status: string | undefined): OrderStatus => {
+    switch (status) {
+      case "pending":
+      case "processing":
+      case "shipped":
+      case "delivered":
+      case "cancelled":
+        return status
+      case "confirmed":
+        return "processing"
+      default:
+        return "pending"
+    }
+  }
+
+  const safeText = (value: unknown, fallback = "") => {
+    return typeof value === "string" && value.trim().length > 0 ? value : fallback
+  }
+
+  const safeDate = (value: unknown) => {
+    const parsed = new Date(typeof value === "string" ? value : "")
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+
   const fetchOrders = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -139,20 +163,45 @@ export default function AdminOrdersPage() {
 
       const data = await response.json()
 
-      const transformedOrders = data.orders.map((order: any) => ({
-        ...order,
-        id: order._id,
-        orderNumber: order.orderNumber || `ORD-${order._id.slice(-6)}`,
-        customerName: order.customerName || `Customer ${order.userId?.slice(-6) || "Unknown"}`,
-        customerEmail: order.customerEmail || "No email provided",
-        storeName: order.storeName || "Unknown Store",
-        shippingAddress: order.shippingInfo
-          ? `${order.shippingInfo.firstName || ""} ${order.shippingInfo.lastName || ""}, ${order.shippingInfo.address || ""}, ${order.shippingInfo.area || ""}, ${order.shippingInfo.state || ""}`
-              .trim()
-              .replace(/^,\s*|,\s*$/g, "") || "No address provided"
-          : "No address provided",
-        total: order.total || order.totalPrice || 0,
-      }))
+      const transformedOrders = (Array.isArray(data.orders) ? data.orders : []).map((order: any, index: number) => {
+        const rawId =
+          typeof order?._id === "string" && order._id.length > 0
+            ? order._id
+            : `fallback-${index}`
+
+        const customerFallback =
+          typeof order?.userId === "string" && order.userId.length > 0
+            ? `Customer ${order.userId.slice(-6)}`
+            : "Unknown Customer"
+
+        return {
+          ...order,
+          _id: rawId,
+          id: rawId,
+          orderNumber: safeText(order?.orderNumber, `ORD-${rawId.slice(-6)}`),
+          customerName: safeText(order?.customerName, customerFallback),
+          customerEmail: safeText(order?.customerEmail, "No email provided"),
+          storeName: safeText(order?.storeName, "Unknown Store"),
+          status: normalizeOrderStatus(order?.status),
+          items: (Array.isArray(order?.items) ? order.items : []).map((item: any, itemIndex: number) => ({
+            productId:
+              typeof item?.productId === "string"
+                ? item.productId
+                : safeText(item?.productId?._id, `item-${itemIndex}`),
+            productName: safeText(item?.productName, "Unknown Product"),
+            quantity: Number(item?.quantity) || 0,
+            price: Number(item?.price) || 0,
+            image: typeof item?.image === "string" ? item.image : undefined,
+          })),
+          shippingAddress: order?.shippingInfo
+            ? `${safeText(order.shippingInfo.firstName)} ${safeText(order.shippingInfo.lastName)}, ${safeText(order.shippingInfo.address)}, ${safeText(order.shippingInfo.area)}, ${safeText(order.shippingInfo.state)}`
+                .trim()
+                .replace(/^,\s*|,\s*$/g, "") || "No address provided"
+            : "No address provided",
+          total: Number(order?.total ?? order?.totalPrice) || 0,
+          createdAt: safeText(order?.createdAt, new Date().toISOString()),
+        }
+      })
 
       setOrders(transformedOrders)
     } catch (error) {
@@ -183,7 +232,7 @@ export default function AdminOrdersPage() {
       setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
 
       toast.success("Status updated", {
-        description: `Order status changed to ${statusConfig[newStatus].label}`,
+        description: `Order status changed to ${(statusConfig[newStatus] || statusConfig.pending).label}`,
       })
       setEditingOrder(null)
       setEditingStatus(null)
@@ -228,7 +277,10 @@ export default function AdminOrdersPage() {
   })
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const parsed = safeDate(dateString)
+    if (!parsed) return "Unknown date"
+
+    return parsed.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -236,24 +288,28 @@ export default function AdminOrdersPage() {
   }
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("en-US", {
+    const parsed = safeDate(dateString)
+    if (!parsed) return "--:--"
+
+    return parsed.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
     })
   }
 
   const formatCurrency = (amount: number) => {
-    return `₦${amount.toLocaleString()}`
+    const safeAmount = Number.isFinite(amount) ? amount : 0
+    return `₦${safeAmount.toLocaleString()}`
   }
 
   const getStatusCounts = () => {
-    return {
-      all: orders.length,
-      pending: orders.filter((o) => o.status === "pending").length,
-      confirmed: orders.filter((o) => o.status === "confirmed").length,
-      shipped: orders.filter((o) => o.status === "shipped").length,
-      delivered: orders.filter((o) => o.status === "delivered").length,
-      cancelled: orders.filter((o) => o.status === "cancelled").length,
+      return {
+        all: orders.length,
+        pending: orders.filter((o) => o.status === "pending").length,
+        processing: orders.filter((o) => o.status === "processing").length,
+        shipped: orders.filter((o) => o.status === "shipped").length,
+        delivered: orders.filter((o) => o.status === "delivered").length,
+        cancelled: orders.filter((o) => o.status === "cancelled").length,
     }
   }
 
@@ -311,7 +367,7 @@ export default function AdminOrdersPage() {
             {[
               { label: "All", value: statusCounts.all, color: "text-foreground" },
               { label: "Pending", value: statusCounts.pending, color: "text-amber-600" },
-              { label: "Confirmed", value: statusCounts.confirmed, color: "text-blue-600" },
+              { label: "Processing", value: statusCounts.processing, color: "text-blue-600" },
               { label: "Shipped", value: statusCounts.shipped, color: "text-purple-600" },
               { label: "Delivered", value: statusCounts.delivered, color: "text-emerald-600" },
               { label: "Cancelled", value: statusCounts.cancelled, color: "text-red-600" },
@@ -354,7 +410,7 @@ export default function AdminOrdersPage() {
                   <SelectContent>
                     <SelectItem value="all">All Status ({statusCounts.all})</SelectItem>
                     <SelectItem value="pending">Pending ({statusCounts.pending})</SelectItem>
-                    <SelectItem value="confirmed">Confirmed ({statusCounts.confirmed})</SelectItem>
+                    <SelectItem value="processing">Processing ({statusCounts.processing})</SelectItem>
                     <SelectItem value="shipped">Shipped ({statusCounts.shipped})</SelectItem>
                     <SelectItem value="delivered">Delivered ({statusCounts.delivered})</SelectItem>
                     <SelectItem value="cancelled">Cancelled ({statusCounts.cancelled})</SelectItem>
@@ -428,7 +484,8 @@ export default function AdminOrdersPage() {
             <div className="space-y-3 sm:space-y-4">
               <AnimatePresence>
                 {filteredOrders.map((order, index) => {
-                  const StatusIcon = statusConfig[order.status].icon
+                  const config = statusConfig[order.status] || statusConfig.pending
+                  const StatusIcon = config.icon
                   const isEditing = editingOrder === order._id
                   const isExpanded = expandedOrder === order._id
 
@@ -482,10 +539,10 @@ export default function AdminOrdersPage() {
                                           Pending
                                         </div>
                                       </SelectItem>
-                                      <SelectItem value="confirmed">
+                                      <SelectItem value="processing">
                                         <div className="flex items-center gap-2">
                                           <CheckCircle className="h-3 w-3" />
-                                          Confirmed
+                                          Processing
                                         </div>
                                       </SelectItem>
                                       <SelectItem value="shipped">
@@ -529,11 +586,11 @@ export default function AdminOrdersPage() {
                                 <>
                                   <Badge
                                     variant="outline"
-                                    className={`${statusConfig[order.status].color} border px-3 py-1`}
+                                    className={`${config.color} border px-3 py-1`}
                                   >
-                                    <div className={`h-1.5 w-1.5 rounded-full ${statusConfig[order.status].dotColor} mr-2 animate-pulse`} />
+                                    <div className={`h-1.5 w-1.5 rounded-full ${config.dotColor} mr-2 animate-pulse`} />
                                     <StatusIcon className="h-3 w-3 mr-1.5" />
-                                    {statusConfig[order.status].label}
+                                    {config.label}
                                   </Badge>
 
                                   <DropdownMenu>

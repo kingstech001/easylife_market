@@ -144,7 +144,7 @@ export default function AnalyticsOverview() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-7xl mx-auto px-4 py-12 space-y-8">
+      <div className="container max-w-7xl mx-auto  py-12 space-y-8">
         {/* Header Section */}
         <motion.div
           variants={containerVariants}

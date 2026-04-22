@@ -60,16 +60,17 @@ export async function GET(request: NextRequest) {
       ...order,
       customerName:
         order.userId?.name ||
+        [order.userId?.firstName, order.userId?.lastName].filter(Boolean).join(" ") ||
         order.shippingInfo?.firstName ||
         "Unknown Customer",
       customerEmail: order.userId?.email || "No email provided",
-      storeName: order.items[0]?.productId?.storeId?.name || "Unknown Store",
-      items: order.items.map((item: any) => ({
+      storeName: order.items?.[0]?.productId?.storeId?.name || "Unknown Store",
+      items: (Array.isArray(order.items) ? order.items : []).map((item: any) => ({
         productId: item.productId?._id,
         productName: item.productId?.name || "Unknown Product",
         storeName: item.productId?.storeId?.name || "Unknown Store",
-        quantity: item.quantity,
-        price: item.price,
+        quantity: Number(item.quantity) || 0,
+        price: Number(item.priceAtPurchase ?? item.price) || 0,
       })),
     }));
 

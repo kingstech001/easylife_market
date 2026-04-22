@@ -135,7 +135,7 @@ export function BuyerSection() {
           <Link href="/allStoreProducts" className="w-full sm:w-auto">
             <Button
               size="lg"
-              className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] hover:from-[#d4b55e] hover:via-[#e1a200] hover:to-[#d4b55e] text-white shadow-lg hover:shadow-xl transition-all duration-300  group"
+              className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] hover:from-[#d4b55e] hover:via-[#e1a200] hover:to-[#d4b55e] text-white shadow-lg hover:shadow-xl transition-all duration-300 group rounded-full"
             >
               Start Shopping
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -146,7 +146,7 @@ export function BuyerSection() {
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto h-14 px-8 text-lg bg-transparent font-bold border-2 hover:border-[#e1a200] hover:bg-[#e1a200]/5  transition-all duration-300"
+              className="w-full sm:w-auto h-14 px-8 text-lg bg-transparent font-bold border-2 hover:border-[#e1a200] hover:bg-[#e1a200]/5  transition-all duration-300 rounded-full"
             >
               Browse Stores
             </Button>
