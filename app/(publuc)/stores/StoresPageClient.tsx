@@ -161,7 +161,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             </div>
 
             <div className="mt-6 rounded-[28px] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
-              <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center relative">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
                   <Input
@@ -170,7 +170,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search for stores, products, or categories..."
                     className={cn(
-                      "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-white/55",
+                      "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-foreground/70 focus:ring-0  focus-visible:ring-2 focus-visible:ring-[#f0c14b]/80 focus-visible:ring-offset-0 transition-colors duration-300",
                       "focus-visible:ring-2 focus-visible:ring-[#f0c14b] focus-visible:ring-offset-0",
                       "sm:h-14 sm:text-[15px]"
                     )}
@@ -178,14 +178,13 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 </div>
                 <Button
                   type="submit"
-                  className="h-12 rounded-full bg-[#e1a200] px-5 text-sm font-semibold text-white hover:bg-[#c89100] sm:h-14 sm:px-7"
+                  className=" flex items-center rounded-full px-3 py-0 bg-[#e1a200] text-sm font-semibold text-white hover:bg-[#c89100] absolute right-0 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
                 >
-                  Search stores
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className=" h-4 w-4" />
                 </Button>
               </form>
 
-              <div className="mt-3 flex flex-wrap gap-2">
+              {/* <div className="mt-3 flex flex-wrap gap-2">
                 {["Restaurants", "Fashion", "Groceries", "Beauty"].map((term) => (
                   <button
                     key={term}
@@ -196,7 +195,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                     {term}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
