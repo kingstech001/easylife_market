@@ -4,6 +4,8 @@ import Store from "@/models/Store";
 import Product from "@/models/Product";
 import StoresPageClient from "./StoresPageClient";
 
+export const dynamic = "force-dynamic";
+
 async function getStoresData() {
   try {
     console.log("🔍 [Server] Fetching stores from database");

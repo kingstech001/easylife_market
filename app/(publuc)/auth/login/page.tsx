@@ -86,6 +86,8 @@ export default function LoginPage() {
       } else if (data.user.role === "seller") {
         const hasStore = await checkSellerStore();
         router.push(hasStore ? "/dashboard/seller" : "/create-store");
+      } else if (data.user.role === "buyer") {
+        router.push("/stores");
       } else {
         router.push("/");
       }
@@ -128,8 +130,9 @@ export default function LoginPage() {
                 Sign in and continue your EasyLife journey
               </h1>
               <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground">
-                Access your buyer or seller account, manage your activity, and continue shopping
-                or growing your store with a cleaner, more focused experience.
+                Access your buyer or seller account, manage your activity, and
+                continue shopping or growing your store with a cleaner, more
+                focused experience.
               </p>
             </div>
 
@@ -140,9 +143,12 @@ export default function LoginPage() {
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">Secure access</h3>
+                    <h3 className="font-semibold text-foreground">
+                      Secure access
+                    </h3>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Your account is protected with email verification, private sessions, and role-based access.
+                      Your account is protected with email verification, private
+                      sessions, and role-based access.
                     </p>
                   </div>
                 </div>
@@ -154,9 +160,12 @@ export default function LoginPage() {
                     <ShoppingBag className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">Everything in one place</h3>
+                    <h3 className="font-semibold text-foreground">
+                      Everything in one place
+                    </h3>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Jump back into your store dashboard, orders, favorites, and shopping activity without friction.
+                      Jump back into your store dashboard, orders, favorites,
+                      and shopping activity without friction.
                     </p>
                   </div>
                 </div>
@@ -167,7 +176,13 @@ export default function LoginPage() {
           <Card className="w-full rounded-[30px] border border-border/70 bg-background/92 shadow-xl backdrop-blur-sm sm:rounded-[36px]">
             <CardHeader className="space-y-5 p-5 pb-3 text-center sm:p-7 sm:pb-4">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-border/70 bg-background shadow-sm">
-                <Image src="/logo.png" alt="EasyLife logo" width={64} height={64} priority />
+                <Image
+                  src="/logo.png"
+                  alt="EasyLife logo"
+                  width={64}
+                  height={64}
+                  priority
+                />
               </div>
 
               <div className="space-y-2">
@@ -175,14 +190,18 @@ export default function LoginPage() {
                   Sign in to your account
                 </CardTitle>
                 <CardDescription className="mx-auto max-w-md text-sm leading-6 sm:text-base">
-                  Welcome back. Enter your details to continue buying, selling, and managing your EasyLife account.
+                  Welcome back. Enter your details to continue buying, selling,
+                  and managing your EasyLife account.
                 </CardDescription>
               </div>
             </CardHeader>
 
             <CardContent className="p-5 pt-2 sm:p-7 sm:pt-3">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-5"
+                >
                   <FormField
                     control={form.control}
                     name="email"
@@ -252,7 +271,9 @@ export default function LoginPage() {
                       <Checkbox
                         id="remember"
                         checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          setRememberMe(checked as boolean)
+                        }
                         disabled={isLoading}
                       />
                       <label

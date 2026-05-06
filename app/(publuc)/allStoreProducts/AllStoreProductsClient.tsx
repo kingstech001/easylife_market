@@ -61,7 +61,7 @@ export default function AllStoreProductsClient({
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.06),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 hidden lg:block">
           {heroBanner?.imageUrl ? (
             <>
               <div className="absolute inset-0">
@@ -87,9 +87,9 @@ export default function AllStoreProductsClient({
           )}
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 lg:px-8 lg:pb-14 lg:pt-8">
+        <div className="relative mx-auto max-w-7xl px-4 pt-3 sm:px-6 sm:pb-10 lg:px-8 lg:pb-14 lg:pt-8">
           <div className="mx-auto max-w-4xl">
-            <div className="mt-5 space-y-4 sm:mt-7 sm:space-y-5">
+            <div className="hidden lg:block mt-5 space-y-4 sm:mt-7 sm:space-y-5">
               <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-6xl">
                 {heroBanner?.title || "Discover quality products"}
               </h1>
@@ -99,7 +99,7 @@ export default function AllStoreProductsClient({
               </p>
             </div>
 
-            <div className="mt-6 rounded-[28px] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
+            <div className=" rounded-[28px] border border-white/15 bg-white/10 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
               <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center relative">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
@@ -117,31 +117,19 @@ export default function AllStoreProductsClient({
                 </div>
                 <Button
                   type="submit"
-                  className=" flex items-center rounded-full px-3 py-0 bg-[#e1a200] text-sm font-semibold text-white hover:bg-[#c89100] absolute right-0 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
+                  className=" flex items-center rounded-full px-3 py-0 bg-[#e1a200] text-sm font-semibold text-white hover:bg-[#c89100] absolute right-1 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
                 >
                   <ArrowRight className=" h-4 w-4" />
                 </Button>
               </form>
 
-              {/* <div className="mt-3 flex flex-wrap gap-2">
-                {["Restaurants", "Groceries", "Fashion", "Tech"].map((term) => (
-                  <button
-                    key={term}
-                    type="button"
-                    onClick={() => router.push(`/Search?search=${encodeURIComponent(term)}`)}
-                    className="rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/14"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div> */}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-[30px] border border-border/70 bg-background/85 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
+      <section className="mx-auto max-w-7xl  py-3 sm:px-6 lg:px-8">
+        <div className="border border-border/70 bg-background/85  shadow-sm backdrop-blur p-4 sm:p-5 lg:p-6">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a97500]">
@@ -157,7 +145,7 @@ export default function AllStoreProductsClient({
             </Link>
           </div>
 
-          <div className="mt-5 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+          <div className="mt-5 flex overflow-x-auto  snap-x snap-mandatory scrollbar-hide">
             {categoryPreview.map((category) => {
               const Icon = category.icon;
 
@@ -165,9 +153,9 @@ export default function AllStoreProductsClient({
                 <Link
                   key={category.name}
                   href={buildCategorySearchUrl(category)}
-                  className="flex flex-col items-center min-w-[118px] snap-start rounded-3xl border border-border/70 bg-muted/30 p-2 transition hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.06] hover:shadow-md sm:min-w-[132px]"
+                  className="flex flex-col items-center min-w-[90px] snap-start transition  hover:shadow-md sm:min-w-[132px]"
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/60">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/60 hover:ring-[#e1a200]/50 transition-all">
                     <Icon className="h-5 w-5 text-[#e1a200]" />
                   </div>
                   <p className="mt-4 text-[10px] font-semibold leading-5 text-foreground">
@@ -179,7 +167,7 @@ export default function AllStoreProductsClient({
 
             <Link
               href="/Search"
-              className="flex flex-col items-center  min-w-[118px] snap-start rounded-3xl border border-dashed border-[#e1a200]/40 bg-[#e1a200]/[0.04] p-2 transition hover:bg-[#e1a200]/[0.08] sm:min-w-[132px]"
+              className="flex flex-col items-center  min-w-[90px] snap-start transition sm:min-w-[132px]"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e1a200] text-white shadow-sm">
                 <ArrowRight className="h-5 w-5" />
@@ -210,17 +198,9 @@ export default function AllStoreProductsClient({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a97500]">
                   Product catalogue
                 </p>
-                {/* <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-                  Fresh picks across every category
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  Browse a growing collection of products from trusted stores, food vendors, and local businesses.
-                </p> */}
+               
               </div>
-              {/* <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-4 py-2 text-sm text-muted-foreground shadow-sm">
-                <Store className="h-4 w-4 text-[#e1a200]" />
-                {initialProducts.length} products available
-              </div> */}
+              
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

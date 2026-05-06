@@ -404,9 +404,7 @@ export default function RegisterPage() {
                                   <Store className="h-4 w-4 text-[#8c6500]" />
                                   <span className="font-medium text-foreground">Seller</span>
                                 </div>
-                                <p className="text-sm leading-6 text-muted-foreground">
-                                  Open a storefront, upload products, and manage your business.
-                                </p>
+                                
                               </div>
                             </label>
 
@@ -429,9 +427,7 @@ export default function RegisterPage() {
                                   <ShoppingBag className="h-4 w-4 text-[#8c6500]" />
                                   <span className="font-medium text-foreground">Buyer</span>
                                 </div>
-                                <p className="text-sm leading-6 text-muted-foreground">
-                                  Save favorites, explore stores, and shop across categories.
-                                </p>
+                               
                               </div>
                             </label>
                           </RadioGroup>

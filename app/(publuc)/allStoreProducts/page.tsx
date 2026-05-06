@@ -3,6 +3,8 @@ import Product from "@/models/Product";
 import Store from "@/models/Store";
 import AllStoreProductsClient from "./AllStoreProductsClient";
 
+export const dynamic = "force-dynamic";
+
 type TransformedProduct = {
   id: string;
   name: string;

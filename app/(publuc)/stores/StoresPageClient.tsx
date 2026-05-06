@@ -9,7 +9,14 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Megaphone, Search, Sparkles, Store, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Megaphone,
+  Search,
+  Sparkles,
+  Store,
+  Users,
+} from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
 interface DaySchedule {
@@ -59,7 +66,9 @@ interface StoresPageClientProps {
 const HERO_ROTATION_MS = 60000;
 const HERO_SWAP_DELAY_MS = 100;
 
-export default function StoresPageClient({ initialStores }: StoresPageClientProps) {
+export default function StoresPageClient({
+  initialStores,
+}: StoresPageClientProps) {
   const router = useRouter();
   const stores = initialStores;
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
@@ -112,13 +121,13 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.06),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 hidden lg:block">
           {heroBanner?.imageUrl ? (
             <>
               <div
                 className={cn(
                   "absolute inset-0 transition-opacity duration-500",
-                  isTransitioning ? "opacity-0" : "opacity-100"
+                  isTransitioning ? "opacity-0" : "opacity-100",
                 )}
               >
                 <Image
@@ -143,25 +152,31 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           )}
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pb-10 lg:px-8 lg:pb-14 lg:pt-8">
+        <div className="relative mx-auto max-w-7xl pt-3 sm:px-6 sm:pb-10 lg:px-8 lg:pb-14 lg:pt-8">
           <div className="mx-auto max-w-4xl">
-            <Badge className="inline-flex border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
-              <Sparkles className="mr-2 h-4 w-4 text-[#f6cf66]" />
-              Discover trusted stores
-            </Badge>
+            <div className="hidden lg:block">
+              <Badge className="inline-flex border border-white/15 bg-white/10  py-2 text-sm font-semibold text-white backdrop-blur-sm">
+                <Sparkles className="mr-2 h-4 w-4 text-[#f6cf66]" />
+                Discover trusted stores
+              </Badge>
 
-            <div className="mt-5 space-y-4 sm:mt-7 sm:space-y-5">
-              <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-6xl">
-                {heroBanner?.title || "Explore standout stores across the marketplace"}
-              </h1>
-              <p className="max-w-2xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7 lg:text-lg">
-                {heroBanner?.subtitle ||
-                  "Browse growing brands, neighborhood businesses, food vendors, and premium sellers in one polished shopping destination."}
-              </p>
+              <div className="mt-5 space-y-4 sm:mt-7 sm:space-y-5">
+                <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-6xl">
+                  {heroBanner?.title ||
+                    "Explore standout stores across the marketplace"}
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7 lg:text-lg">
+                  {heroBanner?.subtitle ||
+                    "Browse growing brands, neighborhood businesses, food vendors, and premium sellers in one polished shopping destination."}
+                </p>
+              </div>
             </div>
 
-            <div className="mt-6 rounded-[28px] border border-white/15 bg-white/10 p-3 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
-              <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row sm:items-center relative">
+            <div className="mx-4 rounded-[28px] border border-white/15 bg-white/10 shadow-2xl shadow-black/20 backdrop-blur-md sm:mt-8 sm:p-4">
+              <form
+                onSubmit={handleSearch}
+                className="flex flex-col gap-3 sm:flex-row sm:items-center relative"
+              >
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
                   <Input
@@ -172,56 +187,37 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                     className={cn(
                       "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-foreground/70 focus:ring-0  focus-visible:ring-2 focus-visible:ring-[#f0c14b]/80 focus-visible:ring-offset-0 transition-colors duration-300",
                       "focus-visible:ring-2 focus-visible:ring-[#f0c14b] focus-visible:ring-offset-0",
-                      "sm:h-14 sm:text-[15px]"
+                      "sm:h-14 sm:text-[15px]",
                     )}
                   />
                 </div>
                 <Button
                   type="submit"
-                  className=" flex items-center rounded-full px-3 py-0 bg-[#e1a200] text-sm font-semibold text-white hover:bg-[#c89100] absolute right-0 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
+                  className=" flex items-center rounded-full px-3 py-0 bg-[#e1a200] text-sm font-semibold text-white hover:bg-[#c89100] absolute right-1 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
                 >
                   <ArrowRight className=" h-4 w-4" />
                 </Button>
               </form>
-
-              {/* <div className="mt-3 flex flex-wrap gap-2">
-                {["Restaurants", "Fashion", "Groceries", "Beauty"].map((term) => (
-                  <button
-                    key={term}
-                    type="button"
-                    onClick={() => router.push(`/Search?search=${encodeURIComponent(term)}`)}
-                    className="rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/14"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div> */}
             </div>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <div className="grid gap-4 ">
           <div className="rounded-[28px] border border-[#e1a200]/15 bg-[linear-gradient(135deg,rgba(225,162,0,0.12),rgba(225,162,0,0.03)_45%,rgba(255,255,255,0.78)_100%)] p-5 shadow-sm sm:p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e1a200] text-white shadow-sm">
-                <Megaphone className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
-                  Promote here
-                </p>
-                <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+            <div >
+              <div className="flex flex-col md:flex-row justify-between md:items-center">
+                <h2 className=" text-sm md:text-xl font-semibold text-foreground sm:text-2xl">
                   Advertise your business to active shoppers
                 </h2>
-                <div className="mt-4">
+                <div className="mt-2 md:mt-0">
                   <Link
                     href="https://wa.me/2348071427831"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button className="h-11 rounded-full bg-[#e1a200] px-5 text-white hover:bg-[#c89100]">
+                    <Button className="h-8 rounded-full bg-[#e1a200] px-5 text-white hover:bg-[#c89100]">
                       Contact us on WhatsApp
                       <FaWhatsapp className="ml-2 h-4 w-4" />
                     </Button>
@@ -230,40 +226,24 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               </div>
             </div>
           </div>
-
-          <div className="rounded-[28px] border border-border/70 bg-background/85 p-5 shadow-sm backdrop-blur sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
-              Become a seller
-            </p>
-            <h3 className="mt-2 text-xl font-semibold text-foreground">Open your store on EasyLife</h3>
-            {/* <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-2 text-sm text-foreground">
-              <Users className="h-4 w-4 text-[#e1a200]" />
-              Join a growing seller community
-            </div> */}
-            <div className="mt-4">
-              <Link href="/auth/register">
-                <Button
-                  variant="outline"
-                  className="h-11 rounded-full border-border bg-background px-5 hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.05]"
-                >
-                  Join now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14" id="stores">
+      <section
+        className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14"
+        id="stores"
+      >
         {stores.length === 0 ? (
           <div className="rounded-[30px] border border-dashed border-border bg-background p-10 text-center shadow-sm">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#e1a200]/10">
               <Store className="h-10 w-10 text-[#e1a200]" />
             </div>
-            <h3 className="mt-6 text-xl font-semibold text-foreground">No stores available yet</h3>
+            <h3 className="mt-6 text-xl font-semibold text-foreground">
+              No stores available yet
+            </h3>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-              Be the first to launch a store on the platform and start reaching customers across the marketplace.
+              Be the first to launch a store on the platform and start reaching
+              customers across the marketplace.
             </p>
             <div className="mt-6">
               <Link href="/auth/register">
@@ -276,20 +256,6 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
         ) : (
           <>
             <div className="rounded-[30px] border border-border/70 bg-background/85 p-5 shadow-sm backdrop-blur sm:p-6">
-              {/* <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
-                    Store directory
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-                    Browse stores built for every kind of shopper
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                    Explore standout stores from sellers in fashion, food, beauty, groceries, and more.
-                  </p>
-                </div>
-              </div> */}
-
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {stores.map((store, index) => (
                   <div
@@ -303,6 +269,26 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+            <div className="mt-4 rounded-[28px] border border-border/70 bg-background/85 p-5 shadow-sm backdrop-blur sm:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                Become a seller
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-foreground">
+                Open your store on EasyLife
+              </h3>
+
+              <div className="mt-4">
+                <Link href="/auth/register">
+                  <Button
+                    variant="outline"
+                    className="h-11 rounded-full border-border bg-background px-5 hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.05]"
+                  >
+                    Join now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </>
