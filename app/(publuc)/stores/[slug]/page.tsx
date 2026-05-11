@@ -7,12 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Award,
   Package,
   ShieldCheck,
   Star,
   Store as StoreIcon,
-  TrendingUp,
   Utensils,
 } from "lucide-react";
 import { VisitTracker } from "@/components/visit-tracker";
@@ -455,7 +453,7 @@ export default async function StorePage({ params }: StorePageProps) {
                 <div className="flex items-center gap-1">
                   <Badge
                     variant="secondary"
-                    className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground"
+                    className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                   >
                     <Star className="mr-1.5 h-3.5 w-3.5 fill-current text-[#e1a200]" />
                     {reviewStats.reviewCount > 0
@@ -464,7 +462,7 @@ export default async function StorePage({ params }: StorePageProps) {
                   </Badge>
                   <Badge
                     variant="secondary"
-                    className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground"
+                    className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                   >
                     {reviewStats.reviewCount} review
                     {reviewStats.reviewCount === 1 ? "" : "s"}
@@ -473,7 +471,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     <Badge
                       key={category}
                       variant="secondary"
-                      className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground"
+                      className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                     >
                       {category}
                     </Badge>

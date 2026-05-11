@@ -51,7 +51,7 @@ const fieldBaseClass =
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, checkSellerStore } = useAuth();
+  const { login, checkSellerStore, checkSellerProducts } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -85,7 +85,12 @@ export default function LoginPage() {
         router.push("/dashboard/admin");
       } else if (data.user.role === "seller") {
         const hasStore = await checkSellerStore();
-        router.push(hasStore ? "/dashboard/seller" : "/create-store");
+        if (!hasStore) {
+          router.push("/create-store");
+        } else {
+          const hasProducts = await checkSellerProducts();
+          router.push(hasProducts ? "/dashboard/seller" : "/store-builder");
+        }
       } else if (data.user.role === "buyer") {
         router.push("/stores");
       } else {

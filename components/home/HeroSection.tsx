@@ -166,7 +166,7 @@ export default function HeroSection() {
 
   return (
     <Reveal>
-      <section className="relative overflow-hidden min-h-[85vh] flex items-center">
+      <section className="relative z-40 flex items-center isolate">
         <AnimatePresence mode="wait">
           {heroBanner?.imageUrl ? (
             <motion.div
@@ -175,7 +175,7 @@ export default function HeroSection() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="absolute inset-0 z-0"
+              className="absolute inset-0 z-0 overflow-hidden"
             >
               <Image
                 src={heroBanner.imageUrl}
@@ -205,7 +205,7 @@ export default function HeroSection() {
           )}
         </AnimatePresence>
 
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="relative z-10 container mx-auto p-4 sm:px-6 lg:px-8 md:py-24">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -216,14 +216,14 @@ export default function HeroSection() {
               <div className="space-y-3 sm:space-y-4">
                 <h1
                   className={cn(
-                    "text-6xl md:text-6xl lg:text-7xl font-bold tracking-tight",
+                    "text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight",
                     heroBanner?.imageUrl
                       ? "text-white drop-shadow-lg"
                       : "text-foreground"
                   )}
                 >
                   {heroHeading}
-                  <span className="block sm:ml-4 sm:inline text-5xl sm:text-6xl lg:text-7xl mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
+                  <span className="block sm:ml-4 sm:inline text-4xl sm:text-6xl lg:text-7xl mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
                     Seamlessly <span className="text-white">with</span> EasyLife
                   </span>
                 </h1>
@@ -239,7 +239,7 @@ export default function HeroSection() {
                 </p>
               </div>
 
-              <div ref={searchContainerRef} className="max-w-2xl relative">
+              <div ref={searchContainerRef} className="relative z-[90] max-w-2xl">
                 <form onSubmit={handleSearch} className="relative">
                   <Input
                     type="text"
@@ -268,7 +268,7 @@ export default function HeroSection() {
                 </form>
 
                 {showSuggestions && (
-                  <div className="absolute mt-2 w-full rounded-xl border border-white/20 bg-black/80 backdrop-blur-md shadow-2xl overflow-hidden z-20">
+                  <div className="absolute z-[100] mt-2 w-full overflow-hidden rounded-xl border border-white/20 bg-black/80 shadow-2xl backdrop-blur-md">
                     {isLoadingSuggestions ? (
                       <div className="px-4 py-3 text-sm text-white/70">Searching...</div>
                     ) : (
@@ -328,33 +328,20 @@ export default function HeroSection() {
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start pt-2">
-                {/* <Link href="/stores" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className={cn(
-                      "w-full sm:w-auto h-12 px-8 text-base font-semibold",
-                      "bg-[#e1a200] hover:bg-[#e1a200]/90 text-white",
-                      "shadow-xl hover:shadow-2xl transition-all",
-                    )}
-                  >
-                    Go to Market
-                    <ShoppingBag className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link> */}
+              <div className="flex sm:flex-row gap-3 sm:gap-4 items-start ">
                 <Link href="/auth/login" className="w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="lg"
                     className={cn(
-                      "w-full sm:w-auto h-12 px-8 text-base font-semibold border-2 transition-all shadow-lg",
+                      "w-full sm:w-auto h-12 text-base font-semibold border-2 transition-all shadow-lg px-2 md:px-4",
                       heroBanner?.imageUrl
-                        ? "bg-white/10 backdrop-blur-sm border-white/40 text-white hover:bg-white/20 hover:border-white/50"
+                        ? "bg-white/10 backdrop-blur-sm border-none text-white hover:bg-white/20 hover:border-white/50"
                         : "bg-background hover:bg-muted/50 hover:border-[#e1a200]/50"
                     )}
                   >
                     Create Store
-                    <Store className="ml-2 h-5 w-5" />
+                    <Store className=" h-5" />
                   </Button>
                 </Link>
                 {heroBanner?.buttonLink && heroBanner?.buttonText && (
@@ -362,7 +349,7 @@ export default function HeroSection() {
                     <Button
                       variant="secondary"
                       size="lg"
-                      className="w-full sm:w-auto h-12 px-8 text-base font-semibold"
+                      className="w-full sm:w-auto h-12 px-2 md:px-4 text-base font-semibold"
                     >
                       {heroBanner.buttonText}
                       <ShoppingBag className="ml-2 h-5 w-5" />
@@ -375,7 +362,7 @@ export default function HeroSection() {
         </div>
 
         {heroBanner && (
-          <div className="absolute bottom-6 right-6 flex gap-1.5 z-10">
+          <div className="hidden absolute bottom-6 right-6 sm:flex gap-1.5 z-10">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}

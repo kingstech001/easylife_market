@@ -1,11 +1,18 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 
 interface User {
   id: string;
   email: string;
-  role: 'user' | 'seller' | 'admin';
+  role: "user" | "seller" | "admin";
 }
 
 interface AuthContextType {
@@ -15,6 +22,7 @@ interface AuthContextType {
   register: (userData: registerData) => Promise<Response>;
   login: (email: string, password: string) => Promise<Response>;
   checkSellerStore: () => Promise<boolean>;
+  checkSellerProducts: () => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -23,7 +31,7 @@ type registerData = {
   lastName: string;
   email: string;
   password: string;
-  role: 'user' | 'seller' | 'admin';
+  role: "user" | "seller" | "admin";
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUser = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/me', { credentials: 'include' });
+      const res = await fetch("/api/me", { credentials: "include" });
       if (!res.ok) {
         setUser(null);
         return;
@@ -50,53 +58,71 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const register = useCallback(async (userData: registerData) => {
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(userData),
     });
     // Do not automatically fetch user here — backend may require email verification
     return res;
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.ok) {
-      await fetchUser();
-    }
-    return res;
-  }, [fetchUser]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        await fetchUser();
+      }
+      return res;
+    },
+    [fetchUser],
+  );
 
   const checkSellerStore = useCallback(async (): Promise<boolean> => {
     try {
-      const res = await fetch('/api/dashboard/seller/store', {
-        method: 'GET',
-        credentials: 'include',
+      const res = await fetch("/api/dashboard/seller/store", {
+        method: "GET",
+        credentials: "include",
       });
       if (res.status === 200) return true;
       if (res.status === 404) return false;
       return false;
     } catch (error) {
-      console.error('Error checking seller store:', error);
+      console.error("Error checking seller store:", error);
+      return false;
+    }
+  }, []);
+
+  const checkSellerProducts = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/dashboard/seller/products", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      return data.products && data.products.length > 0;
+    } catch (error) {
+      console.error("Error checking seller products:", error);
       return false;
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error("Error logging out:", error);
     } finally {
       setUser(null);
     }
@@ -114,8 +140,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [fetchUser]);
 
   const value = useMemo(
-    () => ({ user, loading, refresh: fetchUser, register, login, checkSellerStore, logout }),
-    [user, loading, fetchUser, register, login, checkSellerStore, logout]
+    () => ({
+      user,
+      loading,
+      refresh: fetchUser,
+      register,
+      login,
+      checkSellerStore,
+      checkSellerProducts,
+      logout,
+    }),
+    [
+      user,
+      loading,
+      fetchUser,
+      register,
+      login,
+      checkSellerStore,
+      checkSellerProducts,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -123,6 +167,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
