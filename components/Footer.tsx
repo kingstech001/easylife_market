@@ -177,7 +177,7 @@ export function ModernFooter() {
                   { name: "Stores", href: "/stores" },
                   { name: "About Us", href: "/about" },
                   { name: "Contact", href: "/contact" },
-                  { name: "Blog", href: "/blog" },
+                  { name: "Blog", href: "#" },
                 ].map((link) => (
                   <li key={link.name}>
                     <Link
@@ -202,11 +202,11 @@ export function ModernFooter() {
               </h3>
               <ul className="space-y-3">
                 {[
-                  { name: "Help Center", href: "/help" },
+                  { name: "Help Center", href: "/#" },
                   { name: "Privacy Policy", href: "/privacy" },
                   { name: "Terms of Service", href: "/terms" },
-                  { name: "Cookie Policy", href: "/cookies" },
-                  { name: "FAQ", href: "/faq" },
+                  { name: "Cookie Policy", href: "#" },
+                  { name: "FAQ", href: "#" },
                 ].map((link) => (
                   <li key={link.name}>
                     <Link

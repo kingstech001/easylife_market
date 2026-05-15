@@ -44,6 +44,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { slugify, cn } from "@/lib/utils";
 import { AnimatedContainer } from "@/components/ui/animated-container";
+import { MapAddressPicker } from "@/components/ui/map-address-picker";
 import {
   BusinessHoursEditor,
   BusinessHours,
@@ -752,14 +753,17 @@ export default function CreateStorePage() {
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
-                            <IconInput
-                              icon={MapPin}
-                              placeholder="123 Main St, Enugu, Nigeria"
-                              field={field}
+                            <MapAddressPicker
+                              value={field.value}
+                              onChange={(address) => {
+                                field.onChange(address);
+                                form.trigger("location");
+                              }}
+                              placeholder="Tap to search your store address"
                             />
                           </FormControl>
                           <FormDescription className="text-[10px] sm:text-xs">
-                            Your physical or business address
+                            Search or tap the map to set your address
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
