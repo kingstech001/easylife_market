@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimatedContainer } from "@/components/ui/animated-container"
+import { MapAddressPicker } from "@/components/ui/map-address-picker"
 import { useCart } from "@/context/cart-context"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -562,14 +563,11 @@ export default function CheckoutPage() {
                       </div>
                       <div className="grid gap-4 mt-4">
                         <div className="space-y-2">
-                          <Label htmlFor="address">Street Address *</Label>
-                          <Input
-                            id="address"
-                            placeholder="123 Main Street, Apartment 4B"
+                          <Label htmlFor="address">Delivery Address *</Label>
+                          <MapAddressPicker
                             value={info.address}
-                            onChange={(e) => setInfo({ ...info, address: e.target.value })}
-                            className="h-11 rounded-xl border-2"
-                            disabled={isProcessing || isInitializing}
+                            onChange={(address) => setInfo({ ...info, address })}
+                            placeholder="Tap to pick your delivery address on map"
                           />
                         </div>
                       </div>
