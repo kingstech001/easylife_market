@@ -4,8 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { MapPin, Search, X, Navigation, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import type L from "leaflet";
 
 interface MapAddressPickerProps {
   value: string;
@@ -19,18 +18,6 @@ interface NominatimResult {
   lat: string;
   lon: string;
 }
-
-// Fix Leaflet default marker icons (they break with bundlers)
-const markerIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
 
 export function MapAddressPicker({
   value,
@@ -49,73 +36,129 @@ export function MapAddressPicker({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const leafletRef = useRef<typeof L | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize map when modal opens
+  // Initialize map when modal opens — dynamically import leaflet (client only)
   useEffect(() => {
     if (!isMapOpen || !mapContainerRef.current) return;
 
-    const map = L.map(mapContainerRef.current, {
-      center: selectedCoords
-        ? [selectedCoords[0], selectedCoords[1]]
-        : [6.45, 7.5], // Default: Enugu, Nigeria (lat, lng)
-      zoom: selectedCoords ? 16 : 12,
-      zoomControl: false,
-    });
+    let map: L.Map;
 
-    // Street map layer
-    const streets = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution: "&copy; OpenStreetMap contributors",
-        maxZoom: 19,
+    const initMap = async () => {
+      const leaflet = (await import("leaflet")).default;
+
+      // Inject Leaflet CSS if not already present
+      if (!document.getElementById("leaflet-css")) {
+        const link = document.createElement("link");
+        link.id = "leaflet-css";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
       }
-    );
 
-    // Satellite layer (Google) — shows buildings/roads even in unmapped areas
-    const satellite = L.tileLayer(
-      "https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
-      {
-        attribution: "&copy; Google",
-        maxZoom: 20,
+      leafletRef.current = leaflet;
+
+      // Fix default marker icons for bundlers
+      const markerIcon = leaflet.icon({
+        iconUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+
+      map = leaflet.map(mapContainerRef.current!, {
+        center: selectedCoords
+          ? [selectedCoords[0], selectedCoords[1]]
+          : [6.45, 7.5],
+        zoom: selectedCoords ? 16 : 12,
+        zoomControl: false,
+      });
+
+      // Street map layer
+      const streets = leaflet.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 19,
+        }
+      );
+
+      // Satellite layer — shows buildings/roads even in unmapped areas
+      const satellite = leaflet.tileLayer(
+        "https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
+        {
+          attribution: "&copy; Google",
+          maxZoom: 20,
+        }
+      );
+
+      // Default to satellite for better village coverage
+      satellite.addTo(map);
+
+      leaflet.control
+        .layers(
+          { Street: streets, Satellite: satellite },
+          {},
+          { position: "topright" }
+        )
+        .addTo(map);
+
+      leaflet.control.zoom({ position: "bottomright" }).addTo(map);
+
+      mapRef.current = map;
+
+      // Place marker if we already have coords
+      if (selectedCoords) {
+        const marker = leaflet
+          .marker([selectedCoords[0], selectedCoords[1]], {
+            icon: markerIcon,
+          })
+          .addTo(map);
+        markerRef.current = marker;
       }
-    );
 
-    // Default to satellite for better village coverage
-    satellite.addTo(map);
+      // Click on map to place marker + reverse geocode
+      map.on("click", async (e: L.LeafletMouseEvent) => {
+        const { lat, lng } = e.latlng;
+        // Place marker immediately
+        markerRef.current?.remove();
+        const marker = leaflet
+          .marker([lat, lng], { icon: markerIcon })
+          .addTo(map);
+        markerRef.current = marker;
+        setSelectedCoords([lat, lng]);
 
-    L.control
-      .layers(
-        { Street: streets, Satellite: satellite },
-        {},
-        { position: "topright" }
-      )
-      .addTo(map);
+        // Try reverse geocode, fall back to coords string
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          if (data.display_name) {
+            setTempAddress(data.display_name);
+          } else {
+            setTempAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+          }
+        } catch {
+          setTempAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        }
+      });
+    };
 
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-
-    mapRef.current = map;
-
-    // Place marker if we already have coords
-    if (selectedCoords) {
-      const marker = L.marker(
-        [selectedCoords[0], selectedCoords[1]],
-        { icon: markerIcon }
-      ).addTo(map);
-      markerRef.current = marker;
-    }
-
-    // Click on map to place marker
-    map.on("click", async (e: L.LeafletMouseEvent) => {
-      const { lat, lng } = e.latlng;
-      placeMarker([lat, lng]);
-      await reverseGeocode(lat, lng);
-    });
+    initMap();
 
     return () => {
       markerRef.current?.remove();
       markerRef.current = null;
-      map.remove();
+      map?.remove();
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,10 +166,25 @@ export function MapAddressPicker({
 
   const placeMarker = useCallback((coords: [number, number]) => {
     const activeMap = mapRef.current;
-    if (!activeMap) return;
+    const leaflet = leafletRef.current;
+    if (!activeMap || !leaflet) return;
 
     markerRef.current?.remove();
-    const marker = L.marker(coords, { icon: markerIcon }).addTo(activeMap);
+    const markerIcon = leaflet.icon({
+      iconUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      iconRetinaUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+    const marker = leaflet
+      .marker(coords, { icon: markerIcon })
+      .addTo(activeMap);
     markerRef.current = marker;
     setSelectedCoords(coords);
   }, []);
@@ -140,8 +198,12 @@ export function MapAddressPicker({
       const data = await res.json();
       if (data.display_name) {
         setTempAddress(data.display_name);
+      } else {
+        setTempAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       }
-    } catch {}
+    } catch {
+      setTempAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    }
   };
 
   const searchAddress = useCallback(async (q: string) => {
@@ -314,13 +376,17 @@ export function MapAddressPicker({
 
           {/* Bottom bar */}
           <div className="flex-shrink-0 border-t border-border/40 bg-background p-3 sm:p-4 space-y-2 z-[10001]">
-            {tempAddress && (
+            {tempAddress ? (
               <div className="flex items-start gap-2 px-1">
                 <MapPin className="h-4 w-4 text-[#c0a146] flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-foreground leading-snug line-clamp-2">
                   {tempAddress}
                 </p>
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">
+                Tap anywhere on the map to select a location
+              </p>
             )}
             <Button
               type="button"
