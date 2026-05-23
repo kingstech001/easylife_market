@@ -169,6 +169,7 @@ export default function CreateStorePage() {
 
   const [logoError, setLogoError] = useState(false);
   const [bannerError, setBannerError] = useState(false);
+  const [storeCoords, setStoreCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
@@ -372,6 +373,7 @@ export default function CreateStorePage() {
           banner_url: bannerPreview,
           categories: data.categories ? [data.categories] : [],
           businessHours,
+          locationCoords: storeCoords || undefined,
         }),
       });
       const result = await res.json();
@@ -759,6 +761,7 @@ export default function CreateStorePage() {
                                 field.onChange(address);
                                 form.trigger("location");
                               }}
+                              onSelect={(coords) => setStoreCoords(coords)}
                               placeholder="Tap to search your store address"
                             />
                           </FormControl>

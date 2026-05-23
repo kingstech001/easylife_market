@@ -18,6 +18,10 @@ const storeSchema = z.object({
   banner_url: z.string().optional(),
   categories: z.array(z.string()).optional(),
   location: z.string().optional(),
+  locationCoords: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }).optional(),
 });
 
 export async function POST(req: Request) {
@@ -57,7 +61,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, slug, description, logo_url, banner_url, categories, location } = parsed.data;
+    const { name, slug, description, logo_url, banner_url, categories, location, locationCoords } = parsed.data;
 
     // Check if user already has a store
     const existingUserStore = await Store.findOne({ sellerId });
@@ -92,10 +96,13 @@ export async function POST(req: Request) {
     if (location && location.trim().length > 0) {
       storeData.location = {
         type: "Point",
-        coordinates: [0, 0], // Will be geocoded in pre-save hook
+        // Use actual coordinates from map picker if available, otherwise geocode in pre-save hook
+        coordinates: locationCoords
+          ? [locationCoords.lng, locationCoords.lat] // GeoJSON: [longitude, latitude]
+          : [0, 0],
         address: location.trim(),
       };
-      console.log("📍 Location provided:", location.trim());
+      console.log("📍 Location provided:", location.trim(), locationCoords ? `[${locationCoords.lng}, ${locationCoords.lat}]` : "(will geocode)");
     }
 
     console.log("💾 Creating store:", {

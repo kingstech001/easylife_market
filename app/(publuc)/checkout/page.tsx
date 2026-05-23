@@ -4,13 +4,16 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { ShoppingBag, MapPin, ChevronRight, Shield, ArrowLeft, Trash2, Package, CreditCard, Minus, Plus, Lock, CheckCircle, Loader2 } from "lucide-react"
+import {
+  ShoppingBag, MapPin, ChevronRight, Shield, ArrowLeft, Trash2,
+  Package, CreditCard, Minus, Plus, Lock, CheckCircle, Loader2,
+  ChevronDown, User, Mail, Phone as PhoneIcon, MapPinned, Truck,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AnimatedContainer } from "@/components/ui/animated-container"
 import { MapAddressPicker } from "@/components/ui/map-address-picker"
 import { useCart } from "@/context/cart-context"
@@ -18,6 +21,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useFormatAmount } from "@/hooks/useFormatAmount"
 import { Badge } from "@/components/ui/badge"
+import { calculateMaxDeliveryFee, DELIVERY_TIERS } from "@/lib/delivery-fee"
 
 const CHECKOUT_STORAGE_KEY = "checkout_form_data"
 
@@ -29,6 +33,10 @@ export default function CheckoutPage() {
   const [isInitializing, setIsInitializing] = useState(false)
   const [shipping, setShipping] = useState(0)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [customerCoords, setCustomerCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [deliveryInfo, setDeliveryInfo] = useState<{ distanceKm: number; tierLabel: string } | null>(null)
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false)
+  const [showOrderSummary, setShowOrderSummary] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { formatAmount } = useFormatAmount()
 
@@ -50,13 +58,7 @@ export default function CheckoutPage() {
         const { info: savedInfo, activeStep: savedStep, shipping: savedShipping } = JSON.parse(savedData)
         setInfo(
           savedInfo || {
-            firstName: "",
-            lastName: "",
-            email: "",
-            address: "",
-            state: "",
-            phone: "",
-            area: "",
+            firstName: "", lastName: "", email: "", address: "", state: "", phone: "", area: "",
           }
         )
         setActiveStep(savedStep || "information")
@@ -93,27 +95,19 @@ export default function CheckoutPage() {
   // Auto-save checkout data
   useEffect(() => {
     if (!isHydrated) return
-
     const saveToStorage = () => {
       try {
-        const dataToSave = { info, activeStep, shipping }
-        localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(dataToSave))
+        localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify({ info, activeStep, shipping }))
       } catch (error) {
         console.error("Failed to save checkout data to localStorage:", error)
       }
     }
-
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     saveTimeoutRef.current = setTimeout(saveToStorage, 500)
-
-    const handleVisibility = () => {
-      if (document.visibilityState === "hidden") saveToStorage()
-    }
+    const handleVisibility = () => { if (document.visibilityState === "hidden") saveToStorage() }
     const handleBeforeUnload = () => saveToStorage()
-
     document.addEventListener("visibilitychange", handleVisibility)
     window.addEventListener("beforeunload", handleBeforeUnload)
-
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
       document.removeEventListener("visibilitychange", handleVisibility)
@@ -121,7 +115,6 @@ export default function CheckoutPage() {
     }
   }, [info, activeStep, shipping, isHydrated])
 
-  // ✅ Defined BEFORE the useEffect that calls it
   const handlePaymentCallback = async (reference: string) => {
     setIsProcessing(true)
     try {
@@ -131,58 +124,39 @@ export default function CheckoutPage() {
         credentials: "include",
         body: JSON.stringify({ reference }),
       })
-
       if (!verifyResponse.ok) {
         const errorData = await verifyResponse.json().catch(() => ({ error: "Unknown error" }))
         throw new Error(errorData.error || "Failed to verify payment")
       }
-
       const verifyData = await verifyResponse.json()
-
       const paystackStatus = verifyData?.data?.status || verifyData?.status
-      if (
-        paystackStatus === "abandoned" ||
-        paystackStatus === "cancelled" ||
-        paystackStatus === "failed"
-      ) {
-        // ✅ Hard reload — cleanest way to reset all state
+      if (paystackStatus === "abandoned" || paystackStatus === "cancelled" || paystackStatus === "failed") {
         sessionStorage.setItem("checkout_cancelled_message", "Payment was not completed. You can try again.")
         window.location.replace("/checkout")
         return
       }
-
-      // ✅ Payment successful
-      console.log("✅ Payment verified successfully, clearing cart...")
+      console.log("Payment verified successfully, clearing cart...")
       clearCart()
       localStorage.removeItem(CHECKOUT_STORAGE_KEY)
       localStorage.removeItem("checkout_redirect_data")
       sessionStorage.removeItem("pending_payment_reference")
-
       toast.success("Payment successful! Your order has been placed.")
       router.push(`/checkout/payment-success?reference=${reference}`)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to verify payment"
-      console.error("❌ Payment verification error:", errorMessage)
-      // ✅ Hard reload on error too
+      console.error("Payment verification error:", errorMessage)
       sessionStorage.setItem("checkout_cancelled_message", errorMessage)
       window.location.replace("/checkout")
     }
   }
 
-  // ✅ Check for Paystack callback on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
-    const reference = urlParams.get("reference")
-    const trxref = urlParams.get("trxref")
-    const paymentReference = reference || trxref
-
+    const paymentReference = urlParams.get("reference") || urlParams.get("trxref")
     if (!paymentReference) {
-      // ✅ Clean load — reset all loading states
       setIsInitializing(false)
       setIsProcessing(false)
       sessionStorage.removeItem("paystack_redirect_initiated")
-
-      // ✅ Show any pending toast from a previous cancelled/failed attempt
       const pendingMessage = sessionStorage.getItem("checkout_cancelled_message")
       if (pendingMessage) {
         sessionStorage.removeItem("checkout_cancelled_message")
@@ -190,15 +164,8 @@ export default function CheckoutPage() {
       }
       return
     }
-
-    // ✅ Only verify if we actually initiated a redirect
     const wasRedirected = sessionStorage.getItem("paystack_redirect_initiated")
-    if (!wasRedirected) {
-      // Stale params — hard reload to clean page
-      window.location.replace("/checkout")
-      return
-    }
-
+    if (!wasRedirected) { window.location.replace("/checkout"); return }
     sessionStorage.removeItem("paystack_redirect_initiated")
     handlePaymentCallback(paymentReference)
   }, [])
@@ -206,58 +173,31 @@ export default function CheckoutPage() {
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
-      // Check authentication
-      const userResponse = await fetch("/api/me", {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      })
-
+      const userResponse = await fetch("/api/me", { credentials: "include", headers: { "Content-Type": "application/json" } })
       const userData = await userResponse.json()
-
       if (!userResponse.ok || !userData.user) {
-        try {
-          localStorage.setItem(
-            "checkout_redirect_data",
-            JSON.stringify({ info, shipping, activeStep, timestamp: Date.now() })
-          )
-        } catch (e) {
-          console.error("Failed to save checkout state:", e)
-        }
+        try { localStorage.setItem("checkout_redirect_data", JSON.stringify({ info, shipping, activeStep, timestamp: Date.now() })) } catch {}
         toast.error("Please log in to complete your purchase")
         router.push("/auth/login?redirect=/checkout")
         setIsInitializing(false)
         return
       }
-
       const userId = userData.user._id || userData.user.id
-
       if (!userId) {
         toast.error("User ID not found. Please log in again.")
         router.push("/auth/login?redirect=/checkout")
         setIsInitializing(false)
         return
       }
-
-      console.log("✅ User authenticated:", userId)
-      console.log("User data:", userData.user)
-
-      // Group items by store
       const groupedByStore: Record<string, typeof cartItems> = {}
       cartItems.forEach((item) => {
         if (!groupedByStore[item.storeId]) groupedByStore[item.storeId] = []
         groupedByStore[item.storeId].push(item)
       })
-
       const orders = Object.entries(groupedByStore).map(([storeId, storeItems]) => ({
         storeId,
-        items: storeItems.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
+        items: storeItems.map((item) => ({ productId: item.productId, quantity: item.quantity })),
       }))
-
-      console.log("📦 Prepared orders:", orders)
-
       const initResponse = await fetch("/api/paystack/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -268,556 +208,559 @@ export default function CheckoutPage() {
           type: "checkout",
           orders,
           shippingInfo: {
-            firstName: info.firstName,
-            lastName: info.lastName,
-            email: info.email,
-            address: info.address,
-            state: info.state,
-            phone: info.phone,
-            area: info.area,
+            firstName: info.firstName, lastName: info.lastName, email: info.email,
+            address: info.address, state: info.state, phone: info.phone, area: info.area,
+            customerCoords: customerCoords || undefined,
           },
           deliveryFee: shipping,
           paymentMethod: "card",
           userId,
         }),
       })
-
       const initData = await initResponse.json()
-
-      if (!initResponse.ok) {
-        throw new Error(initData.error || "Failed to initialize payment")
-      }
-
-      console.log("✅ Payment initialized:", initData.reference)
-
+      if (!initResponse.ok) throw new Error(initData.error || "Failed to initialize payment")
       sessionStorage.setItem("pending_payment_reference", initData.reference)
       sessionStorage.setItem("paystack_redirect_initiated", "true")
       localStorage.removeItem("checkout_redirect_data")
-
-      // ✅ Stop spinner before leaving — mobile browsers may cache the page
       setIsInitializing(false)
-
-      // ✅ Navigate to Paystack — page fully unloads
       window.location.href = initData.authorization_url
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to initialize payment"
-      console.error("❌ Payment initialization error:", errorMessage)
+      console.error("Payment initialization error:", errorMessage)
       toast.error(errorMessage)
       setIsInitializing(false)
     }
   }
 
   const handleContinue = () => {
-    if (activeStep === "information" && isInfoValid) setActiveStep("payment")
-  }
-
-  const handleBack = () => {
-    if (activeStep === "payment") setActiveStep("information")
-  }
-
-  const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedArea = e.target.value
-    setInfo({ ...info, area: selectedArea })
-    switch (selectedArea) {
-      case "Enugu":       setShipping(5000); break
-      case "Nsukka":      setShipping(3000); break
-      case "Enugu Ezike": setShipping(2000); break
-      default:            setShipping(0)
+    if (activeStep === "information" && isInfoValid) {
+      setActiveStep("payment")
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
-  const isInfoValid =
-    info.firstName.trim() &&
-    info.lastName.trim() &&
-    info.email.trim() &&
-    info.address.trim() &&
-    info.state.trim() &&
-    info.area.trim()
+  const handleBack = () => {
+    if (activeStep === "payment") {
+      setActiveStep("information")
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
 
+  const calculateDeliveryFromCoords = async (coords: { lat: number; lng: number }) => {
+    const storeIds = [...new Set(cartItems.map((item) => item.storeId))].filter(Boolean)
+    if (storeIds.length === 0) { setShipping(0); setDeliveryInfo(null); return }
+    setIsCalculatingFee(true)
+    try {
+      const res = await fetch(`/api/stores/coordinates?ids=${storeIds.join(",")}`)
+      if (!res.ok) throw new Error("Failed to fetch store locations")
+      const data = await res.json()
+      const storesWithCoords = (data.stores || []).filter(
+        (s: any) => s.coordinates?.length === 2 && !(s.coordinates[0] === 0 && s.coordinates[1] === 0)
+      )
+      if (storesWithCoords.length === 0) {
+        setShipping(2000); setDeliveryInfo({ distanceKm: 0, tierLabel: "Flat rate" }); return
+      }
+      const result = calculateMaxDeliveryFee(
+        storesWithCoords.map((s: any) => ({ coordinates: s.coordinates })), coords.lat, coords.lng
+      )
+      setShipping(result.fee)
+      setDeliveryInfo({ distanceKm: result.distanceKm, tierLabel: result.tierLabel })
+    } catch {
+      setShipping(2000); setDeliveryInfo({ distanceKm: 0, tierLabel: "Flat rate (fallback)" })
+    } finally { setIsCalculatingFee(false) }
+  }
+
+  const handleAddressSelect = (coords: { lat: number; lng: number } | null) => {
+    setCustomerCoords(coords)
+    if (coords) { calculateDeliveryFromCoords(coords) }
+    else { setShipping(0); setDeliveryInfo(null) }
+  }
+
+  const isInfoValid = info.firstName.trim() && info.lastName.trim() && info.email.trim() && info.address.trim() && info.state.trim()
   const subtotal = getTotalPrice()
   const total = subtotal + shipping
+  const disabled = isProcessing || isInitializing
 
+  // ── Empty cart ─────────────────────────────────────────────────────────────
   if (cartItems.length === 0 && !isProcessing) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
-        <div className="container px-4 py-20 max-w-[1280px] mx-auto text-center">
-          <div className="max-w-md mx-auto">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-muted flex items-center justify-center">
-              <ShoppingBag className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h1 className="text-3xl font-bold mb-3">Your cart is empty</h1>
-            <p className="text-muted-foreground mb-8">Add some items to your cart before checking out.</p>
-            <Button onClick={() => router.push("/stores")} size="lg" className="rounded-xl">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Start Shopping
-            </Button>
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-sm mx-auto">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-muted/60 flex items-center justify-center">
+            <ShoppingBag className="h-9 w-9 text-muted-foreground" />
           </div>
+          <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
+          <p className="text-sm text-muted-foreground mb-6">Add some items to your cart before checking out.</p>
+          <Button onClick={() => router.push("/stores")} size="lg" className="rounded-xl h-12 w-full">
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Start Shopping
+          </Button>
         </div>
       </div>
     )
   }
 
+  // ── Checkout ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="container px-4 py-10 max-w-[1400px] mx-auto">
-        <AnimatedContainer animation="fadeIn" className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => router.push("/allStoreProducts")}
-            className="mb-4 hover:bg-primary/10 rounded-xl"
-            disabled={isProcessing || isInitializing}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Continue shopping
-          </Button>
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-              <Lock className="h-7 w-7 text-primary" />
+    <div className="min-h-[100dvh] bg-background">
+      {/* Processing overlay */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card border border-border/50 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" />
+            <h3 className="text-lg font-bold mb-1">Verifying Payment</h3>
+            <p className="text-sm text-muted-foreground">Please wait while we confirm your payment...</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sticky header ──────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/40">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14">
+            <button
+              type="button"
+              onClick={() => router.push("/allStoreProducts")}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
+              disabled={disabled}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Shop</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm font-semibold">Checkout</span>
             </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold">Secure Checkout</h1>
-              <p className="text-muted-foreground">Complete your order safely and securely</p>
+            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+              <Shield className="h-3 w-3" />
+              <span className="hidden sm:inline">Secured</span>
             </div>
           </div>
-        </AnimatedContainer>
 
-        {isProcessing && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <Card className="p-8 max-w-md mx-4">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                <h3 className="text-xl font-bold">Verifying Payment</h3>
-                <p className="text-muted-foreground">Please wait while we confirm your payment...</p>
-              </div>
-            </Card>
+          {/* Step progress */}
+          <div className="flex items-center gap-0 pb-3 -mx-1">
+            <StepPill
+              step={1}
+              label="Details"
+              isActive={activeStep === "information"}
+              isComplete={!!isInfoValid && activeStep === "payment"}
+              onClick={() => !disabled && setActiveStep("information")}
+            />
+            <div className="flex-shrink-0 w-6 sm:w-10 flex items-center justify-center">
+              <div className={cn("h-px w-full", isInfoValid ? "bg-primary" : "bg-border")} />
+            </div>
+            <StepPill
+              step={2}
+              label="Pay"
+              isActive={activeStep === "payment"}
+              isComplete={false}
+              onClick={() => isInfoValid && !disabled && setActiveStep("payment")}
+              disabled={!isInfoValid}
+            />
           </div>
-        )}
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <Tabs value={activeStep} className="w-full">
-              <TabsList className="w-full grid grid-cols-2 mb-8 bg-muted/50 p-1.5 rounded-2xl h-auto">
-                <TabsTrigger
-                  value="information"
-                  className={cn(
-                    "flex items-center gap-2 rounded-xl transition-all duration-200 h-12",
-                    "data-[state=active]:bg-background data-[state=active]:shadow-md"
-                  )}
-                  onClick={() => setActiveStep("information")}
-                  disabled={isProcessing || isInitializing}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
-                        activeStep === "information"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted-foreground/20 text-muted-foreground"
-                      )}
-                    >
-                      {isInfoValid ? <CheckCircle className="h-4 w-4" /> : "1"}
-                    </div>
-                    <span className="hidden sm:inline font-semibold">Information</span>
-                    <span className="sm:hidden font-semibold">Info</span>
-                  </div>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="payment"
-                  className={cn(
-                    "flex items-center gap-2 rounded-xl transition-all duration-200 h-12",
-                    "data-[state=active]:bg-background data-[state=active]:shadow-md"
-                  )}
-                  onClick={() => setActiveStep("payment")}
-                  disabled={!isInfoValid || isProcessing || isInitializing}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
-                        activeStep === "payment"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted-foreground/20 text-muted-foreground"
-                      )}
-                    >
-                      2
-                    </div>
-                    <span className="hidden sm:inline font-semibold">Payment</span>
-                    <span className="sm:hidden font-semibold">Pay</span>
-                  </div>
-                </TabsTrigger>
-              </TabsList>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-36 lg:pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
-              {/* Information Step */}
-              <TabsContent value="information" className="space-y-6 mt-0">
+          {/* ── Main column ──────────────────────────────────────────────── */}
+          <div className="lg:col-span-3 space-y-4 sm:space-y-5">
+
+            {activeStep === "information" && (
+              <>
+                {/* Contact info */}
                 <AnimatedContainer animation="fadeIn">
-                  <Card className="border-2 shadow-lg">
-                    <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                          <ShoppingBag className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <CardTitle>Contact Information</CardTitle>
-                          <CardDescription>We'll use this to send your order confirmation</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="grid gap-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="firstName">First Name *</Label>
-                            <Input
-                              id="firstName"
-                              placeholder="Kingsley"
-                              value={info.firstName}
-                              onChange={(e) => setInfo({ ...info, firstName: e.target.value })}
-                              className="h-11 rounded-xl border-2"
-                              disabled={isProcessing || isInitializing}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="lastName">Last Name *</Label>
-                            <Input
-                              id="lastName"
-                              placeholder="Mamah"
-                              value={info.lastName}
-                              onChange={(e) => setInfo({ ...info, lastName: e.target.value })}
-                              className="h-11 rounded-xl border-2"
-                              disabled={isProcessing || isInitializing}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email *</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="john.doe@example.com"
-                            value={info.email}
-                            onChange={(e) => setInfo({ ...info, email: e.target.value })}
-                            className="h-11 rounded-xl border-2"
-                            disabled={isProcessing || isInitializing}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone (optional)</Label>
-                          <Input
-                            id="phone"
-                            placeholder="08012345678"
-                            value={info.phone}
-                            onChange={(e) => setInfo({ ...info, phone: e.target.value })}
-                            className="h-11 rounded-xl border-2"
-                            disabled={isProcessing || isInitializing}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-4">
+                    <SectionTitle icon={User} title="Contact" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FloatingInput label="First Name" required value={info.firstName} onChange={(v) => setInfo({ ...info, firstName: v })} disabled={disabled} />
+                      <FloatingInput label="Last Name" required value={info.lastName} onChange={(v) => setInfo({ ...info, lastName: v })} disabled={disabled} />
+                    </div>
+                    <FloatingInput label="Email" required type="email" value={info.email} onChange={(v) => setInfo({ ...info, email: v })} disabled={disabled} />
+                    <FloatingInput label="Phone" type="tel" value={info.phone} onChange={(v) => setInfo({ ...info, phone: v })} disabled={disabled} />
+                  </div>
                 </AnimatedContainer>
 
-                <AnimatedContainer animation="fadeIn" delay={0.1}>
-                  <Card className="border-2 shadow-lg">
-                    <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                          <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <CardTitle>Delivery Address</CardTitle>
-                          <CardDescription>Where should we send your order?</CardDescription>
-                        </div>
+                <Separator className="my-1" />
+
+                {/* Delivery */}
+                <AnimatedContainer animation="fadeIn" delay={0.05}>
+                  <div className="space-y-4">
+                    <SectionTitle icon={MapPinned} title="Delivery" />
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">State *</Label>
+                      <select
+                        value={info.state}
+                        onChange={(e) => setInfo({ ...info, state: e.target.value })}
+                        className="w-full h-12 rounded-xl border border-border/60 px-3 text-sm bg-background focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+                        disabled={disabled}
+                      >
+                        <option value="">Select a state</option>
+                        <option value="Enugu">Enugu</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Delivery Address *</Label>
+                      <MapAddressPicker
+                        value={info.address}
+                        onChange={(address) => setInfo({ ...info, address })}
+                        onSelect={handleAddressSelect}
+                        placeholder="Tap to pick your delivery address on map"
+                      />
+                    </div>
+
+                    {/* Delivery fee */}
+                    {isCalculatingFee && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Calculating delivery fee...
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State *</Label>
-                          <select
-                            id="state"
-                            value={info.state}
-                            onChange={(e) => setInfo({ ...info, state: e.target.value })}
-                            className="w-full h-11 rounded-xl border-2 px-3 py-2 text-sm bg-transparent"
-                            disabled={isProcessing || isInitializing}
-                          >
-                            <option className="bg-background text-foreground" value="">Select a state</option>
-                            <option className="bg-background text-foreground" value="Enugu">Enugu</option>
-                          </select>
+                    )}
+                    {deliveryInfo && !isCalculatingFee && (
+                      <div className="flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 px-3.5 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <div>
+                            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200">Delivery Fee</p>
+                            {deliveryInfo.distanceKm > 0 && (
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                ~{deliveryInfo.distanceKm} km &middot; {deliveryInfo.tierLabel}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="area">Delivery Area *</Label>
-                          <select
-                            id="area"
-                            value={info.area}
-                            onChange={handleAreaChange}
-                            className="w-full h-11 rounded-xl border-2 px-3 py-2 text-sm bg-transparent"
-                            disabled={isProcessing || isInitializing}
-                          >
-                            <option className="bg-background text-foreground" value="">Select delivery area</option>
-                            <option className="bg-background text-foreground" value="Enugu">Enugu town - ₦5,000</option>
-                            <option className="bg-background text-foreground" value="Nsukka">Nsukka - ₦3,000</option>
-                            <option className="bg-background text-foreground" value="Enugu Ezike">Enugu Ezike - ₦2,000</option>
-                          </select>
-                        </div>
+                        <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                          {formatAmount(shipping)}
+                        </span>
                       </div>
-                      <div className="grid gap-4 mt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="address">Delivery Address *</Label>
-                          <MapAddressPicker
-                            value={info.address}
-                            onChange={(address) => setInfo({ ...info, address })}
-                            placeholder="Tap to pick your delivery address on map"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    )}
+                  </div>
                 </AnimatedContainer>
 
-                <div className="flex justify-end">
+                {/* Continue button */}
+                <div className="pt-2">
                   <Button
                     onClick={handleContinue}
-                    className="w-full sm:w-auto h-12 rounded-xl shadow-lg text-base font-semibold"
-                    disabled={!isInfoValid || isProcessing || isInitializing}
+                    className="w-full h-13 rounded-xl text-base font-semibold shadow-lg active:scale-[0.98] transition-all"
+                    disabled={!isInfoValid || disabled}
                     size="lg"
                   >
                     Continue to Payment
-                    <ChevronRight className="ml-2 h-5 w-5" />
+                    <ChevronRight className="ml-1.5 h-4 w-4" />
                   </Button>
                 </div>
-              </TabsContent>
+              </>
+            )}
 
-              {/* Payment Step */}
-              <TabsContent value="payment" className="space-y-6 mt-0">
+            {activeStep === "payment" && (
+              <>
+                {/* Review info */}
                 <AnimatedContainer animation="fadeIn">
-                  <Card className="border-2 shadow-lg">
-                    <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                          <CreditCard className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <CardTitle>Payment Method</CardTitle>
-                          <CardDescription>Secure payment powered by Paystack</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between space-x-2 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4 transition-all duration-200">
-                          <div className="flex items-center space-x-4">
-                            <Image src="/paystack.jpeg" alt="paystack-logo" width={50} height={50} />
-                            <div>
-                              <p className="text-[12px] font-semibold md:text-base">Paystack Payment</p>
-                              <p className="text-[10px] md:text-sm text-muted-foreground">
-                                Pay securely with card, bank transfer, or USSD
-                              </p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="gap-1 ml-0">
-                            <Shield className="h-3 w-3" />
-                            Secure
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="w-full text-left rounded-xl border border-border/50 p-3.5 sm:p-4 hover:border-primary/30 transition-colors group"
+                    disabled={disabled}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Delivering to</span>
+                      <span className="text-xs text-primary font-medium group-hover:underline">Edit</span>
+                    </div>
+                    <p className="text-sm font-medium">{info.firstName} {info.lastName}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{info.address}</p>
+                    {info.phone && <p className="text-xs text-muted-foreground mt-0.5">{info.phone}</p>}
+                  </button>
                 </AnimatedContainer>
 
+                {/* Payment method */}
+                <AnimatedContainer animation="fadeIn" delay={0.05}>
+                  <div className="space-y-3">
+                    <SectionTitle icon={CreditCard} title="Payment" />
+                    <div className="rounded-xl border-2 border-primary/20 bg-primary/[0.02] p-4 flex items-center gap-4">
+                      <div className="h-11 w-11 rounded-lg overflow-hidden flex-shrink-0 bg-white flex items-center justify-center border">
+                        <Image src="/paystack.jpeg" alt="Paystack" width={36} height={36} className="object-contain" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">Paystack</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Card, bank transfer, or USSD</p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] gap-1 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300">
+                        <Shield className="h-2.5 w-2.5" />
+                        Secure
+                      </Badge>
+                    </div>
+                  </div>
+                </AnimatedContainer>
+
+                {/* Security note */}
                 <AnimatedContainer animation="fadeIn" delay={0.1}>
-                  <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100/50 dark:border-green-800 dark:from-green-950/20 dark:to-green-900/10">
-                    <CardContent className="pt-6 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                          <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-[12px] font-semibold md:text-base text-green-900 dark:text-green-100 mb-1">
-                            100% Secure Checkout
-                          </p>
-                          <p className="text-[10px] md:text-sm text-green-700 dark:text-green-300">
-                            Your payment information is processed securely by Paystack. We do not store credit card
-                            details nor have access to your credit card information. All prices are validated
-                            server-side for your protection.
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="flex items-start gap-2.5 rounded-xl bg-muted/40 px-3.5 py-3">
+                    <Shield className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
+                      Your payment is processed securely by Paystack. We never store your card details. All prices are verified server-side.
+                    </p>
+                  </div>
                 </AnimatedContainer>
 
-                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                {/* Action buttons */}
+                <div className="flex gap-3 pt-2">
                   <Button
                     variant="outline"
                     onClick={handleBack}
-                    size="lg"
-                    className="h-12 rounded-xl border-2 bg-transparent"
-                    disabled={isProcessing || isInitializing}
+                    className="h-13 rounded-xl border-border/60 px-5"
+                    disabled={disabled}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Information
+                    <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
                   </Button>
                   <Button
                     onClick={handlePayNow}
-                    size="lg"
-                    className="h-12 rounded-xl shadow-lg text-base font-semibold"
-                    disabled={isProcessing || isInitializing}
+                    className="flex-1 h-13 rounded-xl text-base font-semibold shadow-lg active:scale-[0.98] transition-all"
+                    disabled={disabled}
                   >
                     {isInitializing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Initializing...
-                      </>
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Initializing...</>
                     ) : (
-                      <>
-                        <Lock className="mr-2 h-4 w-4" />
-                        Pay {formatAmount(total)}
-                      </>
+                      <><Lock className="mr-2 h-4 w-4" /> Pay {formatAmount(total)}</>
                     )}
                   </Button>
                 </div>
-              </TabsContent>
-            </Tabs>
+              </>
+            )}
           </div>
 
-          {/* Order Summary */}
-          <AnimatedContainer animation="slideIn" className="lg:col-span-1">
-            <Card className="sticky top-6 shadow-2xl border-2 overflow-hidden">
-              <CardHeader className="bg-gradient-to-br from-primary/10 to-primary/5 border-b-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Package className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle>Order Summary</CardTitle>
-                      <CardDescription>{cartItems.length} items</CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6">
-                <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
-                  {cartItems.map((item) => (
-                    <Card
-                      key={`${item.id}-${item.selectedVariant?.color?.hex || ""}-${item.selectedVariant?.size || ""}`}
-                      className="border-2 hover:border-primary/50 transition-all overflow-hidden"
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex gap-3">
-                          <div className="relative h-20 w-20 overflow-hidden rounded-xl border-2 flex-shrink-0 bg-muted">
-                            <Image
-                              src={item.image || "/placeholder.svg?height=80&width=80"}
-                              alt={item.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-1 flex-col min-w-0">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <span className="line-clamp-2 font-semibold text-sm leading-tight">{item.name}</span>
-                                {item.selectedVariant && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {item.selectedVariant.color && (
-                                      <div className="flex items-center gap-1">
-                                        <div
-                                          className="w-3 h-3 rounded-full border border-gray-300"
-                                          style={{ backgroundColor: item.selectedVariant.color.hex }}
-                                          title={item.selectedVariant.color.name}
-                                        />
-                                        <span className="text-xs text-muted-foreground">
-                                          {item.selectedVariant.color.name}
-                                        </span>
-                                      </div>
-                                    )}
-                                    {item.selectedVariant.size && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {item.selectedVariant.color ? "•" : ""} Size: {item.selectedVariant.size}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:bg-destructive/10 rounded-lg flex-shrink-0"
-                                onClick={() => removeFromCart(item.id)}
-                                disabled={isProcessing || isInitializing}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center border-2 rounded-lg overflow-hidden">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 rounded-none hover:bg-primary/10"
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  disabled={item.quantity <= 1 || isProcessing || isInitializing}
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="px-3 text-xs font-bold min-w-[2rem] text-center">
-                                  {item.quantity}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 rounded-none hover:bg-primary/10"
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  disabled={isProcessing || isInitializing}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <span className="font-bold text-sm text-primary">
-                                {formatAmount(item.price * item.quantity)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                <Separator className="my-4" />
-
-                <Card className="border-0 bg-muted/50">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span className="font-semibold">{formatAmount(subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Delivery charge</span>
-                      <span className="font-semibold">{formatAmount(shipping)}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold">Total</span>
-                      <span className="text-2xl font-bold text-primary">{formatAmount(total)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {activeStep === "payment" && (
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-3">
-                    <p className="text-xs text-amber-900 dark:text-amber-100">
-                      💡 <strong>Note:</strong> Final amount will be validated against current product prices when you
-                      click Pay.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </AnimatedContainer>
+          {/* ── Order summary (desktop sidebar) ──────────────────────────── */}
+          <div className="hidden lg:block lg:col-span-2">
+            <div className="sticky top-28">
+              <OrderSummaryContent
+                cartItems={cartItems}
+                subtotal={subtotal}
+                shipping={shipping}
+                total={total}
+                formatAmount={formatAmount}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+                disabled={disabled}
+                activeStep={activeStep}
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* ── Mobile sticky bottom bar ───────────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 lg:hidden">
+        <div className="px-4 py-3 space-y-2">
+          {/* Expandable summary */}
+          <button
+            type="button"
+            onClick={() => setShowOrderSummary(!showOrderSummary)}
+            className="w-full flex items-center justify-between text-sm"
+          >
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <Package className="h-4 w-4" />
+              {cartItems.length} item{cartItems.length > 1 ? "s" : ""}
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showOrderSummary && "rotate-180")} />
+            </span>
+            <span className="font-bold text-base">{formatAmount(total)}</span>
+          </button>
+
+          {showOrderSummary && (
+            <div className="max-h-[40vh] overflow-y-auto border-t border-border/30 pt-3 space-y-3">
+              {cartItems.map((item) => (
+                <div key={`m-${item.id}`} className="flex items-center gap-3">
+                  <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{item.name}</p>
+                    <p className="text-[10px] text-muted-foreground">Qty: {item.quantity}</p>
+                  </div>
+                  <span className="text-xs font-semibold">{formatAmount(item.price * item.quantity)}</span>
+                </div>
+              ))}
+              <Separator />
+              <div className="space-y-1.5 text-xs">
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-medium">{formatAmount(subtotal)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span className="font-medium">{formatAmount(shipping)}</span></div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function StepPill({
+  step, label, isActive, isComplete, onClick, disabled,
+}: {
+  step: number; label: string; isActive: boolean; isComplete: boolean; onClick: () => void; disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all disabled:opacity-40",
+        isActive
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : isComplete
+            ? "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
+            : "text-muted-foreground"
+      )}
+    >
+      {isComplete ? (
+        <CheckCircle className="h-3.5 w-3.5" />
+      ) : (
+        <span className={cn(
+          "h-5 w-5 rounded-full text-[10px] font-bold flex items-center justify-center",
+          isActive ? "bg-primary-foreground/20" : "bg-muted"
+        )}>{step}</span>
+      )}
+      {label}
+    </button>
+  )
+}
+
+function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <h2 className="text-base font-semibold">{title}</h2>
+    </div>
+  )
+}
+
+function FloatingInput({
+  label, value, onChange, required, type = "text", disabled,
+}: {
+  label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string; disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground">
+        {label}{required && " *"}
+      </Label>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-12 rounded-xl border-border/60 focus:border-primary focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:ring-offset-0 text-sm transition-all"
+        disabled={disabled}
+      />
+    </div>
+  )
+}
+
+function OrderSummaryContent({
+  cartItems, subtotal, shipping, total, formatAmount, updateQuantity, removeFromCart, disabled, activeStep,
+}: {
+  cartItems: any[]; subtotal: number; shipping: number; total: number;
+  formatAmount: (n: number) => string; updateQuantity: (id: string, qty: number) => void;
+  removeFromCart: (id: string) => void; disabled: boolean; activeStep: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+      <div className="px-5 py-4 border-b border-border/30">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Order Summary</h3>
+          <Badge variant="secondary" className="text-[10px]">{cartItems.length} items</Badge>
+        </div>
+      </div>
+
+      <div className="px-5 py-4 space-y-3 max-h-[320px] overflow-y-auto">
+        {cartItems.map((item) => (
+          <div
+            key={`d-${item.id}-${item.selectedVariant?.color?.hex || ""}-${item.selectedVariant?.size || ""}`}
+            className="flex gap-3 group"
+          >
+            <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/30">
+              <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-medium leading-tight line-clamp-2">{item.name}</p>
+                <button
+                  type="button"
+                  onClick={() => removeFromCart(item.id)}
+                  disabled={disabled}
+                  className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 p-0.5 flex-shrink-0"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {item.selectedVariant && (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {item.selectedVariant.color && (
+                    <>
+                      <div className="w-2.5 h-2.5 rounded-full border" style={{ backgroundColor: item.selectedVariant.color.hex }} />
+                      <span className="text-[10px] text-muted-foreground">{item.selectedVariant.color.name}</span>
+                    </>
+                  )}
+                  {item.selectedVariant.size && (
+                    <span className="text-[10px] text-muted-foreground">{item.selectedVariant.color ? " / " : ""}Size: {item.selectedVariant.size}</span>
+                  )}
+                </div>
+              )}
+              <div className="flex items-center justify-between mt-1.5">
+                <div className="flex items-center rounded-lg border border-border/50 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    disabled={item.quantity <= 1 || disabled}
+                    className="h-6 w-6 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
+                  >
+                    <Minus className="h-2.5 w-2.5" />
+                  </button>
+                  <span className="px-2 text-[10px] font-bold min-w-[1.5rem] text-center">{item.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    disabled={disabled}
+                    className="h-6 w-6 flex items-center justify-center hover:bg-muted transition-colors"
+                  >
+                    <Plus className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+                <span className="text-sm font-semibold">{formatAmount(item.price * item.quantity)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-border/30 px-5 py-4 space-y-2.5 bg-muted/20">
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Subtotal</span>
+          <span className="font-medium">{formatAmount(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Delivery</span>
+          <span className="font-medium">{shipping > 0 ? formatAmount(shipping) : "---"}</span>
+        </div>
+        <Separator />
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-semibold">Total</span>
+          <span className="text-xl font-bold text-primary">{formatAmount(total)}</span>
+        </div>
+      </div>
+
+      {activeStep === "payment" && (
+        <div className="border-t border-border/30 px-5 py-3 bg-amber-50/50 dark:bg-amber-950/10">
+          <p className="text-[10px] text-amber-700 dark:text-amber-300">
+            Final amount will be validated against current prices when you click Pay.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

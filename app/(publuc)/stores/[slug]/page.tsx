@@ -483,7 +483,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
                       About this {isRestaurant ? "place" : "store"}
                     </p>
-                    <ExpandableText text={store.description} limit={180} />
+                    <ExpandableText text={store.description} limit={100} />
                   </div>
                 )}
               </div>
@@ -498,10 +498,10 @@ export default async function StorePage({ params }: StorePageProps) {
                 <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                   {sectionTitle}
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                   {sectionCaption} Showing {storeProducts.length} of{" "}
                   {totalProducts} {isRestaurant ? "items" : "products"}.
-                </p>
+                </p> */}
               </div>
             </div>
 

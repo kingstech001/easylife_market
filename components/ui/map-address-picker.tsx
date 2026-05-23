@@ -9,6 +9,8 @@ import type L from "leaflet";
 interface MapAddressPickerProps {
   value: string;
   onChange: (address: string) => void;
+  // Optional callback to receive selected coordinates (lat, lng)
+  onSelect?: (coords: { lat: number; lng: number } | null) => void;
   placeholder?: string;
 }
 
@@ -22,15 +24,16 @@ interface NominatimResult {
 export function MapAddressPicker({
   value,
   onChange,
+  onSelect,
   placeholder = "Search for your store address...",
 }: MapAddressPickerProps) {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedCoords, setSelectedCoords] = useState<
-    [number, number] | null
-  >(null);
+  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(
+    null,
+  );
   const [tempAddress, setTempAddress] = useState("");
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -61,8 +64,7 @@ export function MapAddressPicker({
 
       // Fix default marker icons for bundlers
       const markerIcon = leaflet.icon({
-        iconUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
         iconRetinaUrl:
           "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
         shadowUrl:
@@ -87,7 +89,7 @@ export function MapAddressPicker({
         {
           attribution: "&copy; OpenStreetMap contributors",
           maxZoom: 19,
-        }
+        },
       );
 
       // Satellite layer — shows buildings/roads even in unmapped areas
@@ -96,7 +98,7 @@ export function MapAddressPicker({
         {
           attribution: "&copy; Google",
           maxZoom: 20,
-        }
+        },
       );
 
       // Default to satellite for better village coverage
@@ -106,7 +108,7 @@ export function MapAddressPicker({
         .layers(
           { Street: streets, Satellite: satellite },
           {},
-          { position: "topright" }
+          { position: "topright" },
         )
         .addTo(map);
 
@@ -139,7 +141,7 @@ export function MapAddressPicker({
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-            { headers: { "Accept-Language": "en" } }
+            { headers: { "Accept-Language": "en" } },
           );
           const data = await res.json();
           if (data.display_name) {
@@ -171,8 +173,7 @@ export function MapAddressPicker({
 
     markerRef.current?.remove();
     const markerIcon = leaflet.icon({
-      iconUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
       iconRetinaUrl:
         "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
       shadowUrl:
@@ -193,7 +194,7 @@ export function MapAddressPicker({
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
+        { headers: { "Accept-Language": "en" } },
       );
       const data = await res.json();
       if (data.display_name) {
@@ -216,7 +217,7 @@ export function MapAddressPicker({
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
+        { headers: { "Accept-Language": "en" } },
       );
       const data: NominatimResult[] = await res.json();
       setResults(data);
@@ -252,6 +253,11 @@ export function MapAddressPicker({
   const handleConfirm = () => {
     if (tempAddress) {
       onChange(tempAddress);
+      if (onSelect && selectedCoords) {
+        onSelect({ lat: selectedCoords[0], lng: selectedCoords[1] });
+      } else if (onSelect) {
+        onSelect(null);
+      }
       setIsMapOpen(false);
     }
   };
@@ -271,7 +277,7 @@ export function MapAddressPicker({
         }
         await reverseGeocode(coords[0], coords[1]);
       },
-      () => {}
+      () => {},
     );
   };
 
@@ -291,19 +297,19 @@ export function MapAddressPicker({
           "w-full flex items-center gap-3 h-11 sm:h-12 px-3 rounded-xl border text-left text-sm transition-all active:scale-[0.99]",
           value
             ? "border-emerald-400/50 bg-emerald-50/50 dark:bg-emerald-950/10"
-            : "border-border/50 hover:border-[#c0a146]/50 bg-background"
+            : "border-border/50 hover:border-[#c0a146]/50 bg-background",
         )}
       >
         <MapPin
           className={cn(
             "h-4 w-4 flex-shrink-0",
-            value ? "text-emerald-600" : "text-muted-foreground"
+            value ? "text-emerald-600" : "text-muted-foreground",
           )}
         />
         <span
           className={cn(
             "flex-1 truncate",
-            value ? "text-foreground" : "text-muted-foreground"
+            value ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {value || placeholder}

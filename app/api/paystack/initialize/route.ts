@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getUserFromCookies } from "@/lib/auth"
 import { connectToDB } from "@/lib/db"
 import Product from "@/models/Product"
+import Store from "@/models/Store"
+import { calculateMaxDeliveryFee } from "@/lib/delivery-fee"
 
 
 // Helper to get the correct base URL for all environments
@@ -217,9 +219,44 @@ export async function POST(request: NextRequest) {
     let finalAmount = Number(amount)
     if (type === "checkout") {
       await connectToDB()
-      const verifiedOrderData = await verifyAndCalculateOrderAmount(orders, deliveryFee || 0)
+
+      // Verify delivery fee from coordinates if available
+      let verifiedDeliveryFee = Number(deliveryFee) || 0
+      const customerCoords = shippingInfo?.customerCoords
+      if (customerCoords?.lat && customerCoords?.lng) {
+        const storeIds = [...new Set(orders.map((o: any) => o.storeId))].filter(Boolean)
+        const stores = await Store.find(
+          { _id: { $in: storeIds } },
+          { "location.coordinates": 1 }
+        ).lean()
+
+        const storesWithCoords = stores.filter(
+          (s: any) =>
+            s.location?.coordinates?.length === 2 &&
+            !(s.location.coordinates[0] === 0 && s.location.coordinates[1] === 0)
+        )
+
+        if (storesWithCoords.length > 0) {
+          const result = calculateMaxDeliveryFee(
+            storesWithCoords.map((s: any) => ({ coordinates: s.location.coordinates })),
+            customerCoords.lat,
+            customerCoords.lng
+          )
+          verifiedDeliveryFee = result.fee
+          console.log("[Paystack Initialize] Delivery fee verification:", {
+            clientFee: deliveryFee,
+            verifiedFee: verifiedDeliveryFee,
+            distanceKm: result.distanceKm,
+          })
+        }
+      }
+
+      const verifiedOrderData = await verifyAndCalculateOrderAmount(orders, verifiedDeliveryFee)
       finalAmount = verifiedOrderData.grandTotal
-      
+
+      // Update metadata with verified delivery fee
+      metadata.deliveryFee = verifiedDeliveryFee
+
       console.log("[Paystack Initialize] Amount verification:", {
         clientAmount: amount,
         verifiedAmount: finalAmount,
