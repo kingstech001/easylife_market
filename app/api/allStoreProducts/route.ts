@@ -1,48 +1,42 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { connectToDB } from "@/lib/db";
 import Product from "@/models/Product";
 import Store from "@/models/Store";
 
-export async function GET() {
+const MAX_LIMIT = 60;
+const DEFAULT_LIMIT = 24;
+
+export async function GET(req: NextRequest) {
   try {
-    console.log("🔍 Fetching all products from all stores");
     await connectToDB();
 
-    // Ensure Store model is registered by referencing it
+    // Ensure Store model is registered
     if (!Store) {
       console.error("Store model not found");
     }
 
-    // Fetch all active, non-deleted products with their store information
-    const products = await Product.find({
-      isActive: true,
-      isDeleted: false,
-    })
-      .populate({
-        path: "storeId",
-        select: "_id name slug", // Include _id for cart functionality
-        model: "Store",
-      })
-      .sort({ createdAt: -1 })
-      .lean();
+    const { searchParams } = req.nextUrl;
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10)));
+    const skip = (page - 1) * limit;
 
-    console.log("✅ Products fetched successfully:", products.length);
+    const filter = { isActive: true, isDeleted: false };
 
-    // Log sample product for debugging
-    if (products.length > 0) {
-      console.log("Sample product structure:", {
-        name: products[0].name,
-        price: products[0].price,
-        hasImages: products[0].images?.length > 0,
-        imageUrl: products[0].images?.[0]?.url,
-        hasStore: !!products[0].storeId,
-        storeId: (products[0].storeId as any)?._id,
-        storeName: (products[0].storeId as any)?.name,
-        storeSlug: (products[0].storeId as any)?.slug,
-      });
-    }
+    // Run count and fetch in parallel
+    const [totalCount, products] = await Promise.all([
+      Product.countDocuments(filter),
+      Product.find(filter)
+        .populate({
+          path: "storeId",
+          select: "_id name slug",
+          model: "Store",
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
 
-    // Transform the data to match the expected format
     const formattedProducts = products.map((product: any) => ({
       _id: product._id?.toString() || "",
       name: product.name || "Unnamed Product",
@@ -59,35 +53,32 @@ export async function GET() {
       })),
       storeId: product.storeId
         ? {
-            _id: product.storeId._id?.toString() || "", // Include _id for cart
+            _id: product.storeId._id?.toString() || "",
             name: product.storeId.name || "Unknown Store",
             slug: product.storeId.slug || "",
           }
-        : null, // Return null instead of undefined for better type safety
+        : null,
       tags: product.tags || [],
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }));
 
-    // Filter out products without valid store data
     const validProducts = formattedProducts.filter((p) => p.storeId !== null);
-
-    console.log("📦 Total formatted products:", formattedProducts.length);
-    console.log("✅ Valid products with store data:", validProducts.length);
-
-    if (validProducts.length < formattedProducts.length) {
-      console.warn(
-        `⚠️ ${formattedProducts.length - validProducts.length} products excluded due to missing store data`
-      );
-    }
 
     return NextResponse.json({
       success: true,
       products: validProducts,
       count: validProducts.length,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasMore: skip + limit < totalCount,
+      },
     });
   } catch (error) {
-    console.error("❌ Error fetching all products:", error);
+    console.error("Error fetching all products:", error);
     return NextResponse.json(
       {
         success: false,

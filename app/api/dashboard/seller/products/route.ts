@@ -27,18 +27,27 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Store not found." }, { status: 404 })
     }
 
-    const products = await Product.find({ storeId: store._id }).sort({ createdAt: -1 })
+    const url = new URL(req.url)
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10))
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)))
+    const skip = (page - 1) * limit
 
-    // ✅ Convert Mongoose documents to plain objects
-    const productsWithId = products.map(product => {
-      const productObj = product.toObject()
-      return {
-        ...productObj,
-        _id: productObj._id.toString(),
-      }
-    })
+    const filter = { storeId: store._id }
+    const [totalCount, products] = await Promise.all([
+      Product.countDocuments(filter),
+      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    ])
 
-    return NextResponse.json({ store, products: productsWithId }, { status: 200 })
+    const productsWithId = products.map((product: any) => ({
+      ...product,
+      _id: product._id.toString(),
+    }))
+
+    return NextResponse.json({
+      store,
+      products: productsWithId,
+      pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit), hasMore: skip + limit < totalCount },
+    }, { status: 200 })
   } catch (error) {
     console.error("❌ GET /api/seller/products error:", error)
     return NextResponse.json({ message: "Internal Server Error", error: String(error) }, { status: 500 })

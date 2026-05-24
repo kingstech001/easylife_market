@@ -35,25 +35,34 @@ export async function GET(request: NextRequest) {
 
     await connectToDB();
 
-    // 🟢 Populate product → store and user
-    const orders = await Order.find({})
-      .populate({
-        path: "items.productId",
-        model: Product,
-        select: "name storeId",
-        populate: {
-          path: "storeId",
-          model: Store,
-          select: "name", // ✅ Use 'name' instead of 'storeName'
-        },
-      })
-      .populate({
-        path: "userId",
-        model: User,
-        select: "email name",
-      })
-      .sort({ createdAt: -1 })
-      .lean();
+    // Paginated fetch
+    const page = Math.max(1, parseInt(request.nextUrl.searchParams.get("page") || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "50", 10)));
+    const skip = (page - 1) * limit;
+
+    const [totalCount, orders] = await Promise.all([
+      Order.countDocuments({}),
+      Order.find({})
+        .populate({
+          path: "items.productId",
+          model: Product,
+          select: "name storeId",
+          populate: {
+            path: "storeId",
+            model: Store,
+            select: "name",
+          },
+        })
+        .populate({
+          path: "userId",
+          model: User,
+          select: "email name",
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
 
     // 🧩 Format response for frontend
     const formattedOrders = orders.map((order: any) => ({
@@ -74,7 +83,10 @@ export async function GET(request: NextRequest) {
       })),
     }));
 
-    return NextResponse.json({ orders: formattedOrders }, { status: 200 });
+    return NextResponse.json({
+      orders: formattedOrders,
+      pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit), hasMore: skip + limit < totalCount },
+    }, { status: 200 });
   } catch (error: any) {
     console.error("Admin Orders API error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -142,24 +142,40 @@ export default function SearchResultsPage() {
     };
   }, []);
 
-  // Fetch all products
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/allStoreProducts");
-        if (!response.ok) throw new Error("Failed to fetch products");
-        const data = await response.json();
-        setAllProducts((data.products || []).map(transformProduct));
-        setError(null);
-      } catch (err: any) {
-        setError(err.message || "Failed to load products");
-      } finally {
-        setLoading(false);
+  // Fetch products with pagination
+  const apiPageRef = useRef(1);
+  const hasMoreApiPages = useRef(true);
+  const isFetchingRef = useRef(false);
+
+  const fetchProductsPage = useCallback(async (page: number, append: boolean) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    try {
+      if (!append) setLoading(true);
+      const response = await fetch(`/api/allStoreProducts?page=${page}&limit=48`);
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data = await response.json();
+      const newProducts = (data.products || []).map(transformProduct);
+      hasMoreApiPages.current = data.pagination?.hasMore ?? false;
+      if (append) {
+        setAllProducts((prev) => [...prev, ...newProducts]);
+      } else {
+        setAllProducts(newProducts);
       }
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to load products");
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
     }
-    fetchProducts();
   }, [transformProduct]);
+
+  useEffect(() => {
+    apiPageRef.current = 1;
+    hasMoreApiPages.current = true;
+    fetchProductsPage(1, false);
+  }, [fetchProductsPage]);
 
   // Fetch store results for search query
   useEffect(() => {
@@ -212,24 +228,30 @@ export default function SearchResultsPage() {
     setPage(1);
   }, [searchQuery, categoryParams, allProducts]);
 
-  // Infinite scroll
-  const loadMoreProducts = useCallback(() => {
+  // Infinite scroll — loads from local filtered list, fetches next API page when exhausted
+  const loadMoreProducts = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    setTimeout(() => {
-      const startIndex = page * PRODUCTS_PER_PAGE;
-      const endIndex = startIndex + PRODUCTS_PER_PAGE;
-      const newProducts = filteredProducts.slice(startIndex, endIndex);
-      if (newProducts.length > 0) {
-        setDisplayedProducts((prev) => [...prev, ...newProducts]);
-        setPage((prev) => prev + 1);
-        setHasMore(endIndex < filteredProducts.length);
-      } else {
-        setHasMore(false);
-      }
-      setLoadingMore(false);
-    }, 300);
-  }, [page, filteredProducts, hasMore, loadingMore]);
+
+    const startIndex = page * PRODUCTS_PER_PAGE;
+    const endIndex = startIndex + PRODUCTS_PER_PAGE;
+    const newProducts = filteredProducts.slice(startIndex, endIndex);
+
+    if (newProducts.length > 0) {
+      setDisplayedProducts((prev) => [...prev, ...newProducts]);
+      setPage((prev) => prev + 1);
+      setHasMore(endIndex < filteredProducts.length || hasMoreApiPages.current);
+    } else if (hasMoreApiPages.current) {
+      // Fetch next API page
+      apiPageRef.current += 1;
+      await fetchProductsPage(apiPageRef.current, true);
+      // After new data is appended, the filter useEffect will update filteredProducts
+    } else {
+      setHasMore(false);
+    }
+
+    setLoadingMore(false);
+  }, [page, filteredProducts, hasMore, loadingMore, fetchProductsPage]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

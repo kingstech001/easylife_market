@@ -11,7 +11,7 @@ export async function GET(
 
     await connectToDB();
 
-    const products = await Product.find({ storeId });
+    const products = await Product.find({ storeId }).lean();
 
     return NextResponse.json(products);
   } catch (error) {

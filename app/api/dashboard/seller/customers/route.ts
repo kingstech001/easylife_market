@@ -3,11 +3,22 @@ import { connectToDB } from "@/lib/db"
 import Customer from "@/models/Customer"
 
 // ✅ GET all customers
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDB()
-    const customers = await Customer.find().sort({ createdAt: -1 })
-    return NextResponse.json(customers)
+    const url = new URL(req.url)
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10))
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)))
+    const skip = (page - 1) * limit
+
+    const [totalCount, customers] = await Promise.all([
+      Customer.countDocuments({}),
+      Customer.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    ])
+    return NextResponse.json({
+      customers,
+      pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit), hasMore: skip + limit < totalCount },
+    })
   } catch (error) {
     console.error("Error fetching customers:", error)
     return NextResponse.json({ error: "Failed to fetch customers" }, { status: 500 })

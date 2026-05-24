@@ -8,12 +8,13 @@ import { connectToDB } from "@/lib/db"
 import MainOrder from "@/models/MainOrder"
 import { PaymentLogger } from "@/lib/paymentLogger"
 import { type NextRequest, NextResponse } from "next/server"
+import { Redis } from "@upstash/redis"
 
 // Force Node.js runtime for raw body access
 export const runtime = "nodejs"
 
-// Rate limiting store (use Redis in production)
-const webhookAttempts = new Map<string, { count: number; resetTime: number }>()
+// Redis-backed rate limiting (survives server restarts)
+const redis = Redis.fromEnv()
 
 /**
  * Verify transaction with Paystack API
@@ -66,24 +67,24 @@ function verifyPaystackSignature(body: string, signature: string | null): boolea
 }
 
 /**
- * Rate limiting check for webhook calls
+ * Rate limiting check for webhook calls (Redis-backed, survives restarts)
  */
-function checkWebhookRateLimit(reference: string): boolean {
-  const now = Date.now()
-  const attempt = webhookAttempts.get(reference)
-  
-  if (!attempt || now > attempt.resetTime) {
-    webhookAttempts.set(reference, { count: 1, resetTime: now + 60000 })
+async function checkWebhookRateLimit(reference: string): Promise<boolean> {
+  const key = `webhook:ratelimit:${reference}`
+  try {
+    const count = await redis.incr(key)
+    if (count === 1) {
+      await redis.expire(key, 60) // 60 second window
+    }
+    if (count > 10) {
+      console.warn(`Rate limit hit for reference: ${reference}`)
+      return false
+    }
     return true
+  } catch (err) {
+    console.error("Redis rate limit error, allowing through:", err)
+    return true // fail-open so we don't block legitimate webhooks
   }
-  
-  if (attempt.count >= 10) {
-    console.warn(`⚠️ Rate limit hit for reference: ${reference}`)
-    return false
-  }
-  
-  attempt.count++
-  return true
 }
 
 /**
@@ -454,7 +455,7 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
     metadata: { channel, status: data.status },
   })
 
-  if (!checkWebhookRateLimit(reference)) {
+  if (!(await checkWebhookRateLimit(reference))) {
     await PaymentLogger.log({
       reference,
       event: "webhook_rate_limit_hit",

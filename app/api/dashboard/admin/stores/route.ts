@@ -10,7 +10,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
   try {
     await connectToDB()
 
-    const stores = await Store.find({ isPublished: true }).sort({ createdAt: -1 })
+    const stores = await Store.find({ isPublished: true }).sort({ createdAt: -1 }).lean()
 
     return NextResponse.json(
       { success: true, message: "Stores fetched successfully", stores },

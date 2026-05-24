@@ -78,11 +78,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (isHydrated) {
       try {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
-      } catch (error) {
+      } catch (error: any) {
+        // Handle QuotaExceededError — trim oldest items to make space
+        if (error?.name === "QuotaExceededError" && items.length > 1) {
+          const trimmed = items.slice(-50)
+          try { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(trimmed)) } catch {}
+          setItems(trimmed)
+        }
         console.error("Failed to save cart to localStorage:", error)
       }
     }
   }, [items, isHydrated])
+
+  const MAX_CART_ITEMS = 100
 
   const addToCart = (newItem: Omit<CartItem, "selectedVariant"> & { selectedVariant?: ISelectedVariant }) => {
     setItems((prevItems) => {
@@ -90,7 +98,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existingItemIndex = prevItems.findIndex((item) => getCartItemKey(item.id, item.selectedVariant) === itemKey)
 
       if (existingItemIndex > -1) {
-        // If item already exists with same variant, increase quantity
         const updatedItems = [...prevItems]
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
@@ -98,7 +105,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         return updatedItems
       } else {
-        // Add new item with variant support
+        if (prevItems.length >= MAX_CART_ITEMS) {
+          console.warn("Cart is full, cannot add more items")
+          return prevItems
+        }
         return [...prevItems, newItem as CartItem]
       }
     })

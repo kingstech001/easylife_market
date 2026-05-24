@@ -85,7 +85,11 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   // Save to localStorage whenever wishlist changes
   useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(state.wishlist))
+    try {
+      localStorage.setItem("wishlist", JSON.stringify(state.wishlist))
+    } catch (error) {
+      console.error("Failed to save wishlist to localStorage:", error)
+    }
   }, [state.wishlist])
 
   const addToWishlist = (item: WishlistItem) => dispatch({ type: "ADD_TO_WISHLIST", payload: item })

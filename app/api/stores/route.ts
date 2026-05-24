@@ -94,56 +94,36 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
       .exec()
 
 
-    // ✅ Add product count for each store
-    const storesWithCounts: StoreResponse[] = await Promise.all(
-      stores.map(async (store): Promise<StoreResponse> => {
-        try {
-          const productCount = await Product.countDocuments({ 
-            storeId: store._id,
-          })
-          
-          return {
-            _id: store._id ? store._id.toString() : "",
-            name: store.name || "",
-            slug: store.slug || "",
-            description: store.description || "",
-            logo_url: store.logo_url || "",
-            banner_url: store.banner_url || "",
-            sellerId: store.sellerId ? store.sellerId.toString() : "",
-            isPublished: store.isPublished ?? false,
-            isApproved: store.isApproved ?? true,
-            location: store.location ? {
-              type: store.location.type,
-              coordinates: store.location.coordinates,
-              address: store.location.address,
-              city: store.location.city,
-              state: store.location.state,
-              country: store.location.country,
-            } : undefined,
-            createdAt: store.createdAt ? store.createdAt.toISOString() : new Date().toISOString(),
-            updatedAt: store.updatedAt ? store.updatedAt.toISOString() : new Date().toISOString(),
-            productCount,
-          }
-        } catch (err) {
-          console.error(`Error processing store ${store._id}:`, err)
-          return {
-            _id: store._id ? store._id.toString() : "",
-            name: store.name || "",
-            slug: store.slug || "",
-            description: store.description || "",
-            logo_url: store.logo_url || "",
-            banner_url: store.banner_url || "",
-            sellerId: store.sellerId ? store.sellerId.toString() : "",
-            isPublished: store.isPublished ?? false,
-            isApproved: store.isApproved ?? true,
-            location: store.location,
-            createdAt: store.createdAt ? store.createdAt.toISOString() : new Date().toISOString(),
-            updatedAt: store.updatedAt ? store.updatedAt.toISOString() : new Date().toISOString(),
-            productCount: 0,
-          }
-        }
-      })
-    )
+    // ✅ Get product counts in ONE aggregation query (instead of N+1)
+    const storeIds = stores.map((s) => s._id)
+    const productCounts = await Product.aggregate([
+      { $match: { storeId: { $in: storeIds } } },
+      { $group: { _id: "$storeId", count: { $sum: 1 } } },
+    ])
+    const countMap = new Map(productCounts.map((pc: any) => [pc._id.toString(), pc.count]))
+
+    const storesWithCounts: StoreResponse[] = stores.map((store) => ({
+      _id: store._id ? store._id.toString() : "",
+      name: store.name || "",
+      slug: store.slug || "",
+      description: store.description || "",
+      logo_url: store.logo_url || "",
+      banner_url: store.banner_url || "",
+      sellerId: store.sellerId ? store.sellerId.toString() : "",
+      isPublished: store.isPublished ?? false,
+      isApproved: store.isApproved ?? true,
+      location: store.location ? {
+        type: store.location.type,
+        coordinates: store.location.coordinates,
+        address: store.location.address,
+        city: store.location.city,
+        state: store.location.state,
+        country: store.location.country,
+      } : undefined,
+      createdAt: store.createdAt ? store.createdAt.toISOString() : new Date().toISOString(),
+      updatedAt: store.updatedAt ? store.updatedAt.toISOString() : new Date().toISOString(),
+      productCount: countMap.get(store._id.toString()) || 0,
+    }))
 
     return NextResponse.json(
       {

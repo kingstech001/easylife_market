@@ -12,13 +12,13 @@ export async function GET(
     await connectToDB()
 
     const { storeId } = await context.params
-    const store = await Store.findById(storeId)
+    const store = await Store.findById(storeId).lean()
 
     if (!store) {
       return NextResponse.json({ message: 'Store not found' }, { status: 404 })
     }
 
-    const products = await Product.find({ storeId })
+    const products = await Product.find({ storeId }).lean()
     const totalProducts = products.length
     const activeProducts = products.filter((p) => p.isActive && !p.isDeleted)
     const deletedProducts = products.filter((p) => p.isDeleted)
@@ -30,7 +30,7 @@ export async function GET(
         : 0
 
     // optional: if you have orders per product
-    const orders = await Order.find({ storeId })
+    const orders = await Order.find({ storeId }).lean()
     const totalSales = orders.reduce(
       (sum, o) => sum + (o.totalPrice || 0),
       0

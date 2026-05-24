@@ -13,9 +13,10 @@ export async function GET(req: Request) {
 
     // Fetch top stores: published stores, sorted by visits descending
     const stores = await Store.find({ isPublished: true })
-      .sort({ visits: -1 }) // if visits field exists
+      .sort({ visits: -1 })
       .limit(limit)
-      .select("_id name logo_url isPublished visits") // Only return needed fields
+      .select("_id name logo_url isPublished visits")
+      .lean()
 
     return NextResponse.json({ stores }, { status: 200 })
   } catch (error) {

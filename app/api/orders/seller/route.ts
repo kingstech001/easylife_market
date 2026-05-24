@@ -44,15 +44,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No store found for this seller" }, { status: 404 })
     }
 
-    // 🔑 Find orders belonging to this seller’s store
-    const orders = await Order.find({ storeId: sellerStore._id })
-      .populate({
-        path: "items.productId",
-        model: Product,
-        select: "name",
-      })
-      .sort({ createdAt: -1 })
-      .lean()
+    // 🔑 Find orders belonging to this seller’s store (paginated)
+    const page = Math.max(1, parseInt(request.nextUrl.searchParams.get("page") || "1", 10))
+    const limit = Math.min(100, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "50", 10)))
+    const skip = (page - 1) * limit
+
+    const orderFilter = { storeId: sellerStore._id }
+    const [totalCount, orders] = await Promise.all([
+      Order.countDocuments(orderFilter),
+      Order.find(orderFilter)
+        .populate({
+          path: "items.productId",
+          model: Product,
+          select: "name",
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ])
 
     // ✅ Format orders for frontend
     const formattedOrders = orders.map((order) => ({
@@ -66,7 +76,10 @@ export async function GET(request: NextRequest) {
       })),
     }))
 
-    return NextResponse.json({ orders: formattedOrders }, { status: 200 })
+    return NextResponse.json({
+      orders: formattedOrders,
+      pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit), hasMore: skip + limit < totalCount },
+    }, { status: 200 })
   } catch (error: any) {
     console.error("Seller Orders API error:", error)
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
