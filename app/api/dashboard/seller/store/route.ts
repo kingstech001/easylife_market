@@ -28,7 +28,7 @@ export async function GET() {
 
     // Return store with role
     return NextResponse.json(
-      { 
+      {
         success: true,
         store: {
           _id: store._id.toString(),
@@ -37,12 +37,15 @@ export async function GET() {
           description: store.description || "",
           logo_url: store.logo_url || "",
           banner_url: store.banner_url || "",
+          phone: store.phone || "",
+          location: store.location || null,
+          businessHours: store.businessHours || null,
           subscriptionPlan: store.subscriptionPlan || "free",
           subscriptionStatus: store.subscriptionStatus || "active",
           createdAt: store.createdAt,
           updatedAt: store.updatedAt,
         },
-        role: user.role 
+        role: user.role
       },
       { status: 200 }
     )
@@ -81,7 +84,7 @@ export async function PUT(req: Request) {
       hasBanner: !!body.banner_url,
     })
 
-    const { name, description, logo_url, banner_url } = body
+    const { name, description, logo_url, banner_url, businessHours, phone, locationAddress, locationCoords } = body
 
     // Find the store
     const store = await Store.findOne({ sellerId: user.id })
@@ -122,6 +125,28 @@ export async function PUT(req: Request) {
     
     if (banner_url !== undefined) {
       store.banner_url = banner_url
+    }
+
+    if (phone !== undefined) {
+      store.phone = phone
+    }
+
+    if (businessHours !== undefined) {
+      store.businessHours = businessHours
+    }
+
+    // Update location if address provided
+    if (locationAddress && locationAddress.trim().length > 0) {
+      store.location = {
+        type: "Point",
+        coordinates: locationCoords
+          ? [locationCoords.lng, locationCoords.lat]
+          : store.location?.coordinates || [0, 0],
+        address: locationAddress.trim(),
+        city: store.location?.city || "Enugu",
+        state: store.location?.state || "Enugu",
+        country: store.location?.country || "Nigeria",
+      }
     }
 
     // Save changes - use validateBeforeSave: false to skip required field validation

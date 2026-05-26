@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Store, Edit, Loader2, AlertCircle, MapPin, Calendar, ExternalLink } from "lucide-react"
+import { Store, Edit, Loader2, AlertCircle, MapPin, Calendar, ExternalLink, Phone } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -16,6 +16,15 @@ interface StoreData {
   description?: string
   logo_url?: string
   banner_url?: string
+  phone?: string
+  location?: {
+    type: string
+    coordinates: [number, number]
+    address: string
+    city?: string
+    state?: string
+    country?: string
+  } | null
   createdAt?: string
 }
 
@@ -232,6 +241,45 @@ export default function StoreViewPage() {
                 <div className="p-3 bg-muted rounded-lg">
                   <code className="text-sm break-all">{store._id}</code>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Location & Contact */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Location & Contact</CardTitle>
+                <CardDescription>Your store address and phone number</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {store.location?.address ? (
+                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                    <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{store.location.address}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg">
+                    <MapPin className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-amber-800 dark:text-amber-200">No location set</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">Add your address so delivery fees are calculated correctly</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={handleEditStore} className="flex-shrink-0">
+                      Add
+                    </Button>
+                  </div>
+                )}
+                {store.phone && (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                    <span className="text-sm">{store.phone}</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>

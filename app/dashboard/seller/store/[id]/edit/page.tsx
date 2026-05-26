@@ -22,6 +22,16 @@ import {
   BusinessHours,
   DEFAULT_BUSINESS_HOURS,
 } from "@/components/business-hours-editor";
+import { MapAddressPicker } from "@/components/ui/map-address-picker";
+
+interface StoreLocation {
+  type: string;
+  coordinates: [number, number];
+  address: string;
+  city?: string;
+  state?: string;
+  country?: string;
+}
 
 interface StoreData {
   _id: string;
@@ -30,6 +40,8 @@ interface StoreData {
   description?: string;
   logo_url?: string;
   banner_url?: string;
+  phone?: string;
+  location?: StoreLocation | null;
   businessHours?: BusinessHours;
 }
 
@@ -49,7 +61,12 @@ export default function StoreSettingsPage() {
   const [bannerUrl, setBannerUrl] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ✅ Business hours state — pre-filled from DB or default
+  // Location state
+  const [locationAddress, setLocationAddress] = useState("");
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [phone, setPhone] = useState("");
+
+  // Business hours state
   const [businessHours, setBusinessHours] = useState<BusinessHours>(
     DEFAULT_BUSINESS_HOURS
   );
@@ -71,8 +88,15 @@ export default function StoreSettingsPage() {
         setDescription(store.description || "");
         setLogoUrl(store.logo_url || "");
         setBannerUrl(store.banner_url || "");
+        setPhone(store.phone || "");
+        if (store.location?.address) {
+          setLocationAddress(store.location.address);
+          if (store.location.coordinates && store.location.coordinates[0] !== 0 && store.location.coordinates[1] !== 0) {
+            setLocationCoords({ lat: store.location.coordinates[1], lng: store.location.coordinates[0] });
+          }
+        }
 
-        // ✅ Use DB hours if valid, otherwise fall back to defaults
+        // Use DB hours if valid, otherwise fall back to defaults
         if (store.businessHours && isValidBusinessHours(store.businessHours)) {
           setBusinessHours(store.businessHours);
         } else {
@@ -208,7 +232,10 @@ export default function StoreSettingsPage() {
           description,
           logo_url: logoUrl,
           banner_url: bannerUrl,
-          businessHours, // ✅ Include updated hours in the save payload
+          phone,
+          locationAddress: locationAddress || undefined,
+          locationCoords: locationCoords || undefined,
+          businessHours,
         }),
       });
 
@@ -260,7 +287,8 @@ export default function StoreSettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="hours">Business Hours</TabsTrigger>{/* ✅ New tab */}
+          <TabsTrigger value="location">Location</TabsTrigger>
+          <TabsTrigger value="hours">Hours</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
 
@@ -326,7 +354,63 @@ export default function StoreSettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* ✅ Business Hours Tab ────────────────────────────────────────────── */}
+        {/* ── Location Tab ──────────────────────────────────────────────────── */}
+        <TabsContent value="location" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Store Location</CardTitle>
+              <CardDescription>
+                Set your store address so customers can find you and delivery fees are calculated correctly
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Store Address</Label>
+                <MapAddressPicker
+                  value={locationAddress}
+                  onChange={(address) => setLocationAddress(address)}
+                  onSelect={(coords) => setLocationCoords(coords)}
+                  placeholder="Tap to pick your store address on the map"
+                />
+                <p className="text-sm text-muted-foreground">
+                  This address is used to calculate delivery fees for customers
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Business Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+234 800 000 0000"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Preferably WhatsApp-enabled. Admin will contact you on this number.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Location
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* ── Business Hours Tab ──────────────────────────────────────────────── */}
         <TabsContent value="hours" className="space-y-4">
           <Card>
             <CardHeader>
