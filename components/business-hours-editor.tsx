@@ -118,13 +118,13 @@ export function BusinessHoursEditor({
             <div
               key={key}
               className={cn(
-                "rounded-xl border transition-all duration-200 overflow-hidden",
+                "rounded-xl border-0 transition-all duration-200 overflow-hidden",
                 day.open
                   ? "border-border/60 bg-card"
                   : "border-border/30 bg-muted/10"
               )}
             >
-              <div className="flex items-center gap-3 px-3 py-2.5">
+              <div className="flex items-center gap-3 px-0 py-2.5">
                 {/* Toggle switch */}
                 <button
                   type="button"

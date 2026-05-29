@@ -2,7 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  ImageIcon,
+  Loader2,
+  MapPin,
+  Palette,
+  Save,
+  Store,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +33,7 @@ import {
   DEFAULT_BUSINESS_HOURS,
 } from "@/components/business-hours-editor";
 import { MapAddressPicker } from "@/components/ui/map-address-picker";
+import { cn } from "@/lib/utils";
 
 interface StoreLocation {
   type: string;
@@ -256,9 +267,9 @@ export default function StoreSettingsPage() {
 
   if (isFetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-3 text-muted-foreground">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-[#c0a146]" />
+        <span className="text-sm text-muted-foreground">
           Loading store settings...
         </span>
       </div>
@@ -266,62 +277,123 @@ export default function StoreSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Edit Store</h2>
-        <Button onClick={handleSave} disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </>
-          )}
-        </Button>
+    <div className="space-y-5 sm:space-y-7 pb-10">
+      {/* Page header */}
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 border-b border-border/60 pb-4 sm:pb-5">
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Store Settings
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Manage how your storefront appears to customers
+            </p>
+          </div>
+          <Button
+            onClick={handleSave}
+            disabled={isLoading}
+            className="w-full sm:w-auto bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="location">Location</TabsTrigger>
-          <TabsTrigger value="hours">Hours</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5 sm:space-y-6">
+        <TabsList className="w-full overflow-x-auto flex sm:grid sm:grid-cols-4 h-auto p-1 bg-muted/60 rounded-xl">
+          <TabsTrigger
+            value="general"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+          >
+            <Store className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline sm:inline">General</span>
+            <span className="xs:hidden sm:hidden">Info</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="location"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            Location
+          </TabsTrigger>
+          <TabsTrigger
+            value="hours"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+          >
+            <Clock className="h-3.5 w-3.5" />
+            Hours
+          </TabsTrigger>
+          <TabsTrigger
+            value="appearance"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+          >
+            <Palette className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline sm:inline">Appearance</span>
+            <span className="xs:hidden sm:hidden">Style</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* ── General Tab ───────────────────────────────────────────────────── */}
-        <TabsContent value="general" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>General Information</CardTitle>
-              <CardDescription>
-                Basic information about your store
-              </CardDescription>
+        <TabsContent value="general" className="space-y-4 mt-0">
+          <Card className="border-0 shadow-none bg-transparent">
+            <CardHeader className="p-0 pb-5 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
+                  <Store className="h-4 w-4 text-[#c0a146]" />
+                </div>
+                <div>
+                  <CardTitle className="text-base sm:text-lg">General Information</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Basic information about your store
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Store Name</Label>
+            <CardContent className="space-y-5 p-0 pt-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Store Name
+                </Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="Enter store name"
+                  className="h-11"
                 />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name}</p>
+                {errors.name ? (
+                  <p className="text-xs text-red-500">{errors.name}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    This is the name that customers will see.
+                  </p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  This is the name that customers will see.
-                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="slug">Store URL</Label>
-                <div className="flex items-center">
-                  <span className="text-muted-foreground mr-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="slug" className="text-sm font-medium">
+                  Store URL
+                </Label>
+                <div className="flex items-stretch rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-[#c0a146]/40 focus-within:border-[#c0a146]/50 transition-all">
+                  <span className="inline-flex items-center px-3 bg-muted/60 text-xs sm:text-sm text-muted-foreground border-r border-input whitespace-nowrap">
                     yoursite.com/store/
                   </span>
                   <Input
@@ -329,18 +401,22 @@ export default function StoreSettingsPage() {
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
                     placeholder="store-slug"
+                    className="h-11 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
-                {errors.slug && (
-                  <p className="text-sm text-red-500">{errors.slug}</p>
+                {errors.slug ? (
+                  <p className="text-xs text-red-500">{errors.slug}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Lowercase letters, numbers, and hyphens only.
+                  </p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  This is the URL where customers can find your store.
-                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Store Description</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="description" className="text-sm font-medium">
+                  Store Description
+                </Label>
                 <Textarea
                   id="description"
                   value={description}
@@ -349,52 +425,69 @@ export default function StoreSettingsPage() {
                   className="resize-none"
                   rows={4}
                 />
+                <p className="text-xs text-muted-foreground">
+                  A short, compelling pitch shown on your storefront.
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* ── Location Tab ──────────────────────────────────────────────────── */}
-        <TabsContent value="location" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Store Location</CardTitle>
-              <CardDescription>
-                Set your store address so customers can find you and delivery fees are calculated correctly
-              </CardDescription>
+        <TabsContent value="location" className="space-y-5 mt-0">
+          <Card className="border-0 shadow-none bg-transparent">
+            <CardHeader className="p-0 pb-5 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-[#c0a146]" />
+                </div>
+                <div>
+                  <CardTitle className="text-base sm:text-lg">Store Location</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Where customers find you and how delivery fees are calculated
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Store Address</Label>
+            <CardContent className="space-y-5 p-0 pt-5">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Store Address</Label>
                 <MapAddressPicker
                   value={locationAddress}
                   onChange={(address) => setLocationAddress(address)}
                   onSelect={(coords) => setLocationCoords(coords)}
                   placeholder="Tap to pick your store address on the map"
                 />
-                <p className="text-sm text-muted-foreground">
-                  This address is used to calculate delivery fees for customers
+                <p className="text-xs text-muted-foreground">
+                  Used to calculate delivery fees for customers near your store.
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Business Phone</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  Business Phone
+                </Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+234 800 000 0000"
+                  className="h-11"
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Preferably WhatsApp-enabled. Admin will contact you on this number.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={isLoading}>
+          <div className="flex justify-end pt-2 border-t border-border/60">
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="w-full sm:w-auto mt-4 bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -411,15 +504,22 @@ export default function StoreSettingsPage() {
         </TabsContent>
 
         {/* ── Business Hours Tab ──────────────────────────────────────────────── */}
-        <TabsContent value="hours" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Hours</CardTitle>
-              <CardDescription>
-                Set your opening and closing times for each day of the week
-              </CardDescription>
+        <TabsContent value="hours" className="space-y-5 mt-0">
+          <Card className="border-0 shadow-none bg-transparent">
+            <CardHeader className="p-0 pb-5 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-[#c0a146]" />
+                </div>
+                <div>
+                  <CardTitle className="text-base sm:text-lg">Business Hours</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Set when your store is open for orders
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 pt-5">
               <BusinessHoursEditor
                 value={businessHours}
                 onChange={setBusinessHours}
@@ -428,9 +528,12 @@ export default function StoreSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Save shortcut inside this tab */}
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={isLoading}>
+          <div className="flex justify-end pt-2 border-t border-border/60">
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="w-full sm:w-auto mt-4 bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -447,106 +550,210 @@ export default function StoreSettingsPage() {
         </TabsContent>
 
         {/* ── Appearance Tab ────────────────────────────────────────────────── */}
-        <TabsContent value="appearance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Store Images</CardTitle>
-              <CardDescription>
-                Upload your store logo and banner
-              </CardDescription>
+        <TabsContent value="appearance" className="space-y-5 mt-0">
+          <Card className="border-0 shadow-none bg-transparent">
+            <CardHeader className="p-0 pb-5 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
+                  <Palette className="h-4 w-4 text-[#c0a146]" />
+                </div>
+                <div>
+                  <CardTitle className="text-base sm:text-lg">Store Images</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Brand your storefront with a logo and banner
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 sm:space-y-8 p-0 pt-5">
               {/* Logo */}
-              <div className="space-y-2">
-                <Label>Logo</Label>
-                <p className="text-sm text-muted-foreground">
-                  Recommended: Square image, 400x400px
-                </p>
-                <div className="space-y-4">
-                  <input
-                    id="logo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                    disabled={isUploadingLogo}
-                  />
-                  <Button
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm font-semibold">Store Logo</Label>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">400×400px</span>
+                </div>
+
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  disabled={isUploadingLogo}
+                />
+
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  {/* Preview / Dropzone */}
+                  <button
                     type="button"
-                    variant="outline"
-                    onClick={() =>
-                      document.getElementById("logo-upload")?.click()
-                    }
+                    onClick={() => document.getElementById("logo-upload")?.click()}
                     disabled={isUploadingLogo}
+                    className={cn(
+                      "relative group h-32 w-32 sm:h-36 sm:w-36 rounded-2xl border-2 border-dashed overflow-hidden flex items-center justify-center transition-all flex-shrink-0",
+                      logoUrl
+                        ? "border-[#c0a146]/40 bg-muted/30"
+                        : "border-border/60 hover:border-[#c0a146]/60 hover:bg-[#c0a146]/5 bg-muted/20",
+                      isUploadingLogo && "opacity-60 cursor-not-allowed",
+                    )}
                   >
-                    {isUploadingLogo ? (
+                    {logoUrl ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
+                        <img
+                          src={logoUrl}
+                          alt="Logo"
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Upload className="h-6 w-6 text-white" />
+                        </div>
                       </>
                     ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Logo
-                      </>
+                      <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                        <ImageIcon className="h-8 w-8" />
+                        <span className="text-[11px]">No logo</span>
+                      </div>
                     )}
-                  </Button>
-                  {logoUrl && (
-                    <img
-                      src={logoUrl}
-                      alt="Logo"
-                      className="h-32 w-32 object-cover rounded-lg border"
-                    />
-                  )}
+
+                    {isUploadingLogo && (
+                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-[#c0a146]" />
+                      </div>
+                    )}
+                  </button>
+
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      A square image works best. Your logo appears in store listings, the storefront header, and on customer receipts.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById("logo-upload")?.click()}
+                      disabled={isUploadingLogo}
+                      className="w-full sm:w-auto text-xs sm:text-sm"
+                    >
+                      {isUploadingLogo ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          {logoUrl ? "Replace Logo" : "Upload Logo"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
 
+              <div className="h-px bg-border/60" />
+
               {/* Banner */}
-              <div className="space-y-2">
-                <Label>Banner</Label>
-                <p className="text-sm text-muted-foreground">
-                  Recommended: 1920x400px
-                </p>
-                <div className="space-y-4">
-                  <input
-                    id="banner-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerUpload}
-                    className="hidden"
-                    disabled={isUploadingBanner}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      document.getElementById("banner-upload")?.click()
-                    }
-                    disabled={isUploadingBanner}
-                  >
-                    {isUploadingBanner ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Banner
-                      </>
-                    )}
-                  </Button>
-                  {bannerUrl && (
-                    <img
-                      src={bannerUrl}
-                      alt="Banner"
-                      className="h-48 w-full object-cover rounded-lg border"
-                    />
-                  )}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm font-semibold">Store Banner</Label>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">1920×400px</span>
                 </div>
+
+                <input
+                  id="banner-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerUpload}
+                  className="hidden"
+                  disabled={isUploadingBanner}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("banner-upload")?.click()}
+                  disabled={isUploadingBanner}
+                  className={cn(
+                    "relative group w-full aspect-[16/6] sm:aspect-[16/5] rounded-2xl border-2 border-dashed overflow-hidden flex items-center justify-center transition-all",
+                    bannerUrl
+                      ? "border-[#c0a146]/40 bg-muted/30"
+                      : "border-border/60 hover:border-[#c0a146]/60 hover:bg-[#c0a146]/5 bg-muted/20",
+                    isUploadingBanner && "opacity-60 cursor-not-allowed",
+                  )}
+                >
+                  {bannerUrl ? (
+                    <>
+                      <img
+                        src={bannerUrl}
+                        alt="Banner"
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="flex items-center gap-2 text-white text-sm font-medium">
+                          <Upload className="h-5 w-5" />
+                          Replace Banner
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground px-4 text-center">
+                      <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10" />
+                      <span className="text-xs sm:text-sm">Tap to upload a banner image</span>
+                    </div>
+                  )}
+
+                  {isUploadingBanner && (
+                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                      <Loader2 className="h-7 w-7 animate-spin text-[#c0a146]" />
+                    </div>
+                  )}
+                </button>
+
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  A wide banner displayed at the top of your storefront. Use high-quality imagery for a premium look.
+                </p>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById("banner-upload")?.click()}
+                  disabled={isUploadingBanner}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
+                >
+                  {isUploadingBanner ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {bannerUrl ? "Replace Banner" : "Upload Banner"}
+                    </>
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
+
+          <div className="flex justify-end pt-2 border-t border-border/60">
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="w-full sm:w-auto mt-4 bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Appearance
+                </>
+              )}
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

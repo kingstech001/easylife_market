@@ -308,7 +308,7 @@ export function MapAddressPicker({
         />
         <span
           className={cn(
-            "flex-1 truncate",
+            "flex-1 truncate text-[8px]",
             value ? "text-foreground" : "text-muted-foreground",
           )}
         >

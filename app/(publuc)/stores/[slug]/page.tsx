@@ -450,7 +450,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 justify-between sm:justify-start">
                   <Badge
                     variant="secondary"
                     className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"

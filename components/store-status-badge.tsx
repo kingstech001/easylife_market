@@ -69,17 +69,17 @@ export function StoreStatusBadge({ openTime, closeTime, isOpenToday = true }: St
     >
       <div className={`h-2 w-2 rounded-full ${isOpen ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
       {isOpen ? (
-        <>
+        <p className="text-[11px]">
           Open Now
-          <span className="text-xs opacity-70">(Closes at {formatTime(closeTime)})</span>
-        </>
+          <span className="text-[8px] opacity-70">(Closes at {formatTime(closeTime)})</span>
+        </p>
       ) : (
-        <>
+        <p className="text-[11px]">
           Closed Now
-          <span className="text-xs opacity-70">
+          <span className="text-[8px] opacity-70">
             {isOpenToday ? `(Opens at ${formatTime(openTime)})` : "(Closed today)"}
           </span>
-        </>
+        </p>
       )}
     </Badge>
   )
