@@ -706,6 +706,10 @@ async function handleFailedCharge(data: any, ipAddress: string) {
 
 /**
  * GET endpoint - Check payment and order status
+ *
+ * If Paystack's webhook hasn't fired yet (common in dev, or when the webhook
+ * URL is misconfigured), this endpoint falls back to creating the order
+ * directly so the customer never ends up "paid but no order."
  */
 export async function GET(request: NextRequest) {
   try {
@@ -721,6 +725,10 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get("token")?.value
     const isAuthenticated = !!token
 
+    const forwardedFor = request.headers.get("x-forwarded-for")
+    const realIp = request.headers.get("x-real-ip")
+    const ipAddress = forwardedFor?.split(",")[0] || realIp || "unknown"
+
     const verifyData = await verifyPaystackTransaction(reference)
 
     if (verifyData.data.status !== "success") {
@@ -734,10 +742,10 @@ export async function GET(request: NextRequest) {
     const paidAmount = verifyData.data.amount / 100
 
     await connectToDB()
-    
+
     if (metadata.type === "subscription") {
       const { plan, storeId } = metadata
-      
+
       if (!plan || !storeId) {
         return NextResponse.json(
           { error: "Invalid subscription metadata" },
@@ -745,9 +753,29 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const store = await Store.findById(storeId)
+      let store = await Store.findById(storeId)
         .select("subscriptionPlan subscriptionStatus lastPaymentReference productLimit")
         .lean()
+
+      // Fallback: if the webhook hasn't activated the subscription yet, do it now
+      if (store && store.lastPaymentReference !== reference) {
+        try {
+          await handleSuccessfulCharge(verifyData.data, ipAddress)
+          store = await Store.findById(storeId)
+            .select("subscriptionPlan subscriptionStatus lastPaymentReference productLimit")
+            .lean()
+        } catch (fallbackError: any) {
+          console.error(
+            `[GET fallback] Failed to activate subscription for ${reference}:`,
+            fallbackError.message
+          )
+          await PaymentLogger.log({
+            reference,
+            event: "get_fallback_subscription_failed",
+            error: fallbackError.message,
+          }).catch(console.error)
+        }
+      }
 
       return NextResponse.json({
         status: "success",
@@ -765,10 +793,30 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const existingOrders = await Order.find({ reference })
+    let existingOrders = await Order.find({ reference })
       .select("_id reference status paymentStatus")
       .lean()
-    
+
+    // Fallback: if the webhook hasn't created the order yet, create it now
+    if (existingOrders.length === 0) {
+      try {
+        await handleSuccessfulCharge(verifyData.data, ipAddress)
+        existingOrders = await Order.find({ reference })
+          .select("_id reference status paymentStatus")
+          .lean()
+      } catch (fallbackError: any) {
+        console.error(
+          `[GET fallback] Failed to create order for ${reference}:`,
+          fallbackError.message
+        )
+        await PaymentLogger.log({
+          reference,
+          event: "get_fallback_order_failed",
+          error: fallbackError.message,
+        }).catch(console.error)
+      }
+    }
+
     if (existingOrders.length === 0) {
       return NextResponse.json({
         status: "success",

@@ -118,7 +118,7 @@ export default function CheckoutPage() {
   const handlePaymentCallback = async (reference: string) => {
     setIsProcessing(true)
     try {
-      const verifyResponse = await fetch("/api/payment/verify", {
+      const verifyResponse = await fetch("/api/paystack/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -316,7 +316,7 @@ export default function CheckoutPage() {
 
       {/* ── Sticky header ──────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/40">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
             <button
               type="button"
@@ -338,7 +338,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Step progress */}
-          <div className="flex items-center gap-0 pb-3 -mx-1">
+          <div className="flex items-center justify-center gap-0 pb-3 ">
             <StepPill
               step={1}
               label="Details"
@@ -361,8 +361,26 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-36 lg:pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
+
+          {/* ── Order summary (mobile inline - top) ───────────────────────── */}
+          <div className="lg:hidden">
+            <SectionTitle icon={Package} title="Order Summary" />
+            <div className="mt-3">
+              <OrderSummaryContent
+                cartItems={cartItems}
+                subtotal={subtotal}
+                shipping={shipping}
+                total={total}
+                formatAmount={formatAmount}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+                disabled={disabled}
+                activeStep={activeStep}
+              />
+            </div>
+          </div>
 
           {/* ── Main column ──────────────────────────────────────────────── */}
           <div className="lg:col-span-3 space-y-4 sm:space-y-5">
@@ -443,7 +461,7 @@ export default function CheckoutPage() {
                 <div className="pt-2">
                   <Button
                     onClick={handleContinue}
-                    className="w-full h-13 rounded-xl text-base font-semibold shadow-lg active:scale-[0.98] transition-all"
+                    className="w-full rounded-xl text-base font-semibold shadow-lg active:scale-[0.98] transition-all"
                     disabled={!isInfoValid || disabled}
                     size="lg"
                   >
@@ -677,7 +695,7 @@ function OrderSummaryContent({
         </div>
       </div>
 
-      <div className="px-5 py-4 space-y-3 max-h-[320px] overflow-y-auto">
+      <div className="px-5 py-4 space-y-3 lg:max-h-[320px] lg:overflow-y-auto">
         {cartItems.map((item) => (
           <div
             key={`d-${item.id}-${item.selectedVariant?.color?.hex || ""}-${item.selectedVariant?.size || ""}`}
@@ -693,7 +711,7 @@ function OrderSummaryContent({
                   type="button"
                   onClick={() => removeFromCart(item.id)}
                   disabled={disabled}
-                  className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 p-0.5 flex-shrink-0"
+                  className="text-muted-foreground hover:text-destructive transition-colors lg:opacity-0 lg:group-hover:opacity-100 p-0.5 flex-shrink-0"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
