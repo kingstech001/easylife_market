@@ -331,13 +331,23 @@ export async function POST(request: NextRequest) {
       type,
     })
   } catch (error: any) {
+    const message = error?.message || "Failed to initialize payment"
+    const isInventoryConflict =
+      message.includes("Insufficient stock") ||
+      message.includes("no longer available") ||
+      message.includes("currently unavailable")
+
+    if (isInventoryConflict) {
+      console.warn("[Paystack Initialize] Inventory conflict:", message)
+      return NextResponse.json({ error: message }, { status: 409 })
+    }
     console.error("[Paystack Initialize] ❌ Unexpected error:", error)
     console.error("Stack trace:", error.stack)
     
     return NextResponse.json(
       { 
         error: "Failed to initialize payment",
-        details: process.env.NODE_ENV === "development" ? error.message : undefined,
+        details: process.env.NODE_ENV === "development" ? message : undefined,
       },
       { status: 500 }
     )

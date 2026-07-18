@@ -60,7 +60,9 @@ export async function proxy(req: NextRequest) {
 
   if (!token) {
     if (isPublic) return NextResponse.next(); // allow home/login/signup
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+    const loginUrl = new URL("/auth/login", req.url);
+    loginUrl.searchParams.set("redirect", `${path}${req.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   try {
@@ -110,7 +112,9 @@ export async function proxy(req: NextRequest) {
     }
   } catch (err) {
     console.error("JWT verification failed:", err);
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+    const loginUrl = new URL("/auth/login", req.url);
+    loginUrl.searchParams.set("redirect", `${path}${req.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

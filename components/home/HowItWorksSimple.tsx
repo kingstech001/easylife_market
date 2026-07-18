@@ -57,7 +57,7 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section className="relative py-16 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
+    <section className="relative py-16 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div 
@@ -94,11 +94,6 @@ export function HowItWorksSection() {
             </span>
           </h2>
 
-          {/* Intro Paragraph */}
-          <p className="text-sm md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Whether you're shopping or selling, EasyLife makes it simple. Follow three easy steps 
-            to start buying from trusted sellers or launch your own store today.
-          </p>
         </div>
 
         {/* Steps Grid */}

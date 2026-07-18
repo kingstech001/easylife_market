@@ -251,7 +251,7 @@ export function TestimonialsSection() {
   ]
 
   return (
-    <section className="relative w-full py-12 sm:py-16 lg:py-24 overflow-hidden">
+    <section className="relative w-full py-12 sm:py-16 overflow-hidden">
       {/* Minimal Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
       

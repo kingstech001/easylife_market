@@ -209,7 +209,10 @@ export default function CheckoutPage() {
           orders,
           shippingInfo: {
             firstName: info.firstName, lastName: info.lastName, email: info.email,
-            address: info.address, state: info.state, phone: info.phone, area: info.area,
+            address: info.address,
+            state: info.state,
+            phone: info.phone || "Not provided",
+            area: info.area || info.state || "Not provided",
             customerCoords: customerCoords || undefined,
           },
           deliveryFee: shipping,

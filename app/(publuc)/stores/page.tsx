@@ -1,52 +1,59 @@
 // app/stores/page.tsx
 import { connectToDB } from "@/lib/db";
-import Store from "@/models/Store";
 import Product from "@/models/Product";
+import Store from "@/models/Store";
 import StoresPageClient from "./StoresPageClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 async function getStoresData() {
   try {
-    console.log("🔍 [Server] Fetching stores from database");
-    
     await connectToDB();
 
     const stores = await Store.find({
       isPublished: true,
       isApproved: true,
     })
+      .select(
+        "_id name slug description logo_url banner_url sellerId isPublished createdAt updatedAt businessHours",
+      )
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log("✅ [Server] Stores found:", stores.length);
-
-    const storesWithProductCount = await Promise.all(
-      stores.map(async (store: any) => {
-        const productCount = await Product.countDocuments({
-          storeId: store._id,
-        });
-
-        return {
-          _id: store._id.toString(),
-          name: store.name,
-          slug: store.slug,
-          description: store.description,
-          logo_url: store.logo_url,
-          banner_url: store.banner_url,
-          sellerId: store.sellerId?.toString(),
-          isPublished: store.isPublished,
-          createdAt: store.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: store.updatedAt?.toISOString() || new Date().toISOString(),
-          productCount,
-          businessHours: store.businessHours || null, // ✅ included
-        };
-      })
+    const storeIds = stores.map((store: any) => store._id);
+    const productCounts = await Product.aggregate([
+      {
+        $match: {
+          storeId: { $in: storeIds },
+          isActive: true,
+          isDeleted: false,
+        },
+      },
+      { $group: { _id: "$storeId", count: { $sum: 1 } } },
+    ]);
+    const countByStoreId = new Map(
+      productCounts.map((item: { _id: any; count: number }) => [
+        item._id.toString(),
+        item.count,
+      ]),
     );
 
-    return storesWithProductCount;
+    return stores.map((store: any) => ({
+      _id: store._id.toString(),
+      name: store.name,
+      slug: store.slug,
+      description: store.description,
+      logo_url: store.logo_url,
+      banner_url: store.banner_url,
+      sellerId: store.sellerId?.toString(),
+      isPublished: store.isPublished,
+      createdAt: store.createdAt?.toISOString() || new Date().toISOString(),
+      updatedAt: store.updatedAt?.toISOString() || new Date().toISOString(),
+      productCount: countByStoreId.get(store._id.toString()) || 0,
+      businessHours: store.businessHours || null,
+    }));
   } catch (error) {
-    console.error("❌ [Server] Error fetching stores:", error);
+    console.error("[Server] Error fetching stores:", error);
     return [];
   }
 }

@@ -251,6 +251,7 @@ StoreSchema.pre<IStore>("save", async function (next) {
 StoreSchema.index({ "location.coordinates": "2dsphere" }); // geospatial
 StoreSchema.index({ sellerId: 1 });
 StoreSchema.index({ isPublished: 1, isApproved: 1 });
+StoreSchema.index({ isPublished: 1, isApproved: 1, createdAt: -1 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model

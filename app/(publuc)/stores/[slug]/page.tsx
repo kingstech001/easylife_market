@@ -509,6 +509,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     key={product.id}
                     product={product}
                     storeSlug={store.slug}
+                    isRestaurant={isRestaurant}
                   />
                 ))}
               </div>

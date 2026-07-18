@@ -134,7 +134,6 @@ const MainOrderSchema = new mongoose.Schema<IMainOrder>(
 MainOrderSchema.index({ createdAt: -1 })
 MainOrderSchema.index({ userId: 1, createdAt: -1 })
 MainOrderSchema.index({ paymentStatus: 1, status: 1 })
-MainOrderSchema.index({ reference: 1 }) // Fast lookup by payment reference
 
 // Virtual for checking if order is fully paid
 MainOrderSchema.virtual('isPaid').get(function() {

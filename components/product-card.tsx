@@ -47,9 +47,10 @@ interface Product {
 interface ProductCardProps {
   product: Product
   storeSlug: string
+  isRestaurant?: boolean
 }
 
-export function ProductCard({ product, storeSlug }: ProductCardProps) {
+export function ProductCard({ product, storeSlug, isRestaurant = false }: ProductCardProps) {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const { addToCart } = useCart()
@@ -57,6 +58,8 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
   const { formatAmount } = useFormatAmount()
 
   const mainImage = product.images?.[0]
+  const productHref = `/stores/${storeSlug}/products/${product.id}`
+  const shouldOpenProductPage = isRestaurant || product.hasVariants
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
   const discountPercentage = hasDiscount
     ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
@@ -127,6 +130,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
         storeId: product.store_id,
         productId: product.id,
       })
+      toast.success("Added to cart")
     }, 1000)
   }
 
@@ -158,8 +162,8 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <Link href={`/stores/${storeSlug}/products/${product.id}`} className="block h-full">
-        <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col">
+      <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col">
+        <Link href={productHref} className="block">
           <div className="relative aspect-square overflow-hidden">
             <Image
               src={mainImage?.url || "/placeholder.svg?height=300&width=300&text=Product"}
@@ -204,12 +208,15 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
               </Button>
             </motion.div>
           </div>
+        </Link>
 
-          <CardContent className="p-2 flex-1 flex flex-col">
+        <CardContent className="p-2 flex-1 flex flex-col">
             <div className=" flex-1">
-              <h3 className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                {product.name}
-              </h3>
+              <Link href={productHref}>
+                <h3 className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                  {product.name}
+                </h3>
+              </Link>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">{formatAmount(product.price)}</span>
                 {hasDiscount && (
@@ -228,9 +235,32 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </Link>
+        </CardContent>
+
+        <CardFooter className="p-2 pt-0">
+          {shouldOpenProductPage ? (
+            <Button asChild className="h-10 w-full rounded-xl text-sm font-semibold">
+              <Link href={productHref}>
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                {isRestaurant ? "Customize" : "Select options"}
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              className="h-10 w-full rounded-xl text-sm font-semibold"
+              onClick={handleAddToCart}
+              disabled={isAddingToCart || product.inventory_quantity === 0}
+            >
+              {isAddingToCart ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ShoppingCart className="mr-2 h-4 w-4" />
+              )}
+              {product.inventory_quantity === 0 ? "Out of stock" : "Add to cart"}
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
     </motion.div>
   )
 }

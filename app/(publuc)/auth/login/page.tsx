@@ -49,6 +49,17 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const fieldBaseClass =
   "peer h-14 rounded-2xl border-border/60 bg-background/90 px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#e1a200]/30 focus-visible:ring-offset-0 focus-visible:border-[#e1a200]/50";
 
+function getSafeRedirectPath() {
+  if (typeof window === "undefined") return null;
+
+  const redirect = new URLSearchParams(window.location.search).get("redirect");
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+    return null;
+  }
+
+  return redirect;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, checkSellerStore, checkSellerProducts } = useAuth();
@@ -92,7 +103,7 @@ export default function LoginPage() {
           router.push(hasProducts ? "/dashboard/seller" : "/store-builder");
         }
       } else if (data.user.role === "buyer") {
-        router.push("/stores");
+        router.push(getSafeRedirectPath() || "/stores");
       } else {
         router.push("/");
       }

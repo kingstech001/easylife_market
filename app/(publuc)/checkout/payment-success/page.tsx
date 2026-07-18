@@ -39,7 +39,7 @@ function PaymentSuccessContent() {
   const [pollAttempts, setPollAttempts] = useState(0)
   const [countdown, setCountdown] = useState(10)
 
-  const MAX_POLL_ATTEMPTS = 30 // Increased to 60 seconds for webhook processing
+  const MAX_POLL_ATTEMPTS = 45 // ~90s — covers slow webhooks and cold Vercel functions
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const attemptCountRef = useRef(0)
   const cartClearedRef = useRef(false)
@@ -52,10 +52,20 @@ function PaymentSuccessContent() {
       return
     }
 
+    // Safely parse a JSON response. On non-JSON bodies (e.g. Vercel 504 HTML
+    // pages, network drops), returns null instead of throwing.
+    const safeJson = async (response: Response): Promise<any | null> => {
+      try {
+        return await response.json()
+      } catch {
+        return null
+      }
+    }
+
     const checkOrderStatus = async () => {
       try {
         console.log(`[Poll Attempt ${attemptCountRef.current + 1}] Checking order status...`)
-        
+
         // ✅ Call webhook GET endpoint to check if order was created
         const response = await fetch(
           `/api/webhooks/paystack?reference=${reference}`,
@@ -66,19 +76,30 @@ function PaymentSuccessContent() {
         )
 
         if (!response.ok) {
-          const errorData = await response.json()
-          
+          const errorData = await safeJson(response)
+
           // If payment not successful, show error immediately
-          if (response.status === 400 && errorData.error?.includes("not successful")) {
+          if (
+            response.status === 400 &&
+            errorData?.error?.includes("not successful")
+          ) {
             throw new Error(errorData.error || "Payment was not successful")
           }
-          
-          // Other errors - keep polling (webhook might still be processing)
-          console.log("⏳ Webhook still processing...", errorData)
+
+          // Other errors (504 timeout, 500, non-JSON, etc.) — keep polling.
+          // The webhook (or our GET fallback) may still be creating the order.
+          console.log("⏳ Transient error, continuing to poll...", {
+            status: response.status,
+            errorData,
+          })
           return false
         }
 
-        const data: VerificationResult = await response.json()
+        const data: VerificationResult | null = await safeJson(response)
+        if (!data?.data) {
+          console.log("⏳ Empty/invalid response body, continuing to poll...")
+          return false
+        }
         console.log("[Order Status Response]", data)
         setResult(data)
 
@@ -110,7 +131,7 @@ function PaymentSuccessContent() {
         }
 
         // Handle order payments - check if webhook created the order
-        if (data.data.orderExists && data.data.orderNumber) {
+        if (data.data.orderExists) {
           console.log("✅ Order created successfully:", data.data.orderNumber)
           setVerificationState("success")
           if (pollIntervalRef.current) {
@@ -163,11 +184,17 @@ function PaymentSuccessContent() {
         setPollAttempts(attemptCountRef.current)
 
         if (attemptCountRef.current >= MAX_POLL_ATTEMPTS) {
-          console.log("⚠️ Max polling attempts reached")
+          console.log("⚠️ Max polling attempts reached — doing final check")
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current)
             pollIntervalRef.current = null
           }
+
+          // Final safety net: re-check via checkOrderStatus which will move
+          // us to success if the order now exists.
+          const found = await checkOrderStatus()
+          if (found) return
+
           setError(
             "Order creation is taking longer than expected. Your payment was successful. Please check your orders page in a few minutes or contact support."
           )
@@ -215,6 +242,8 @@ function PaymentSuccessContent() {
       router.push("/dashboard/buyer/orders") // Go to orders page instead of checkout
     }
   }, [verificationState, countdown, router])
+
+  const confirmedAmount = result?.data.grandTotal ?? result?.data.amount
 
   if (!reference) {
     return (
@@ -413,7 +442,7 @@ function PaymentSuccessContent() {
           Your order has been successfully placed and payment confirmed.
         </p>
         
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded-xl p-6 mb-6 space-y-4 border border-emerald-500/30">
+        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded-xl p-4 sm:p-6 mb-6 space-y-4 border border-emerald-500/30 overflow-hidden">
           <div>
             <div className="flex items-center justify-center gap-2 mb-2">
               <Package className="w-5 h-5 text-emerald-500" />
@@ -421,18 +450,18 @@ function PaymentSuccessContent() {
                 Order Number
               </p>
             </div>
-            <p className="text-2xl font-bold text-emerald-600">
-              {result?.data.orderNumber}
+            <p className="mx-auto max-w-full break-all px-1 text-lg font-bold leading-snug text-emerald-600 sm:text-2xl">
+              {result?.data.orderNumber || result?.data.reference || "Confirmed"}
             </p>
           </div>
           <div className="border-t border-border/30 pt-4 space-y-3">
-            <div className="flex justify-between items-center text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-sm">
               <span className="text-muted-foreground">Total Amount:</span>
-              <span className="font-bold text-lg bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
-                ₦{result?.data.grandTotal?.toLocaleString()}
+              <span className="font-bold text-base sm:text-lg bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
+                {typeof confirmedAmount === "number" ? `\u20A6${confirmedAmount.toLocaleString()}` : "Confirmed"}
               </span>
             </div>
-            <div className="flex justify-between items-center text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-1 text-sm">
               <span className="text-muted-foreground">Items:</span>
               <span className="font-semibold text-foreground">
                 {result?.data.subOrderCount} store(s)

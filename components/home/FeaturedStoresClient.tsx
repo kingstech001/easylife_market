@@ -2,20 +2,27 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  Star,
-  TrendingUp,
-  Users,
-  Store,
-  Award,
-  Sparkles,
-  CheckCircle,
-} from "lucide-react";
+import { ArrowRight, Store, Sparkles, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StoreCard } from "@/components/store-card";
 import { cn } from "@/lib/utils";
+
+interface DaySchedule {
+  open: boolean;
+  openTime: string;
+  closeTime: string;
+}
+
+interface BusinessHours {
+  monday: DaySchedule;
+  tuesday: DaySchedule;
+  wednesday: DaySchedule;
+  thursday: DaySchedule;
+  friday: DaySchedule;
+  saturday: DaySchedule;
+  sunday: DaySchedule;
+}
 
 interface StoreData {
   _id: string;
@@ -27,6 +34,7 @@ interface StoreData {
   sellerId: string;
   isPublished: boolean;
   productCount?: number;
+  businessHours?: BusinessHours | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,7 +45,7 @@ interface FeaturedStoresClientProps {
 
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
-    <section className="relative mt-5 w-full overflow-hidden">
+    <section className="relative mt-8 w-full overflow-hidden">
       {/* Simplified background */}
 
       {/* Reduced animated background elements */}
@@ -50,7 +58,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
       <div className="container relative z-10 px-4 sm:px-6 mx-auto">
         {/* Header Section */}
-        <div className="flex items-center justify-between text-center mb-16">
+        <div className="flex items-center justify-between text-center mb-8  ">
           {/* Badge */}
           <Badge
             variant="secondary"
@@ -119,72 +127,6 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
               ))}
             </div>
           )}
-        </div>
-
-        {/* CTA Section */}
-        <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-8 mt-12">
-          {/* Decorative divider */}
-          <div className="flex items-center gap-4 w-full max-w-md">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-border" />
-            <div className="p-2 sm:p-2.5 rounded-full bg-gradient-to-br from-[#e1a200]/20 to-primary/20 shadow-lg">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#e1a200]" />
-            </div>
-            <div className="flex-1 h-px bg-gradient-to-r from-border via-border to-transparent" />
-          </div>
-
-          {/* CTA Content */}
-          <div className="text-center space-y-4 sm:space-y-5 max-w-2xl">
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground via-[#e1a200] to-foreground bg-clip-text text-transparent">
-              Ready to Join These Success Stories?
-            </h3>
-            <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
-              Start your journey today and become our next featured store
-            </p>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-3">
-              {["Free Trial", "Easy Setup", "24/7 Support"].map(
-                (item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50"
-                  >
-                    <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
-                    <span className="text-xs sm:text-sm font-medium text-muted-foreground">
-                      {item}
-                    </span>
-                  </div>
-                ),
-              )}
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center pt-4 sm:pt-6 w-full max-w-md mx-auto sm:max-w-none">
-              <Link href="/stores" className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-background/80 backdrop-blur-sm border-2 border-border/50 hover:border-[#e1a200]/50 hover:bg-muted/50 hover:shadow-lg transition-all rounded-full"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Explore All Stores
-                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </Button>
-              </Link>
-              <Link href="/auth/register" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] shadow-lg hover:shadow-xl transition-all rounded-full"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Start Your Store
-                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </span>
-                </Button>
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
 

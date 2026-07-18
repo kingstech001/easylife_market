@@ -40,6 +40,10 @@ const PaymentAuditSchema = new mongoose.Schema({
       "duplicate_order_updated",
       "subscription_updated",
       "subscription_failed",
+      "inventory_deducted_successfully",
+      "low_inventory_warning",
+      "product_out_of_stock",
+      "inventory_deduction_error",
     ],
   },
   amount: Number,
@@ -51,12 +55,24 @@ const PaymentAuditSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
     default: Date.now,
-    index: true,
   },
 });
 
 // TTL index - automatically delete logs older than 90 days
 PaymentAuditSchema.index({ timestamp: 1 }, { expireAfterSeconds: 7776000 });
+
+const existingPaymentAuditModel = mongoose.models.PaymentAudit;
+const existingEventValues = (existingPaymentAuditModel?.schema.path("event") as any)
+  ?.enumValues as string[] | undefined;
+
+if (
+  existingPaymentAuditModel &&
+  process.env.NODE_ENV !== "production" &&
+  (!existingEventValues ||
+    !existingEventValues.includes("inventory_deduction_error"))
+) {
+  mongoose.deleteModel("PaymentAudit");
+}
 
 const PaymentAudit =
   mongoose.models.PaymentAudit ||

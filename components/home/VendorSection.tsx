@@ -77,7 +77,7 @@ export function VendorSection() {
   const sellerPreview = useMemo(() => storePreviews.slice(0, 5), [storePreviews]);
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 lg:py-24">
+    <section className="relative overflow-hidden py-16 sm:py-20 ">
       <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background))_0%,rgba(225,162,0,0.05)_26%,hsl(var(--muted)/0.22)_68%,hsl(var(--background))_100%)]" />
       <div className="absolute inset-0 opacity-[0.04]">
         <div
@@ -142,7 +142,7 @@ export function VendorSection() {
               <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="h-12 w-full rounded-full bg-[#e1a200] px-6 text-base font-semibold text-white shadow-lg shadow-[#e1a200]/20 hover:bg-[#c89100] sm:h-14 sm:w-auto sm:px-8"
+                  className="h-12 w-full bg-[#e1a200] px-6 text-base font-semibold text-white shadow-lg shadow-[#e1a200]/20 hover:bg-[#c89100] sm:h-14 sm:w-auto sm:px-8"
                 >
                   Create Your Store
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -153,7 +153,7 @@ export function VendorSection() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="h-12 w-full rounded-full border-border bg-background/85 px-6 text-base font-semibold hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.05] sm:h-14 sm:w-auto sm:px-8"
+                  className="h-12 w-full border-border bg-background/85 px-6 text-base font-semibold hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.05] sm:h-14 sm:w-auto sm:px-8"
                 >
                   See Success Stories
                 </Button>

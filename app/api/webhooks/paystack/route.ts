@@ -209,6 +209,24 @@ async function verifyAndCalculateOrderAmount(
 /**
  * ✅ ENHANCED: Create main order and sub-orders atomically with detailed inventory tracking
  */
+function normalizeShippingInfo(shippingInfo: any) {
+  const fallbackArea =
+    shippingInfo?.area ||
+    shippingInfo?.state ||
+    shippingInfo?.address ||
+    "Not provided"
+
+  return {
+    firstName: shippingInfo?.firstName || "Customer",
+    lastName: shippingInfo?.lastName || "Customer",
+    email: shippingInfo?.email || "not-provided@example.com",
+    phone: shippingInfo?.phone || "Not provided",
+    address: shippingInfo?.address || fallbackArea,
+    state: shippingInfo?.state || fallbackArea,
+    area: fallbackArea,
+  }
+}
+
 async function createOrdersFromWebhook(
   verifiedOrderData: any,
   reference: string,
@@ -221,6 +239,7 @@ async function createOrdersFromWebhook(
   const { verifiedOrders, subtotal, deliveryFee, grandTotal } = verifiedOrderData
   const createdSubOrders = []
   const inventoryUpdates = [] // Track all inventory changes
+  const safeShippingInfo = normalizeShippingInfo(shippingInfo)
 
   for (const orderGroup of verifiedOrders) {
     const { storeId, items, totalPrice } = orderGroup
@@ -239,15 +258,7 @@ async function createOrdersFromWebhook(
           paymentDetails: paymentInfo,
           items,
           paymentMethod,
-          shippingInfo: {
-            firstName: shippingInfo.firstName,
-            lastName: shippingInfo.lastName,
-            email: shippingInfo.email,
-            phone: shippingInfo.phone || "",
-            address: shippingInfo.address,
-            state: shippingInfo.state,
-            area: shippingInfo.area,
-          },
+          shippingInfo: safeShippingInfo,
         },
       ],
       { session }
@@ -389,15 +400,7 @@ async function createOrdersFromWebhook(
         totalAmount: subtotal,
         deliveryFee,
         grandTotal,
-        shippingInfo: {
-          firstName: shippingInfo.firstName,
-          lastName: shippingInfo.lastName,
-          email: shippingInfo.email,
-          phone: shippingInfo.phone || "",
-          address: shippingInfo.address,
-          state: shippingInfo.state,
-          area: shippingInfo.area,
-        },
+        shippingInfo: safeShippingInfo,
         paymentMethod,
         paymentStatus: "paid",
         status: "processing",
@@ -722,9 +725,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const token = request.cookies.get("token")?.value
-    const isAuthenticated = !!token
-
     const forwardedFor = request.headers.get("x-forwarded-for")
     const realIp = request.headers.get("x-real-ip")
     const ipAddress = forwardedFor?.split(",")[0] || realIp || "unknown"
@@ -831,22 +831,11 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    if (!isAuthenticated) {
-      return NextResponse.json({
-        status: "success",
-        message: "Payment verified and order created",
-        data: {
-          reference,
-          paymentStatus: "success",
-          amount: paidAmount,
-          orderExists: true,
-          subOrderCount: existingOrders.length,
-        },
-      })
-    }
-
     const mainOrder = await MainOrder.findOne({
-      subOrders: { $in: existingOrders.map((o) => o._id) },
+      $or: [
+        { reference },
+        { subOrders: { $in: existingOrders.map((o) => o._id) } },
+      ],
     })
       .select("orderNumber reference status paymentStatus grandTotal createdAt")
       .lean()
