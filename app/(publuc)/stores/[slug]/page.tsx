@@ -126,6 +126,7 @@ interface ProductData {
   created_at: string;
   updated_at: string;
   hasVariants?: boolean;
+  hasModifiers?: boolean;
   variants?: any;
 }
 
@@ -199,7 +200,7 @@ async function getStoreProducts(
       storeId,
     })
       .select(
-        "name price compareAtPrice inventoryQuantity hasVariants variants images",
+        "name price compareAtPrice inventoryQuantity hasVariants variants hasModifiers images",
       )
       .limit(limit)
       .sort({ createdAt: -1 })
@@ -229,6 +230,7 @@ async function getStoreProducts(
         updated_at:
           product.updatedAt?.toISOString() || new Date().toISOString(),
         hasVariants,
+        hasModifiers: product.hasModifiers || false,
         variants: hasVariants
           ? JSON.parse(JSON.stringify(product.variants))
           : undefined,

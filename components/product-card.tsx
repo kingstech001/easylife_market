@@ -28,6 +28,7 @@ interface Product {
   created_at: string
   updated_at: string
   hasVariants?: boolean
+  hasModifiers?: boolean
   variants?: Array<{
     color: { 
       name: string
@@ -59,7 +60,8 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
 
   const mainImage = product.images?.[0]
   const productHref = `/stores/${storeSlug}/products/${product.id}`
-  const shouldOpenProductPage = isRestaurant || product.hasVariants
+  const needsCustomization = product.hasModifiers
+  const shouldOpenProductPage = needsCustomization || product.hasVariants
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
   const discountPercentage = hasDiscount
     ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
@@ -242,7 +244,7 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
             <Button asChild className="h-10 w-full rounded-xl text-sm font-semibold">
               <Link href={productHref}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                {isRestaurant ? "Customize" : "Select options"}
+                {needsCustomization ? "Customize" : "Select options"}
               </Link>
             </Button>
           ) : (

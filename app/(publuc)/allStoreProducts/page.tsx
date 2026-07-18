@@ -15,6 +15,8 @@ type TransformedProduct = {
   images: { id: string; url: string; alt_text: string | null }[];
   store_id: string;
   store_slug?: string;
+  hasVariants?: boolean;
+  hasModifiers?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -63,6 +65,8 @@ async function getProducts(): Promise<TransformedProduct[]> {
           })),
           store_id: storeId,
           store_slug: storeSlug,
+          hasVariants: p.hasVariants || false,
+          hasModifiers: p.hasModifiers || false,
           created_at: p.createdAt?.toISOString() || new Date().toISOString(),
           updated_at: p.updatedAt?.toISOString() || new Date().toISOString(),
         };

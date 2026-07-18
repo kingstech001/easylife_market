@@ -22,6 +22,8 @@ type Product = {
   images: { id: string; url: string; alt_text: string | null }[];
   store_id: string;
   store_slug?: string;
+  hasVariants?: boolean;
+  hasModifiers?: boolean;
   created_at: string;
   updated_at: string;
 };
