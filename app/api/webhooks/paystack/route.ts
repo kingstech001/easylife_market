@@ -4,6 +4,7 @@ import mongoose from "mongoose"
 import Order from "@/models/Order"
 import Store from "@/models/Store"
 import Product from "@/models/Product"
+import CheckoutPayment from "@/models/CheckoutPayment"
 import { connectToDB } from "@/lib/db"
 import MainOrder from "@/models/MainOrder"
 import { PaymentLogger } from "@/lib/paymentLogger"
@@ -239,6 +240,36 @@ function normalizeShippingInfo(shippingInfo: any) {
   }
 }
 
+async function getCheckoutMetadata(reference: string, paystackMetadata: any) {
+  const checkoutPayment = await CheckoutPayment.findOne({ reference }).lean()
+  if (!checkoutPayment) {
+    return paystackMetadata
+  }
+
+  const localShippingInfo = (checkoutPayment as any).shippingInfo || {}
+  const paystackShippingInfo = paystackMetadata?.shippingInfo || {}
+
+  return {
+    ...paystackMetadata,
+    orders: (checkoutPayment as any).orders?.length
+      ? (checkoutPayment as any).orders
+      : paystackMetadata?.orders,
+    shippingInfo: {
+      ...paystackShippingInfo,
+      ...localShippingInfo,
+      customerCoords:
+        localShippingInfo.customerCoords ||
+        paystackShippingInfo.customerCoords,
+    },
+    deliveryFee:
+      (checkoutPayment as any).deliveryFee ?? paystackMetadata?.deliveryFee ?? 0,
+    paymentMethod:
+      (checkoutPayment as any).paymentMethod || paystackMetadata?.paymentMethod,
+    userId: (checkoutPayment as any).userId || paystackMetadata?.userId,
+    userEmail: (checkoutPayment as any).userEmail || paystackMetadata?.userEmail,
+  }
+}
+
 async function createOrdersFromWebhook(
   verifiedOrderData: any,
   reference: string,
@@ -427,6 +458,7 @@ async function createOrdersFromWebhook(
         totalAmount: subtotal,
         deliveryFee,
         grandTotal,
+        customerCoords: safeShippingInfo.customerCoords,
         shippingInfo: safeShippingInfo,
         paymentMethod,
         paymentStatus: "paid",
@@ -608,7 +640,8 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       return
     }
 
-    const { orders, shippingInfo, deliveryFee = 0, userId } = metadata
+    const checkoutMetadata = await getCheckoutMetadata(reference, metadata)
+    const { orders, shippingInfo, deliveryFee = 0, userId } = checkoutMetadata
 
     if (!orders || !Array.isArray(orders) || orders.length === 0) {
       throw new Error("Invalid orders data in webhook metadata")
@@ -665,6 +698,12 @@ async function handleSuccessfulCharge(data: any, ipAddress: string) {
       shippingInfo,
       paymentInfo,
       session
+    )
+
+    await CheckoutPayment.updateOne(
+      { reference },
+      { $set: { status: "paid" } },
+      { session },
     )
 
     await session.commitTransaction()

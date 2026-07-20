@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     const mainOrders = references.length
       ? await MainOrder.find(
           { reference: { $in: references } },
-          { reference: 1, totalAmount: 1, deliveryFee: 1, grandTotal: 1, shippingInfo: 1 },
+          { reference: 1, totalAmount: 1, deliveryFee: 1, grandTotal: 1, customerCoords: 1, shippingInfo: 1 },
         ).lean()
       : [];
 
@@ -144,6 +144,7 @@ export async function GET(request: NextRequest) {
       const customerCoords =
         order.customerCoords ||
         orderShippingInfo.customerCoords ||
+        mainOrder?.customerCoords ||
         mainOrderShippingInfo.customerCoords;
       const shippingInfo = {
         ...mainOrderShippingInfo,

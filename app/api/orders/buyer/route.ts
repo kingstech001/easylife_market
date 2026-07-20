@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
       totalAmount,
       deliveryFee: deliveryFee || 0,
       grandTotal: totalAmount + (deliveryFee || 0),
+      customerCoords: shippingInfo?.customerCoords,
       shippingInfo,
       paymentMethod,
       receiptUrl,

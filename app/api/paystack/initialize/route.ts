@@ -3,6 +3,7 @@ import { getUserFromCookies } from "@/lib/auth"
 import { connectToDB } from "@/lib/db"
 import Product from "@/models/Product"
 import Store from "@/models/Store"
+import CheckoutPayment from "@/models/CheckoutPayment"
 import { calculateMaxDeliveryFee } from "@/lib/delivery-fee"
 
 
@@ -302,6 +303,16 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      if (
+        !Number.isFinite(Number(customerCoords?.lat)) ||
+        !Number.isFinite(Number(customerCoords?.lng))
+      ) {
+        return NextResponse.json(
+          { error: "Please confirm a valid delivery location on the map before payment." },
+          { status: 400 },
+        )
+      }
+
       if (customerCoords?.lat && customerCoords?.lng) {
         const storeIds = await getStoreIdsForOrders(orders)
         const stores = await Store.find(
@@ -337,6 +348,22 @@ export async function POST(request: NextRequest) {
       metadata.orders = verifiedOrderData.verifiedOrders
       metadata.shippingInfo = shippingInfo
       metadata.deliveryFee = verifiedDeliveryFee
+
+      await CheckoutPayment.findOneAndUpdate(
+        { reference: paymentReference },
+        {
+          reference: paymentReference,
+          userId: user.id,
+          userEmail: user.email,
+          orders: verifiedOrderData.verifiedOrders,
+          shippingInfo,
+          deliveryFee: verifiedDeliveryFee,
+          paymentMethod: paymentMethod || "card",
+          amount: finalAmount,
+          status: "initialized",
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
 
       console.log("[Paystack Initialize] Amount verification:", {
         clientAmount: amount,

@@ -20,6 +20,10 @@ export interface IMainOrder extends Document {
   totalAmount: number
   deliveryFee: number
   grandTotal: number
+  customerCoords?: {
+    lat: number
+    lng: number
+  }
   shippingInfo: {
     firstName: string
     lastName: string
@@ -88,6 +92,10 @@ const MainOrderSchema = new mongoose.Schema<IMainOrder>(
     grandTotal: {
       type: Number,
       required: true,
+    },
+    customerCoords: {
+      lat: { type: Number },
+      lng: { type: Number },
     },
     shippingInfo: {
       firstName: { type: String, required: true },

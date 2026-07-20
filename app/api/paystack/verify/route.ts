@@ -4,6 +4,7 @@ import Store from "@/models/Store";
 import Order from "@/models/Order";
 import MainOrder from "@/models/MainOrder";
 import Product from "@/models/Product";
+import CheckoutPayment from "@/models/CheckoutPayment";
 import mongoose from "mongoose";
 import { PaymentLogger } from "@/lib/paymentLogger";
 
@@ -283,6 +284,7 @@ async function createMainOrder(
           totalAmount: subtotal,
           deliveryFee: deliveryFee,
           grandTotal: grandTotal,
+          customerCoords: shippingInfo.customerCoords,
           shippingInfo: {
             firstName: shippingInfo.firstName,
             lastName: shippingInfo.lastName,
@@ -401,6 +403,36 @@ function extractMetadata(paystackMetadata: any) {
   return result;
 }
 
+async function getCheckoutMetadata(reference: string, paystackMetadata: any) {
+  const checkoutPayment = await CheckoutPayment.findOne({ reference }).lean();
+  if (!checkoutPayment) {
+    return paystackMetadata;
+  }
+
+  const localShippingInfo = (checkoutPayment as any).shippingInfo || {};
+  const paystackShippingInfo = paystackMetadata?.shippingInfo || {};
+
+  return {
+    ...paystackMetadata,
+    orders: (checkoutPayment as any).orders?.length
+      ? (checkoutPayment as any).orders
+      : paystackMetadata?.orders,
+    shippingInfo: {
+      ...paystackShippingInfo,
+      ...localShippingInfo,
+      customerCoords:
+        localShippingInfo.customerCoords ||
+        paystackShippingInfo.customerCoords,
+    },
+    deliveryFee:
+      (checkoutPayment as any).deliveryFee ?? paystackMetadata?.deliveryFee ?? 0,
+    paymentMethod:
+      (checkoutPayment as any).paymentMethod || paystackMetadata?.paymentMethod,
+    userId: (checkoutPayment as any).userId || paystackMetadata?.userId,
+    userEmail: (checkoutPayment as any).userEmail || paystackMetadata?.userEmail,
+  };
+}
+
 export async function POST(request: NextRequest) {
   const session = await mongoose.startSession();
   let requestBody: any = null;
@@ -464,7 +496,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const paystackMetadata = verifyData.data.metadata ?? {};
+    const rawPaystackMetadata = verifyData.data.metadata ?? {};
+    const paystackMetadata = await getCheckoutMetadata(reference, rawPaystackMetadata);
     const paystackChannel = verifyData.data.channel || "card";
     const paidAmount = verifyData.data.amount / 100; // Convert from kobo to naira
 
@@ -765,6 +798,12 @@ export async function POST(request: NextRequest) {
         session,
       );
 
+      await CheckoutPayment.updateOne(
+        { reference },
+        { $set: { status: "paid" } },
+        { session },
+      );
+
       await session.commitTransaction();
 
       console.log(
@@ -879,7 +918,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const paystackMetadata = verifyData.data.metadata ?? {};
+    const rawPaystackMetadata = verifyData.data.metadata ?? {};
+    const paystackMetadata = await getCheckoutMetadata(reference, rawPaystackMetadata);
     const paidAmount = verifyData.data.amount / 100;
 
     console.log(
