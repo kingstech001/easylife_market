@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder"
 import { useEffect, useState } from "react"
+import { Loader2 } from "lucide-react"
 
 interface Store {
   _id: string
@@ -38,7 +39,12 @@ export function TopStores({ limit = 5 }: TopStoresProps) {
   }, [limit])
 
   if (loading) {
-    return <p>Loading top stores...</p>
+    return  <div className="flex items-center justify-center h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-muted-foreground">
+          Loading top products...
+        </span>
+      </div>
   }
 
   if (stores.length === 0) {
