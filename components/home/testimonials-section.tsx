@@ -102,7 +102,7 @@ const TestimonialCard = React.memo(({ testimonial }: { testimonial: Testimonial 
     .slice(0, 2)
 
   const typeColors = {
-    seller: "text-[#e1a200]",
+    seller: "text-[#0E5A43]",
     buyer: "text-primary",
   }
 
@@ -114,13 +114,13 @@ const TestimonialCard = React.memo(({ testimonial }: { testimonial: Testimonial 
   const TypeIcon = typeBadges[testimonial.type].icon
 
   return (
-    <Card className="group relative flex flex-col justify-between h-full bg-card/95 backdrop-blur-sm border border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-[#e1a200]/10 hover:border-[#e1a200]/30 hover:scale-[1.02] overflow-hidden">
+    <Card className="group relative flex flex-col justify-between h-full bg-card/95 backdrop-blur-sm border border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-[#0E5A43]/10 hover:border-[#0E5A43]/30 hover:scale-[1.02] overflow-hidden">
       {/* Decorative corner accent */}
-      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#e1a200]/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute top-0 right-0 w-16 h-16 bg-[#0E5A43]/10 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       {/* Quote icon */}
-      <div className="absolute top-3 left-3 p-1.5 rounded-lg bg-[#e1a200]/10 opacity-50 group-hover:opacity-100 transition-all duration-300">
-        <Quote className="w-4 h-4 text-[#e1a200]" aria-hidden="true" />
+      <div className="absolute top-3 left-3 p-1.5 rounded-lg bg-[#0E5A43]/10 opacity-50 group-hover:opacity-100 transition-all duration-300">
+        <Quote className="w-4 h-4 text-[#0E5A43]" aria-hidden="true" />
       </div>
 
       {/* Type badge */}
@@ -130,7 +130,7 @@ const TestimonialCard = React.memo(({ testimonial }: { testimonial: Testimonial 
           className={cn(
             "text-xs px-2 py-0.5",
             testimonial.type === "seller" 
-              ? "bg-[#e1a200]/10 border-[#e1a200]/30" 
+              ? "bg-[#0E5A43]/10 border-[#0E5A43]/30" 
               : "bg-primary/10 border-primary/30"
           )}
         >
@@ -143,7 +143,7 @@ const TestimonialCard = React.memo(({ testimonial }: { testimonial: Testimonial 
         {/* Star rating */}
         <div className="flex items-center gap-1 mb-2" role="img" aria-label={`${testimonial.rating} out of 5 stars`}>
           {Array.from({ length: testimonial.rating || 5 }).map((_, i) => (
-            <Star key={i} className="w-3.5 h-3.5 fill-[#e1a200] text-[#e1a200]" aria-hidden="true" />
+            <Star key={i} className="w-3.5 h-3.5 fill-[#0E5A43] text-[#0E5A43]" aria-hidden="true" />
           ))}
         </div>
         <CardTitle className="text-sm sm:text-base font-semibold leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors">
@@ -154,14 +154,14 @@ const TestimonialCard = React.memo(({ testimonial }: { testimonial: Testimonial 
       <CardContent className="pt-3 border-t border-border/50">
         <div className="flex items-center gap-2.5">
           <div className="relative flex-shrink-0">
-            <Avatar className="h-10 w-10 border-2 border-border/50 group-hover:border-[#e1a200]/50 transition-colors">
+            <Avatar className="h-10 w-10 border-2 border-border/50 group-hover:border-[#0E5A43]/50 transition-colors">
               <AvatarImage src={testimonial.avatar} alt={`${testimonial.author}'s avatar`} />
-              <AvatarFallback className="bg-gradient-to-br from-[#e1a200]/20 to-primary/20 text-[#e1a200] font-semibold text-xs">
+              <AvatarFallback className="bg-[#0E5A43] text-white font-semibold text-xs">
                 {initials}
               </AvatarFallback>
             </Avatar>
             {/* Verified badge */}
-            <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-[#e1a200] shadow-md">
+            <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-[#0E5A43] text-white shadow-md">
               <Award className="w-2.5 h-2.5 text-white" aria-label="Verified" />
             </div>
           </div>
@@ -177,7 +177,7 @@ const TestimonialCard = React.memo(({ testimonial }: { testimonial: Testimonial 
       </CardContent>
 
       {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#e1a200] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F4C430] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </Card>
   )
 })
@@ -226,9 +226,9 @@ function MarqueeRow({ items, direction = "left", speed = 60 }: MarqueeRowProps) 
 // ============================================================================
 
 const StatCard = React.memo(({ stat, accentColor }: { stat: Stat; accentColor: string }) => (
-  <div className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border/50 hover:border-[#e1a200]/30 transition-all">
+  <div className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border/50 hover:border-[#0E5A43]/30 transition-all">
     <div className={cn("p-1.5 rounded-md", accentColor)}>
-      <stat.icon className="w-4 h-4 text-[#e1a200]" aria-hidden="true" />
+      <stat.icon className="w-4 h-4 text-[#0E5A43]" aria-hidden="true" />
     </div>
     <div className="text-center">
       <p className="text-base sm:text-lg font-bold text-foreground">{stat.value}</p>
@@ -253,11 +253,11 @@ export function TestimonialsSection() {
   return (
     <section className="relative w-full py-12 sm:py-16 overflow-hidden">
       {/* Minimal Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
+      <div className="absolute inset-0 bg-background" />
       
       {/* Optimized background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50">
-        <div className="absolute top-1/4 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#e1a200]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#0E5A43]/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
@@ -274,9 +274,9 @@ export function TestimonialsSection() {
           <div className="flex justify-center">
             <Badge
               variant="secondary"
-              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#e1a200]/10 to-primary/10 border-[#e1a200]/30 transition-all duration-300 backdrop-blur-sm shadow-sm"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30 transition-all duration-300 backdrop-blur-sm shadow-sm"
             >
-              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 text-[#e1a200]" aria-hidden="true" />
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 text-[#0E5A43]" aria-hidden="true" />
               User Testimonials
             </Badge>
           </div>
@@ -284,10 +284,10 @@ export function TestimonialsSection() {
           {/* Heading */}
           <div className="space-y-2 sm:space-y-3">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              <span className="text-foreground">
                 What Our{" "}
               </span>
-              <span className="bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
+              <span className="text-[#0E5A43]">
                 Users Say
               </span>
             </h2>
@@ -299,7 +299,7 @@ export function TestimonialsSection() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto pt-4">
             {stats.map((stat, index) => (
-              <StatCard key={index} stat={stat} accentColor="bg-[#e1a200]/10" />
+              <StatCard key={index} stat={stat} accentColor="bg-[#0E5A43]/10" />
             ))}
           </div>
         </motion.div>
@@ -309,7 +309,7 @@ export function TestimonialsSection() {
       </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-background pointer-events-none" />
     </section>
   )
 }

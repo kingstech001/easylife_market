@@ -136,17 +136,17 @@ function VerifyEmailForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 py-8 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background py-8 px-4">
       <div className="flex w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl bg-card/80 backdrop-blur-xl border border-border/50 relative">
         {/* Decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
         <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-x-16 -translate-y-16" />
         <div className="absolute bottom-0 right-0 w-32 h-32 bg-secondary/10 rounded-full blur-3xl translate-x-16 translate-y-16" />
 
         <div className="w-full p-8 lg:p-12 flex flex-col justify-center relative z-10">
           <div className="mb-6 text-center space-y-3">
             <ShieldCheck className="w-12 h-12 mx-auto text-primary" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-foreground">
               Verify Your Email
             </h1>
             <p className="text-muted-foreground text-base">
@@ -221,7 +221,7 @@ function VerifyEmailForm() {
                   type="submit"
                   className={cn(
                     "w-full h-12 text-base text-background font-medium transition-all duration-200",
-                    "bg-gradient-to-r from-foreground to-foreground/90 hover:from-primary/90 hover:to-primary",
+                    "bg-foreground hover:brightness-95",
                     "shadow-lg hover:shadow-xl hover:shadow-primary/25",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
@@ -278,7 +278,7 @@ function VerifyEmailForm() {
 // Loading fallback component
 function VerifyEmailLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-muted-foreground">Loading...</p>

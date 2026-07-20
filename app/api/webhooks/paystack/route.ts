@@ -138,7 +138,7 @@ async function verifyAndCalculateOrderAmount(
   session: mongoose.ClientSession
 ) {
   let calculatedTotal = 0
-  const verifiedOrders = []
+  const ordersByStore = new Map<string, { items: any[]; totalPrice: number }>()
 
   for (const orderGroup of orders) {
     const { storeId, items } = orderGroup
@@ -146,9 +146,6 @@ async function verifyAndCalculateOrderAmount(
     if (!items || !Array.isArray(items) || items.length === 0) {
       throw new Error(`Invalid items for store ${storeId}`)
     }
-
-    let storeTotal = 0
-    const verifiedItems = []
 
     for (const item of items) {
       const product = await Product.findById(item.productId).session(session).lean()
@@ -174,32 +171,40 @@ async function verifyAndCalculateOrderAmount(
       const actualPrice = Number(product.price)
       const quantity = Number(item.quantity)
       const itemTotal = actualPrice * quantity
+      const resolvedStoreId = String(storeId || (product as any).storeId || "")
 
-      verifiedItems.push({
+      if (!resolvedStoreId) {
+        throw new Error(`Store not found for product "${product.name}"`)
+      }
+
+      const storeOrder = ordersByStore.get(resolvedStoreId) || {
+        items: [],
+        totalPrice: 0,
+      }
+
+      storeOrder.items.push({
         productId: product._id,
         productName: product.name,
         quantity: quantity,
         priceAtPurchase: actualPrice,
         itemTotal,
       })
+      storeOrder.totalPrice = Number(storeOrder.totalPrice) + Number(itemTotal)
+      ordersByStore.set(resolvedStoreId, storeOrder)
 
-      storeTotal = Number(storeTotal) + Number(itemTotal)
+      calculatedTotal = Number(calculatedTotal) + Number(itemTotal)
     }
-
-    verifiedOrders.push({
-      storeId,
-      items: verifiedItems,
-      totalPrice: Number(storeTotal),
-    })
-
-    calculatedTotal = Number(calculatedTotal) + Number(storeTotal)
   }
 
   const numericDeliveryFee = Number(deliveryFee) || 0
   const grandTotal = Number(calculatedTotal) + numericDeliveryFee
 
   return {
-    verifiedOrders,
+    verifiedOrders: Array.from(ordersByStore.entries()).map(([storeId, order]) => ({
+      storeId,
+      items: order.items,
+      totalPrice: Number(order.totalPrice),
+    })),
     subtotal: Number(calculatedTotal),
     deliveryFee: numericDeliveryFee,
     grandTotal: Number(grandTotal),
@@ -215,6 +220,12 @@ function normalizeShippingInfo(shippingInfo: any) {
     shippingInfo?.state ||
     shippingInfo?.address ||
     "Not provided"
+  const lat = Number(shippingInfo?.customerCoords?.lat)
+  const lng = Number(shippingInfo?.customerCoords?.lng)
+  const customerCoords =
+    Number.isFinite(lat) && Number.isFinite(lng)
+      ? { lat, lng }
+      : undefined
 
   return {
     firstName: shippingInfo?.firstName || "Customer",
@@ -224,6 +235,7 @@ function normalizeShippingInfo(shippingInfo: any) {
     address: shippingInfo?.address || fallbackArea,
     state: shippingInfo?.state || fallbackArea,
     area: fallbackArea,
+    ...(customerCoords ? { customerCoords } : {}),
   }
 }
 
@@ -243,12 +255,26 @@ async function createOrdersFromWebhook(
 
   for (const orderGroup of verifiedOrders) {
     const { storeId, items, totalPrice } = orderGroup
+    let resolvedStoreId = String(storeId || "").trim()
+
+    if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
+      const firstProductId = items?.[0]?.productId
+      const product = firstProductId
+        ? await Product.findById(firstProductId).select("storeId").session(session).lean()
+        : null
+
+      resolvedStoreId = String((product as any)?.storeId || "").trim()
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
+      throw new Error(`Invalid or missing storeId for order reference ${reference}`)
+    }
 
     // Create the sub-order
     const subOrder = await Order.create(
       [
         {
-          storeId,
+          storeId: resolvedStoreId,
           userId,
           reference,
           totalPrice,
@@ -258,6 +284,7 @@ async function createOrdersFromWebhook(
           paymentDetails: paymentInfo,
           items,
           paymentMethod,
+          customerCoords: safeShippingInfo.customerCoords,
           shippingInfo: safeShippingInfo,
         },
       ],

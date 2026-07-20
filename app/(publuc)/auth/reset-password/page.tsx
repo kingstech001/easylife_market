@@ -90,11 +90,11 @@ function ResetPasswordForm() {
 
   if (tokenValid === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/10 to-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-border/50">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-[#c0a146]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#0E5A43]" />
               <p className="text-muted-foreground">Verifying reset link...</p>
             </div>
           </CardContent>
@@ -105,7 +105,7 @@ function ResetPasswordForm() {
 
   if (tokenValid === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/10 to-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-border/50">
           <CardHeader className="text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
@@ -120,12 +120,12 @@ function ResetPasswordForm() {
           </CardHeader>
           <CardFooter className="flex flex-col space-y-3">
             <Link href="/auth/forgot-password" className="w-full">
-              <Button className="w-full bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146]">
+              <Button className="w-full bg-[#0E5A43] text-white hover:bg-[#083B2D]">
                 Request New Link
               </Button>
             </Link>
             <Link href="/auth/login" className="w-full">
-              <Button variant="ghost" className="w-full hover:text-[#c0a146]">
+              <Button variant="ghost" className="w-full hover:text-[#0E5A43]">
                 Back to Login
               </Button>
             </Link>
@@ -137,10 +137,10 @@ function ResetPasswordForm() {
 
   if (resetSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/10 to-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-border/50">
           <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#c0a146] to-[#d4b55e] rounded-full flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-[#0E5A43] text-white rounded-full flex items-center justify-center">
               <CheckCircle2 className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
@@ -157,7 +157,7 @@ function ResetPasswordForm() {
           </CardContent>
           <CardFooter>
             <Link href="/auth/login" className="w-full">
-              <Button className="w-full bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146]">
+              <Button className="w-full bg-[#0E5A43] text-white hover:bg-[#083B2D]">
                 Go to Login
               </Button>
             </Link>
@@ -168,12 +168,12 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-muted/10 to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md border-border/50">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
-            <div className="w-10 h-10 bg-gradient-to-br from-[#c0a146] to-[#d4b55e] rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#0E5A43] text-white rounded-lg flex items-center justify-center">
               <Lock className="h-5 w-5 text-white" />
             </div>
           </div>
@@ -193,7 +193,7 @@ function ResetPasswordForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20 pr-10"
+                  className="border-border/50 focus:border-[#0E5A43]/50 focus:ring-[#0E5A43]/20 pr-10"
                   required
                 />
                 <button
@@ -219,7 +219,7 @@ function ResetPasswordForm() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
-                  className="border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20 pr-10"
+                  className="border-border/50 focus:border-[#0E5A43]/50 focus:ring-[#0E5A43]/20 pr-10"
                   required
                 />
                 <button
@@ -235,7 +235,7 @@ function ResetPasswordForm() {
           <CardFooter className="flex flex-col space-y-3">
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] transition-all duration-300"
+              className="w-full bg-[#0E5A43] text-white hover:bg-[#083B2D] transition-all duration-300"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -251,7 +251,7 @@ function ResetPasswordForm() {
               )}
             </Button>
             <Link href="/auth/login" className="w-full">
-              <Button variant="ghost" className="w-full hover:text-[#c0a146]">
+              <Button variant="ghost" className="w-full hover:text-[#0E5A43]">
                 Back to Login
               </Button>
             </Link>
@@ -266,7 +266,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#c0a146]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#0E5A43]" />
       </div>
     }>
       <ResetPasswordForm />

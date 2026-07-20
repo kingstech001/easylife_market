@@ -73,7 +73,7 @@ export default function ModifierSection({
       {/* ── Outer header — collapses the whole section ── */}
       <button
         onClick={() => setSectionOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 hover:brightness-95 transition-all text-left"
+        className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 bg-[#F4C430]/10 dark:bg-[#F4C430]/10 hover:brightness-95 transition-all text-left"
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
@@ -94,7 +94,7 @@ export default function ModifierSection({
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Count badge — shown when collapsed and has selections */}
           {!sectionOpen && totalSelected > 0 && (
-            <span className="w-5 h-5 rounded-full bg-[#e1a200] text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="w-5 h-5 rounded-full bg-[#0E5A43] text-white text-[10px] font-bold flex items-center justify-center">
               {totalSelected}
             </span>
           )}
@@ -152,7 +152,7 @@ export default function ModifierSection({
 
                         {/* Count bubble when this group is collapsed */}
                         {!isOpen && selectionCount > 0 && (
-                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#e1a200] text-white text-[10px] font-bold flex items-center justify-center">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#0E5A43] text-white text-[10px] font-bold flex items-center justify-center">
                             {selectionCount}
                           </span>
                         )}
@@ -214,7 +214,7 @@ export default function ModifierSection({
                                   key={optionKey}
                                   className={`flex items-center justify-between px-4 sm:px-5 py-3 transition-colors ${
                                     !isLast ? "border-b border-border/50" : ""
-                                  } ${isSelected ? "bg-[#e1a200]/5" : ""}`}
+                                  } ${isSelected ? "bg-[#0E5A43]/5" : ""}`}
                                 >
                                   {/* Name + price */}
                                   <div className="flex-1 min-w-0 pr-4">
@@ -229,7 +229,7 @@ export default function ModifierSection({
                                       className={`text-[10px] mt-0.5 font-semibold ${
                                         isFree
                                           ? "text-green-600 dark:text-green-400"
-                                          : "text-[#e1a200]"
+                                          : "text-[#0E5A43]"
                                       }`}
                                     >
                                       {isFree
@@ -254,7 +254,7 @@ export default function ModifierSection({
                                     className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
                                       isSelected
                                         ? "bg-[#e0ac29] border-[#e0ac29] text-white"
-                                        : "border-border hover:border-[#e1a200] hover:text-[#e1a200] text-muted-foreground"
+                                        : "border-border hover:border-[#0E5A43] hover:text-[#0E5A43] text-muted-foreground"
                                     }`}
                                     aria-label={
                                       isSelected

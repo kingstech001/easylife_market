@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import {
@@ -55,7 +55,13 @@ export default function CheckoutPage() {
     try {
       const savedData = localStorage.getItem(CHECKOUT_STORAGE_KEY)
       if (savedData) {
-        const { info: savedInfo, activeStep: savedStep, shipping: savedShipping } = JSON.parse(savedData)
+        const {
+          info: savedInfo,
+          activeStep: savedStep,
+          shipping: savedShipping,
+          customerCoords: savedCustomerCoords,
+          deliveryInfo: savedDeliveryInfo,
+        } = JSON.parse(savedData)
         setInfo(
           savedInfo || {
             firstName: "", lastName: "", email: "", address: "", state: "", phone: "", area: "",
@@ -63,6 +69,8 @@ export default function CheckoutPage() {
         )
         setActiveStep(savedStep || "information")
         setShipping(savedShipping || 0)
+        setCustomerCoords(savedCustomerCoords || null)
+        setDeliveryInfo(savedDeliveryInfo || null)
       }
     } catch (error) {
       console.error("Failed to load checkout data from localStorage:", error)
@@ -82,6 +90,8 @@ export default function CheckoutPage() {
         if (age < 30 * 60 * 1000) {
           setInfo(data.info || info)
           setShipping(data.shipping || 0)
+          setCustomerCoords(data.customerCoords || null)
+          setDeliveryInfo(data.deliveryInfo || null)
           setActiveStep(data.activeStep || "information")
           toast.success("Welcome back! Your checkout is ready.")
           localStorage.removeItem("checkout_redirect_data")
@@ -97,7 +107,10 @@ export default function CheckoutPage() {
     if (!isHydrated) return
     const saveToStorage = () => {
       try {
-        localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify({ info, activeStep, shipping }))
+        localStorage.setItem(
+          CHECKOUT_STORAGE_KEY,
+          JSON.stringify({ info, activeStep, shipping, customerCoords, deliveryInfo }),
+        )
       } catch (error) {
         console.error("Failed to save checkout data to localStorage:", error)
       }
@@ -113,7 +126,7 @@ export default function CheckoutPage() {
       document.removeEventListener("visibilitychange", handleVisibility)
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [info, activeStep, shipping, isHydrated])
+  }, [info, activeStep, shipping, customerCoords, deliveryInfo, isHydrated])
 
   const handlePaymentCallback = async (reference: string) => {
     setIsProcessing(true)
@@ -173,10 +186,25 @@ export default function CheckoutPage() {
   const handlePayNow = async () => {
     setIsInitializing(true)
     try {
+      if (
+        !Number.isFinite(Number(customerCoords?.lat)) ||
+        !Number.isFinite(Number(customerCoords?.lng))
+      ) {
+        toast.error("Please confirm your delivery location on the map before payment")
+        setActiveStep("information")
+        setIsInitializing(false)
+        return
+      }
+
       const userResponse = await fetch("/api/me", { credentials: "include", headers: { "Content-Type": "application/json" } })
       const userData = await userResponse.json()
       if (!userResponse.ok || !userData.user) {
-        try { localStorage.setItem("checkout_redirect_data", JSON.stringify({ info, shipping, activeStep, timestamp: Date.now() })) } catch {}
+        try {
+          localStorage.setItem(
+            "checkout_redirect_data",
+            JSON.stringify({ info, shipping, activeStep, customerCoords, deliveryInfo, timestamp: Date.now() }),
+          )
+        } catch {}
         toast.error("Please log in to complete your purchase")
         router.push("/auth/login?redirect=/checkout")
         setIsInitializing(false)
@@ -249,12 +277,23 @@ export default function CheckoutPage() {
     }
   }
 
-  const calculateDeliveryFromCoords = async (coords: { lat: number; lng: number }) => {
+  const calculateDeliveryFromCoords = useCallback(async (coords: { lat: number; lng: number }) => {
     const storeIds = [...new Set(cartItems.map((item) => item.storeId))].filter(Boolean)
-    if (storeIds.length === 0) { setShipping(0); setDeliveryInfo(null); return }
+    const productIds = [
+      ...new Set(cartItems.map((item) => item.productId || item.id).filter(Boolean)),
+    ]
+    if (storeIds.length === 0 && productIds.length === 0) {
+      setShipping(0)
+      setDeliveryInfo(null)
+      return
+    }
     setIsCalculatingFee(true)
     try {
-      const res = await fetch(`/api/stores/coordinates?ids=${storeIds.join(",")}`)
+      const params = new URLSearchParams()
+      if (storeIds.length > 0) params.set("ids", storeIds.join(","))
+      if (productIds.length > 0) params.set("productIds", productIds.join(","))
+
+      const res = await fetch(`/api/stores/coordinates?${params.toString()}`)
       if (!res.ok) throw new Error("Failed to fetch store locations")
       const data = await res.json()
       const storesWithCoords = (data.stores || []).filter(
@@ -271,7 +310,7 @@ export default function CheckoutPage() {
     } catch {
       setShipping(2000); setDeliveryInfo({ distanceKm: 0, tierLabel: "Flat rate (fallback)" })
     } finally { setIsCalculatingFee(false) }
-  }
+  }, [cartItems])
 
   const handleAddressSelect = (coords: { lat: number; lng: number } | null) => {
     setCustomerCoords(coords)
@@ -279,7 +318,15 @@ export default function CheckoutPage() {
     else { setShipping(0); setDeliveryInfo(null) }
   }
 
-  const isInfoValid = info.firstName.trim() && info.lastName.trim() && info.email.trim() && info.address.trim() && info.state.trim()
+  useEffect(() => {
+    if (!isHydrated || !customerCoords || cartItems.length === 0) return
+    calculateDeliveryFromCoords(customerCoords)
+  }, [isHydrated, customerCoords, cartItems.length, calculateDeliveryFromCoords])
+
+  const hasDeliveryCoords =
+    Number.isFinite(Number(customerCoords?.lat)) &&
+    Number.isFinite(Number(customerCoords?.lng))
+  const isInfoValid = info.firstName.trim() && info.lastName.trim() && info.email.trim() && info.address.trim() && info.state.trim() && hasDeliveryCoords
   const subtotal = getTotalPrice()
   const total = subtotal + shipping
   const disabled = isProcessing || isInitializing
@@ -430,6 +477,11 @@ export default function CheckoutPage() {
                         onSelect={handleAddressSelect}
                         placeholder="Tap to pick your delivery address on map"
                       />
+                      {!hasDeliveryCoords && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          Confirm the delivery pin on the map to calculate delivery and continue.
+                        </p>
+                      )}
                     </div>
 
                     {/* Delivery fee */}

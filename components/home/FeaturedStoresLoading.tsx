@@ -2,7 +2,7 @@
 
 export function FeaturedStoresLoading() {
   return (
-    <section className="relative w-full py-6 sm:py-8 bg-gradient-to-b from-background via-muted/10 to-background">
+    <section className="relative w-full py-6 sm:py-8 bg-background">
       <div className="container px-4 sm:px-6 lg:px-8">
         
 

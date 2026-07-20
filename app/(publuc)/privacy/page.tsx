@@ -264,16 +264,16 @@ const sections: PrivacySection[] = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.08),transparent_25%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.12))] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-8%] top-[10%] h-56 w-56 rounded-full bg-[#e1a200]/10 blur-3xl sm:h-72 sm:w-72" />
+        <div className="absolute left-[-8%] top-[10%] h-56 w-56 rounded-full bg-[#0E5A43]/10 blur-3xl sm:h-72 sm:w-72" />
         <div className="absolute bottom-[12%] right-[-8%] h-64 w-64 rounded-full bg-foreground/5 blur-3xl sm:h-80 sm:w-80" />
       </div>
 
       <div className="relative mx-auto max-w-6xl">
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8">
-          <div className="rounded-[32px] border border-border/70 bg-[linear-gradient(180deg,rgba(225,162,0,0.14),rgba(225,162,0,0.02)_45%,rgba(255,255,255,0.72)_100%)] p-6 shadow-xl sm:p-8 lg:sticky lg:top-8 lg:h-fit">
-            <div className="inline-flex items-center rounded-full border border-[#e1a200]/20 bg-[#e1a200]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+          <div className="rounded-[32px] border border-border/70 bg-muted/20 p-6 shadow-xl sm:p-8 lg:sticky lg:top-8 lg:h-fit">
+            <div className="inline-flex items-center rounded-full border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
               Privacy Policy
             </div>
 
@@ -331,7 +331,7 @@ export default function PrivacyPage() {
           <Card className="rounded-[32px] border border-border/70 bg-background/92 shadow-xl backdrop-blur-sm">
             <CardContent className="p-5 sm:p-7 lg:p-8">
               <div className="mb-8 flex items-start gap-4 rounded-3xl border border-border/70 bg-muted/20 p-4 sm:p-5">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                   <FileLock className="h-5 w-5" />
                 </div>
                 <div>
@@ -376,7 +376,7 @@ export default function PrivacyPage() {
                             key={item}
                             className="flex items-start gap-3 text-sm leading-7 text-muted-foreground sm:text-[15px]"
                           >
-                            <span className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-[#e1a200]" />
+                            <span className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-[#0E5A43]" />
                             <span>{item}</span>
                           </li>
                         ))}
@@ -386,7 +386,7 @@ export default function PrivacyPage() {
                     {section.id === "17" ? (
                       <div className="mt-4 rounded-3xl border border-border/70 bg-background p-4 shadow-sm">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                             <Mail className="h-4 w-4" />
                           </div>
                           <div>
@@ -395,7 +395,7 @@ export default function PrivacyPage() {
                             </p>
                             <a
                               href="mailto:support@easylifemarket.com"
-                              className="mt-1 inline-block text-sm font-medium text-[#8c6500] underline underline-offset-4"
+                              className="mt-1 inline-block text-sm font-medium text-[#083B2D] underline underline-offset-4"
                             >
                               easylifemarket01@gmail.com
                             </a>
@@ -409,7 +409,7 @@ export default function PrivacyPage() {
                         Related platform rules are also available in our{" "}
                         <Link
                           href="/terms"
-                          className="font-medium text-[#8c6500] underline underline-offset-4"
+                          className="font-medium text-[#083B2D] underline underline-offset-4"
                         >
                           Terms and Conditions
                         </Link>
@@ -439,7 +439,7 @@ function InfoCard({
   return (
     <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
           <Icon className="h-5 w-5" />
         </div>
         <div>

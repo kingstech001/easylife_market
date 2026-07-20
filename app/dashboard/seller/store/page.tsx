@@ -113,7 +113,7 @@ export default function StoreViewPage() {
           >
             <Card className="overflow-hidden">
               {/* Banner */}
-              <div className="relative w-full h-64 bg-gradient-to-r from-primary/20 to-primary/10">
+              <div className="relative w-full h-64 bg-primary/10">
                 {store.banner_url ? (
                   <img
                     src={store.banner_url}
@@ -290,7 +290,7 @@ export default function StoreViewPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <Card className="bg-primary/10">
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>

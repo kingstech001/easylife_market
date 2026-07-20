@@ -40,11 +40,39 @@ interface ProductSuggestion {
 
 const HERO_BANNER_ROTATION_MS = 30000;
 const HERO_BANNER_SWAP_DELAY_MS = 300;
+const STATIC_HERO_BANNERS: HeroBanner[] = [
+  {
+    id: "static-hero-1",
+    imageUrl: "/africa.png",
+    title: "Buy and Sell",
+    subtitle:
+      "Build, customize, and launch your online store in minutes. Shop from trusted stores on EasyLife.",
+    buttonText: "Shop Now",
+    buttonLink: "/allStoreProducts",
+  },
+  {
+    id: "static-hero-2",
+    imageUrl: "/easylife.png", 
+    title: "Discover Great Stores",
+    subtitle:
+      "Find products, meals, and trusted sellers across the EasyLife marketplace.",
+    buttonText: "Browse Stores",
+    buttonLink: "/stores",
+  },
+];
+
+function getInitialHeroBanner() {
+  return STATIC_HERO_BANNERS[
+    Math.floor(Math.random() * STATIC_HERO_BANNERS.length)
+  ];
+}
 
 export default function HeroSection() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(
+    getInitialHeroBanner,
+  );
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [bannerKey, setBannerKey] = useState(0);
   const [storeSuggestions, setStoreSuggestions] = useState<StoreSuggestion[]>([]);
@@ -76,10 +104,6 @@ export default function HeroSection() {
       setIsTransitioning(false);
     }
   }, []);
-
-  useEffect(() => {
-    fetchNewBanner();
-  }, [fetchNewBanner]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -186,7 +210,7 @@ export default function HeroSection() {
                 sizes="100vw"
               />
               <div className="absolute inset-0 bg-black/55" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-black/50" />
             </motion.div>
           ) : (
             <motion.div
@@ -195,10 +219,10 @@ export default function HeroSection() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6 }}
-              className="absolute inset-0 z-0 bg-gradient-to-b from-muted/30 via-background to-background"
+              className="absolute inset-0 z-0 bg-background"
             >
               <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-10 left-10 w-64 h-64 bg-[#e1a200] rounded-full blur-3xl animate-pulse" />
+                <div className="absolute top-10 left-10 w-64 h-64 bg-[#0E5A43] text-white rounded-full blur-3xl animate-pulse" />
                 <div className="absolute bottom-10 right-10 w-80 h-80 bg-foreground rounded-full blur-3xl animate-pulse" />
               </div>
             </motion.div>
@@ -223,7 +247,7 @@ export default function HeroSection() {
                   )}
                 >
                   {heroHeading}
-                  <span className="block sm:ml-4 sm:inline text-4xl sm:text-6xl lg:text-7xl mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent drop-shadow-lg">
+                  <span className="block sm:ml-4 sm:inline text-4xl sm:text-6xl lg:text-7xl mt-2 text-[#0E5A43] drop-shadow-lg">
                     Seamlessly <span className="text-white">with</span> EasyLife
                   </span>
                 </h1>
@@ -261,7 +285,7 @@ export default function HeroSection() {
                   <Button
                     type="submit"
                     size="lg"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded bg-gradient-to-r from-[#e1a200] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#e1a200] shadow-lg"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded bg-[#0E5A43] text-white hover:bg-[#083B2D] shadow-lg"
                   >
                     <Search className="pointer-events-none" />
                   </Button>
@@ -283,7 +307,7 @@ export default function HeroSection() {
                                 className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-2 text-white"
                                 onClick={() => handleSuggestionClick(`/stores/${store.slug || store._id}`)}
                               >
-                                <Store className="h-4 w-4 text-[#e1a200]" />
+                                <Store className="h-4 w-4 text-[#0E5A43]" />
                                 <span className="truncate">{store.businessName}</span>
                               </button>
                             ))}
@@ -314,7 +338,7 @@ export default function HeroSection() {
                                   />
                                 ) : (
                                   <div className="h-8 w-8 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
-                                    <Package className="h-4 w-4 text-[#e1a200]" />
+                                    <Package className="h-4 w-4 text-[#0E5A43]" />
                                   </div>
                                 )}
                                 <span className="truncate">{product.name}</span>
@@ -337,7 +361,7 @@ export default function HeroSection() {
                       "w-full sm:w-auto h-12 text-base font-semibold border-2 transition-all shadow-lg px-2 md:px-4",
                       heroBanner?.imageUrl
                         ? "bg-white/10 backdrop-blur-sm border-none text-white hover:bg-white/20 hover:border-white/50"
-                        : "bg-background hover:bg-muted/50 hover:border-[#e1a200]/50"
+                        : "bg-background hover:bg-muted/50 hover:border-[#0E5A43]/50"
                     )}
                   >
                     Create Store
@@ -368,7 +392,7 @@ export default function HeroSection() {
                 key={i}
                 className={`rounded-full transition-all duration-300 ${
                   !isTransitioning
-                    ? "w-6 h-1.5 bg-[#e1a200]"
+                    ? "w-6 h-1.5 bg-[#0E5A43]"
                     : "w-1.5 h-1.5 bg-white/40"
                 }`}
               />

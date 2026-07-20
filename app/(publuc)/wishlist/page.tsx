@@ -25,7 +25,7 @@ export default function WishlistPage() {
         <div className="text-center py-10">
           <p className="text-base sm:text-lg text-muted-foreground">Your wishlist is empty.</p>
           <Link href="/stores">
-            <Button className="mt-4">Browse Stores</Button>
+            <Button className="mt-4 text-white">Browse Stores</Button>
           </Link>
         </div>
       ) : (

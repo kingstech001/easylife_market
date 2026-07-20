@@ -209,7 +209,7 @@ function SubscriptionSuccessContent() {
 
   if (!reference) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse" />
@@ -217,16 +217,16 @@ function SubscriptionSuccessContent() {
         </div>
 
         <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
-          <div className="p-4 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+          <div className="p-4 rounded-full bg-red-500/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
             <XCircle className="w-12 h-12 text-red-500" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-3xl font-bold text-foreground mb-3 text-foreground">
             Invalid Request
           </h1>
           <p className="text-muted-foreground mb-8 text-lg">No payment reference found.</p>
           <button
             onClick={() => router.push("/dashboard/seller/subscriptions")}
-            className="w-full bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#c0a146]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+            className="w-full bg-[#0E5A43] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#0E5A43]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
           >
             Return to Subscriptions
             <ArrowRight className="w-5 h-5" />
@@ -238,27 +238,27 @@ function SubscriptionSuccessContent() {
 
   if (verificationState === "verifying") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#0E5A43]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
 
         <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
-          <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-            <Loader2 className="w-12 h-12 text-[#c0a146] animate-spin" />
+          <div className="p-4 rounded-full bg-[#0E5A43] text-white w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <Loader2 className="w-12 h-12 text-[#0E5A43] animate-spin" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-3xl font-bold text-foreground mb-3 text-foreground">
             Processing Payment
           </h1>
           <p className="text-muted-foreground text-lg">
             Verifying your payment with Paystack...
           </p>
           <div className="mt-6 flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-[#c0a146] rounded-full animate-bounce" />
-            <div className="w-2 h-2 bg-[#c0a146] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-            <div className="w-2 h-2 bg-[#c0a146] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+            <div className="w-2 h-2 bg-[#0E5A43] text-white rounded-full animate-bounce" />
+            <div className="w-2 h-2 bg-[#0E5A43] text-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="w-2 h-2 bg-[#0E5A43] text-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
           </div>
         </div>
       </div>
@@ -267,20 +267,20 @@ function SubscriptionSuccessContent() {
 
   if (verificationState === "polling") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#0E5A43]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
 
         <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
-          <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-            <Clock className="w-12 h-12 text-[#c0a146] animate-pulse" />
+          <div className="p-4 rounded-full bg-[#0E5A43] text-white w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <Clock className="w-12 h-12 text-[#0E5A43] animate-pulse" />
           </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <CheckCircle className="w-6 h-6 text-emerald-500" />
-            <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            <h1 className="text-3xl font-bold text-foreground text-foreground">
               Payment Verified!
             </h1>
           </div>
@@ -294,20 +294,20 @@ function SubscriptionSuccessContent() {
           <div className="bg-muted/30 rounded-xl p-4 mb-6 border border-border/30">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-muted-foreground">Progress</span>
-              <span className="text-sm font-semibold text-[#c0a146]">
+              <span className="text-sm font-semibold text-[#0E5A43]">
                 {pollAttempts} / {MAX_POLL_ATTEMPTS}
               </span>
             </div>
             <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-[#c0a146] to-[#d4b55e] h-2 rounded-full transition-all duration-300"
+                className="bg-[#0E5A43] text-white h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(pollAttempts / MAX_POLL_ATTEMPTS) * 100}%` }}
               />
             </div>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Sparkles className="w-4 h-4 text-[#c0a146]" />
+            <Sparkles className="w-4 h-4 text-[#0E5A43]" />
             <span>Setting up your subscription details...</span>
           </div>
         </div>
@@ -317,7 +317,7 @@ function SubscriptionSuccessContent() {
 
   if (verificationState === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse" />
@@ -325,7 +325,7 @@ function SubscriptionSuccessContent() {
         </div>
 
         <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
-          <div className="p-4 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+          <div className="p-4 rounded-full bg-red-500/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
             <XCircle className="w-12 h-12 text-red-500" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-3">
@@ -337,7 +337,7 @@ function SubscriptionSuccessContent() {
           
           <div className="bg-muted/30 rounded-xl p-5 mb-6 text-left border border-border/30">
             <div className="flex items-center gap-2 mb-3">
-              <CreditCard className="w-5 h-5 text-[#c0a146]" />
+              <CreditCard className="w-5 h-5 text-[#0E5A43]" />
               <p className="text-sm font-semibold text-foreground">
                 Payment Reference
               </p>
@@ -354,14 +354,14 @@ function SubscriptionSuccessContent() {
           <div className="space-y-3">
             <button
               onClick={() => router.push("/dashboard/seller/subscriptions")}
-              className="w-full bg-gradient-to-r from-[#c0a146] via-[#d4b55e] to-[#c0a146] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#c0a146]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              className="w-full bg-[#0E5A43] text-white font-semibold py-4 rounded-xl hover:shadow-xl hover:shadow-[#0E5A43]/30 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             >
               <Package className="w-5 h-5" />
               Check My Subscriptions
             </button>
             <button
               onClick={() => router.push("/dashboard/seller/subscriptions")}
-              className="w-full bg-muted/50 text-foreground font-semibold py-4 rounded-xl hover:bg-muted/70 border border-border/50 hover:border-[#c0a146]/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              className="w-full bg-muted/50 text-foreground font-semibold py-4 rounded-xl hover:bg-muted/70 border border-border/50 hover:border-[#0E5A43]/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
             >
               Return to Subscriptions
               <ArrowRight className="w-5 h-5" />
@@ -370,7 +370,7 @@ function SubscriptionSuccessContent() {
 
           <div className="mt-6 p-4 bg-muted/20 rounded-lg border border-border/30">
             <p className="text-sm text-muted-foreground">
-              Redirecting to subscriptions in <span className="font-bold text-[#c0a146]">{countdown}</span> seconds...
+              Redirecting to subscriptions in <span className="font-bold text-[#0E5A43]">{countdown}</span> seconds...
             </p>
           </div>
         </div>
@@ -380,23 +380,23 @@ function SubscriptionSuccessContent() {
 
   // Success state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#0E5A43]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
         {/* Success icon with animation */}
         <div className="relative mb-6">
-          <div className="p-4 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 w-20 h-20 mx-auto flex items-center justify-center">
+          <div className="p-4 rounded-full bg-emerald-500/20 w-20 h-20 mx-auto flex items-center justify-center">
             <CheckCircle className="w-12 h-12 text-emerald-500" />
           </div>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 animate-ping" />
+          <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
         </div>
 
-        <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+        <h1 className="text-3xl font-bold text-foreground mb-3 text-foreground">
           Subscription Activated!
         </h1>
         
@@ -404,7 +404,7 @@ function SubscriptionSuccessContent() {
           Your subscription has been successfully activated and payment confirmed.
         </p>
         
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 rounded-xl p-6 mb-6 space-y-4 border border-emerald-500/30">
+        <div className="bg-emerald-500/10 rounded-xl p-6 mb-6 space-y-4 border border-emerald-500/30">
           <div>
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-emerald-500" />
@@ -421,7 +421,7 @@ function SubscriptionSuccessContent() {
             <div className="border-t border-border/30 pt-4 space-y-3">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Product Limit:</span>
-                <span className="font-bold text-lg bg-gradient-to-r from-[#c0a146] to-[#d4b55e] bg-clip-text text-transparent">
+                <span className="font-bold text-lg text-[#0E5A43]">
                   {productLimit >= 999999 ? "Unlimited" : `${productLimit} products`}
                 </span>
               </div>
@@ -430,7 +430,7 @@ function SubscriptionSuccessContent() {
         </div>
         
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin text-[#c0a146]" />
+          <Loader2 className="w-4 h-4 animate-spin text-[#0E5A43]" />
           <span>Redirecting to subscriptions...</span>
         </div>
       </div>
@@ -441,16 +441,16 @@ function SubscriptionSuccessContent() {
 // Loading fallback
 function SubscriptionSuccessLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#c0a146]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-[20%] right-[20%] w-96 h-96 bg-[#0E5A43]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
       <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
-        <div className="p-4 rounded-full bg-gradient-to-br from-[#c0a146]/20 to-primary/20 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-          <Loader2 className="w-12 h-12 text-[#c0a146] animate-spin" />
+        <div className="p-4 rounded-full bg-[#0E5A43] text-white w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+          <Loader2 className="w-12 h-12 text-[#0E5A43] animate-spin" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+        <h1 className="text-3xl font-bold text-foreground mb-3 text-foreground">
           Loading...
         </h1>
         <p className="text-muted-foreground text-lg">

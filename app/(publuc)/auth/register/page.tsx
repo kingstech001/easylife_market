@@ -80,7 +80,7 @@ const registerSchema = z
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const fieldBaseClass =
-  "peer h-14 rounded-2xl border-border/60 bg-background/90 px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#e1a200]/30 focus-visible:ring-offset-0 focus-visible:border-[#e1a200]/50";
+  "peer h-14 rounded-2xl border-border/60 bg-background/90 px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#0E5A43]/30 focus-visible:ring-offset-0 focus-visible:border-[#0E5A43]/50";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -135,16 +135,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,rgba(225,162,0,0.08),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.12))] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#e1a200]/10 blur-3xl sm:h-72 sm:w-72" />
+        <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#0E5A43]/10 blur-3xl sm:h-72 sm:w-72" />
         <div className="absolute bottom-[8%] right-[-8%] h-64 w-64 rounded-full bg-foreground/5 blur-3xl sm:h-80 sm:w-80" />
         <div className="absolute inset-0 opacity-[0.035]">
           <div
             className="absolute inset-0"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.25) 1px, transparent 0)",
+                "none",
               backgroundSize: "26px 26px",
             }}
           />
@@ -153,9 +153,9 @@ export default function RegisterPage() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
         <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-          <div className="hidden rounded-[36px] border border-border/70 bg-[linear-gradient(180deg,rgba(225,162,0,0.14),rgba(225,162,0,0.02)_45%,rgba(255,255,255,0.72)_100%)] p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
+          <div className="hidden rounded-[36px] border border-border/70 bg-muted/20 p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
             <div>
-              <div className="inline-flex items-center rounded-full border border-[#e1a200]/20 bg-[#e1a200]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+              <div className="inline-flex items-center rounded-full border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                 Join EasyLife
               </div>
               <h1 className="mt-6 max-w-md text-4xl font-semibold leading-tight tracking-tight text-foreground">
@@ -171,7 +171,7 @@ export default function RegisterPage() {
             <div className="grid gap-4">
               <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                     <Store className="h-5 w-5" />
                   </div>
                   <div>
@@ -188,7 +188,7 @@ export default function RegisterPage() {
 
               <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                     <ShoppingBag className="h-5 w-5" />
                   </div>
                   <div>
@@ -249,7 +249,7 @@ export default function RegisterPage() {
                                 disabled={isLoading}
                                 className={cn(fieldBaseClass, "pl-11")}
                               />
-                              <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
+                              <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
                                 First Name
                               </FormLabel>
                             </div>
@@ -273,7 +273,7 @@ export default function RegisterPage() {
                                 disabled={isLoading}
                                 className={cn(fieldBaseClass, "pl-11")}
                               />
-                              <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
+                              <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
                                 Last Name
                               </FormLabel>
                             </div>
@@ -299,7 +299,7 @@ export default function RegisterPage() {
                               disabled={isLoading}
                               className={cn(fieldBaseClass, "pl-11")}
                             />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
+                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
                               Email Address
                             </FormLabel>
                           </div>
@@ -324,7 +324,7 @@ export default function RegisterPage() {
                               disabled={isLoading}
                               className={cn(fieldBaseClass, "pl-11 pr-12")}
                             />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
+                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
                               Password
                             </FormLabel>
                             <Button
@@ -367,7 +367,7 @@ export default function RegisterPage() {
                               disabled={isLoading}
                               className={cn(fieldBaseClass, "pl-11 pr-12")}
                             />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
+                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
                               Confirm Password
                             </FormLabel>
                             <Button
@@ -415,18 +415,18 @@ export default function RegisterPage() {
                               className={cn(
                                 "flex flex-1 cursor-pointer items-start gap-3 rounded-3xl border p-4 transition",
                                 field.value === "seller"
-                                  ? "border-[#e1a200]/50 bg-[#e1a200]/[0.06] shadow-sm"
-                                  : "border-border/70 bg-background hover:border-[#e1a200]/30",
+                                  ? "border-[#0E5A43]/50 bg-[#0E5A43]/[0.06] shadow-sm"
+                                  : "border-border/70 bg-background hover:border-[#0E5A43]/30",
                               )}
                             >
                               <RadioGroupItem
                                 value="seller"
                                 id="seller"
-                                className="mt-1 border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200]"
+                                className="mt-1 border-2 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
                               />
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <Store className="h-4 w-4 text-[#8c6500]" />
+                                  <Store className="h-4 w-4 text-[#083B2D]" />
                                   <span className="font-medium text-foreground">
                                     Seller
                                   </span>
@@ -439,18 +439,18 @@ export default function RegisterPage() {
                               className={cn(
                                 "flex flex-1 cursor-pointer items-start gap-3 rounded-3xl border p-4 transition",
                                 field.value === "buyer"
-                                  ? "border-[#e1a200]/50 bg-[#e1a200]/[0.06] shadow-sm"
-                                  : "border-border/70 bg-background hover:border-[#e1a200]/30",
+                                  ? "border-[#0E5A43]/50 bg-[#0E5A43]/[0.06] shadow-sm"
+                                  : "border-border/70 bg-background hover:border-[#0E5A43]/30",
                               )}
                             >
                               <RadioGroupItem
                                 value="buyer"
                                 id="buyer"
-                                className="mt-1 border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200]"
+                                className="mt-1 border-2 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
                               />
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <ShoppingBag className="h-4 w-4 text-[#8c6500]" />
+                                  <ShoppingBag className="h-4 w-4 text-[#083B2D]" />
                                   <span className="font-medium text-foreground">
                                     Buyer
                                   </span>
@@ -475,7 +475,7 @@ export default function RegisterPage() {
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               disabled={isLoading}
-                              className="mt-1 border-2 data-[state=checked]:border-[#e1a200] data-[state=checked]:bg-[#e1a200]"
+                              className="mt-1 border-2 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
                             />
                           </FormControl>
                           <div className="space-y-2 leading-none">
@@ -487,7 +487,7 @@ export default function RegisterPage() {
                               , you agree to our{" "}
                               <Link
                                 href="/terms"
-                                className="text-[#e1a200] hover:text-[#8c6500] underline underline-offset-2"
+                                className="text-[#0E5A43] hover:text-[#083B2D] underline underline-offset-2"
                                 target="_blank"
                                 rel="noreferrer"
                               >
@@ -496,7 +496,7 @@ export default function RegisterPage() {
                               and{" "}
                               <Link
                                 href="/privacy"
-                                className="text-[#e1a200] hover:text-[#8c6500] underline underline-offset-2"
+                                className="text-[#0E5A43] hover:text-[#083B2D] underline underline-offset-2"
                                 target="_blank"
                                 rel="noreferrer"
                               >
@@ -512,7 +512,7 @@ export default function RegisterPage() {
 
                   <Button
                     type="submit"
-                    className="h-12 w-full rounded-full bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] text-sm font-semibold text-white shadow-lg transition hover:opacity-90 hover:shadow-xl sm:h-13"
+                    className="h-12 w-full rounded-full bg-[#0E5A43] text-sm font-semibold text-white shadow-lg transition hover:opacity-90 hover:shadow-xl sm:h-13"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -546,7 +546,7 @@ export default function RegisterPage() {
               <Link href="/auth/login" className="w-full">
                 <Button
                   variant="outline"
-                  className="h-12 w-full rounded-full border-border/70 bg-background hover:border-[#e1a200]/50 hover:bg-[#e1a200]/[0.05] hover:text-[#8c6500]"
+                  className="h-12 w-full rounded-full border-border/70 bg-background hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/[0.05] hover:text-[#083B2D]"
                   disabled={isLoading}
                 >
                   Sign In Instead

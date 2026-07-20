@@ -137,11 +137,11 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                   className="object-cover"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80 hidden lg:block" />
+              <div className="absolute inset-0 bg-black/60 hidden lg:block" />
               <div className="absolute inset-0 bg-background lg:hidden" />
             </>
           ) : (
-            <div className="absolute inset-0 bg-background lg:bg-gradient-to-br lg:from-[#e1a200]/15 lg:via-background lg:to-background" />
+            <div className="absolute inset-0 bg-background lg:bg-[#0E5A43]/10" />
           )}
         </div>
 
@@ -176,8 +176,8 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               heroBanner?.imageUrl
                 ? "bg-muted/50 border border-border/60 lg:bg-white/10 lg:backdrop-blur-md lg:border-white/15"
                 : "bg-muted/50 border border-border/60",
-              searchFocused && "ring-2 ring-[#e1a200]/20 border-[#e1a200]",
-              searchFocused && heroBanner?.imageUrl && "lg:ring-[#e1a200]/40 lg:border-[#e1a200]/30"
+              searchFocused && "ring-2 ring-[#0E5A43]/20 border-[#0E5A43]",
+              searchFocused && heroBanner?.imageUrl && "lg:ring-[#0E5A43]/40 lg:border-[#0E5A43]/30"
             )}>
               <Search className={cn("ml-3.5 h-4 w-4 flex-shrink-0 text-muted-foreground", heroBanner?.imageUrl && "lg:text-white/40")} />
               <input
@@ -199,7 +199,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               )}
               <button
                 type="submit"
-                className="h-full px-4 sm:px-5 bg-[#e1a200] hover:bg-[#c89200] text-white text-sm font-medium transition-colors flex items-center gap-1.5"
+                className="h-full px-4 sm:px-5 bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white text-sm font-medium transition-colors flex items-center gap-1.5"
               >
                 <span className="hidden sm:inline">Search</span>
                 <ArrowRight className="h-4 w-4" />
@@ -228,10 +228,10 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           href="https://wa.me/2348071427831"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between gap-4 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-[#e1a200]/10 to-[#e1a200]/5 border border-[#e1a200]/15 hover:border-[#e1a200]/30 transition-all group"
+          className="flex items-center justify-between gap-4 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl bg-[#0E5A43] text-white border border-[#0E5A43]/15 hover:border-[#0E5A43]/30 transition-all group"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-[#e1a200]/15 flex items-center justify-center flex-shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-[#0E5A43]/15 flex items-center justify-center flex-shrink-0">
               <FaWhatsapp className="h-4 w-4 text-[#25D366]" />
             </div>
             <div className="min-w-0">
@@ -239,7 +239,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Reach active shoppers on EasyLife</p>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[#e1a200] flex-shrink-0 transition-colors" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[#0E5A43] flex-shrink-0 transition-colors" />
         </Link>
       </div>
 
@@ -255,7 +255,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               Be the first to launch a store and start reaching customers across the marketplace.
             </p>
             <Link href="/auth/register">
-              <Button className="h-11 rounded-xl bg-[#e1a200] hover:bg-[#c89200] text-white px-6">
+              <Button className="h-11 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white px-6">
                 Launch your store
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -266,7 +266,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             {/* Section header */}
             <div className="flex items-center justify-between mb-4 sm:mb-5">
               <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-[#e1a200]" />
+                <ShoppingBag className="h-4 w-4 text-[#0E5A43]" />
                 All Stores
                 <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({stores.length})</span>
               </h2>
@@ -277,7 +277,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               {stores.map((store) => (
                 <div
                   key={store._id}
-                  className="group rounded-xl border border-border/50 bg-card overflow-hidden hover:border-[#e1a200]/30 hover:shadow-lg hover:shadow-[#e1a200]/5 transition-all duration-300"
+                  className="group rounded-xl border border-border/50 bg-card overflow-hidden hover:border-[#0E5A43]/30 hover:shadow-lg hover:shadow-[#0E5A43]/5 transition-all duration-300"
                 >
                   <StoreCard store={store} />
                 </div>
@@ -285,14 +285,14 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             </div>
 
             {/* CTA */}
-            <div className="mt-8 sm:mt-10 rounded-xl border border-border/50 bg-gradient-to-r from-muted/30 to-muted/10 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mt-8 sm:mt-10 rounded-xl border border-border/50 bg-muted/20 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-[#c89200] font-semibold mb-1">Become a seller</p>
+                <p className="text-[10px] uppercase tracking-widest text-[#083B2D] font-semibold mb-1">Become a seller</p>
                 <h3 className="text-base sm:text-lg font-semibold">Open your store on EasyLife</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Start selling to thousands of customers today.</p>
               </div>
               <Link href="/auth/register" className="flex-shrink-0">
-                <Button variant="outline" className="h-10 sm:h-11 rounded-xl border-border/60 hover:border-[#e1a200]/40 hover:bg-[#e1a200]/5 px-5 text-sm">
+                <Button variant="outline" className="h-10 sm:h-11 rounded-xl border-border/60 hover:border-[#0E5A43]/40 hover:bg-[#0E5A43]/5 px-5 text-sm">
                   Join now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

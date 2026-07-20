@@ -95,7 +95,7 @@ export function StoreCard({ store }: StoreCardProps) {
               <AvatarPlaceholder name={store.name} className="h-16 w-16 text-xl" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-background/80" />
           <div className="absolute bottom-4 left-4 flex items-center gap-2">
             {store.isApproved ? (
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">

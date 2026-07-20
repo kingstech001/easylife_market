@@ -98,8 +98,8 @@ export function BusinessHoursEditor({
     <div className="space-y-3">
       {showHeading && (
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="h-8 w-8 rounded-lg bg-[#c0a146]/10 flex items-center justify-center flex-shrink-0">
-            <Clock className="h-4 w-4 text-[#c0a146]" />
+          <div className="h-8 w-8 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center flex-shrink-0">
+            <Clock className="h-4 w-4 text-[#0E5A43]" />
           </div>
           <div>
             <p className="text-sm font-semibold leading-none">Business Hours</p>
@@ -132,7 +132,7 @@ export function BusinessHoursEditor({
                   onClick={() => toggle(key)}
                   className={cn(
                     "relative w-9 h-5 rounded-full flex-shrink-0 transition-colors duration-200",
-                    day.open ? "bg-[#c0a146]" : "bg-muted-foreground/25"
+                    day.open ? "bg-[#0E5A43]" : "bg-muted-foreground/25"
                   )}
                 >
                   <span
@@ -158,7 +158,7 @@ export function BusinessHoursEditor({
                     <select
                       value={day.openTime}
                       onChange={(e) => update(key, "openTime", e.target.value)}
-                      className="flex-1 min-w-0 h-8 rounded-lg border border-border/50 bg-background text-xs px-2 focus:border-[#c0a146] focus:outline-none transition-colors cursor-pointer"
+                      className="flex-1 min-w-0 h-8 rounded-lg border border-border/50 bg-background text-xs px-2 focus:border-[#0E5A43] focus:outline-none transition-colors cursor-pointer"
                     >
                       {TIME_OPTIONS.map((t) => (
                         <option key={t.value} value={t.value}>
@@ -172,7 +172,7 @@ export function BusinessHoursEditor({
                     <select
                       value={day.closeTime}
                       onChange={(e) => update(key, "closeTime", e.target.value)}
-                      className="flex-1 min-w-0 h-8 rounded-lg border border-border/50 bg-background text-xs px-2 focus:border-[#c0a146] focus:outline-none transition-colors cursor-pointer"
+                      className="flex-1 min-w-0 h-8 rounded-lg border border-border/50 bg-background text-xs px-2 focus:border-[#0E5A43] focus:outline-none transition-colors cursor-pointer"
                     >
                       {TIME_OPTIONS.map((t) => (
                         <option key={t.value} value={t.value}>
@@ -196,7 +196,7 @@ export function BusinessHoursEditor({
       <button
         type="button"
         onClick={applyWeekdays}
-        className="w-full text-xs text-[#c0a146] hover:text-[#d4b55e] underline underline-offset-2 transition-colors pt-1 pb-0.5"
+        className="w-full text-xs text-[#0E5A43] hover:text-[#F4C430] underline underline-offset-2 transition-colors pt-1 pb-0.5"
       >
         Copy Monday hours to all weekdays (Mon – Fri)
       </button>

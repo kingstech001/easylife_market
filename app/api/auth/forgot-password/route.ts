@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
                     
                     <!-- Header with Logo -->
                     <tr>
-                      <td style="background-color: #e1a200; padding: 30px 40px; border-bottom: 3px solid #c0a146;">
+                      <td style="background-color: #0E5A43; padding: 30px 40px; border-bottom: 3px solid #0E5A43;">
                         <img src="${baseUrl}/logo.png" alt="EasyLife" width="120" style="display: block; margin: 0 auto;">
                       </td>
                     </tr>
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                           <tr>
                             <td align="center">
-                              <a href="${resetUrl}" style="display: inline-block; padding: 14px 40px; background-color: #c0a146; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: normal; border: none;">
+                              <a href="${resetUrl}" style="display: inline-block; padding: 14px 40px; background-color: #0E5A43; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: normal; border: none;">
                                 Reset Password
                               </a>
                             </td>
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
                           Alternatively, you may copy and paste the following link into your browser:
                         </p>
                         
-                        <p style="margin: 0 0 20px 0; padding: 12px; background-color: #f9f9f9; border: 1px solid #e0e0e0; color: #c0a146; font-size: 13px; word-break: break-all; font-family: monospace;">
+                        <p style="margin: 0 0 20px 0; padding: 12px; background-color: #f9f9f9; border: 1px solid #e0e0e0; color: #0E5A43; font-size: 13px; word-break: break-all; font-family: monospace;">
                           ${resetUrl}
                         </p>
                         
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
                         
                         <p style="margin: 16px 0 8px 0; color: #777777; font-size: 12px; text-align: center;">
                           Questions? Contact us at 
-                          <a href="mailto:easylifemarket01@gmail.com" style="color: #c0a146; text-decoration: none;">
+                          <a href="mailto:easylifemarket01@gmail.com" style="color: #0E5A43; text-decoration: none;">
                             easylifemarket01@gmail.com
                           </a>
                         </p>

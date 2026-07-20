@@ -241,7 +241,7 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
 
         <CardFooter className="p-2 pt-0">
           {shouldOpenProductPage ? (
-            <Button asChild className="h-10 w-full rounded-xl text-sm font-semibold">
+            <Button asChild className="h-10 w-full rounded-xl text-sm font-semibold `">
               <Link href={productHref}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 {needsCustomization ? "Customize" : "Select options"}

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card"
 
 export default function AdminOrdersLoading() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <div className="container px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-7xl mx-auto animate-pulse">
         {/* Header */}
         <div className="mb-6 sm:mb-8 lg:mb-10">

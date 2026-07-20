@@ -125,14 +125,14 @@ export default function FeaturesSection() {
               variant="secondary"
               className="px-4 py-2 text-sm font-semibold bg-background border shadow-sm"
             >
-              <Zap className="w-4 h-4 mr-2 text-[#e1a200]" />
+              <Zap className="w-4 h-4 mr-2 text-[#0E5A43]" />
               Why Choose EasyLife
             </Badge>
 
             <div className="space-y-3 max-w-3xl">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
                 Buy and Sell with
-                <span className="block mt-1 bg-gradient-to-r from-[#e1a200] to-[#d4b55e] bg-clip-text text-transparent">
+                <span className="block mt-1 text-[#0E5A43]">
                   Complete Confidence
                 </span>
               </h2>
@@ -148,7 +148,7 @@ export default function FeaturesSection() {
                   key={index}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background border border-border"
                 >
-                  <stat.icon className="w-5 h-5 text-[#e1a200]" />
+                  <stat.icon className="w-5 h-5 text-[#0E5A43]" />
                   <div className="text-center">
                     <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
                     <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
@@ -166,7 +166,7 @@ export default function FeaturesSection() {
                 className={cn(
                   "group relative overflow-hidden transition-all duration-300",
                   "bg-background border border-border",
-                  "hover:shadow-lg hover:border-[#e1a200]/30"
+                  "hover:shadow-lg hover:border-[#0E5A43]/30"
                 )}
               >
                 <CardContent className="p-6 space-y-4">
@@ -231,7 +231,7 @@ export default function FeaturesSection() {
                   key={index}
                   className={cn(
                     "p-6 rounded-lg border border-border bg-background",
-                    "hover:border-[#e1a200]/30 transition-all duration-300"
+                    "hover:border-[#0E5A43]/30 transition-all duration-300"
                   )}
                 >
                   <div className="flex flex-col items-center text-center space-y-3">
@@ -254,7 +254,7 @@ export default function FeaturesSection() {
 
           {/* CTA Section */}
           <div className="flex flex-col items-center justify-center space-y-6 pt-16">
-            <div className="w-full max-w-md h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="w-full max-w-md h-px bg-border" />
 
             <div className="text-center space-y-4 max-w-xl">
               <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
@@ -286,8 +286,8 @@ export default function FeaturesSection() {
                     size="lg"
                     className={cn(
                       "w-full sm:w-auto h-12 px-8 text-base font-semibold",
-                      "bg-gradient-to-r from-[#e1a200] to-[#d4b55e]",
-                      "hover:from-[#d4b55e] hover:to-[#e1a200]",
+                      "bg-[#0E5A43]",
+                      "hover:bg-[#083B2D]",
                       "shadow-md hover:shadow-lg transition-all"
                     )}
                   >
@@ -299,7 +299,7 @@ export default function FeaturesSection() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="w-full sm:w-auto h-12 px-8 text-base font-semibold border-2 hover:bg-muted/50 hover:border-[#e1a200]/50 transition-all"
+                    className="w-full sm:w-auto h-12 px-8 text-base font-semibold border-2 hover:bg-muted/50 hover:border-[#0E5A43]/50 transition-all"
                   >
                     Browse Products
                     <ArrowRight className="ml-2 h-5 w-5" />

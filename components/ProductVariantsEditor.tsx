@@ -216,8 +216,8 @@ export default function ProductVariantsEditor({
         <div className="space-y-1 mb-4 sm:mb-0 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="p-2 rounded-lg bg-[#c0a146]/10">
-                <Palette className="h-5 w-5 text-[#c0a146]" />
+              <div className="p-2 rounded-lg bg-[#0E5A43]/10">
+                <Palette className="h-5 w-5 text-[#0E5A43]" />
               </div>
               <h3 className="text-lg font-semibold">Product Variants</h3>
             </div>
@@ -255,7 +255,7 @@ export default function ProductVariantsEditor({
                     "flex items-center gap-2 px-2 py-1.5 rounded-full border transition-all text-sm",
                     isAdded
                       ? "opacity-50 cursor-not-allowed border-muted"
-                      : "hover:border-[#c0a146] hover:bg-[#c0a146]/5 cursor-pointer",
+                      : "hover:border-[#0E5A43] hover:bg-[#0E5A43]/5 cursor-pointer",
                   )}
                 >
                   <span
@@ -305,7 +305,7 @@ export default function ProductVariantsEditor({
                 onClick={addCustomColor}
                 disabled={!customColor.name.trim()}
                 size="sm"
-                className="bg-[#c0a146] hover:bg-[#c0a146]/90"
+                className="bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add
@@ -359,7 +359,7 @@ export default function ProductVariantsEditor({
               <Card
                 className={cn(
                   "transition-all",
-                  expandedVariants.has(variantIndex) && "border-[#c0a146]/50",
+                  expandedVariants.has(variantIndex) && "border-[#0E5A43]/50",
                 )}
               >
                 <CollapsibleTrigger asChild>

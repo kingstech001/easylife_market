@@ -77,7 +77,7 @@ export function CartSummaryWidget() {
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
             Your Cart 
-            <span className="bg-[#c0a146] text-white text-xs min-w-[20px] h-5 px-2 rounded-full flex items-center justify-center font-semibold">
+            <span className="bg-[#0E5A43] text-white text-xs min-w-[20px] h-5 px-2 rounded-full flex items-center justify-center font-semibold">
               {cartTotal}
             </span>
           </CardTitle>

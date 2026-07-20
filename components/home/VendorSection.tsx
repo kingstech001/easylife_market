@@ -78,24 +78,24 @@ export function VendorSection() {
 
   return (
     <section className="relative overflow-hidden py-16 sm:py-20 ">
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background))_0%,rgba(225,162,0,0.05)_26%,hsl(var(--muted)/0.22)_68%,hsl(var(--background))_100%)]" />
+      <div className="absolute inset-0 bg-muted/20" />
       <div className="absolute inset-0 opacity-[0.04]">
         <div
           className="absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.18) 1px, transparent 0)",
+              "none",
             backgroundSize: "28px 28px",
           }}
         />
       </div>
-      <div className="absolute left-[-10%] top-8 h-48 w-48 rounded-full bg-[#e1a200]/12 blur-3xl sm:h-64 sm:w-64" />
-      <div className="absolute bottom-0 right-[-8%] h-56 w-56 rounded-full bg-[#d4b55e]/12 blur-3xl sm:h-72 sm:w-72" />
+      <div className="absolute left-[-10%] top-8 h-48 w-48 rounded-full bg-[#0E5A43]/12 blur-3xl sm:h-64 sm:w-64" />
+      <div className="absolute bottom-0 right-[-8%] h-56 w-56 rounded-full bg-[#F4C430]/12 blur-3xl sm:h-72 sm:w-72" />
 
       <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-10">
           <div className="space-y-6 sm:space-y-7">
-            <Badge className="inline-flex border-0 bg-gradient-to-r from-[#e1a200] to-[#d4b55e] px-4 py-2 text-sm font-semibold text-white shadow-sm">
+            <Badge className="inline-flex border-0 bg-[#0E5A43] text-white px-4 py-2 text-sm font-semibold text-white shadow-sm">
               <Rocket className="mr-2 h-4 w-4" />
               For Vendors
             </Badge>
@@ -103,7 +103,7 @@ export function VendorSection() {
             <div className="space-y-4">
               <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-6xl">
                 Turn your passion into
-                <span className="mt-2 block bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
+                <span className="mt-2 block text-[#0E5A43]">
                   profit with a professional storefront
                 </span>
               </h2>
@@ -116,21 +116,21 @@ export function VendorSection() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm backdrop-blur">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Setup
                 </p>
                 <p className="mt-2 text-lg font-semibold text-foreground">Fast launch</p>
                 <p className="mt-1 text-sm text-muted-foreground">Start selling without technical friction.</p>
               </div>
               <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm backdrop-blur">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Control
                 </p>
                 <p className="mt-2 text-lg font-semibold text-foreground">Simple management</p>
                 <p className="mt-1 text-sm text-muted-foreground">Track inventory and orders in one place.</p>
               </div>
               <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm backdrop-blur">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Growth
                 </p>
                 <p className="mt-2 text-lg font-semibold text-foreground">More visibility</p>
@@ -142,7 +142,7 @@ export function VendorSection() {
               <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="h-12 w-full bg-[#e1a200] px-6 text-base font-semibold text-white shadow-lg shadow-[#e1a200]/20 hover:bg-[#c89100] sm:h-14 sm:w-auto sm:px-8"
+                  className="h-12 w-full bg-[#0E5A43] text-white px-6 text-base font-semibold text-white shadow-lg shadow-[#0E5A43]/20 hover:bg-[#083B2D] sm:h-14 sm:w-auto sm:px-8"
                 >
                   Create Your Store
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -153,7 +153,7 @@ export function VendorSection() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="h-12 w-full border-border bg-background/85 px-6 text-base font-semibold hover:border-[#e1a200]/45 hover:bg-[#e1a200]/[0.05] sm:h-14 sm:w-auto sm:px-8"
+                  className="h-12 w-full border-border bg-background/85 px-6 text-base font-semibold hover:border-[#0E5A43]/45 hover:bg-[#0E5A43]/[0.05] sm:h-14 sm:w-auto sm:px-8"
                 >
                   See Success Stories
                 </Button>
@@ -182,7 +182,7 @@ export function VendorSection() {
             <div className="rounded-[32px] border border-border/70 bg-background/85 p-5 shadow-xl backdrop-blur sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                     Seller benefits
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
@@ -198,10 +198,10 @@ export function VendorSection() {
                   return (
                     <div
                       key={benefit.title}
-                      className="rounded-3xl border border-border/70 bg-muted/25 p-4 transition hover:border-[#e1a200]/35 hover:bg-[#e1a200]/[0.04]"
+                      className="rounded-3xl border border-border/70 bg-muted/25 p-4 transition hover:border-[#0E5A43]/35 hover:bg-[#0E5A43]/[0.04]"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e1a200] to-[#d4b55e] text-white shadow-sm">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0E5A43] text-white shadow-sm">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>
@@ -217,8 +217,8 @@ export function VendorSection() {
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-[#e1a200]/15 bg-[linear-gradient(135deg,rgba(225,162,0,0.1),rgba(225,162,0,0.03)_48%,rgba(255,255,255,0.72)_100%)] p-5 shadow-sm sm:p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+            <div className="rounded-[32px] border border-[#0E5A43]/15 bg-muted/20 p-5 shadow-sm sm:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                 Social proof
               </p>
               <div className="mt-3 flex items-center gap-3">
@@ -232,7 +232,7 @@ export function VendorSection() {
                         return (
                           <div
                             key={store._id}
-                            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-gradient-to-br from-[#e1a200] to-[#d4b55e] shadow-sm"
+                            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-[#0E5A43] text-white shadow-sm"
                             title={displayName}
                             style={{ zIndex: sellerPreview.length - i }}
                           >
@@ -253,7 +253,7 @@ export function VendorSection() {
                     : Array.from({ length: 5 }).map((_, i) => (
                         <div
                           key={i}
-                          className="h-11 w-11 rounded-full border-2 border-background bg-gradient-to-br from-[#e1a200]/40 to-[#d4b55e]/40 shadow-sm animate-pulse"
+                          className="h-11 w-11 rounded-full border-2 border-background bg-[#0E5A43] text-white shadow-sm animate-pulse"
                           style={{ zIndex: 5 - i }}
                         />
                       ))}

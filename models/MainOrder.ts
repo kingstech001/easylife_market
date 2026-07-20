@@ -28,6 +28,10 @@ export interface IMainOrder extends Document {
     state: string
     phone: string
     area: string
+    customerCoords?: {
+      lat: number
+      lng: number
+    }
   }
   paymentMethod: string
   paymentStatus: string
@@ -93,6 +97,10 @@ const MainOrderSchema = new mongoose.Schema<IMainOrder>(
       state: { type: String, required: true },
       phone: { type: String, required: true },
       area: { type: String, required: true },
+      customerCoords: {
+        lat: { type: Number },
+        lng: { type: Number },
+      },
     },
     paymentMethod: {
       type: String,

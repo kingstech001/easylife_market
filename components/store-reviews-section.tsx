@@ -119,11 +119,11 @@ export function StoreReviewsSection({
         <Card className="rounded-[30px] border border-border/70 bg-background/90 shadow-sm">
           <CardContent className="p-5 pt-5 sm:p-6 sm:pt-6">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                 <PencilLine className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Leave a review
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-foreground">
@@ -144,13 +144,13 @@ export function StoreReviewsSection({
                       key={value}
                       type="button"
                       onClick={() => setRating(value)}
-                      className="rounded-full p-1.5 transition hover:bg-[#e1a200]/10"
+                      className="rounded-full p-1.5 transition hover:bg-[#0E5A43]/10"
                       aria-label={`Rate ${value} star${value > 1 ? "s" : ""}`}
                     >
                       <Star
                         className={`h-6 w-6 ${
                           value <= rating
-                            ? "fill-[#e1a200] text-[#e1a200]"
+                            ? "fill-[#0E5A43] text-[#0E5A43]"
                             : "text-muted-foreground/40"
                         }`}
                       />
@@ -176,7 +176,7 @@ export function StoreReviewsSection({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-11 rounded-full px-6 text-white hover:bg-[#c89100]"
+                className="h-11 rounded-full px-6 text-white hover:bg-[#083B2D]"
               >
                 {isSubmitting ? "Submitting..." : "Submit review"}
               </Button>
@@ -188,7 +188,7 @@ export function StoreReviewsSection({
           <CardContent className="p-5 pt-5 sm:p-6 sm:pt-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Customer reviews
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-foreground">
@@ -200,7 +200,7 @@ export function StoreReviewsSection({
               </div>
               <div className="flex items-center gap-2">
                 <Badge className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground">
-                  <Star className="mr-1.5 h-3.5 w-3.5 fill-[#e1a200] text-[#e1a200]" />
+                  <Star className="mr-1.5 h-3.5 w-3.5 fill-[#0E5A43] text-[#0E5A43]" />
                   {stats.reviewCount > 0 ? stats.averageRating.toFixed(1) : "New"}
                 </Badge>
                 <Badge variant="secondary" className="rounded-full px-3 py-1 text-sm">
@@ -225,7 +225,7 @@ export function StoreReviewsSection({
                               key={index}
                               className={`h-4 w-4 ${
                                 index < review.rating
-                                  ? "fill-[#e1a200] text-[#e1a200]"
+                                  ? "fill-[#0E5A43] text-[#0E5A43]"
                                   : "text-muted-foreground/30"
                               }`}
                             />
@@ -244,7 +244,7 @@ export function StoreReviewsSection({
               </div>
             ) : (
               <div className="mt-5 rounded-3xl border border-dashed border-border bg-muted/20 p-8 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e1a200]/10 text-[#8c6500]">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E5A43]/10 text-[#083B2D]">
                   <MessageSquare className="h-6 w-6" />
                 </div>
                 <h4 className="mt-4 text-lg font-semibold text-foreground">No reviews yet</h4>

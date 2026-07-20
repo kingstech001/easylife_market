@@ -268,7 +268,7 @@ export default function StoreSettingsPage() {
   if (isFetching) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-[#c0a146]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#0E5A43]" />
         <span className="text-sm text-muted-foreground">
           Loading store settings...
         </span>
@@ -300,7 +300,7 @@ export default function StoreSettingsPage() {
           <Button
             onClick={handleSave}
             disabled={isLoading}
-            className="w-full sm:w-auto bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+            className="w-full sm:w-auto bg-[#0E5A43] text-white hover:bg-[#a88a36] text-white shadow-sm"
           >
             {isLoading ? (
               <>
@@ -321,7 +321,7 @@ export default function StoreSettingsPage() {
         <TabsList className="w-full overflow-x-auto flex sm:grid sm:grid-cols-4 h-auto p-1 bg-muted/60 rounded-xl">
           <TabsTrigger
             value="general"
-            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#0E5A43]"
           >
             <Store className="h-3.5 w-3.5" />
             <span className="hidden xs:inline sm:inline">General</span>
@@ -329,21 +329,21 @@ export default function StoreSettingsPage() {
           </TabsTrigger>
           <TabsTrigger
             value="location"
-            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#0E5A43]"
           >
             <MapPin className="h-3.5 w-3.5" />
             Location
           </TabsTrigger>
           <TabsTrigger
             value="hours"
-            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#0E5A43]"
           >
             <Clock className="h-3.5 w-3.5" />
             Hours
           </TabsTrigger>
           <TabsTrigger
             value="appearance"
-            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#c0a146]"
+            className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#0E5A43]"
           >
             <Palette className="h-3.5 w-3.5" />
             <span className="hidden xs:inline sm:inline">Appearance</span>
@@ -356,8 +356,8 @@ export default function StoreSettingsPage() {
           <Card className="border-0 shadow-none bg-transparent">
             <CardHeader className="p-0 pb-5 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
-                  <Store className="h-4 w-4 text-[#c0a146]" />
+                <div className="h-9 w-9 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center">
+                  <Store className="h-4 w-4 text-[#0E5A43]" />
                 </div>
                 <div>
                   <CardTitle className="text-base sm:text-lg">General Information</CardTitle>
@@ -392,7 +392,7 @@ export default function StoreSettingsPage() {
                 <Label htmlFor="slug" className="text-sm font-medium">
                   Store URL
                 </Label>
-                <div className="flex items-stretch rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-[#c0a146]/40 focus-within:border-[#c0a146]/50 transition-all">
+                <div className="flex items-stretch rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-[#0E5A43]/40 focus-within:border-[#0E5A43]/50 transition-all">
                   <span className="inline-flex items-center px-3 bg-muted/60 text-xs sm:text-sm text-muted-foreground border-r border-input whitespace-nowrap">
                     yoursite.com/store/
                   </span>
@@ -438,8 +438,8 @@ export default function StoreSettingsPage() {
           <Card className="border-0 shadow-none bg-transparent">
             <CardHeader className="p-0 pb-5 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
-                  <MapPin className="h-4 w-4 text-[#c0a146]" />
+                <div className="h-9 w-9 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-[#0E5A43]" />
                 </div>
                 <div>
                   <CardTitle className="text-base sm:text-lg">Store Location</CardTitle>
@@ -486,7 +486,7 @@ export default function StoreSettingsPage() {
             <Button
               onClick={handleSave}
               disabled={isLoading}
-              className="w-full sm:w-auto mt-4 bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+              className="w-full sm:w-auto mt-4 bg-[#0E5A43] text-white hover:bg-[#a88a36] text-white shadow-sm"
             >
               {isLoading ? (
                 <>
@@ -508,8 +508,8 @@ export default function StoreSettingsPage() {
           <Card className="border-0 shadow-none bg-transparent">
             <CardHeader className="p-0 pb-5 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-[#c0a146]" />
+                <div className="h-9 w-9 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-[#0E5A43]" />
                 </div>
                 <div>
                   <CardTitle className="text-base sm:text-lg">Business Hours</CardTitle>
@@ -532,7 +532,7 @@ export default function StoreSettingsPage() {
             <Button
               onClick={handleSave}
               disabled={isLoading}
-              className="w-full sm:w-auto mt-4 bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+              className="w-full sm:w-auto mt-4 bg-[#0E5A43] text-white hover:bg-[#a88a36] text-white shadow-sm"
             >
               {isLoading ? (
                 <>
@@ -554,8 +554,8 @@ export default function StoreSettingsPage() {
           <Card className="border-0 shadow-none bg-transparent">
             <CardHeader className="p-0 pb-5 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-lg bg-[#c0a146]/10 flex items-center justify-center">
-                  <Palette className="h-4 w-4 text-[#c0a146]" />
+                <div className="h-9 w-9 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center">
+                  <Palette className="h-4 w-4 text-[#0E5A43]" />
                 </div>
                 <div>
                   <CardTitle className="text-base sm:text-lg">Store Images</CardTitle>
@@ -591,8 +591,8 @@ export default function StoreSettingsPage() {
                     className={cn(
                       "relative group h-32 w-32 sm:h-36 sm:w-36 rounded-2xl border-2 border-dashed overflow-hidden flex items-center justify-center transition-all flex-shrink-0",
                       logoUrl
-                        ? "border-[#c0a146]/40 bg-muted/30"
-                        : "border-border/60 hover:border-[#c0a146]/60 hover:bg-[#c0a146]/5 bg-muted/20",
+                        ? "border-[#0E5A43]/40 bg-muted/30"
+                        : "border-border/60 hover:border-[#0E5A43]/60 hover:bg-[#0E5A43]/5 bg-muted/20",
                       isUploadingLogo && "opacity-60 cursor-not-allowed",
                     )}
                   >
@@ -616,7 +616,7 @@ export default function StoreSettingsPage() {
 
                     {isUploadingLogo && (
                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-[#c0a146]" />
+                        <Loader2 className="h-6 w-6 animate-spin text-[#0E5A43]" />
                       </div>
                     )}
                   </button>
@@ -674,8 +674,8 @@ export default function StoreSettingsPage() {
                   className={cn(
                     "relative group w-full aspect-[16/6] sm:aspect-[16/5] rounded-2xl border-2 border-dashed overflow-hidden flex items-center justify-center transition-all",
                     bannerUrl
-                      ? "border-[#c0a146]/40 bg-muted/30"
-                      : "border-border/60 hover:border-[#c0a146]/60 hover:bg-[#c0a146]/5 bg-muted/20",
+                      ? "border-[#0E5A43]/40 bg-muted/30"
+                      : "border-border/60 hover:border-[#0E5A43]/60 hover:bg-[#0E5A43]/5 bg-muted/20",
                     isUploadingBanner && "opacity-60 cursor-not-allowed",
                   )}
                 >
@@ -702,7 +702,7 @@ export default function StoreSettingsPage() {
 
                   {isUploadingBanner && (
                     <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                      <Loader2 className="h-7 w-7 animate-spin text-[#c0a146]" />
+                      <Loader2 className="h-7 w-7 animate-spin text-[#0E5A43]" />
                     </div>
                   )}
                 </button>
@@ -739,7 +739,7 @@ export default function StoreSettingsPage() {
             <Button
               onClick={handleSave}
               disabled={isLoading}
-              className="w-full sm:w-auto mt-4 bg-[#c0a146] hover:bg-[#a88a36] text-white shadow-sm"
+              className="w-full sm:w-auto mt-4 bg-[#0E5A43] text-white hover:bg-[#a88a36] text-white shadow-sm"
             >
               {isLoading ? (
                 <>

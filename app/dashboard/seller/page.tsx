@@ -254,7 +254,7 @@ export default function SellerDashboardPage() {
               <div className="space-y-1">
                 <h1 className="text-xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                   Welcome back,{" "}
-                  <span className="block sm:inline bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  <span className="block sm:inline text-foreground">
                     {storeName || "Your Store"}
                   </span>
                 </h1>

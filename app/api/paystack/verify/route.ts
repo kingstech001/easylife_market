@@ -109,7 +109,7 @@ async function verifyAndCalculateOrderAmount(
   deliveryFee: number = 0,
 ) {
   let calculatedTotal = 0;
-  const verifiedOrders = [];
+  const ordersByStore = new Map<string, { items: any[]; totalPrice: number }>();
 
   console.log("=== Starting Order Verification ===");
   console.log("Delivery Fee (from metadata):", deliveryFee);
@@ -121,10 +121,7 @@ async function verifyAndCalculateOrderAmount(
       throw new Error(`Invalid items for store ${storeId}`);
     }
 
-    let storeTotal = 0;
-    const verifiedItems = [];
-
-    console.log(`\n--- Verifying Store ${storeId} ---`);
+    console.log(`\n--- Verifying Store ${storeId || "from product"} ---`);
 
     for (const item of items) {
       const product = await Product.findById(item.productId).lean();
@@ -153,43 +150,45 @@ async function verifyAndCalculateOrderAmount(
 
       const actualPrice = Number(product.price);
       const itemTotal = actualPrice * item.quantity;
+      const resolvedStoreId = String(storeId || (product as any).storeId || "");
 
-      console.log(
-        `  Item Total: ₦${actualPrice} × ${item.quantity} = ₦${itemTotal}`,
-      );
+      if (!resolvedStoreId) {
+        throw new Error(`Store not found for product "${product.name}"`);
+      }
 
-      verifiedItems.push({
+      const storeOrder = ordersByStore.get(resolvedStoreId) || {
+        items: [],
+        totalPrice: 0,
+      };
+
+      storeOrder.items.push({
         productId: product._id,
         productName: product.name,
         quantity: item.quantity,
         priceAtPurchase: actualPrice,
         itemTotal,
       });
+      storeOrder.totalPrice += itemTotal;
+      ordersByStore.set(resolvedStoreId, storeOrder);
 
-      storeTotal += itemTotal;
+      calculatedTotal += itemTotal;
     }
-
-    console.log(`Store Total: ₦${storeTotal}`);
-
-    verifiedOrders.push({
-      storeId,
-      items: verifiedItems,
-      totalPrice: storeTotal,
-    });
-
-    calculatedTotal += storeTotal;
   }
 
   const grandTotal = calculatedTotal + deliveryFee;
 
   console.log("\n=== Calculation Summary ===");
-  console.log(`Subtotal: ₦${calculatedTotal}`);
-  console.log(`Delivery Fee: ₦${deliveryFee}`);
-  console.log(`Grand Total: ₦${grandTotal}`);
+  console.log(`Subtotal: ${calculatedTotal}`);
+  console.log(`Delivery Fee: ${deliveryFee}`);
+  console.log(`Grand Total: ${grandTotal}`);
   console.log("===========================\n");
 
   return {
-    verifiedOrders,
+    verifiedOrders: Array.from(ordersByStore.entries()).map(([storeId, order]) => ({
+      storeId,
+      items: order.items,
+      totalPrice: order.totalPrice,
+    })),
     subtotal: calculatedTotal,
     deliveryFee,
     grandTotal,
@@ -213,11 +212,25 @@ async function createMainOrder(
 
     for (const orderGroup of verifiedOrders) {
       const { storeId, items, totalPrice } = orderGroup;
+      let resolvedStoreId = String(storeId || "").trim();
+
+      if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
+        const firstProductId = items?.[0]?.productId;
+        const product = firstProductId
+          ? await Product.findById(firstProductId).select("storeId").session(session).lean()
+          : null;
+
+        resolvedStoreId = String((product as any)?.storeId || "").trim();
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
+        throw new Error(`Invalid or missing storeId for order reference ${reference}`);
+      }
 
       const subOrder = await Order.create(
         [
           {
-            storeId: storeId,
+            storeId: resolvedStoreId,
             userId: userId,
             reference: reference,
             totalPrice: totalPrice,
@@ -227,6 +240,7 @@ async function createMainOrder(
             paymentDetails: paymentInfo,
             items: items,
             paymentMethod: actualPaymentMethod,
+            customerCoords: shippingInfo.customerCoords,
             shippingInfo: {
               firstName: shippingInfo.firstName,
               lastName: shippingInfo.lastName,
@@ -235,6 +249,7 @@ async function createMainOrder(
               address: shippingInfo.address,
               state: shippingInfo.state,
               area: shippingInfo.area,
+              customerCoords: shippingInfo.customerCoords,
             },
           },
         ],
@@ -276,6 +291,7 @@ async function createMainOrder(
             address: shippingInfo.address,
             state: shippingInfo.state,
             area: shippingInfo.area,
+            customerCoords: shippingInfo.customerCoords,
           },
           paymentMethod: actualPaymentMethod,
           paymentStatus: "paid",

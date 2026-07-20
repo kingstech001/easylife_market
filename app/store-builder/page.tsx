@@ -1061,9 +1061,9 @@ export default function StoreBuilderPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-[#c0a146] rounded-full animate-spin mx-auto" />
+            <div className="w-20 h-20 border-4 border-muted border-t-[#0E5A43] rounded-full animate-spin mx-auto" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Store className="w-8 h-8 text-[#c0a146] animate-pulse" />
+              <Store className="w-8 h-8 text-[#0E5A43] animate-pulse" />
             </div>
           </div>
           <div className="space-y-2">
@@ -1078,7 +1078,7 @@ export default function StoreBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       {/* Hero Banner Section */}
       <div className="relative w-full h-64 md:h-80 bg-cover bg-center overflow-hidden">
         <div className="absolute inset-0">
@@ -1093,8 +1093,8 @@ export default function StoreBuilderPage() {
             priority
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/40" />
 
         {/* Navigation */}
         <div className="absolute top-6 left-0 right-0 px-4 md:px-8 flex justify-between items-center z-20">
@@ -1108,7 +1108,7 @@ export default function StoreBuilderPage() {
           <Button
             onClick={publishStore}
             disabled={isPublishingStore || !products.length}
-            className="h-11 shadow-lg bg-[#c0a146] hover:bg-[#c0a146]/90"
+            className="h-11 shadow-lg bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90"
           >
             {isPublishingStore ? (
               <>
@@ -1136,7 +1136,7 @@ export default function StoreBuilderPage() {
                   height={112}
                   className="w-28 h-28 rounded-3xl object-cover border-4 border-background shadow-xl"
                 />
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#c0a146] rounded-full border-4 border-background shadow-lg flex items-center justify-center">
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#0E5A43] text-white rounded-full border-4 border-background shadow-lg flex items-center justify-center">
                   <Check className="w-4 h-4 text-white" />
                 </div>
               </div>
@@ -1172,8 +1172,8 @@ export default function StoreBuilderPage() {
               <CardHeader className="pb-4 border-b">
                 <div className="flex justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-[#c0a146]/10">
-                      <Package className="w-5 h-5 text-[#c0a146]" />
+                    <div className="p-2 rounded-xl bg-[#0E5A43]/10">
+                      <Package className="w-5 h-5 text-[#0E5A43]" />
                     </div>
                     <div>
                       <CardTitle className="text-2xl">Products</CardTitle>
@@ -1212,7 +1212,7 @@ export default function StoreBuilderPage() {
                         });
                       }, 100);
                     }}
-                    className="bg-[#c0a146] hover:bg-[#c0a146]/90 h-9"
+                    className="bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 h-9"
                   >
                     <Plus className="h-4 w-4 mr-2" /> Add
                   </Button>
@@ -1252,8 +1252,8 @@ export default function StoreBuilderPage() {
                           <Card
                             className={`cursor-pointer transition-all duration-300 hover:shadow-lg group ${
                               isEditing
-                                ? "border-[#c0a146] bg-[#c0a146]/5 shadow-lg"
-                                : "border-border hover:border-[#c0a146]/50 bg-background"
+                                ? "border-[#0E5A43] bg-[#0E5A43]/5 shadow-lg"
+                                : "border-border hover:border-[#0E5A43]/50 bg-background"
                             }`}
                             onClick={() => handleEdit(p)}
                           >
@@ -1265,7 +1265,7 @@ export default function StoreBuilderPage() {
                                       {p.name}
                                     </h3>
                                     {isEditing && (
-                                      <Badge className="bg-[#c0a146] text-white border-0">
+                                      <Badge className="bg-[#0E5A43] text-white border-0">
                                         <Edit3 className="w-3 h-3 mr-1" />
                                         Editing
                                       </Badge>
@@ -1285,7 +1285,7 @@ export default function StoreBuilderPage() {
                                     {p.category && (
                                       <Badge
                                         variant="outline"
-                                        className="text-xs border-[#c0a146]/30"
+                                        className="text-xs border-[#0E5A43]/30"
                                       >
                                         <Tag className="w-2 h-2 mr-1" />
                                         {p.category}
@@ -1346,11 +1346,11 @@ export default function StoreBuilderPage() {
                   <CardHeader className="pb-6 p-3 border-b">
                     <div>
                       <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-2xl bg-[#c0a146]/10">
+                        <div className="p-3 rounded-2xl bg-[#0E5A43]/10">
                           {editingProduct ? (
-                            <Edit3 className="w-6 h-6 text-[#c0a146]" />
+                            <Edit3 className="w-6 h-6 text-[#0E5A43]" />
                           ) : (
-                            <Plus className="w-6 h-6 text-[#c0a146]" />
+                            <Plus className="w-6 h-6 text-[#0E5A43]" />
                           )}
                         </div>
                         <div>
@@ -1494,7 +1494,7 @@ export default function StoreBuilderPage() {
                                     </FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#c0a146] text-lg">
+                                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#0E5A43] text-lg">
                                           ₦
                                         </span>
                                         <Input
@@ -1521,7 +1521,7 @@ export default function StoreBuilderPage() {
                                     </FormLabel>
                                     <FormControl>
                                       <div className="relative">
-                                        <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#c0a146]" />
+                                        <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#0E5A43]" />
                                         <Input
                                           placeholder="e.g., Electronics, Clothing"
                                           className="pl-12 h-12"
@@ -1530,7 +1530,7 @@ export default function StoreBuilderPage() {
                                       </div>
                                     </FormControl>
                                     {supportsVariants && (
-                                      <FormDescription className="flex items-center gap-1 text-[#c0a146]">
+                                      <FormDescription className="flex items-center gap-1 text-[#0E5A43]">
                                         <Palette className="w-3 h-3" />
                                         This category supports color/size
                                         variants
@@ -1573,8 +1573,8 @@ export default function StoreBuilderPage() {
                             className="space-y-6 mt-8"
                           >
                             <div className="flex items-center gap-3 pb-4 border-b">
-                              <div className="p-2 rounded-lg bg-[#c0a146]/10">
-                                <ImageIcon className="h-5 w-5 text-[#c0a146]" />
+                              <div className="p-2 rounded-lg bg-[#0E5A43]/10">
+                                <ImageIcon className="h-5 w-5 text-[#0E5A43]" />
                               </div>
                               <div>
                                 <h3 className="text-lg font-semibold">
@@ -1590,7 +1590,7 @@ export default function StoreBuilderPage() {
                             <div className="flex justify-center">
                               <label
                                 htmlFor="upload"
-                                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium bg-[#c0a146] text-white rounded-xl cursor-pointer hover:bg-[#c0a146]/90 transition-all shadow-lg hover:shadow-xl"
+                                className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium bg-[#0E5A43] text-white rounded-xl cursor-pointer hover:bg-[#0E5A43]/90 transition-all shadow-lg hover:shadow-xl"
                               >
                                 <Upload className="mr-2 h-4 w-4" />
                                 Upload Image
@@ -1655,7 +1655,7 @@ export default function StoreBuilderPage() {
                                     transition={{ delay: idx * 0.1 }}
                                     className="relative group"
                                   >
-                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-[#c0a146] transition-colors shadow-lg group-hover:shadow-xl">
+                                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-border group-hover:border-[#0E5A43] transition-colors shadow-lg group-hover:shadow-xl">
                                       <Image
                                         src={img.url || "/placeholder.svg"}
                                         alt={
@@ -1686,7 +1686,7 @@ export default function StoreBuilderPage() {
                                       <X className="h-3 w-3" />
                                     </Button>
                                     {idx === 0 && (
-                                      <Badge className="absolute bottom-3 left-3 bg-[#c0a146] text-white border-0 shadow-lg">
+                                      <Badge className="absolute bottom-3 left-3 bg-[#0E5A43] text-white border-0 shadow-lg">
                                         <Sparkles className="w-3 h-3 mr-1" />
                                         Main
                                       </Badge>
@@ -1715,8 +1715,8 @@ export default function StoreBuilderPage() {
                             className="space-y-6 mt-8"
                           >
                             <div className="flex items-center gap-3 pb-4 border-b">
-                              <div className="p-2 rounded-lg bg-[#c0a146]/10">
-                                <Box className="h-5 w-5 text-[#c0a146]" />
+                              <div className="p-2 rounded-lg bg-[#0E5A43]/10">
+                                <Box className="h-5 w-5 text-[#0E5A43]" />
                               </div>
                               <div>
                                 <h3 className="text-lg font-semibold">
@@ -1729,9 +1729,9 @@ export default function StoreBuilderPage() {
                             </div>
 
                             {watchedHasVariants ? (
-                              <div className="rounded-lg bg-[#c0a146]/10 border border-[#c0a146]/20 p-4">
+                              <div className="rounded-lg bg-[#0E5A43]/10 border border-[#0E5A43]/20 p-4">
                                 <div className="flex items-start gap-3">
-                                  <Palette className="h-5 w-5 text-[#c0a146] mt-0.5" />
+                                  <Palette className="h-5 w-5 text-[#0E5A43] mt-0.5" />
                                   <div className="text-sm">
                                     <p className="font-medium text-foreground mb-1">
                                       Variants Enabled
@@ -1741,7 +1741,7 @@ export default function StoreBuilderPage() {
                                       the Variants tab to set quantities for
                                       each color/size combination.
                                     </p>
-                                    <p className="text-[#c0a146] font-medium mt-2">
+                                    <p className="text-[#0E5A43] font-medium mt-2">
                                       Total inventory:{" "}
                                       {watchedVariants?.reduce(
                                         (total, v) =>
@@ -1769,7 +1769,7 @@ export default function StoreBuilderPage() {
                                       </FormLabel>
                                       <FormControl>
                                         <div className="relative">
-                                          <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#c0a146]" />
+                                          <Box className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#0E5A43]" />
                                           <Input
                                             type="number"
                                             min="0"
@@ -1789,10 +1789,10 @@ export default function StoreBuilderPage() {
                               </div>
                             )}
 
-                            <div className="rounded-lg bg-[#c0a146]/10 border border-[#c0a146]/20 p-4 max-w-md">
+                            <div className="rounded-lg bg-[#0E5A43]/10 border border-[#0E5A43]/20 p-4 max-w-md">
                               <div className="flex items-start gap-3">
                                 <div className="flex-shrink-0 mt-0.5">
-                                  <Sparkles className="h-5 w-5 text-[#c0a146]" />
+                                  <Sparkles className="h-5 w-5 text-[#0E5A43]" />
                                 </div>
                                 <div className="text-sm">
                                   <p className="font-medium text-foreground mb-1">
@@ -1817,8 +1817,8 @@ export default function StoreBuilderPage() {
                                 <div className="flex flex-col sm:flex-row iitems-start sm:items-center justify-between pb-4 border-b">
                                   <div className="space-y-1 mb-2 sm:mb-0">
                                     <div className="flex items-center">
-                                      <div className="p-2 rounded-lg bg-[#c0a146]/10">
-                                        <Palette className="h-5 w-5 text-[#c0a146]" />
+                                      <div className="p-2 rounded-lg bg-[#0E5A43]/10">
+                                        <Palette className="h-5 w-5 text-[#0E5A43]" />
                                       </div>
                                       <h3 className="text-lg font-semibold">
                                         Color & Size Variants
@@ -2090,7 +2090,7 @@ export default function StoreBuilderPage() {
                               isSavingProduct ||
                               (products.length >= 10 && !editingProduct)
                             }
-                            className="bg-[#c0a146] hover:bg-[#c0a146]/90 text-white shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
+                            className="bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 text-white shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
                           >
                             {isSavingProduct ? (
                               <>

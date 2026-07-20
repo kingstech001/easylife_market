@@ -369,7 +369,7 @@ export default function ProductPageClient({
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <div className="container py-8 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back button */}
         <AnimatedContainer animation="fadeIn">
@@ -399,7 +399,7 @@ export default function ProductPageClient({
                   />
                   {hasDiscount && (
                     <div className="absolute top-6 left-6">
-                      <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 text-sm font-bold shadow-lg">
+                      <Badge className="bg-red-600 text-white px-4 py-2 text-sm font-bold shadow-lg">
                         -{discountPercentage}% OFF
                       </Badge>
                     </div>
@@ -415,7 +415,7 @@ export default function ProductPageClient({
                   )}
                   {currentStock < 10 && currentStock > 0 && (
                     <div className="absolute top-6 right-6">
-                      <Badge className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-4 py-2 shadow-lg">
+                      <Badge className="bg-orange-600 text-white px-4 py-2 shadow-lg">
                         Only {currentStock} left!
                       </Badge>
                     </div>
@@ -433,7 +433,7 @@ export default function ProductPageClient({
                       whileTap={{ scale: 0.95 }}
                       className={`relative aspect-square w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-xl transition-all ${
                         selectedImage === index
-                          ? "ring-2 ring-[#e1a200] border-primary shadow-lg"
+                          ? "ring-2 ring-[#0E5A43] border-primary shadow-lg"
                           : "border-border hover:border-primary/50"
                       }`}
                       onClick={() => setSelectedImage(index)}
@@ -450,7 +450,7 @@ export default function ProductPageClient({
               )}
 
               {/* Trust Badges */}
-              <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/5 to-primary/10">
+              <Card className="border-0 shadow-sm bg-primary/10">
                 <CardContent className="p-3">
                   <div className="grid grid-cols-3">
                     <div className="text-center">
@@ -547,7 +547,7 @@ export default function ProductPageClient({
                 </div>
 
                 {/* Price */}
-                <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+                <Card className="border-2 border-primary/20 bg-primary/10">
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between relative">
                       <div>
@@ -573,7 +573,7 @@ export default function ProductPageClient({
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: "auto" }}
                               exit={{ opacity: 0, height: 0 }}
-                              className="text-xs text-[#e1a200] font-medium mt-1"
+                              className="text-xs text-[#0E5A43] font-medium mt-1"
                             >
                               Includes +{formatAmount(modifierPriceAddition)} in add-ons
                             </motion.p>
@@ -581,7 +581,7 @@ export default function ProductPageClient({
                         </AnimatePresence>
                       </div>
                       {hasDiscount && (
-                        <Badge className="bg-gradient-to-r from-red-600 to-red-500 text-white text-sm right-0 shadow-lg absolute top-0">
+                        <Badge className="bg-red-600 text-white text-sm right-0 shadow-lg absolute top-0">
                           -{discountPercentage}%
                         </Badge>
                       )}
@@ -614,8 +614,8 @@ export default function ProductPageClient({
                               }}
                               className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border-2 transition-all flex-shrink-0 ${
                                 selectedColor === variant.color.name
-                                  ? "border-[#e1a200] bg-[#e1a200]/10 ring-1 ring-[#e1a200]/30"
-                                  : "border-border hover:border-[#e1a200]/50"
+                                  ? "border-[#0E5A43] bg-[#0E5A43]/10 ring-1 ring-[#0E5A43]/30"
+                                  : "border-border hover:border-[#0E5A43]/50"
                               }`}
                             >
                               <div
@@ -648,10 +648,10 @@ export default function ProductPageClient({
                                 disabled={sizeData.quantity === 0}
                                 className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-2 font-medium transition-all flex-shrink-0 ${
                                   selectedSize === sizeData.size
-                                    ? "border-[#e1a200] bg-[#e1a200]/10 text-primary ring-1 ring-[#e1a200]/30"
+                                    ? "border-[#0E5A43] bg-[#0E5A43]/10 text-primary ring-1 ring-[#0E5A43]/30"
                                     : sizeData.quantity === 0
                                     ? "border-border bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                                    : "border-border hover:border-[#e1a200]/50"
+                                    : "border-border hover:border-[#0E5A43]/50"
                                 }`}
                               >
                                 <span className="text-sm sm:text-base">{sizeData.size}</span>

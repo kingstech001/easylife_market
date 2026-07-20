@@ -57,28 +57,28 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section className="relative py-16 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
+    <section className="relative py-16 bg-background overflow-hidden">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div 
           className="absolute inset-0" 
           style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.05) 1px, transparent 0)`,
+            backgroundImage: `none`,
             backgroundSize: '40px 40px'
           }}
         />
       </div>
 
       {/* Minimal Accent - MATCHING OTHER SECTIONS */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#e1a200]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#d4b55e]/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#0E5A43]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#F4C430]/5 rounded-full blur-3xl" />
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-16">
           {/* Badge */}
           <div className="flex justify-center mb-6">
-            <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
+            <Badge className="bg-[#0E5A43] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
               <Sparkles className="w-4 h-4 mr-2" />
               Simple Process
             </Badge>
@@ -89,7 +89,7 @@ export function HowItWorksSection() {
             <span className="block text-foreground">
               How It Works
             </span>
-            <span className="block mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
+            <span className="block mt-2 text-[#0E5A43]">
               Simple, fast, hassle-free
             </span>
           </h2>
@@ -101,7 +101,7 @@ export function HowItWorksSection() {
           {/* For Buyers */}
           <div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
                 <ShoppingCart className="w-6 h-6" />
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -117,8 +117,8 @@ export function HowItWorksSection() {
                 >
                   {/* Step Number */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/10 flex items-center justify-center">
-                      <span className="text-xl font-bold bg-gradient-to-br from-blue-500 to-blue-600 bg-clip-text text-transparent">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                      <span className="text-xl font-bold text-blue-600">
                         {step.number}
                       </span>
                     </div>
@@ -151,7 +151,7 @@ export function HowItWorksSection() {
           {/* For Vendors */}
           <div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#e1a200] to-[#d4b55e] flex items-center justify-center text-white shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-[#0E5A43] text-white flex items-center justify-center text-white shadow-sm">
                 <Upload className="w-6 h-6" />
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -163,12 +163,12 @@ export function HowItWorksSection() {
               {vendorSteps.map((step, index) => (
                 <div
                   key={index}
-                  className="group relative flex gap-4 p-6 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-[#e1a200]/30 transition-all duration-300"
+                  className="group relative flex gap-4 p-6 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-[#0E5A43]/30 transition-all duration-300"
                 >
                   {/* Step Number */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#e1a200]/10 to-[#d4b55e]/10 flex items-center justify-center">
-                      <span className="text-xl font-bold bg-gradient-to-br from-[#e1a200] to-[#d4b55e] bg-clip-text text-transparent">
+                    <div className="w-12 h-12 rounded-xl bg-[#F4C430]/10 flex items-center justify-center">
+                      <span className="text-xl font-bold text-[#0E5A43]">
                         {step.number}
                       </span>
                     </div>
@@ -177,7 +177,7 @@ export function HowItWorksSection() {
                   {/* Content */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <step.icon className="w-5 h-5 text-[#e1a200]" />
+                      <step.icon className="w-5 h-5 text-[#0E5A43]" />
                       <h4 className="text-lg font-bold text-foreground">
                         {step.title}
                       </h4>

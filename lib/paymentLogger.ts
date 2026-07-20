@@ -38,6 +38,8 @@ const PaymentAuditSchema = new mongoose.Schema({
       "webhook_rate_limit_hit",
       "webhook_order_created",
       "duplicate_order_updated",
+      "get_fallback_order_failed",
+      "get_fallback_subscription_failed",
       "subscription_updated",
       "subscription_failed",
       "inventory_deducted_successfully",
@@ -67,9 +69,9 @@ const existingEventValues = (existingPaymentAuditModel?.schema.path("event") as 
 
 if (
   existingPaymentAuditModel &&
-  process.env.NODE_ENV !== "production" &&
   (!existingEventValues ||
-    !existingEventValues.includes("inventory_deduction_error"))
+    !existingEventValues.includes("inventory_deduction_error") ||
+    !existingEventValues.includes("get_fallback_order_failed"))
 ) {
   mongoose.deleteModel("PaymentAudit");
 }

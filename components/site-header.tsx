@@ -154,7 +154,7 @@ export function SiteHeader() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
+                  className="h-9 w-9 hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
                   onClick={() => setSearchOpen(!searchOpen)}
                 >
                   <Search className="h-4 w-4" />
@@ -170,14 +170,14 @@ export function SiteHeader() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 relative hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
+                          className="h-9 w-9 relative hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
                         >
                           <Heart className="h-4 w-4" />
                           <span className="sr-only">Wishlist</span>
                           {wishlistCount > 0 && (
                             <Badge
                               variant="destructive"
-                              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-medium animate-in zoom-in-50 bg-gradient-to-br from-[#e1a200] to-[#e1a200] border-0"
+                              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-medium animate-in zoom-in-50 bg-[#0E5A43] text-white border-0"
                             >
                               {wishlistCount > 99 ? "99+" : wishlistCount}
                             </Badge>
@@ -191,7 +191,7 @@ export function SiteHeader() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 relative hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
+                        className="h-9 w-9 relative hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
                         onClick={() => setCartOpen(true)}
                       >
                         <ShoppingCart className="h-4 w-4" />
@@ -199,7 +199,7 @@ export function SiteHeader() {
                         {itemCount > 0 && (
                           <Badge
                             variant="destructive"
-                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-medium animate-in zoom-in-50 bg-[#e1a200] border-0"
+                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-medium animate-in zoom-in-50 bg-[#0E5A43] text-white border-0"
                           >
                             {itemCount > 99 ? "99+" : itemCount}
                           </Badge>
@@ -216,7 +216,7 @@ export function SiteHeader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
+                    className="h-9 w-9 hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
                   >
                     <Bell className="h-4 w-4" />
                     <span className="sr-only">Notifications</span>
@@ -230,7 +230,7 @@ export function SiteHeader() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
+                        className="h-9 w-9 hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
                       >
                         <LayoutDashboard className="h-4 w-4" />
                         <span className="sr-only">Dashboard</span>
@@ -243,7 +243,7 @@ export function SiteHeader() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-9 px-3 hover:bg-[#e1a200]/10 hover:text-[#e1a200] transition-colors"
+                        className="h-9 px-3 hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
                       >
                         <LogIn className="mr-2 h-4 w-4" />
                         Login
@@ -271,7 +271,7 @@ export function SiteHeader() {
               {itemCount > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute bottom-3 left-3 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+                  className="absolute bottom-3 left-3 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#0E5A43] text-white border-0"
                 >
                   {itemCount > 9 ? "9+" : itemCount}
                 </Badge>
@@ -284,7 +284,7 @@ export function SiteHeader() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors",
                 pathname?.startsWith("/dashboard")
-                  ? "text-[#e1a200]"
+                  ? "text-[#0E5A43]"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -310,14 +310,14 @@ export function SiteHeader() {
                 placeholder="Search for stores or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 h-12 text-base border-border/50 focus:border-[#c0a146]/50 focus:ring-[#c0a146]/20"
+                className="pl-10 pr-4 h-12 text-base border-border/50 focus:border-[#0E5A43]/50 focus:ring-[#0E5A43]/20"
                 autoFocus
               />
               {searchQuery && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:text-[#e1a200]"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:text-[#0E5A43]"
                   onClick={() => {
                     setSearchQuery("");
                     setSearchResults({ stores: [], products: [] });
@@ -333,7 +333,7 @@ export function SiteHeader() {
               <Card className="mt-2 max-h-80 overflow-y-auto border-border/50">
                 {isSearching ? (
                   <div className="p-8 text-center text-muted-foreground">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e1a200] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E5A43] mx-auto"></div>
                     <p className="mt-2">Searching...</p>
                   </div>
                 ) : searchResults.stores.length === 0 &&
@@ -356,7 +356,7 @@ export function SiteHeader() {
                               key={store._id}
                               href={`/stores/${store.slug || store._id}`}
                               onClick={handleSearchResultClick}
-                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#c0a146]/10 transition-colors"
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
                             >
                               {store.logo ? (
                                 <img
@@ -365,8 +365,8 @@ export function SiteHeader() {
                                   className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
                                 />
                               ) : (
-                                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#e1a200]/20 to-[#d4b55e]/20 flex items-center justify-center flex-shrink-0">
-                                  <Store className="h-5 w-5 text-[#e1a200]" />
+                                <div className="h-10 w-10 rounded-lg bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
+                                  <Store className="h-5 w-5 text-[#0E5A43]" />
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
@@ -395,7 +395,7 @@ export function SiteHeader() {
                               key={product._id}
                               href={`/stores/${product.storeSlug}/products/${product._id}`}
                               onClick={handleSearchResultClick}
-                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#e1a200]/10 transition-colors"
+                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
                             >
                               {product.image ? (
                                 <img
@@ -404,15 +404,15 @@ export function SiteHeader() {
                                   className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
                                 />
                               ) : (
-                                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#e1a200]/20 to-[#d4b55e]/20 flex items-center justify-center flex-shrink-0">
-                                  <Package className="h-5 w-5 text-[#e1a200]" />
+                                <div className="h-10 w-10 rounded-lg bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-5 w-5 text-[#0E5A43]" />
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">
                                   {product.name}
                                 </p>
-                                <p className="text-sm text-[#e1a200] font-semibold">
+                                <p className="text-sm text-[#0E5A43] font-semibold">
                                   ₦{product.price?.toLocaleString()}
                                 </p>
                               </div>
@@ -460,7 +460,7 @@ export function SiteHeader() {
             className={cn(
               "flex flex-col items-center justify-center gap-1 transition-colors",
               pathname === "/stores" || pathname?.startsWith("/stores/")
-                ? "text-[#e1a200]"
+                ? "text-[#0E5A43]"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -475,7 +475,7 @@ export function SiteHeader() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors relative",
                 pathname === "/wishlist"
-                  ? "text-[#e1a200]"
+                  ? "text-[#0E5A43]"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -484,7 +484,7 @@ export function SiteHeader() {
               {wishlistCount > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#e1a200] border-0"
+                  className="absolute top-0 right-6 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#0E5A43] text-white border-0"
                 >
                   {wishlistCount > 9 ? "9+" : wishlistCount}
                 </Badge>
@@ -522,7 +522,7 @@ export function SiteHeader() {
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 transition-colors",
                   pathname?.startsWith("/dashboard")
-                    ? "text-[#e1a200]"
+                    ? "text-[#0E5A43]"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >

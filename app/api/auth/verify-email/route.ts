@@ -75,7 +75,7 @@ export async function POST(req: Request) {
           subject: "Your New Verification Code",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; padding: 20px; background-color: #e1a200; border-radius: 10px 10px 0 0;">
+              <div style="text-align: center; padding: 20px; background-color: #0E5A43; border-radius: 10px 10px 0 0;">
                 <img src="${baseUrl}/logo-white.png" alt="Easylife Logo" style="width: 120px;"/>
                 <h1 style="color: white; margin: 0;">Easylife</h1>
               </div>
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
                   You requested a new verification code. Here it is:
                 </p>
                 
-                <div style="background-color: white; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 30px 0; border: 2px dashed #c0a146; border-radius: 8px; color: #c0a146;">
+                <div style="background-color: white; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 30px 0; border: 2px dashed #0E5A43; border-radius: 8px; color: #0E5A43;">
                   ${newCode}
                 </div>
                 

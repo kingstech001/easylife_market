@@ -151,7 +151,7 @@ export default function StoreAnalyticsPage() {
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center">
                 <BarChart3 className="h-8 w-8 text-white" />
               </div>
               <div className="space-y-1">

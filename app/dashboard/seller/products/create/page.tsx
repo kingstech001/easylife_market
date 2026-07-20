@@ -1501,7 +1501,7 @@ export default function CreateProductPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5">
+              <Card className="border-0 shadow-sm bg-primary/10 dark:from-primary/10 dark:to-primary/5">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">

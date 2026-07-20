@@ -21,7 +21,7 @@ const stats = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       {/* Hero Section - Client Component (has image cycling) */}
       <AboutHero />
 
@@ -31,7 +31,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-[#e1a200] mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-[#0E5A43] mb-2">
                   {stat.value}
                 </div>
                 <div className="text-sm text-muted-foreground font-medium">
@@ -51,8 +51,8 @@ export default function AboutPage() {
             <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-lg">
               <CardContent className="p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 rounded-xl bg-[#e1a200]/10">
-                    <Target className="h-6 w-6 text-[#e1a200]" />
+                  <div className="p-3 rounded-xl bg-[#0E5A43]/10">
+                    <Target className="h-6 w-6 text-[#0E5A43]" />
                   </div>
                   <h2 className="text-2xl font-bold">Our Mission</h2>
                 </div>
@@ -69,8 +69,8 @@ export default function AboutPage() {
             <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-lg">
               <CardContent className="p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 rounded-xl bg-[#e1a200]/10">
-                    <Eye className="h-6 w-6 text-[#e1a200]" />
+                  <div className="p-3 rounded-xl bg-[#0E5A43]/10">
+                    <Eye className="h-6 w-6 text-[#0E5A43]" />
                   </div>
                   <h2 className="text-2xl font-bold">Our Vision</h2>
                 </div>
@@ -99,11 +99,11 @@ export default function AboutPage() {
                 { icon: Users, text: "Trusted community marketplace" },
                 { icon: TrendingUp, text: "Fast & reliable service delivery" },
               ].map((feature, index) => (
-                <Card key={index} className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:border-[#e1a200]/30 h-full">
+                <Card key={index} className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:border-[#0E5A43]/30 h-full">
                   <CardContent className="p-6">
                     <div className="flex flex-col items-center text-center gap-4">
-                      <div className="p-3 rounded-xl bg-[#e1a200]/10">
-                        <feature.icon className="h-6 w-6 text-[#e1a200]" />
+                      <div className="p-3 rounded-xl bg-[#0E5A43]/10">
+                        <feature.icon className="h-6 w-6 text-[#0E5A43]" />
                       </div>
                       <p className="font-medium text-sm leading-relaxed">
                         {feature.text}
@@ -117,11 +117,11 @@ export default function AboutPage() {
 
           {/* Why We Built This */}
           <div className="mt-16">
-            <Card className="border-border/40 bg-gradient-to-br from-card/50 to-muted/30 backdrop-blur-sm shadow-lg">
+            <Card className="border-border/40 bg-card/80 backdrop-blur-sm shadow-lg">
               <CardContent className="p-8 md:p-12">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 rounded-xl bg-[#e1a200]/10">
-                    <Heart className="h-6 w-6 text-[#e1a200]" />
+                  <div className="p-3 rounded-xl bg-[#0E5A43]/10">
+                    <Heart className="h-6 w-6 text-[#0E5A43]" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold">
                     Why We Built This Platform
@@ -140,7 +140,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-[#e1a200]/10 via-transparent to-transparent">
+      <section className="py-16 md:py-24 bg-[#0E5A43]/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
@@ -154,7 +154,7 @@ export default function AboutPage() {
               <Button
                 asChild
                 size="lg"
-                className="bg-[#e1a200] hover:bg-[#e1a200]/90 text-white shadow-lg hover:shadow-xl transition-all"
+                className="bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 text-white shadow-lg hover:shadow-xl transition-all"
               >
                 <Link href="/auth/register">
                   Start Selling Today
@@ -165,7 +165,7 @@ export default function AboutPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-[#e1a200]/30 hover:bg-[#e1a200]/10"
+                className="border-[#0E5A43]/30 hover:bg-[#0E5A43]/10"
               >
                 <Link href="/stores">Explore Stores</Link>
               </Button>

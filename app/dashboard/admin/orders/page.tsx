@@ -31,6 +31,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { DeliveryLocationMap } from "@/components/ui/delivery-location-map"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   DropdownMenu,
@@ -39,6 +40,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
 // Define types for orders
@@ -62,15 +73,44 @@ type Order = {
   status: OrderStatus
   total: number
   totalPrice?: number
+  subtotal?: number
+  deliveryFee?: number
+  grandTotal?: number
+  customerCoords?: {
+    lat?: number
+    lng?: number
+  }
   createdAt: string
   shippingAddress?: string
-  shippingInfo?: any
+  shippingInfo?: {
+    firstName?: string
+    lastName?: string
+    email?: string
+    phone?: string
+    address?: string
+    state?: string
+    area?: string
+    customerCoords?: {
+      lat?: number
+      lng?: number
+    }
+  }
   userId?: string
   storeId?: string
   storeName?: string
   paymentMethod?: string
   receiptUrl?: string
 }
+
+type Pagination = {
+  page: number
+  limit: number
+  totalCount: number
+  totalPages: number
+  hasMore: boolean
+}
+
+type StatusCounts = Record<"all" | OrderStatus, number>
 
 const statusConfig = {
   pending: {
@@ -123,10 +163,28 @@ export default function AdminOrdersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 10,
+    totalCount: 0,
+    totalPages: 1,
+    hasMore: false,
+  })
+  const [statusCounts, setStatusCounts] = useState<StatusCounts>({
+    all: 0,
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  })
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
   const [editingOrder, setEditingOrder] = useState<string | null>(null)
   const [editingStatus, setEditingStatus] = useState<OrderStatus | null>(null)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null)
 
   const normalizeOrderStatus = (status: string | undefined): OrderStatus => {
     switch (status) {
@@ -155,7 +213,20 @@ export default function AdminOrdersPage() {
   const fetchOrders = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/orders/admin")
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(pageSize),
+      })
+
+      if (statusFilter !== "all") {
+        params.set("status", statusFilter)
+      }
+
+      if (searchTerm.trim()) {
+        params.set("search", searchTerm.trim())
+      }
+
+      const response = await fetch(`/api/orders/admin?${params.toString()}`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -199,11 +270,29 @@ export default function AdminOrdersPage() {
                 .replace(/^,\s*|,\s*$/g, "") || "No address provided"
             : "No address provided",
           total: Number(order?.total ?? order?.totalPrice) || 0,
+          subtotal: Number(order?.subtotal ?? order?.totalPrice ?? order?.total) || 0,
+          deliveryFee: Number(order?.deliveryFee) || 0,
+          grandTotal: Number(order?.grandTotal ?? order?.total ?? order?.totalPrice) || 0,
           createdAt: safeText(order?.createdAt, new Date().toISOString()),
         }
       })
 
       setOrders(transformedOrders)
+      setPagination({
+        page: Number(data.pagination?.page) || currentPage,
+        limit: Number(data.pagination?.limit) || pageSize,
+        totalCount: Number(data.pagination?.totalCount) || 0,
+        totalPages: Math.max(1, Number(data.pagination?.totalPages) || 1),
+        hasMore: Boolean(data.pagination?.hasMore),
+      })
+      setStatusCounts({
+        all: Number(data.statusCounts?.all) || 0,
+        pending: Number(data.statusCounts?.pending) || 0,
+        processing: Number(data.statusCounts?.processing) || 0,
+        shipped: Number(data.statusCounts?.shipped) || 0,
+        delivered: Number(data.statusCounts?.delivered) || 0,
+        cancelled: Number(data.statusCounts?.cancelled) || 0,
+      })
     } catch (error) {
       console.error("Failed to fetch orders:", error)
       toast.error("Failed to load orders", {
@@ -212,7 +301,7 @@ export default function AdminOrdersPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [currentPage, pageSize, searchTerm, statusFilter])
 
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
     setIsUpdating(orderId)
@@ -236,6 +325,7 @@ export default function AdminOrdersPage() {
       })
       setEditingOrder(null)
       setEditingStatus(null)
+      fetchOrders()
     } catch (error) {
       console.error("Failed to update order status:", error)
       toast.error("Failed to update status", {
@@ -262,19 +352,34 @@ export default function AdminOrdersPage() {
     }
   }
 
+  const deleteOrder = async (orderId: string) => {
+    setIsUpdating(orderId)
+    try {
+      const response = await fetch(`/api/orders/admin/${orderId}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete order")
+      }
+
+      setOrders((prev) => prev.filter((order) => order._id !== orderId))
+      setOrderToDelete(null)
+      toast.success("Order deleted")
+      fetchOrders()
+    } catch (error) {
+      console.error("Failed to delete order:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to delete order")
+    } finally {
+      setIsUpdating(null)
+    }
+  }
+
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
-
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.storeName?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
 
   const formatDate = (dateString: string) => {
     const parsed = safeDate(dateString)
@@ -301,22 +406,45 @@ export default function AdminOrdersPage() {
     const safeAmount = Number.isFinite(amount) ? amount : 0
     return `₦${safeAmount.toLocaleString()}`
   }
+  const getDeliveryCoords = (order: Order) => {
+    const lat = Number(order.customerCoords?.lat ?? order.shippingInfo?.customerCoords?.lat)
+    const lng = Number(order.customerCoords?.lng ?? order.shippingInfo?.customerCoords?.lng)
 
-  const getStatusCounts = () => {
-      return {
-        all: orders.length,
-        pending: orders.filter((o) => o.status === "pending").length,
-        processing: orders.filter((o) => o.status === "processing").length,
-        shipped: orders.filter((o) => o.status === "shipped").length,
-        delivered: orders.filter((o) => o.status === "delivered").length,
-        cancelled: orders.filter((o) => o.status === "cancelled").length,
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return null
     }
+
+    return { lat, lng }
   }
 
-  const statusCounts = getStatusCounts()
+  const getDeliveryMapUrl = (order: Order) => {
+    const coords = getDeliveryCoords(order)
+    if (coords) {
+      return `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`
+    }
+
+    const address = order.shippingAddress || order.shippingInfo?.address
+    if (!address) return null
+
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+  }
+
+  const openDeliveryLocation = (order: Order) => {
+    const mapUrl = getDeliveryMapUrl(order)
+    if (!mapUrl) {
+      toast.error("No delivery location saved for this order")
+      return
+    }
+
+    window.open(
+      mapUrl,
+      "_blank",
+      "noopener,noreferrer",
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <div className="container px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-7xl mx-auto">
         {/* Header Section */}
         <motion.div
@@ -326,7 +454,7 @@ export default function AdminOrdersPage() {
         >
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 flex items-center justify-center shadow-lg shadow-red-500/20 flex-shrink-0">
+              <div className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-2xl bg-red-500/20 dark:from-red-600 dark:to-red-700 flex items-center justify-center shadow-lg shadow-red-500/20 flex-shrink-0">
                 <Shield className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -398,11 +526,20 @@ export default function AdminOrdersPage() {
                   <Input
                     placeholder="Search by order number, customer, email, or store..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      setCurrentPage(1)
+                      setSearchTerm(e.target.value)
+                    }}
                     className="pl-10 h-10 sm:h-11"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => {
+                    setCurrentPage(1)
+                    setStatusFilter(value)
+                  }}
+                >
                   <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-11">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="Filter by status" />
@@ -450,7 +587,7 @@ export default function AdminOrdersPage() {
                 </Card>
               ))}
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : orders.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="p-12 sm:p-16 text-center">
                 <div className="flex flex-col items-center gap-4">
@@ -469,6 +606,7 @@ export default function AdminOrdersPage() {
                     <Button
                       variant="outline"
                       onClick={() => {
+                        setCurrentPage(1)
                         setSearchTerm("")
                         setStatusFilter("all")
                       }}
@@ -483,11 +621,12 @@ export default function AdminOrdersPage() {
           ) : (
             <div className="space-y-3 sm:space-y-4">
               <AnimatePresence>
-                {filteredOrders.map((order, index) => {
+                {orders.map((order, index) => {
                   const config = statusConfig[order.status] || statusConfig.pending
                   const StatusIcon = config.icon
                   const isEditing = editingOrder === order._id
                   const isExpanded = expandedOrder === order._id
+                  const deliveryCoords = getDeliveryCoords(order)
 
                   return (
                     <motion.div
@@ -569,7 +708,7 @@ export default function AdminOrdersPage() {
                                     size="sm"
                                     onClick={() => saveStatusChange(order._id)}
                                     disabled={isUpdating === order._id}
-                                    className="h-9 w-9 p-0"
+                                    className="h-9 w-9 p-0 bg-[#0E5A43] text-white hover:bg-[#083B2D]"
                                   >
                                     <Save className="h-4 w-4" />
                                   </Button>
@@ -584,6 +723,17 @@ export default function AdminOrdersPage() {
                                 </div>
                               ) : (
                                 <>
+                                  {getDeliveryMapUrl(order) && (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      onClick={() => openDeliveryLocation(order)}
+                                      className="h-8 bg-[#0E5A43] px-3 text-white hover:bg-[#083B2D]"
+                                    >
+                                      <MapPin className="mr-1.5 h-3.5 w-3.5" />
+                                      Map
+                                    </Button>
+                                  )}
                                   <Badge
                                     variant="outline"
                                     className={`${config.color} border px-3 py-1`}
@@ -592,6 +742,21 @@ export default function AdminOrdersPage() {
                                     <StatusIcon className="h-3 w-3 mr-1.5" />
                                     {config.label}
                                   </Badge>
+
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setExpandedOrder(isExpanded ? null : order._id)}
+                                    className="h-8 w-8 p-0"
+                                    aria-label={isExpanded ? "Hide order details" : "Show order details"}
+                                  >
+                                    <ChevronDown
+                                      className={`h-4 w-4 transition-transform duration-300 ${
+                                        isExpanded ? "rotate-180" : ""
+                                      }`}
+                                    />
+                                  </Button>
 
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -616,7 +781,10 @@ export default function AdminOrdersPage() {
                                         Edit Status
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
-                                      <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                      <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive"
+                                        onClick={() => setOrderToDelete(order)}
+                                      >
                                         <Trash2 className="h-4 w-4 mr-2" />
                                         Delete Order
                                       </DropdownMenuItem>
@@ -624,62 +792,6 @@ export default function AdminOrdersPage() {
                                   </DropdownMenu>
                                 </>
                               )}
-                            </div>
-                          </div>
-
-                          {/* Order Details Grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground font-medium">
-                                <User className="h-3.5 w-3.5" />
-                                Customer
-                              </div>
-                              <p className="font-semibold text-sm sm:text-base truncate">{order.customerName}</p>
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <Mail className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{order.customerEmail}</span>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground font-medium">
-                                <Package className="h-3.5 w-3.5" />
-                                Items
-                              </div>
-                              <div className="space-y-1">
-                                {order.items.slice(0, 2).map((item, index) => (
-                                  <p key={item.productId || index} className="font-medium text-sm truncate">
-                                    {item.quantity}× {item.productName}
-                                  </p>
-                                ))}
-                                {order.items.length > 2 && (
-                                  <button
-                                    onClick={() => setExpandedOrder(isExpanded ? null : order._id)}
-                                    className="text-xs text-primary hover:underline font-medium"
-                                  >
-                                    +{order.items.length - 2} more items
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground font-medium">
-                                <Calendar className="h-3.5 w-3.5" />
-                                Order Date
-                              </div>
-                              <p className="font-semibold text-sm sm:text-base">{formatDate(order.createdAt)}</p>
-                              <p className="text-xs text-muted-foreground">{formatTime(order.createdAt)}</p>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground font-medium">
-                                ₦
-                                Total Amount
-                              </div>
-                              <p className="font-bold text-lg sm:text-xl text-emerald-600 dark:text-emerald-400">
-                                {formatCurrency(order.total)}
-                              </p>
                             </div>
                           </div>
 
@@ -694,6 +806,29 @@ export default function AdminOrdersPage() {
                                 className="overflow-hidden"
                               >
                                 <div className="mt-6 pt-6 border-t border-border space-y-4">
+                                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="rounded-lg bg-muted/50 p-3">
+                                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                        <User className="h-4 w-4" />
+                                        Customer
+                                      </h4>
+                                      <p className="text-sm font-medium">{order.customerName}</p>
+                                      <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <Mail className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">{order.customerEmail}</span>
+                                      </div>
+                                    </div>
+
+                                    <div className="rounded-lg bg-muted/50 p-3">
+                                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                        <Calendar className="h-4 w-4" />
+                                        Order Date
+                                      </h4>
+                                      <p className="text-sm font-medium">{formatDate(order.createdAt)}</p>
+                                      <p className="text-xs text-muted-foreground">{formatTime(order.createdAt)}</p>
+                                    </div>
+                                  </div>
+
                                   {/* All Items */}
                                   <div>
                                     <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
@@ -725,6 +860,29 @@ export default function AdminOrdersPage() {
                                     </div>
                                   </div>
 
+                                  <div>
+                                    <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                      <DollarSign className="h-4 w-4" />
+                                      Payment Summary
+                                    </h4>
+                                    <div className="space-y-2 rounded-lg bg-muted/50 p-3 text-sm">
+                                      <div className="flex items-center justify-between gap-4">
+                                        <span className="text-muted-foreground">Store subtotal</span>
+                                        <span className="font-medium">{formatCurrency(order.total)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between gap-4">
+                                        <span className="text-muted-foreground">Delivery fee</span>
+                                        <span className="font-medium">{formatCurrency(order.deliveryFee || 0)}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between gap-4 border-t border-border pt-2">
+                                        <span className="font-semibold">Customer paid</span>
+                                        <span className="font-bold text-[#0E5A43]">
+                                          {formatCurrency(order.grandTotal || order.total)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
                                   {/* Shipping Address */}
                                   {order.shippingAddress && (
                                     <div>
@@ -732,9 +890,34 @@ export default function AdminOrdersPage() {
                                         <MapPin className="h-4 w-4" />
                                         Shipping Address
                                       </h4>
-                                      <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                                        {order.shippingAddress}
-                                      </p>
+                                      <div className="space-y-3 rounded-lg bg-muted/50 p-3">
+                                        <p className="text-sm text-muted-foreground">
+                                          {order.shippingAddress}
+                                        </p>
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                          <p className="text-xs text-muted-foreground">
+                                            {deliveryCoords
+                                              ? `Pin: ${deliveryCoords.lat.toFixed(6)}, ${deliveryCoords.lng.toFixed(6)}`
+                                              : "Opening map with delivery address"}
+                                          </p>
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={() => openDeliveryLocation(order)}
+                                            className="w-full bg-[#0E5A43] text-white hover:bg-[#083B2D] sm:w-auto"
+                                          >
+                                            <MapPin className="mr-2 h-3.5 w-3.5" />
+                                            Open map
+                                          </Button>
+                                        </div>
+                                        {deliveryCoords && (
+                                          <DeliveryLocationMap
+                                            lat={deliveryCoords.lat}
+                                            lng={deliveryCoords.lng}
+                                            label={order.shippingAddress || "Delivery location"}
+                                          />
+                                        )}
+                                      </div>
                                     </div>
                                   )}
 
@@ -780,7 +963,7 @@ export default function AdminOrdersPage() {
         </motion.div>
 
         {/* Pagination Info */}
-        {!isLoading && filteredOrders.length > 0 && (
+        {!isLoading && orders.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -791,25 +974,52 @@ export default function AdminOrdersPage() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-sm text-muted-foreground text-center sm:text-left">
-                    Showing <span className="font-semibold text-foreground">{filteredOrders.length}</span> of{" "}
-                    <span className="font-semibold text-foreground">{orders.length}</span> orders
+                    Showing{" "}
+                    <span className="font-semibold text-foreground">
+                      {(pagination.page - 1) * pagination.limit + 1}
+                    </span>
+                    -
+                    <span className="font-semibold text-foreground">
+                      {Math.min(pagination.page * pagination.limit, pagination.totalCount)}
+                    </span>{" "}
+                    of <span className="font-semibold text-foreground">{pagination.totalCount}</span> orders
                   </p>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(value) => {
+                        setCurrentPage(1)
+                        setPageSize(Number(value))
+                      }}
+                    >
+                      <SelectTrigger className="h-9 w-[88px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={pagination.page <= 1}
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    >
                       Previous
                     </Button>
                     <div className="flex items-center gap-1">
-                      <Button variant="default" size="sm" className="w-8 h-8 p-0">
-                        1
-                      </Button>
-                      <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
-                        2
-                      </Button>
-                      <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
-                        3
-                      </Button>
+                      <span className="px-3 text-sm text-muted-foreground">
+                        Page {pagination.page} of {pagination.totalPages}
+                      </span>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!pagination.hasMore}
+                      onClick={() => setCurrentPage((page) => Math.min(pagination.totalPages, page + 1))}
+                    >
                       Next
                     </Button>
                   </div>
@@ -819,6 +1029,32 @@ export default function AdminOrdersPage() {
           </motion.div>
         )}
       </div>
+      <AlertDialog open={!!orderToDelete} onOpenChange={(open) => !open && setOrderToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove{" "}
+              <span className="font-medium text-foreground">
+                {orderToDelete?.orderNumber || "this order"}
+              </span>
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!orderToDelete && isUpdating === orderToDelete._id}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => orderToDelete && deleteOrder(orderToDelete._id)}
+              disabled={!!orderToDelete && isUpdating === orderToDelete._id}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {orderToDelete && isUpdating === orderToDelete._id ? "Deleting..." : "Delete order"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

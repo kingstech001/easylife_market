@@ -181,8 +181,8 @@ export function LocationPrompt() {
                   </button>
                   
                   <div className="flex items-center gap-2 sm:gap-3 mb-2 pr-8">
-                    <div className="p-2 sm:p-3 rounded-xl bg-[#c0a146]/10 flex-shrink-0">
-                      <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-[#c0a146]" />
+                    <div className="p-2 sm:p-3 rounded-xl bg-[#0E5A43]/10 flex-shrink-0">
+                      <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-[#0E5A43]" />
                     </div>
                     <CardTitle className="text-lg sm:text-xl">Enable Location</CardTitle>
                   </div>
@@ -202,11 +202,11 @@ export function LocationPrompt() {
                   
                   <div className="space-y-2.5 sm:space-y-3">
                     <div className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                      <Navigation className="h-4 w-4 text-[#c0a146] mt-0.5 flex-shrink-0" />
+                      <Navigation className="h-4 w-4 text-[#0E5A43] mt-0.5 flex-shrink-0" />
                       <span className="leading-relaxed">Get accurate delivery time estimates</span>
                     </div>
                     <div className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 text-[#c0a146] mt-0.5 flex-shrink-0" />
+                      <MapPin className="h-4 w-4 text-[#0E5A43] mt-0.5 flex-shrink-0" />
                       <span className="leading-relaxed">Discover stores and products near you</span>
                     </div>
                   </div>
@@ -215,7 +215,7 @@ export function LocationPrompt() {
                     <Button
                       onClick={handleEnableLocation}
                       disabled={isLoading}
-                      className="w-full bg-[#c0a146] hover:bg-[#c0a146]/90 text-white h-10 sm:h-11 text-sm sm:text-base"
+                      className="w-full bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 text-white h-10 sm:h-11 text-sm sm:text-base"
                     >
                       {isLoading ? (
                         <>

@@ -101,9 +101,9 @@ export function CategoryGrid() {
               href={buildCategorySearchUrl(category)}
               className="group flex-shrink-0"
             >
-              <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#e1a200]/50 hover:bg-[#e1a200]/5 hover:shadow-md transition-all duration-300 w-[72px]">
-                <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#e1a200]/40 group-hover:bg-[#e1a200]/10 group-hover:scale-110 transition-all duration-300">
-                  <Icon className={cn("h-4 w-4 text-[#e1a200]")} />
+              <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 hover:shadow-md transition-all duration-300 w-[72px]">
+                <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#0E5A43]/40 group-hover:bg-[#0E5A43]/10 group-hover:scale-110 transition-all duration-300">
+                  <Icon className={cn("h-4 w-4 text-[#0E5A43]")} />
                 </div>
                 <span className="text-[9px] font-semibold text-foreground text-center leading-tight line-clamp-2">
                   {category.name}
@@ -134,9 +134,9 @@ export function CategoryGridAll() {
               href={buildCategorySearchUrl(category)}
               className="group flex-shrink-0 lg:flex-shrink"
             >
-              <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#e1a200]/50 hover:bg-[#e1a200]/5 hover:shadow-md transition-all duration-300 w-[72px] lg:w-[80px]">
-                <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#e1a200]/40 group-hover:bg-[#e1a200]/10 group-hover:scale-110 transition-all duration-300">
-                  <Icon className={cn("h-4 w-4 lg:h-5 lg:w-5 text-[#e1a200]")} />
+              <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 hover:shadow-md transition-all duration-300 w-[72px] lg:w-[80px]">
+                <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#0E5A43]/40 group-hover:bg-[#0E5A43]/10 group-hover:scale-110 transition-all duration-300">
+                  <Icon className={cn("h-4 w-4 lg:h-5 lg:w-5 text-[#0E5A43]")} />
                 </div>
                 <span className="text-[9px] lg:text-[10px] font-semibold text-foreground text-center leading-tight line-clamp-2">
                   {category.name}
@@ -168,16 +168,16 @@ export function CategorySidebar() {
                 className="group"
               >
                 <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted/50 transition-all duration-200">
-                  <div className="p-2 rounded-lg bg-muted/50 border border-border group-hover:border-[#e1a200]/30 group-hover:bg-[#e1a200]/10 transition-all duration-200">
-                    <Icon className="h-5 w-5 text-[#e1a200]" />
+                  <div className="p-2 rounded-lg bg-muted/50 border border-border group-hover:border-[#0E5A43]/30 group-hover:bg-[#0E5A43]/10 transition-all duration-200">
+                    <Icon className="h-5 w-5 text-[#0E5A43]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-[#e1a200] transition-colors">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-[#0E5A43] transition-colors">
                       {category.name}
                     </p>
                   </div>
                   <svg
-                    className="h-4 w-4 text-muted-foreground group-hover:text-[#e1a200] group-hover:translate-x-1 transition-all"
+                    className="h-4 w-4 text-muted-foreground group-hover:text-[#0E5A43] group-hover:translate-x-1 transition-all"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

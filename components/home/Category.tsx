@@ -9,7 +9,7 @@ function Category() {
     <div>
       <div className="mb-8 text-center">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-primary bg-clip-text text-transparent">
+                <span className="text-[#0E5A43]">
                   New{" "}
                 </span>
                 <span className="text-foreground">Products</span>

@@ -39,27 +39,27 @@ export function BuyerSection() {
   ];
 
   return (
-    <section className="relative py-16 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
+    <section className="relative py-16 md:py-24 bg-background overflow-hidden">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div 
           className="absolute inset-0" 
           style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.05) 1px, transparent 0)`,
+            backgroundImage: `none`,
             backgroundSize: '40px 40px'
           }}
         />
       </div>
 
       {/* Minimal Accent */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#e1a200]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#d4b55e]/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#0E5A43]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#F4C430]/5 rounded-full blur-3xl" />
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="text-center mb-12 md:mb-16">
           {/* Badge */}
           <div className="flex justify-center mb-6">
-            <Badge className="bg-gradient-to-r from-[#e1a200] to-[#d4b55e] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
+            <Badge className="bg-[#0E5A43] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
               <Sparkles className="w-4 h-4 mr-2" />
               For Customers
             </Badge>
@@ -70,7 +70,7 @@ export function BuyerSection() {
             <span className="block text-foreground">
               Everything you need,
             </span>
-            <span className="block mt-2 bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] bg-clip-text text-transparent">
+            <span className="block mt-2 text-[#0E5A43]">
               delivered with ease
             </span>
           </h2>
@@ -87,10 +87,10 @@ export function BuyerSection() {
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="group relative bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-[#e1a200]/30 transition-all duration-300 hover:-translate-y-1"
+              className="group relative bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-[#0E5A43]/30 transition-all duration-300 hover:-translate-y-1"
             >
               {/* Icon */}
-              <div className="mb-4 inline-flex p-3 rounded-xl bg-gradient-to-br from-[#e1a200] to-[#d4b55e] text-white shadow-sm">
+              <div className="mb-4 inline-flex p-3 rounded-xl bg-[#0E5A43] text-white shadow-sm">
                 <benefit.icon className="w-6 h-6" />
               </div>
 
@@ -135,7 +135,7 @@ export function BuyerSection() {
           <Link href="/allStoreProducts" className="w-full sm:w-auto">
             <Button
               size="lg"
-              className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] hover:from-[#d4b55e] hover:via-[#e1a200] hover:to-[#d4b55e] text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
+              className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
             >
               Start Shopping
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -146,7 +146,7 @@ export function BuyerSection() {
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto h-14 px-8 text-lg bg-transparent font-bold border-2 hover:border-[#e1a200] hover:bg-[#e1a200]/5  transition-all duration-300"
+              className="w-full sm:w-auto h-14 px-8 text-lg bg-transparent font-bold border-2 hover:border-[#0E5A43] hover:bg-[#0E5A43]/5  transition-all duration-300"
             >
               Browse Stores
             </Button>

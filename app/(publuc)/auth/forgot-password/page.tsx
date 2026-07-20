@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const fieldBaseClass =
-  "peer h-14 rounded-2xl border-border/60 bg-background/90 px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#e1a200]/30 focus-visible:ring-offset-0 focus-visible:border-[#e1a200]/50";
+  "peer h-14 rounded-2xl border-border/60 bg-background/90 px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#0E5A43]/30 focus-visible:ring-offset-0 focus-visible:border-[#0E5A43]/50";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -60,17 +60,17 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,rgba(225,162,0,0.08),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.12))] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="relative min-h-screen overflow-hidden bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#e1a200]/10 blur-3xl sm:h-72 sm:w-72" />
+          <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#0E5A43]/10 blur-3xl sm:h-72 sm:w-72" />
           <div className="absolute bottom-[8%] right-[-8%] h-64 w-64 rounded-full bg-foreground/5 blur-3xl sm:h-80 sm:w-80" />
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
           <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-            <div className="hidden rounded-[36px] border border-border/70 bg-[linear-gradient(180deg,rgba(225,162,0,0.14),rgba(225,162,0,0.02)_45%,rgba(255,255,255,0.72)_100%)] p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
+            <div className="hidden rounded-[36px] border border-border/70 bg-muted/20 p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
               <div>
-                <div className="inline-flex items-center rounded-full border border-[#e1a200]/20 bg-[#e1a200]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                <div className="inline-flex items-center rounded-full border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Recovery sent
                 </div>
                 <h1 className="mt-6 max-w-md text-4xl font-semibold leading-tight tracking-tight text-foreground">
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
               <div className="grid gap-4">
                 <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                       <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div>
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
             <Card className="w-full rounded-[30px] border border-border/70 bg-background/92 shadow-xl backdrop-blur-sm sm:rounded-[36px]">
               <CardHeader className="space-y-5 p-5 pb-3 text-center sm:p-7 sm:pb-4">
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-border/70 bg-background shadow-sm">
-                  <CheckCircle2 className="h-10 w-10 text-[#e1a200]" />
+                  <CheckCircle2 className="h-10 w-10 text-[#0E5A43]" />
                 </div>
 
                 <div className="space-y-2">
@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
               <CardFooter className="flex flex-col space-y-3 p-5 pt-1 sm:p-7 sm:pt-2">
                 <Button
                   variant="outline"
-                  className="h-12 w-full rounded-full border-border/70 bg-background hover:border-[#e1a200]/50 hover:bg-[#e1a200]/[0.05] hover:text-[#8c6500]"
+                  className="h-12 w-full rounded-full border-border/70 bg-background hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/[0.05] hover:text-[#083B2D]"
                   onClick={() => {
                     setEmailSent(false);
                     setEmail("");
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
                 </Button>
 
                 <Link href="/auth/login" className="w-full">
-                  <Button variant="ghost" className="h-12 w-full rounded-full hover:text-[#8c6500]">
+                  <Button variant="ghost" className="h-12 w-full rounded-full hover:text-[#083B2D]">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Login
                   </Button>
@@ -156,16 +156,16 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,rgba(225,162,0,0.08),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.12))] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen overflow-hidden bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#e1a200]/10 blur-3xl sm:h-72 sm:w-72" />
+        <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#0E5A43]/10 blur-3xl sm:h-72 sm:w-72" />
         <div className="absolute bottom-[8%] right-[-8%] h-64 w-64 rounded-full bg-foreground/5 blur-3xl sm:h-80 sm:w-80" />
         <div className="absolute inset-0 opacity-[0.035]">
           <div
             className="absolute inset-0"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.25) 1px, transparent 0)",
+                "none",
               backgroundSize: "26px 26px",
             }}
           />
@@ -174,9 +174,9 @@ export default function ForgotPasswordPage() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
         <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-          <div className="hidden rounded-[36px] border border-border/70 bg-[linear-gradient(180deg,rgba(225,162,0,0.14),rgba(225,162,0,0.02)_45%,rgba(255,255,255,0.72)_100%)] p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
+          <div className="hidden rounded-[36px] border border-border/70 bg-muted/20 p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
             <div>
-              <div className="inline-flex items-center rounded-full border border-[#e1a200]/20 bg-[#e1a200]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+              <div className="inline-flex items-center rounded-full border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                 Account recovery
               </div>
               <h1 className="mt-6 max-w-md text-4xl font-semibold leading-tight tracking-tight text-foreground">
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
             <div className="grid gap-4">
               <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
@@ -204,7 +204,7 @@ export default function ForgotPasswordPage() {
 
               <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e1a200]/12 text-[#8c6500]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div>
@@ -248,7 +248,7 @@ export default function ForgotPasswordPage() {
                     className={cn(fieldBaseClass, "pl-11")}
                     required
                   />
-                  <label className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#e1a200] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
+                  <label className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
                     Email Address
                   </label>
                 </div>
@@ -257,7 +257,7 @@ export default function ForgotPasswordPage() {
               <CardFooter className="flex flex-col space-y-3 p-5 pt-1 sm:p-7 sm:pt-2">
                 <Button
                   type="submit"
-                  className="h-12 w-full rounded-full bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] text-sm font-semibold text-white shadow-lg transition hover:opacity-90 hover:shadow-xl"
+                  className="h-12 w-full rounded-full bg-[#0E5A43] text-sm font-semibold text-white shadow-lg transition hover:opacity-90 hover:shadow-xl"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -276,7 +276,7 @@ export default function ForgotPasswordPage() {
                 <Link href="/auth/login" className="w-full">
                   <Button
                     variant="ghost"
-                    className="h-12 w-full rounded-full hover:text-[#8c6500]"
+                    className="h-12 w-full rounded-full hover:text-[#083B2D]"
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Login

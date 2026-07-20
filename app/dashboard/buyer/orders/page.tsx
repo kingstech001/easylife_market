@@ -212,7 +212,7 @@ export default function BuyerOrdersPage() {
                 <ShoppingBag className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-4xl font-bold tracking-tight text-foreground">
                   My Orders
                 </h1>
                 <p className="text-sm sm:text-lg text-muted-foreground mt-1">Track your order history and status</p>

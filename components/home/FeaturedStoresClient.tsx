@@ -50,7 +50,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
       {/* Reduced animated background elements */}
       <div className="absolute  inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-[#e1a200]/5 rounded-full blur-3xl opacity-60" />
+        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-[#0E5A43]/5 rounded-full blur-3xl opacity-60" />
         <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl opacity-60" />
       </div>
 
@@ -62,14 +62,14 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
           {/* Badge */}
           <Badge
             variant="secondary"
-            className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#e1a200]/10 to-primary/10 text-foreground border-[#e1a200]/30 transition-all duration-300 hover:shadow-md"
+            className="px-4 py-2 text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30 transition-all duration-300 hover:shadow-md"
           >
-            <Sparkles className="w-4 h-4 mr-2 text-[#e1a200]" />
+            <Sparkles className="w-4 h-4 mr-2 text-[#0E5A43]" />
             New Featured Stores
           </Badge>
           <Link
             href="/stores"
-            className="flex items-center text-xs md:text-sm font-medium text-[#e1a200] hover:text-[#d4b55e] transition-colors"
+            className="flex items-center text-xs md:text-sm font-medium text-[#0E5A43] hover:text-[#F4C430] transition-colors"
           >
             View All
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -80,7 +80,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
         <div className="relative">
           {stores.length === 0 ? (
             <div className="text-center py-12 sm:py-16 lg:py-20 space-y-6 sm:space-y-8 max-w-2xl mx-auto">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center shadow-lg">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-muted flex items-center justify-center shadow-lg">
                 <Store className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
               </div>
               <div className="space-y-2 sm:space-y-3">
@@ -95,7 +95,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
               <Link href="/auth/register" className="inline-block">
                 <Button
                   size="lg"
-                  className="h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-gradient-to-r from-[#e1a200] via-[#d4b55e] to-[#e1a200] shadow-lg hover:shadow-xl transition-all"
+                  className="h-11 sm:h-12 lg:h-14 px-6 sm:px-8 lg:px-10 text-sm sm:text-base lg:text-lg font-semibold bg-[#0E5A43] text-white shadow-lg hover:shadow-xl transition-all"
                 >
                   <span className="flex items-center gap-2">
                     Start Your Own Store
@@ -130,8 +130,8 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
         </div>
       </div>
 
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-24 lg:h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-24 lg:h-32 bg-background pointer-events-none" />
     </section>
   );
 }

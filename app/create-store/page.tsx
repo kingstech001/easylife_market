@@ -415,7 +415,7 @@ export default function CreateStorePage() {
             </button>
 
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-br from-[#c0a146] to-[#d4b55e] flex items-center justify-center">
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-[#0E5A43] text-white flex items-center justify-center">
                 <StoreIcon className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-white" />
               </div>
               <div className="leading-tight">
@@ -444,7 +444,7 @@ export default function CreateStorePage() {
                 className={cn(
                   "p-1.5 rounded-lg transition-colors",
                   showPreview
-                    ? "bg-[#c0a146]/10 text-[#c0a146]"
+                    ? "bg-[#0E5A43]/10 text-[#0E5A43]"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -456,7 +456,7 @@ export default function CreateStorePage() {
           {/* Progress bar */}
           <div className="h-0.5 -mx-4 sm:-mx-6 bg-border/30">
             <div
-              className="h-full bg-gradient-to-r from-[#c0a146] to-[#d4b55e] transition-all duration-500 ease-out"
+              className="h-full bg-[#0E5A43] text-white transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -481,7 +481,7 @@ export default function CreateStorePage() {
                   "flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-300 flex-1 justify-center min-w-0",
                   "disabled:opacity-40 disabled:cursor-not-allowed",
                   isActive
-                    ? "bg-gradient-to-r from-[#c0a146] to-[#d4b55e] text-white shadow-md shadow-[#c0a146]/25"
+                    ? "bg-[#0E5A43] text-white shadow-md shadow-[#0E5A43]/25"
                     : isComplete
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                       : "bg-muted/50 text-muted-foreground border border-border/50"
@@ -503,7 +503,7 @@ export default function CreateStorePage() {
           <AnimatedContainer animation="slideUp" className="mb-5 sm:mb-6">
             <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
               {/* Banner */}
-              <div className="aspect-[3/1] bg-gradient-to-br from-muted to-muted/50 relative overflow-hidden">
+              <div className="aspect-[3/1] bg-muted relative overflow-hidden">
                 {bannerPreview ? (
                   <img
                     src={bannerPreview}
@@ -544,7 +544,7 @@ export default function CreateStorePage() {
                 )}
                 <div className="flex items-center gap-3 mt-2 flex-wrap">
                   {watchedCategories && (
-                    <span className="text-[10px] sm:text-xs bg-[#c0a146]/10 text-[#c0a146] px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-[10px] sm:text-xs bg-[#0E5A43]/10 text-[#0E5A43] px-2 py-0.5 rounded-full font-medium">
                       {
                         CATEGORY_OPTIONS.find(
                           (c) => c.value === watchedCategories
@@ -611,7 +611,7 @@ export default function CreateStorePage() {
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
-                            <div className="flex items-stretch overflow-hidden rounded-xl border border-border/50 focus-within:border-[#c0a146] focus-within:ring-1 focus-within:ring-[#c0a146]/20 transition-all">
+                            <div className="flex items-stretch overflow-hidden rounded-xl border border-border/50 focus-within:border-[#0E5A43] focus-within:ring-1 focus-within:ring-[#0E5A43]/20 transition-all">
                               <div className="flex items-center px-2.5 sm:px-3 bg-muted/50 border-r border-border/50">
                                 <Link2 className="h-3.5 w-3.5 text-muted-foreground sm:mr-1.5 flex-shrink-0" />
                                 <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">
@@ -645,7 +645,7 @@ export default function CreateStorePage() {
                               <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Textarea
                                 placeholder="Tell customers what makes your store special..."
-                                className="pl-10 min-h-[100px] sm:min-h-[110px] rounded-xl border-border/50 focus:border-[#c0a146] focus-visible:ring-1 focus-visible:ring-[#c0a146]/20 focus-visible:ring-offset-0 resize-none transition-all text-sm"
+                                className="pl-10 min-h-[100px] sm:min-h-[110px] rounded-xl border-border/50 focus:border-[#0E5A43] focus-visible:ring-1 focus-visible:ring-[#0E5A43]/20 focus-visible:ring-offset-0 resize-none transition-all text-sm"
                                 {...field}
                               />
                             </div>
@@ -676,15 +676,15 @@ export default function CreateStorePage() {
                                     className={cn(
                                       "flex items-center gap-3 sm:gap-4 w-full rounded-xl border-2 px-3 sm:px-4 py-3 text-left transition-all duration-200 active:scale-[0.98]",
                                       isSelected
-                                        ? "border-[#c0a146] bg-[#c0a146]/5 shadow-sm shadow-[#c0a146]/10"
-                                        : "border-border/50 hover:border-[#c0a146]/40 hover:bg-muted/30"
+                                        ? "border-[#0E5A43] bg-[#0E5A43]/5 shadow-sm shadow-[#0E5A43]/10"
+                                        : "border-border/50 hover:border-[#0E5A43]/40 hover:bg-muted/30"
                                     )}
                                   >
                                     <div
                                       className={cn(
                                         "h-10 w-10 sm:h-11 sm:w-11 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 transition-colors",
                                         isSelected
-                                          ? "bg-[#c0a146]/15"
+                                          ? "bg-[#0E5A43]/15"
                                           : "bg-muted/50"
                                       )}
                                     >
@@ -695,7 +695,7 @@ export default function CreateStorePage() {
                                         className={cn(
                                           "text-sm font-semibold leading-tight",
                                           isSelected
-                                            ? "text-[#c0a146]"
+                                            ? "text-[#0E5A43]"
                                             : "text-foreground"
                                         )}
                                       >
@@ -709,7 +709,7 @@ export default function CreateStorePage() {
                                       className={cn(
                                         "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
                                         isSelected
-                                          ? "border-[#c0a146] bg-[#c0a146]"
+                                          ? "border-[#0E5A43] bg-[#0E5A43]"
                                           : "border-border"
                                       )}
                                     >
@@ -859,7 +859,7 @@ export default function CreateStorePage() {
                                 ? "border-destructive/60 bg-destructive/5"
                                 : logoPreview
                                   ? "border-emerald-400/60"
-                                  : "border-border/60 hover:border-[#c0a146]/50"
+                                  : "border-border/60 hover:border-[#0E5A43]/50"
                             )}
                           >
                             {logoPreview ? (
@@ -915,7 +915,7 @@ export default function CreateStorePage() {
                               "w-full h-10 sm:h-11 rounded-xl transition-colors text-xs sm:text-sm",
                               logoError && !logoPreview
                                 ? "border-destructive/50 text-destructive hover:border-destructive hover:bg-destructive/5"
-                                : "border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5"
+                                : "border-border/50 hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5"
                             )}
                             onClick={() =>
                               document.getElementById("logo-upload")?.click()
@@ -980,7 +980,7 @@ export default function CreateStorePage() {
                               ? "border-destructive/60 bg-destructive/5"
                               : bannerPreview
                                 ? "border-emerald-400/60"
-                                : "border-border/60 hover:border-[#c0a146]/50"
+                                : "border-border/60 hover:border-[#0E5A43]/50"
                           )}
                         >
                           {bannerPreview ? (
@@ -1037,7 +1037,7 @@ export default function CreateStorePage() {
                           "w-full h-10 sm:h-11 rounded-xl transition-colors text-xs sm:text-sm",
                           bannerError && !bannerPreview
                             ? "border-destructive/50 text-destructive hover:border-destructive hover:bg-destructive/5"
-                            : "border-border/50 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5"
+                            : "border-border/50 hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5"
                         )}
                         onClick={() =>
                           document.getElementById("banner-upload")?.click()
@@ -1113,7 +1113,7 @@ export default function CreateStorePage() {
                     variant="outline"
                     size="lg"
                     onClick={handleBack}
-                    className="h-12 sm:h-13 px-4 sm:px-6 rounded-xl border-2 hover:border-[#c0a146]/50 hover:bg-[#c0a146]/5 active:scale-[0.98] transition-all text-sm"
+                    className="h-12 sm:h-13 px-4 sm:px-6 rounded-xl border-2 hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 active:scale-[0.98] transition-all text-sm"
                   >
                     <ChevronLeft className="mr-1 h-4 w-4" /> Back
                   </Button>
@@ -1124,7 +1124,7 @@ export default function CreateStorePage() {
                     type="button"
                     size="lg"
                     onClick={handleNext}
-                    className="flex-1 h-12 sm:h-13 px-6 rounded-xl bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] text-white shadow-lg shadow-[#c0a146]/20 hover:shadow-xl active:scale-[0.98] transition-all duration-300 text-sm sm:text-base font-medium"
+                    className="flex-1 h-12 sm:h-13 px-6 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white shadow-lg shadow-[#0E5A43]/20 hover:shadow-xl active:scale-[0.98] transition-all duration-300 text-sm sm:text-base font-medium"
                   >
                     Continue <ChevronRight className="ml-1.5 h-4 w-4" />
                   </Button>
@@ -1136,8 +1136,8 @@ export default function CreateStorePage() {
                     className={cn(
                       "flex-1 h-12 sm:h-13 px-6 rounded-xl text-white shadow-lg transition-all duration-300 text-sm sm:text-base font-medium active:scale-[0.98]",
                       readyToLaunch
-                        ? "bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] shadow-[#c0a146]/20 hover:shadow-xl"
-                        : "bg-gradient-to-r from-[#c0a146]/50 to-[#d4b55e]/50 cursor-not-allowed opacity-70"
+                        ? "bg-[#0E5A43] text-white hover:bg-[#083B2D] shadow-[#0E5A43]/20 hover:shadow-xl"
+                        : "bg-[#0E5A43]/50 cursor-not-allowed opacity-70"
                     )}
                   >
                     {isSubmitting ? (
@@ -1177,8 +1177,8 @@ function SectionHeading({
 }) {
   return (
     <div className="flex items-center gap-3 mb-1">
-      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-[#c0a146]/10 flex items-center justify-center flex-shrink-0">
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-[#c0a146]" />
+      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-[#0E5A43]/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-[#0E5A43]" />
       </div>
       <div>
         <h2 className="text-base sm:text-lg font-semibold">{title}</h2>
@@ -1207,7 +1207,7 @@ function IconInput({
       <Input
         type={type}
         placeholder={placeholder}
-        className="pl-10 h-11 sm:h-12 rounded-xl border-border/50 focus:border-[#c0a146] focus-visible:ring-1 focus-visible:ring-[#c0a146]/20 focus-visible:ring-offset-0 transition-all text-sm"
+        className="pl-10 h-11 sm:h-12 rounded-xl border-border/50 focus:border-[#0E5A43] focus-visible:ring-1 focus-visible:ring-[#0E5A43]/20 focus-visible:ring-offset-0 transition-all text-sm"
         {...field}
       />
     </div>

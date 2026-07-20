@@ -34,6 +34,10 @@ export interface IOrder extends Document {
     paidAt?: Date
   }
   items: IOrderItem[]
+  customerCoords?: {
+    lat: number
+    lng: number
+  }
   shippingInfo: {
     firstName: string
     lastName: string
@@ -42,6 +46,10 @@ export interface IOrder extends Document {
     address: string
     state: string
     area: string
+    customerCoords?: {
+      lat: number
+      lng: number
+    }
   }
   trackingNumber?: string
   cancelledAt?: Date
@@ -131,6 +139,14 @@ const OrderSchema = new Schema<IOrder>(
         },
       },
     ],
+    customerCoords: {
+      lat: {
+        type: Number,
+      },
+      lng: {
+        type: Number,
+      },
+    },
     shippingInfo: {
       firstName: {
         type: String,
@@ -158,6 +174,14 @@ const OrderSchema = new Schema<IOrder>(
       area: {
         type: String,
         required: true,
+      },
+      customerCoords: {
+        lat: {
+          type: Number,
+        },
+        lng: {
+          type: Number,
+        },
       },
     },
     trackingNumber: {

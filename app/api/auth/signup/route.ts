@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
             
             <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center; margin: 20px 0;">
               <h2 style="color: #333; margin-bottom: 15px;">Your Verification Code</h2>
-              <div style="background-color: #fff; padding: 20px; border-radius: 8px; border: 2px dashed #c0a146; margin: 15px 0;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #c0a146;">${verificationToken}</span>
+              <div style="background-color: #fff; padding: 20px; border-radius: 8px; border: 2px dashed #0E5A43; margin: 15px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #0E5A43;">${verificationToken}</span>
               </div>
               <p style="color: #666; margin-top: 15px;">This code will expire in <strong>10 minutes</strong></p>
             </div>

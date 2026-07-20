@@ -66,7 +66,7 @@ export default function AboutHero() {
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-black/55" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-black/60" />
         </motion.div>
       </AnimatePresence>
 
@@ -77,20 +77,20 @@ export default function AboutHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e1a200]/20 border border-[#e1a200]/40 mb-6 backdrop-blur-sm">
-              <Sparkles className="h-4 w-4 text-[#e1a200]" />
-              <span className="text-sm font-medium text-[#e1a200]">About EasyLife</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0E5A43]/20 border border-[#0E5A43]/40 mb-6 backdrop-blur-sm">
+              <Sparkles className="h-4 w-4 text-[#0E5A43]" />
+              <span className="text-sm font-medium text-[#0E5A43]">About EasyLife</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 text-white leading-tight">
               Empowering{" "}
-              <span className="text-[#e1a200]">Communities</span>{" "}
+              <span className="text-[#0E5A43]">Communities</span>{" "}
               Through Digital Commerce
             </h1>
 
             <p className="text-lg text-white/80 leading-relaxed mb-8 max-w-lg">
               Welcome to{" "}
-              <span className="font-semibold text-[#e1a200]">EasyLife Market</span> — a
+              <span className="font-semibold text-[#0E5A43]">EasyLife Market</span> — a
               modern online marketplace built to make buying and selling simpler, faster,
               and more accessible for everyone.
             </p>
@@ -99,7 +99,7 @@ export default function AboutHero() {
               <Button
                 asChild
                 size="lg"
-                className="bg-[#e1a200] hover:bg-[#e1a200]/90 text-white shadow-lg"
+                className="bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 text-white shadow-lg"
               >
                 <Link href="/auth/register">
                   Start Selling Today
@@ -143,7 +143,7 @@ export default function AboutHero() {
               onClick={() => setCurrentImageIndex(i)}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === currentImageIndex
-                  ? "w-6 bg-[#e1a200]"
+                  ? "w-6 bg-[#0E5A43]"
                   : "w-1.5 bg-white/40"
               }`}
             />

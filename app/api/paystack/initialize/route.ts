@@ -29,9 +29,66 @@ function generateReference() {
   return `REF_${timestamp}_${random}`.toUpperCase()
 }
 
+async function geocodeAddress(address: string) {
+  if (!address.trim()) return null
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`,
+      {
+        headers: {
+          "Accept-Language": "en",
+          "User-Agent": "EasyLife Marketplace",
+        },
+      },
+    )
+
+    if (!response.ok) return null
+
+    const results = await response.json()
+    const firstResult = Array.isArray(results) ? results[0] : null
+    const lat = Number(firstResult?.lat)
+    const lng = Number(firstResult?.lon)
+
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
+  } catch (error) {
+    console.warn("[Paystack Initialize] Failed to geocode delivery address:", error)
+    return null
+  }
+}
+
+async function getStoreIdsForOrders(orders: any[]) {
+  const submittedStoreIds = orders
+    .map((order: any) => order.storeId)
+    .filter(Boolean)
+    .map(String)
+
+  const productIds = orders.flatMap((order: any) =>
+    Array.isArray(order.items)
+      ? order.items.map((item: any) => item.productId).filter(Boolean)
+      : [],
+  )
+
+  if (productIds.length === 0) {
+    return [...new Set(submittedStoreIds)]
+  }
+
+  const products = await Product.find(
+    { _id: { $in: productIds } },
+    { storeId: 1 },
+  ).lean()
+
+  return [
+    ...new Set([
+      ...submittedStoreIds,
+      ...products.map((product: any) => product.storeId?.toString()).filter(Boolean),
+    ]),
+  ]
+}
+
 async function verifyAndCalculateOrderAmount(orders: any[], deliveryFee: number = 0) {
   let calculatedTotal = 0
-  const verifiedOrders = []
+  const ordersByStore = new Map<string, { items: any[]; totalPrice: number }>()
 
   for (const orderGroup of orders) {
     const { storeId, items } = orderGroup
@@ -39,9 +96,6 @@ async function verifyAndCalculateOrderAmount(orders: any[], deliveryFee: number 
     if (!items || !Array.isArray(items) || items.length === 0) {
       throw new Error(`Invalid items for store ${storeId}`)
     }
-
-    let storeTotal = 0
-    const verifiedItems = []
 
     for (const item of items) {
       const product = await Product.findById(item.productId).lean()
@@ -67,32 +121,40 @@ async function verifyAndCalculateOrderAmount(orders: any[], deliveryFee: number 
       const actualPrice = Number(product.price)
       const quantity = Number(item.quantity)
       const itemTotal = actualPrice * quantity
+      const resolvedStoreId = String(storeId || (product as any).storeId || "")
 
-      verifiedItems.push({
+      if (!resolvedStoreId) {
+        throw new Error(`Store not found for product "${product.name}"`)
+      }
+
+      const storeOrder = ordersByStore.get(resolvedStoreId) || {
+        items: [],
+        totalPrice: 0,
+      }
+
+      storeOrder.items.push({
         productId: product._id,
         productName: product.name,
         quantity,
         priceAtPurchase: actualPrice,
         itemTotal,
       })
+      storeOrder.totalPrice = Number(storeOrder.totalPrice) + Number(itemTotal)
+      ordersByStore.set(resolvedStoreId, storeOrder)
 
-      storeTotal = Number(storeTotal) + Number(itemTotal)
+      calculatedTotal = Number(calculatedTotal) + Number(itemTotal)
     }
-
-    verifiedOrders.push({
-      storeId,
-      items: verifiedItems,
-      totalPrice: Number(storeTotal),
-    })
-
-    calculatedTotal = Number(calculatedTotal) + Number(storeTotal)
   }
 
   const numericDeliveryFee = Number(deliveryFee) || 0
   const grandTotal = Number(calculatedTotal) + numericDeliveryFee
 
   return {
-    verifiedOrders,
+    verifiedOrders: Array.from(ordersByStore.entries()).map(([storeId, order]) => ({
+      storeId,
+      items: order.items,
+      totalPrice: Number(order.totalPrice),
+    })),
     subtotal: Number(calculatedTotal),
     deliveryFee: numericDeliveryFee,
     grandTotal: Number(grandTotal),
@@ -220,11 +282,28 @@ export async function POST(request: NextRequest) {
     if (type === "checkout") {
       await connectToDB()
 
-      // Verify delivery fee from coordinates if available
+      // Verify delivery fee from coordinates if available. If the browser did
+      // not send a pin, geocode the selected address so the order still saves
+      // a usable delivery coordinate for admins.
       let verifiedDeliveryFee = Number(deliveryFee) || 0
-      const customerCoords = shippingInfo?.customerCoords
+      let customerCoords = shippingInfo?.customerCoords
+      const hasCustomerCoords =
+        Number.isFinite(Number(customerCoords?.lat)) &&
+        Number.isFinite(Number(customerCoords?.lng))
+
+      if (!hasCustomerCoords && shippingInfo?.address) {
+        customerCoords = await geocodeAddress(
+          [shippingInfo.address, shippingInfo.area, shippingInfo.state, "Nigeria"]
+            .filter(Boolean)
+            .join(", "),
+        )
+        if (customerCoords) {
+          shippingInfo.customerCoords = customerCoords
+        }
+      }
+
       if (customerCoords?.lat && customerCoords?.lng) {
-        const storeIds = [...new Set(orders.map((o: any) => o.storeId))].filter(Boolean)
+        const storeIds = await getStoreIdsForOrders(orders)
         const stores = await Store.find(
           { _id: { $in: storeIds } },
           { "location.coordinates": 1 }
@@ -254,7 +333,9 @@ export async function POST(request: NextRequest) {
       const verifiedOrderData = await verifyAndCalculateOrderAmount(orders, verifiedDeliveryFee)
       finalAmount = verifiedOrderData.grandTotal
 
-      // Update metadata with verified delivery fee
+      // Update metadata with server-verified order groups and delivery fee
+      metadata.orders = verifiedOrderData.verifiedOrders
+      metadata.shippingInfo = shippingInfo
       metadata.deliveryFee = verifiedDeliveryFee
 
       console.log("[Paystack Initialize] Amount verification:", {

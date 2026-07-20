@@ -283,8 +283,8 @@ export default function SearchResultsPage() {
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="relative w-14 h-14 mx-auto">
-            <div className="w-14 h-14 border-[3px] border-muted border-t-[#e1a200] rounded-full animate-spin" />
-            <Search className="absolute inset-0 m-auto w-5 h-5 text-[#e1a200]" />
+            <div className="w-14 h-14 border-[3px] border-muted border-t-[#0E5A43] rounded-full animate-spin" />
+            <Search className="absolute inset-0 m-auto w-5 h-5 text-[#0E5A43]" />
           </div>
           <div>
             <p className="text-sm font-medium">Searching...</p>
@@ -332,7 +332,7 @@ export default function SearchResultsPage() {
               className={cn(
                 "w-full h-11 pl-10 pr-20 rounded-xl bg-muted/50 border text-sm outline-none transition-all",
                 searchFocused
-                  ? "border-[#e1a200] ring-2 ring-[#e1a200]/15 bg-background"
+                  ? "border-[#0E5A43] ring-2 ring-[#0E5A43]/15 bg-background"
                   : "border-border/50 hover:border-border"
               )}
             />
@@ -348,7 +348,7 @@ export default function SearchResultsPage() {
             <Button
               type="submit"
               size="sm"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3.5 rounded-lg bg-[#e1a200] hover:bg-[#c89200] text-white text-xs font-medium shadow-sm"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3.5 rounded-lg bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white text-xs font-medium shadow-sm"
             >
               Search
             </Button>
@@ -368,7 +368,7 @@ export default function SearchResultsPage() {
               <div className="h-3 w-px bg-border" />
               <button
                 onClick={clearSearch}
-                className="inline-flex items-center gap-1.5 text-xs bg-[#e1a200]/10 text-[#c89200] dark:text-[#e1a200] px-2.5 py-1 rounded-full hover:bg-[#e1a200]/20 transition-colors font-medium"
+                className="inline-flex items-center gap-1.5 text-xs bg-[#0E5A43]/10 text-[#083B2D] dark:text-[#0E5A43] px-2.5 py-1 rounded-full hover:bg-[#0E5A43]/20 transition-colors font-medium"
               >
                 {currentQuery}
                 <X className="h-3 w-3" />
@@ -386,7 +386,7 @@ export default function SearchResultsPage() {
           <section>
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <Store className="h-4 w-4 text-[#e1a200]" />
+                <Store className="h-4 w-4 text-[#0E5A43]" />
                 Stores
                 <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({storeResults.length})</span>
               </h2>
@@ -396,7 +396,7 @@ export default function SearchResultsPage() {
                 <Link
                   key={store._id}
                   href={`/stores/${store.slug || store._id}`}
-                  className="flex-shrink-0 w-[260px] sm:w-auto flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border border-border/50 hover:border-[#e1a200]/40 bg-card hover:bg-[#e1a200]/[0.03] transition-all group active:scale-[0.98]"
+                  className="flex-shrink-0 w-[260px] sm:w-auto flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border border-border/50 hover:border-[#0E5A43]/40 bg-card hover:bg-[#0E5A43]/[0.03] transition-all group active:scale-[0.98]"
                 >
                   {store.logo ? (
                     <img
@@ -405,12 +405,12 @@ export default function SearchResultsPage() {
                       className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg object-cover flex-shrink-0 border border-border/50"
                     />
                   ) : (
-                    <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-[#e1a200]/10 flex items-center justify-center flex-shrink-0">
-                      <Store className="h-5 w-5 text-[#e1a200]" />
+                    <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center flex-shrink-0">
+                      <Store className="h-5 w-5 text-[#0E5A43]" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate group-hover:text-[#e1a200] transition-colors">
+                    <p className="text-sm font-semibold truncate group-hover:text-[#0E5A43] transition-colors">
                       {store.businessName}
                     </p>
                     {(store.description || store.location) && (
@@ -420,7 +420,7 @@ export default function SearchResultsPage() {
                       </p>
                     )}
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-[#e1a200] flex-shrink-0 transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-[#0E5A43] flex-shrink-0 transition-colors" />
                 </Link>
               ))}
             </div>
@@ -432,7 +432,7 @@ export default function SearchResultsPage() {
           <section>
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <Package className="h-4 w-4 text-[#e1a200]" />
+                <Package className="h-4 w-4 text-[#0E5A43]" />
                 Products
                 <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({filteredProducts.length})</span>
               </h2>
@@ -452,7 +452,7 @@ export default function SearchResultsPage() {
             <div ref={observerTarget} className="py-6">
               {loadingMore && (
                 <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#e1a200]" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
                   <span className="text-xs text-muted-foreground">Loading more...</span>
                 </div>
               )}
@@ -486,9 +486,9 @@ export default function SearchResultsPage() {
                       <Link
                         key={cat.name}
                         href={buildCategorySearchUrl(cat)}
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border/50 hover:border-[#e1a200]/40 hover:bg-[#e1a200]/5 transition-all"
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border/50 hover:border-[#0E5A43]/40 hover:bg-[#0E5A43]/5 transition-all"
                       >
-                        <Icon className="h-3 w-3 text-[#e1a200]" />
+                        <Icon className="h-3 w-3 text-[#0E5A43]" />
                         {cat.name}
                       </Link>
                     );

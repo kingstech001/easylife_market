@@ -378,7 +378,7 @@ export default async function StorePage({ params }: StorePageProps) {
       : "Notify Me When Available";
 
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.05),transparent_22%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
+      <div className="min-h-screen bg-muted/20">
         <VisitTracker storeId={store.id} />
 
         <section className="relative overflow-hidden">
@@ -393,13 +393,13 @@ export default async function StorePage({ params }: StorePageProps) {
                   priority
                   sizes="100vw"
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.2)_0%,rgba(8,8,8,0.42)_55%,rgba(8,8,8,0.75)_100%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(225,162,0,0.16),transparent_34%)]" />
+                <div className="absolute inset-0 bg-muted/20" />
+                <div className="absolute inset-0 bg-[#F4C430]/10" />
               </>
             ) : (
               <>
-                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(225,162,0,0.18),rgba(255,255,255,0.03)_35%,rgba(0,0,0,0.02)_100%)]" />
-                <div className="absolute left-[-8%] top-[10%] h-40 w-40 rounded-full bg-[#e1a200]/20 blur-3xl sm:h-56 sm:w-56" />
+                <div className="absolute inset-0 bg-muted/20" />
+                <div className="absolute left-[-8%] top-[10%] h-40 w-40 rounded-full bg-[#0E5A43]/20 blur-3xl sm:h-56 sm:w-56" />
                 <div className="absolute bottom-[-10%] right-[-6%] h-44 w-44 rounded-full bg-primary/15 blur-3xl sm:h-64 sm:w-64" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <StoreIcon className="h-20 w-20 text-primary/25 sm:h-28 sm:w-28" />
@@ -423,7 +423,7 @@ export default async function StorePage({ params }: StorePageProps) {
                             height={112}
                             className="h-20 w-20 rounded-[22px] border-4 border-background object-cover shadow-xl ring-1 ring-border/60 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
                           />
-                          <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#e1a200] text-white shadow-lg">
+                          <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#0E5A43] text-white shadow-lg">
                             <ShieldCheck className="h-4 w-4" />
                           </div>
                         </div>
@@ -457,7 +457,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     variant="secondary"
                     className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                   >
-                    <Star className="mr-1.5 h-3.5 w-3.5 fill-current text-[#e1a200]" />
+                    <Star className="mr-1.5 h-3.5 w-3.5 fill-current text-[#0E5A43]" />
                     {reviewStats.reviewCount > 0
                       ? `${reviewStats.averageRating.toFixed(1)} rating`
                       : "New store"}
@@ -482,7 +482,7 @@ export default async function StorePage({ params }: StorePageProps) {
 
                 {store.description && (
                   <div className="mt-5 rounded-[24px] border border-border/70 bg-muted/20 p-4 sm:mt-6 sm:p-5">
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                       About this {isRestaurant ? "place" : "store"}
                     </p>
                     <ExpandableText text={store.description} limit={100} />
@@ -518,11 +518,11 @@ export default async function StorePage({ params }: StorePageProps) {
             ) : (
               <Card className="rounded-[30px] border-2 border-dashed bg-background shadow-none">
                 <CardContent className="px-6 py-14 text-center sm:px-8 sm:py-16">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#e1a200]/10">
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#0E5A43]/10">
                     {isRestaurant ? (
-                      <Utensils className="h-10 w-10 text-[#e1a200]" />
+                      <Utensils className="h-10 w-10 text-[#0E5A43]" />
                     ) : (
-                      <Package className="h-10 w-10 text-[#e1a200]" />
+                      <Package className="h-10 w-10 text-[#0E5A43]" />
                     )}
                   </div>
                   <h3 className="text-xl font-semibold text-foreground">

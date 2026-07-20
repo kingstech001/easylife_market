@@ -30,7 +30,7 @@ const PLAN_BADGE: Record<
 > = {
   free:     { label: "Free",     className: "bg-muted text-muted-foreground border border-border/60" },
   basic:    { label: "Basic",    className: "bg-blue-500/10 text-blue-500 border border-blue-500/20" },
-  standard: { label: "Standard", className: "bg-[#e1a200]/10 text-[#e1a200] border border-[#e1a200]/30" },
+  standard: { label: "Standard", className: "bg-[#0E5A43]/10 text-[#0E5A43] border border-[#0E5A43]/30" },
   premium:  { label: "Premium",  className: "bg-purple-500/10 text-purple-500 border border-purple-500/20" },
 }
 
@@ -129,13 +129,13 @@ export function SellerSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border/40">
-      <SidebarHeader className="border-b border-border/40 bg-gradient-to-b from-muted/30 to-transparent px-3">
+      <SidebarHeader className="border-b border-border/40 bg-muted/20 px-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard/seller" className="flex items-center group">
               <Image src={'/logo.png'} alt="logo" width={70} height={36} />
               <div className="flex flex-col">
-                <span className="font-bold text-base tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                <span className="font-bold text-base tracking-tight text-foreground">
                   EasyLife
                 </span>
                 <span className="text-[10px] text-muted-foreground font-medium">Seller Dashboard</span>
@@ -163,7 +163,7 @@ export function SellerSidebar() {
                       className={`
                         relative h-9 px-2.5 rounded-lg transition-all duration-200
                         ${isActive
-                          ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold shadow-sm hover:bg-[#e1a200]/15'
+                          ? 'bg-[#0E5A43]/10 text-[#0E5A43] font-semibold shadow-sm hover:bg-[#0E5A43]/15'
                           : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                         }
                       `}
@@ -177,7 +177,7 @@ export function SellerSidebar() {
                           )}
                         </div>
                         {isActive && (
-                          <ChevronRight className="h-3.5 w-3.5 text-[#e1a200] flex-shrink-0" strokeWidth={2.5} />
+                          <ChevronRight className="h-3.5 w-3.5 text-[#0E5A43] flex-shrink-0" strokeWidth={2.5} />
                         )}
                       </Link>
                     </SidebarMenuButton>
@@ -204,7 +204,7 @@ export function SellerSidebar() {
                   className={`
                     h-9 px-2.5 rounded-lg transition-all duration-200
                     ${pathname === "/dashboard/seller/support"
-                      ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold'
+                      ? 'bg-[#0E5A43]/10 text-[#0E5A43] font-semibold'
                       : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                     }
                   `}
@@ -223,7 +223,7 @@ export function SellerSidebar() {
                   className={`
                     h-9 px-2.5 rounded-lg transition-all duration-200
                     ${pathname === "/dashboard/seller/settings"
-                      ? 'bg-[#e1a200]/10 text-[#e1a200] font-semibold'
+                      ? 'bg-[#0E5A43]/10 text-[#0E5A43] font-semibold'
                       : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                     }
                   `}
@@ -239,14 +239,14 @@ export function SellerSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/40 bg-gradient-to-t from-muted/30 to-transparent p-3">
+      <SidebarFooter className="border-t border-border/40 bg-muted/20 p-3">
         <SidebarMenu className="gap-2">
           {/* User Profile Section */}
           <SidebarMenuItem>
             <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-muted/50 border border-border/40">
-              <Avatar className="h-8 w-8 border-2 border-[#e1a200]/20 flex-shrink-0">
+              <Avatar className="h-8 w-8 border-2 border-[#0E5A43]/20 flex-shrink-0">
                 <AvatarImage src={user?.avatar} alt={user?.name} />
-                <AvatarFallback className="bg-gradient-to-br from-[#e1a200] to-[#e1a200]/80 text-white text-[10px] font-semibold">
+                <AvatarFallback className="bg-[#0E5A43] text-white text-[10px] font-semibold">
                   {getUserInitials(user?.name)}
                 </AvatarFallback>
               </Avatar>

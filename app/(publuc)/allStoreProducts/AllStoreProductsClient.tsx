@@ -61,7 +61,7 @@ export default function AllStoreProductsClient({
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,rgba(225,162,0,0.06),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted)/0.18))]">
+    <div className="min-h-screen bg-muted/20">
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 hidden lg:block">
           {heroBanner?.imageUrl ? (
@@ -77,13 +77,13 @@ export default function AllStoreProductsClient({
                   className="object-cover"
                 />
               </div>
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.78)_0%,rgba(8,8,8,0.6)_48%,rgba(8,8,8,0.78)_100%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(225,162,0,0.22),transparent_34%)]" />
+              <div className="absolute inset-0 bg-muted/20" />
+              <div className="absolute inset-0 bg-[#F4C430]/10" />
             </>
           ) : (
             <>
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(225,162,0,0.18),rgba(255,255,255,0.02)_35%,rgba(0,0,0,0.02)_100%)]" />
-              <div className="absolute left-[-10%] top-[-8%] h-48 w-48 rounded-full bg-[#e1a200]/20 blur-3xl sm:h-64 sm:w-64" />
+              <div className="absolute inset-0 bg-muted/20" />
+              <div className="absolute left-[-10%] top-[-8%] h-48 w-48 rounded-full bg-[#0E5A43]/20 blur-3xl sm:h-64 sm:w-64" />
               <div className="absolute bottom-[-12%] right-[-8%] h-56 w-56 rounded-full bg-foreground/10 blur-3xl sm:h-72 sm:w-72" />
             </>
           )}
@@ -111,15 +111,15 @@ export default function AllStoreProductsClient({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search products, food, gadgets, fashion..."
                     className={cn(
-                      "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-foreground/70 focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#f0c14b] focus-visible:ring-offset-0",
-                      "focus-visible:ring-2 focus-visible:ring-[#f0c14b] focus-visible:ring-offset-0",
+                      "h-12 rounded-full border-0 bg-white/12 pl-11 pr-4 text-sm text-white shadow-none placeholder:text-foreground/70 focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#F4C430] focus-visible:ring-offset-0",
+                      "focus-visible:ring-2 focus-visible:ring-[#F4C430] focus-visible:ring-offset-0",
                       "sm:h-14 sm:text-[15px]"
                     )}
                   />
                 </div>
                 <Button
                   type="submit"
-                  className=" flex items-center rounded-full px-3 py-0 bg-[#e1a200] text-sm font-semibold text-white hover:bg-[#c89100] absolute right-1 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
+                  className=" flex items-center rounded-full px-3 py-0 bg-[#0E5A43] text-sm font-semibold text-white hover:bg-[#083B2D] absolute right-1 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0"
                 >
                   <ArrowRight className=" h-4 w-4" />
                 </Button>
@@ -134,7 +134,7 @@ export default function AllStoreProductsClient({
         <div className="border border-border/70 bg-background/85  shadow-sm backdrop-blur p-4 sm:p-5 lg:p-6">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a97500]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                 Browse categories
               </p>
              
@@ -157,8 +157,8 @@ export default function AllStoreProductsClient({
                   href={buildCategorySearchUrl(category)}
                   className="flex flex-col items-center min-w-[90px] snap-start transition  hover:shadow-md sm:min-w-[132px]"
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/60 hover:ring-[#e1a200]/50 transition-all">
-                    <Icon className="h-5 w-5 text-[#e1a200]" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border/60 hover:ring-[#0E5A43]/50 transition-all">
+                    <Icon className="h-5 w-5 text-[#0E5A43]" />
                   </div>
                   <p className="mt-4 text-[10px] font-semibold leading-5 text-foreground">
                     {category.name}
@@ -171,7 +171,7 @@ export default function AllStoreProductsClient({
               href="/Search"
               className="flex flex-col items-center  min-w-[90px] snap-start transition sm:min-w-[132px]"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e1a200] text-white shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0E5A43] text-white shadow-sm">
                 <ArrowRight className="h-5 w-5" />
               </div>
               <p className="mt-4 text-[10px] font-semibold leading-5 text-foreground">
@@ -185,8 +185,8 @@ export default function AllStoreProductsClient({
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14" id="products">
         {initialProducts.length === 0 ? (
           <div className="rounded-[30px] border border-dashed border-border bg-background p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#e1a200]/10">
-              <Package className="h-10 w-10 text-[#e1a200]" />
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#0E5A43]/10">
+              <Package className="h-10 w-10 text-[#0E5A43]" />
             </div>
             <h3 className="mt-6 text-xl font-semibold text-foreground">No products found</h3>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
@@ -197,7 +197,7 @@ export default function AllStoreProductsClient({
           <>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#a97500]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Product catalogue
                 </p>
                
@@ -215,10 +215,10 @@ export default function AllStoreProductsClient({
               ))}
             </div>
 
-            <div className="mt-8 rounded-[30px] border border-[#e1a200]/20 bg-[linear-gradient(135deg,rgba(225,162,0,0.12),rgba(225,162,0,0.03)_45%,rgba(255,255,255,0.6)_100%)] p-5 shadow-sm sm:p-6 lg:p-8">
+            <div className="mt-8 rounded-[30px] border border-[#0E5A43]/20 bg-muted/20 p-5 shadow-sm sm:p-6 lg:p-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8c6500]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                     Stay updated
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold text-foreground">
@@ -236,7 +236,7 @@ export default function AllStoreProductsClient({
                       placeholder="Enter your email"
                       className="h-12 rounded-full border-border bg-background/90 px-4"
                     />
-                    <Button className="h-12 rounded-full bg-[#e1a200] px-6 text-white hover:bg-[#c89100]">
+                    <Button className="h-12 rounded-full bg-[#0E5A43] text-white px-6 text-white hover:bg-[#083B2D]">
                       Subscribe
                     </Button>
                   </div>

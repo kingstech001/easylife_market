@@ -98,7 +98,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
         )}
       >
         {/* Header */}
-        <div className="relative p-6 border-b bg-gradient-to-br from-primary/5 to-primary/10">
+        <div className="relative p-6 border-b bg-primary/10">
           <button
             onClick={handleClose}
             className="absolute top-6 right-6 text-muted-foreground hover:text-foreground transition-colors p-2 hover:bg-background rounded-full"
@@ -271,7 +271,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t bg-gradient-to-br from-background to-muted/20 p-2 space-y-4">
+          <div className="border-t bg-background p-2 space-y-4">
             {/* Price Breakdown */}
             <Card className="border-0 shadow-sm bg-muted/50 mb-2">
               <CardContent className="p-4 space-y-3">

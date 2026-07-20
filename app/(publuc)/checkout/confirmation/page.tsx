@@ -24,9 +24,9 @@ function PaymentConfirmationContent() {
   const reference = searchParams.get("reference");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl shadow-2xl border-2">
-        <CardHeader className="text-center bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-b-2">
+        <CardHeader className="text-center bg-green-50 dark:bg-green-950/20 border-b-2">
           <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>

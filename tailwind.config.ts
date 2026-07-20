@@ -69,7 +69,13 @@ const config: Config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+			brand: {
+				primary: '#0E5A43',
+				dark: '#083B2D',
+				gold: '#F4C430',
+				text: '#1F2937'
+			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

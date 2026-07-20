@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
         items: enrichedItems,
         paymentMethod,
         receiptUrl,
+        customerCoords: shippingInfo?.customerCoords,
         shippingInfo,
       })
 

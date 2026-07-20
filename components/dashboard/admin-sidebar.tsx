@@ -119,18 +119,18 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border/40">
-      <SidebarHeader className="border-b border-border/40 bg-gradient-to-b from-muted/30 to-transparent px-3">
+      <SidebarHeader className="border-b border-border/40 bg-muted/20 px-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/dashboard/admin" className="flex items-center gap-3 py-4 group">
               <div className="relative">
-                <div className="w-9 h-9 bg-gradient-to-br from-[#c0a146] via-[#d4b55e] to-[#c0a146] rounded-xl flex items-center justify-center shadow-lg shadow-[#c0a146]/20 transition-transform group-hover:scale-105">
+                <div className="w-9 h-9 bg-[#0E5A43] text-white rounded-xl flex items-center justify-center shadow-lg shadow-[#0E5A43]/20 transition-transform group-hover:scale-105">
                   <Shield className="h-4 w-4 text-white" strokeWidth={2.5} />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-base tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                <span className="font-bold text-base tracking-tight text-foreground">
                   EasyLife
                 </span>
                 <span className="text-[10px] text-muted-foreground font-medium">Admin Dashboard</span>
@@ -158,7 +158,7 @@ export function AdminSidebar() {
                       className={`
                         relative h-9 px-2.5 rounded-lg transition-all duration-200
                         ${isActive 
-                          ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold shadow-sm hover:bg-[#c0a146]/15' 
+                          ? 'bg-[#0E5A43]/10 text-[#0E5A43] font-semibold shadow-sm hover:bg-[#0E5A43]/15' 
                           : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                         }
                       `}
@@ -169,7 +169,7 @@ export function AdminSidebar() {
                           <span className="text-[13px]">{item.title}</span>
                         </div>
                         {isActive && (
-                          <ChevronRight className="h-3.5 w-3.5 text-[#c0a146] flex-shrink-0" strokeWidth={2.5} />
+                          <ChevronRight className="h-3.5 w-3.5 text-[#0E5A43] flex-shrink-0" strokeWidth={2.5} />
                         )}
                       </Link>
                     </SidebarMenuButton>
@@ -199,7 +199,7 @@ export function AdminSidebar() {
                       className={`
                         h-9 px-2.5 rounded-lg transition-all duration-200
                         ${isActive
-                          ? 'bg-[#c0a146]/10 text-[#c0a146] font-semibold'
+                          ? 'bg-[#0E5A43]/10 text-[#0E5A43] font-semibold'
                           : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                         }
                       `}
@@ -217,14 +217,14 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/40 bg-gradient-to-t from-muted/30 to-transparent p-3">
+      <SidebarFooter className="border-t border-border/40 bg-muted/20 p-3">
         <SidebarMenu className="gap-2">
           {/* User Profile Section */}
           <SidebarMenuItem>
             <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-muted/50 border border-border/40">
-              <Avatar className="h-8 w-8 border-2 border-[#c0a146]/20 flex-shrink-0">
+              <Avatar className="h-8 w-8 border-2 border-[#0E5A43]/20 flex-shrink-0">
                 <AvatarImage src={user?.avatar} alt={user?.name} />
-                <AvatarFallback className="bg-gradient-to-br from-[#c0a146] to-[#c0a146]/80 text-white text-[10px] font-semibold">
+                <AvatarFallback className="bg-[#0E5A43] text-white text-[10px] font-semibold">
                   {getUserInitials(user?.name)}
                 </AvatarFallback>
               </Avatar>

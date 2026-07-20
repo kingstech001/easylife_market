@@ -297,7 +297,7 @@ export function MapAddressPicker({
           "w-full flex items-center gap-3 h-11 sm:h-12 px-3 rounded-xl border text-left text-sm transition-all active:scale-[0.99]",
           value
             ? "border-emerald-400/50 bg-emerald-50/50 dark:bg-emerald-950/10"
-            : "border-border/50 hover:border-[#c0a146]/50 bg-background",
+            : "border-border/50 hover:border-[#0E5A43]/50 bg-background",
         )}
       >
         <MapPin
@@ -338,7 +338,7 @@ export function MapAddressPicker({
                   onChange={(e) => handleQueryChange(e.target.value)}
                   placeholder="Search address..."
                   autoFocus
-                  className="w-full h-10 pl-10 pr-3 rounded-xl bg-muted/50 border border-border/50 text-sm outline-none focus:border-[#c0a146] transition-colors"
+                  className="w-full h-10 pl-10 pr-3 rounded-xl bg-muted/50 border border-border/50 text-sm outline-none focus:border-[#0E5A43] transition-colors"
                 />
                 {isSearching && (
                   <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -356,7 +356,7 @@ export function MapAddressPicker({
                     onClick={() => handleSelectResult(result)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b border-border/20 last:border-0"
                   >
-                    <MapPin className="h-4 w-4 text-[#c0a146] flex-shrink-0" />
+                    <MapPin className="h-4 w-4 text-[#0E5A43] flex-shrink-0" />
                     <span className="text-sm truncate">
                       {result.display_name}
                     </span>
@@ -376,7 +376,7 @@ export function MapAddressPicker({
               onClick={handleLocateMe}
               className="absolute top-3 right-3 h-10 w-10 bg-background border border-border/50 rounded-xl shadow-lg flex items-center justify-center hover:bg-muted transition-colors z-[10001]"
             >
-              <Navigation className="h-4 w-4 text-[#c0a146]" />
+              <Navigation className="h-4 w-4 text-[#0E5A43]" />
             </button>
           </div>
 
@@ -384,7 +384,7 @@ export function MapAddressPicker({
           <div className="flex-shrink-0 border-t border-border/40 bg-background p-3 sm:p-4 space-y-2 z-[10001]">
             {tempAddress ? (
               <div className="flex items-start gap-2 px-1">
-                <MapPin className="h-4 w-4 text-[#c0a146] flex-shrink-0 mt-0.5" />
+                <MapPin className="h-4 w-4 text-[#0E5A43] flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-foreground leading-snug line-clamp-2">
                   {tempAddress}
                 </p>
@@ -398,7 +398,7 @@ export function MapAddressPicker({
               type="button"
               onClick={handleConfirm}
               disabled={!tempAddress}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#c0a146] to-[#d4b55e] hover:from-[#d4b55e] hover:to-[#c0a146] text-white font-medium text-sm sm:text-base shadow-lg active:scale-[0.98] transition-all"
+              className="w-full h-12 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white font-medium text-sm sm:text-base shadow-lg active:scale-[0.98] transition-all"
             >
               <MapPin className="mr-2 h-4 w-4" />
               Confirm Address

@@ -191,7 +191,7 @@ export default function SellerOrdersPage() {
                 <Package className="h-6 w-6 text-indigo-600" />
               </div>
               <div>
-                <h1 className="text-xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                <h1 className="text-xl lg:text-5xl font-bold tracking-tight text-foreground">
                   Orders Management
                 </h1>
                 <p className="text-sm sm:text-lg text-muted-foreground mt-1">Track and manage all your customer orders</p>
