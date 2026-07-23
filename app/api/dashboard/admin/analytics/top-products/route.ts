@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Order from "@/models/Order"
 import Product from "@/models/Product"
 import mongoose from "mongoose"
+import { requireApiRole } from "@/lib/apiAuth"
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
 
     const { searchParams } = new URL(req.url)

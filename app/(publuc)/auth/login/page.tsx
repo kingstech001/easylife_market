@@ -47,7 +47,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const fieldBaseClass =
-  "peer h-14 rounded-2xl border-border/60 bg-background/90 px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#0E5A43]/30 focus-visible:ring-offset-0 focus-visible:border-[#0E5A43]/50";
+  "peer h-14 rounded border-border bg-background px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#0E5A43]/30 focus-visible:ring-offset-0 focus-visible:border-[#0E5A43]/50";
 
 function getSafeRedirectPath() {
   if (typeof window === "undefined") return null;
@@ -119,27 +119,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-[#0E5A43]/10 blur-3xl sm:h-72 sm:w-72" />
-        <div className="absolute bottom-[8%] right-[-8%] h-64 w-64 rounded-full bg-foreground/5 blur-3xl sm:h-80 sm:w-80" />
-        <div className="absolute inset-0 opacity-[0.035]">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "none",
-              backgroundSize: "26px 26px",
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
+    <div className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
         <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-          <div className="hidden rounded-[36px] border border-border/70 bg-muted/20 p-8 shadow-xl lg:flex lg:flex-col lg:justify-between">
+          <div className="hidden rounded border-0 border-border bg-muted/20 p-8 shadow-none lg:flex lg:flex-col lg:justify-between">
             <div>
-              <div className="inline-flex items-center rounded-full border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
+              <div className="inline-flex items-center rounded border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                 Welcome Back
               </div>
               <h1 className="mt-6 max-w-md text-4xl font-semibold leading-tight tracking-tight text-foreground">
@@ -153,9 +138,9 @@ export default function LoginPage() {
             </div>
 
             <div className="grid gap-4">
-              <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
+              <div className="rounded border border-border bg-background p-5 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0E5A43]/12 text-[#083B2D]">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div>
@@ -170,9 +155,9 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-border/70 bg-background/85 p-5 shadow-sm">
+              <div className="rounded border border-border bg-background p-5 shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0E5A43]/12 text-[#083B2D]">
                     <ShoppingBag className="h-5 w-5" />
                   </div>
                   <div>
@@ -189,9 +174,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <Card className="w-full rounded-[30px] border border-border/70 bg-background/92 shadow-xl backdrop-blur-sm sm:rounded-[36px]">
+          <Card className="w-full border-0 border-border shadow-none">
             <CardHeader className="space-y-5 p-5 pb-3 text-center sm:p-7 sm:pb-4">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-border/70 bg-background shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded border border-border bg-background shadow-sm">
                 <Image
                   src="/logo.png"
                   alt="EasyLife logo"
@@ -265,7 +250,7 @@ export default function LoginPage() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="absolute right-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full hover:bg-muted"
+                              className="absolute right-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded hover:bg-muted"
                               onClick={() => setShowPassword(!showPassword)}
                               disabled={isLoading}
                             >
@@ -310,7 +295,7 @@ export default function LoginPage() {
 
                   <Button
                     type="submit"
-                    className="h-12 w-full rounded-full bg-[#0E5A43] text-sm font-semibold text-white shadow-lg transition hover:opacity-90 hover:shadow-xl sm:h-13"
+                    className="h-12 w-full rounded bg-[#0E5A43] text-sm font-semibold text-white shadow-sm transition hover:bg-[#083B2D]"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -344,7 +329,7 @@ export default function LoginPage() {
               <Link href="/auth/register" className="w-full">
                 <Button
                   variant="outline"
-                  className="h-12 w-full rounded-full border-border/70 bg-background hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/[0.05] hover:text-[#083B2D]"
+                  className="h-12 w-full rounded border-border bg-background hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/[0.05] hover:text-[#083B2D]"
                   disabled={isLoading}
                 >
                   Create an Account

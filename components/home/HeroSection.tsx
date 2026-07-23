@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +11,6 @@ import {
   Store,
   Package,
 } from "lucide-react";
-import { Reveal } from "../Reveal";
 import { cn } from "@/lib/utils";
 
 interface HeroBanner {
@@ -39,82 +36,96 @@ interface ProductSuggestion {
 }
 
 const HERO_BANNER_ROTATION_MS = 30000;
-const HERO_BANNER_SWAP_DELAY_MS = 300;
+const HERO_REMOTE_FETCH_DELAY_MS = 10000;
 const STATIC_HERO_BANNERS: HeroBanner[] = [
   {
     id: "static-hero-1",
-    imageUrl: "/africa.png",
-    title: "Buy and Sell",
+    imageUrl: "/africa-hero.jpg",
+    title: "Shop trusted local stores",
     subtitle:
-      "Build, customize, and launch your online store in minutes. Shop from trusted stores on EasyLife.",
+      "Find products, meals, groceries, and everyday essentials from verified sellers near you.",
     buttonText: "Shop Now",
     buttonLink: "/allStoreProducts",
   },
   {
     id: "static-hero-2",
-    imageUrl: "/easylife.png", 
-    title: "Discover Great Stores",
+    imageUrl: "/easylife-hero.jpg",
+    title: "Discover products faster",
     subtitle:
-      "Find products, meals, and trusted sellers across the EasyLife marketplace.",
+      "Search stores, compare products, and checkout securely from one simple marketplace.",
     buttonText: "Browse Stores",
     buttonLink: "/stores",
   },
 ];
 
-function getInitialHeroBanner() {
-  return STATIC_HERO_BANNERS[
-    Math.floor(Math.random() * STATIC_HERO_BANNERS.length)
-  ];
+function preloadImage(src: string) {
+  return new Promise<void>((resolve, reject) => {
+    const image = new window.Image();
+    image.onload = () => resolve();
+    image.onerror = () => reject();
+    image.src = src;
+  });
 }
 
 export default function HeroSection() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(
-    getInitialHeroBanner,
-  );
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [bannerKey, setBannerKey] = useState(0);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner>(STATIC_HERO_BANNERS[0]);
   const [storeSuggestions, setStoreSuggestions] = useState<StoreSuggestion[]>([]);
   const [productSuggestions, setProductSuggestions] = useState<ProductSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const fetchNewBanner = useCallback(async () => {
+  const fetchRemoteBanner = useCallback(async () => {
     try {
-      setIsTransitioning(true);
-
       const bannerRes = await fetch("/api/hero-banner", {
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(6000),
         cache: "no-store",
       });
 
-      if (bannerRes.ok) {
-        const bannerData = await bannerRes.json();
-        if (bannerData.banner) {
-          setTimeout(() => {
-            setHeroBanner(bannerData.banner);
-            setBannerKey((prev) => prev + 1);
-            setIsTransitioning(false);
-          }, HERO_BANNER_SWAP_DELAY_MS);
-        }
+      if (!bannerRes.ok) {
+        return;
       }
+
+      const bannerData = await bannerRes.json();
+      const nextBanner = bannerData.banner as HeroBanner | undefined;
+
+      if (!nextBanner?.imageUrl) {
+        return;
+      }
+
+      await preloadImage(nextBanner.imageUrl);
+      setHeroBanner(nextBanner);
     } catch {
-      setIsTransitioning(false);
+      setCurrentBannerIndex((index) => {
+        const nextIndex = (index + 1) % STATIC_HERO_BANNERS.length;
+        setHeroBanner(STATIC_HERO_BANNERS[nextIndex]);
+        return nextIndex;
+      });
     }
   }, []);
 
   useEffect(() => {
+    const initialFetch = window.setTimeout(() => {
+      if (document.visibilityState === "visible") {
+        fetchRemoteBanner();
+      }
+    }, HERO_REMOTE_FETCH_DELAY_MS);
+
     const interval = setInterval(() => {
       if (document.visibilityState !== "visible") {
         return;
       }
-      fetchNewBanner();
+      fetchRemoteBanner();
     }, HERO_BANNER_ROTATION_MS);
 
-    return () => clearInterval(interval);
-  }, [fetchNewBanner]);
+    return () => {
+      window.clearTimeout(initialFetch);
+      clearInterval(interval);
+    };
+  }, [fetchRemoteBanner]);
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
@@ -179,83 +190,58 @@ export default function HeroSection() {
     router.push(path);
   };
 
-  const heroHeading = heroBanner?.title || "Buy and Sell";
+  const heroHeading = heroBanner?.title || "Shop trusted local stores";
   const heroSubheading =
     heroBanner?.subtitle ||
-    "Build, customize, and launch your online store in minutes. Join thousands of successful entrepreneurs who trust our platform to grow their business.";
+    "Find products, meals, groceries, and everyday essentials from verified sellers near you.";
   const showSuggestions =
     isSuggestionsOpen &&
     searchQuery.trim().length >= 2 &&
     (isLoadingSuggestions || storeSuggestions.length > 0 || productSuggestions.length > 0);
 
   return (
-    <Reveal>
-      <section className="relative z-40 flex items-center isolate">
-        <AnimatePresence mode="wait">
-          {heroBanner?.imageUrl ? (
-            <motion.div
-              key={bannerKey}
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="absolute inset-0 z-0 overflow-hidden"
-            >
-              <Image
-                src={heroBanner.imageUrl}
-                alt="Hero Background"
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-              <div className="absolute inset-0 bg-black/55" />
-              <div className="absolute inset-0 bg-black/50" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="fallback"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="absolute inset-0 z-0 bg-background"
-            >
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-10 left-10 w-64 h-64 bg-[#0E5A43] text-white rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-10 right-10 w-80 h-80 bg-foreground rounded-full blur-3xl animate-pulse" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+    <section className="relative z-40 flex min-h-[560px] items-center isolate sm:min-h-[640px]">
+      {heroBanner?.imageUrl ? (
+        <div
+          key={heroBanner.id}
+          className="absolute inset-0 z-0 overflow-hidden"
+        >
+          <img
+            src={heroBanner.imageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+          />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-background" />
+      )}
 
-        <div className="relative z-10 container mx-auto p-4 sm:px-6 lg:px-8 md:py-24">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-6 sm:space-y-8"
-            >
-              <div className="space-y-3 sm:space-y-4">
+        <div className="relative z-10 container mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+          <div className="max-w-5xl">
+            <div className="space-y-6 sm:space-y-7">
+              <div className="max-w-3xl space-y-4">
                 <h1
                   className={cn(
-                    "text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight",
+                    "text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl",
                     heroBanner?.imageUrl
-                      ? "text-white drop-shadow-lg"
+                      ? "text-white drop-shadow-md"
                       : "text-foreground"
                   )}
                 >
                   {heroHeading}
-                  <span className="block sm:ml-4 sm:inline text-4xl sm:text-6xl lg:text-7xl mt-2 text-[#0E5A43] drop-shadow-lg">
-                    Seamlessly <span className="text-white">with</span> EasyLife
+                  <span className="block text-[#F4C430]">
+                    on EasyLife
                   </span>
                 </h1>
                 <p
                   className={cn(
-                    "text-sm sm:text-xl max-w-2xl",
+                    "max-w-2xl text-base leading-7 sm:text-lg",
                     heroBanner?.imageUrl
-                      ? "text-white/80 drop-shadow-md"
+                      ? "text-white/85 drop-shadow-sm"
                       : "text-muted-foreground"
                   )}
                 >
@@ -272,20 +258,20 @@ export default function HeroSection() {
                     onFocus={() => setIsSuggestionsOpen(true)}
                     placeholder="Search for products, stores, or categories..."
                     className={cn(
-                      "h-14 pl-5 pr-29 text-[13px] rounded shadow-lg",
+                      "h-14 rounded pl-5 pr-20 text-sm shadow-lg sm:pr-24",
                       "border-0 border-transparent",
                       "outline-none",
                       "ring-0 ring-offset-0",
                       "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
                       "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
                       "[box-shadow:none]",
-                      "bg-white/10 backdrop-blur-sm text-white placeholder:text-white/60",
+                      "bg-white text-[#1F2937] placeholder:text-muted-foreground",
                     )}
                   />
                   <Button
                     type="submit"
                     size="lg"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-auto p-4 rounded bg-[#0E5A43] text-white hover:bg-[#083B2D] shadow-lg"
+                    className="absolute right-1 top-1/2 h-auto -translate-y-1/2 rounded bg-[#0E5A43] p-4 text-white shadow-lg hover:bg-[#083B2D]"
                   >
                     <Search className="pointer-events-none" />
                   </Button>
@@ -352,46 +338,45 @@ export default function HeroSection() {
                 )}
               </div>
 
-              <div className="flex sm:flex-row gap-3 sm:gap-4 items-start ">
-                <Link href="/auth/login" className="w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className={cn(
-                      "w-full sm:w-auto h-12 text-base font-semibold border-2 transition-all shadow-lg px-2 md:px-4",
-                      heroBanner?.imageUrl
-                        ? "bg-white/10 backdrop-blur-sm border-none text-white hover:bg-white/20 hover:border-white/50"
-                        : "bg-background hover:bg-muted/50 hover:border-[#0E5A43]/50"
-                    )}
-                  >
-                    Create Store
-                    <Store className=" h-5" />
-                  </Button>
-                </Link>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 {heroBanner?.buttonLink && heroBanner?.buttonText && (
                   <Link href={heroBanner.buttonLink} className="w-full sm:w-auto">
                     <Button
-                      variant="secondary"
                       size="lg"
-                      className="w-full sm:w-auto h-12 px-2 md:px-4 text-base font-semibold"
+                      className="h-12 w-full bg-[#0E5A43] px-6 text-base font-semibold text-white shadow-lg hover:bg-[#083B2D] sm:w-auto"
                     >
                       {heroBanner.buttonText}
                       <ShoppingBag className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                 )}
+                <Link href="/auth/login" className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className={cn(
+                      "h-12 w-full border-white/40 px-6 text-base font-semibold transition-all sm:w-auto",
+                      heroBanner?.imageUrl
+                        ? "bg-white/10 text-white hover:bg-white hover:text-[#083B2D]"
+                        : "bg-background hover:bg-muted/50 hover:border-[#0E5A43]/50"
+                    )}
+                  >
+                    Create Store
+                    <Store className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
 
         {heroBanner && (
           <div className="hidden absolute bottom-6 right-6 sm:flex gap-1.5 z-10">
-            {[...Array(3)].map((_, i) => (
+            {STATIC_HERO_BANNERS.map((banner, i) => (
               <div
-                key={i}
+                key={banner.id}
                 className={`rounded-full transition-all duration-300 ${
-                  !isTransitioning
+                  i === currentBannerIndex
                     ? "w-6 h-1.5 bg-[#0E5A43]"
                     : "w-1.5 h-1.5 bg-white/40"
                 }`}
@@ -400,6 +385,5 @@ export default function HeroSection() {
           </div>
         )}
       </section>
-    </Reveal>
   );
 }

@@ -134,7 +134,7 @@ async function getHeroBanner() {
           `https://api.unsplash.com/photos/random?query=${encodeURIComponent(theme.query)}&orientation=landscape&content_filter=high`,
           {
             headers: { Authorization: `Client-ID ${unsplashKey}` },
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(1500),
           }
         );
         if (res.ok) {

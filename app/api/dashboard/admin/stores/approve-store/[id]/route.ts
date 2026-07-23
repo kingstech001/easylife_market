@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store from "@/models/Store"
+import { requireApiRole } from "@/lib/apiAuth"
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const auth = await requireApiRole(request, ["admin"])
+    if (auth.response) return auth.response
+
     const { id } = await params
     await connectToDB()
 

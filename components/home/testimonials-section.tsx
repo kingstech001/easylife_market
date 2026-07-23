@@ -226,7 +226,7 @@ function MarqueeRow({ items, direction = "left", speed = 60 }: MarqueeRowProps) 
 // ============================================================================
 
 const StatCard = React.memo(({ stat, accentColor }: { stat: Stat; accentColor: string }) => (
-  <div className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-lg bg-muted/50 border border-border/50 hover:border-[#0E5A43]/30 transition-all">
+  <div className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded bg-muted/50 border border-border/50 hover:border-[#0E5A43]/30 transition-all">
     <div className={cn("p-1.5 rounded-md", accentColor)}>
       <stat.icon className="w-4 h-4 text-[#0E5A43]" aria-hidden="true" />
     </div>
@@ -251,16 +251,7 @@ export function TestimonialsSection() {
   ]
 
   return (
-    <section className="relative w-full py-12 sm:py-16 overflow-hidden">
-      {/* Minimal Background */}
-      <div className="absolute inset-0 bg-background" />
-      
-      {/* Optimized background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50">
-        <div className="absolute top-1/4 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#0E5A43]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 rounded-full blur-3xl" />
-      </div>
-
+    <section className="relative w-full py-12 sm:py-16 overflow-hidden bg-background">
       <div className="container relative z-10 px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
         {/* Section Header */}
         <motion.div
@@ -274,16 +265,16 @@ export function TestimonialsSection() {
           <div className="flex justify-center">
             <Badge
               variant="secondary"
-              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30 transition-all duration-300 backdrop-blur-sm shadow-sm"
+              className="rounded px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30 shadow-sm"
             >
-              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 text-[#0E5A43]" aria-hidden="true" />
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 text-white" aria-hidden="true" />
               User Testimonials
             </Badge>
           </div>
 
           {/* Heading */}
           <div className="space-y-2 sm:space-y-3">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
               <span className="text-foreground">
                 What Our{" "}
               </span>
@@ -307,9 +298,6 @@ export function TestimonialsSection() {
         {/* Testimonials Marquee */}
         <MarqueeRow items={testimonials} direction="left" speed={50} />
       </div>
-
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-background pointer-events-none" />
     </section>
   )
 }

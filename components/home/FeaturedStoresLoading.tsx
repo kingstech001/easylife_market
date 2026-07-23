@@ -11,7 +11,7 @@ export function FeaturedStoresLoading() {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse"
+              className="rounded border border-border bg-card p-6 space-y-4 animate-pulse"
             >
               <div className="w-full h-32 bg-muted rounded-lg" />
               <div className="h-4 bg-muted rounded w-3/4" />

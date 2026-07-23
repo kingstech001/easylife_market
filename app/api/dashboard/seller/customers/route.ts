@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Customer from "@/models/Customer"
+import { requireApiRole } from "@/lib/apiAuth"
 
 // ✅ GET all customers
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await requireApiRole(req, ["seller", "admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
     const url = new URL(req.url)
     const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10))
@@ -26,8 +30,11 @@ export async function GET(req: Request) {
 }
 
 // ✅ POST new customer
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireApiRole(req, ["seller", "admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
     const body = await req.json()
     const customer = await Customer.create(body)

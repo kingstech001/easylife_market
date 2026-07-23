@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
-import Order from "@/models/Order"
 import User from "@/models/User"
+import { requireApiRole } from "@/lib/apiAuth"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
 
     // Aggregate customers with order stats

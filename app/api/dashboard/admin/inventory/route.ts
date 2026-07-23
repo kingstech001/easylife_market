@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { restoreInventoryForOrder } from "@/lib/restoreInventory"
 import Order from "@/models/Order"
 import { connectToDB } from "@/lib/db"
+import { requireApiRole } from "@/lib/apiAuth"
 
 /**
  * POST - Manually restore inventory for an order
@@ -12,6 +13,9 @@ import { connectToDB } from "@/lib/db"
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireApiRole(request, ["admin"])
+    if (auth.response) return auth.response
+
     const { orderId, reason } = await request.json()
 
     if (!orderId) {
@@ -56,6 +60,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireApiRole(request, ["admin"])
+    if (auth.response) return auth.response
+
     const orderId = request.nextUrl.searchParams.get("orderId")
 
     if (!orderId) {

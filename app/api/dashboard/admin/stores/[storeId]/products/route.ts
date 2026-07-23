@@ -1,24 +1,28 @@
-import { NextResponse } from "next/server";
-import { connectToDB } from "@/lib/db";
-import Product from "@/models/Product";
+import { type NextRequest, NextResponse } from "next/server"
+import { connectToDB } from "@/lib/db"
+import Product from "@/models/Product"
+import { requireApiRole } from "@/lib/apiAuth"
 
 export async function GET(
-  req: Request,
-  context: { params: Promise<{ storeId: string }> }
+  req: NextRequest,
+  context: { params: Promise<{ storeId: string }> },
 ) {
   try {
-    const { storeId } = await context.params; // ✅ await the params
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
 
-    await connectToDB();
+    const { storeId } = await context.params
 
-    const products = await Product.find({ storeId }).lean();
+    await connectToDB()
 
-    return NextResponse.json(products);
+    const products = await Product.find({ storeId }).lean()
+
+    return NextResponse.json(products)
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching products:", error)
     return NextResponse.json(
       { message: "Failed to fetch products" },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 }

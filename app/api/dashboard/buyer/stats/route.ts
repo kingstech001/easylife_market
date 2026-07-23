@@ -1,17 +1,16 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import User from "@/models/User"
 import MainOrder from "@/models/MainOrder"
 import mongoose from "mongoose"
+import { requireApiRole } from "@/lib/apiAuth"
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url)
-    const userId = searchParams.get("userId")
+    const auth = await requireApiRole(req, ["buyer"])
+    if (auth.response) return auth.response
 
-    if (!userId) {
-      return NextResponse.json({ message: "User ID is required" }, { status: 400 })
-    }
+    const userId = auth.user!.id
 
     await connectToDB()
 

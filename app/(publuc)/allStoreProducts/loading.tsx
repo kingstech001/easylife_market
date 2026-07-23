@@ -10,14 +10,14 @@ export default function AllProductsLoading() {
 
       {/* Categories skeleton */}
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-[30px] border border-border/70 bg-background p-4 sm:p-5 lg:p-6">
+        <div className="rounded border border-border/70 bg-background p-4 sm:p-5 lg:p-6">
           <div className="space-y-2 mb-5">
             <div className="h-3 bg-muted rounded w-28" />
             <div className="h-6 bg-muted rounded w-52" />
           </div>
           <div className="flex gap-3 overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="min-w-[118px] h-28 bg-muted rounded-3xl" />
+              <div key={i} className="min-w-[118px] h-28 bg-muted rounded" />
             ))}
           </div>
         </div>

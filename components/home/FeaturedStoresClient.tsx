@@ -45,26 +45,16 @@ interface FeaturedStoresClientProps {
 
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
-    <section className="relative mt-8 w-full overflow-hidden">
-      {/* Simplified background */}
-
-      {/* Reduced animated background elements */}
-      <div className="absolute  inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-[#0E5A43]/5 rounded-full blur-3xl opacity-60" />
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl opacity-60" />
-      </div>
-
-      {/* Subtle grid pattern */}
-
+    <section className="relative w-full overflow-hidden border-b border-border/60 bg-background py-12 sm:py-16">
       <div className="container relative z-10 px-4 sm:px-6 mx-auto">
         {/* Header Section */}
-        <div className="flex items-center justify-between text-center mb-8  ">
+        <div className="mb-8 flex items-center justify-between gap-4">
           {/* Badge */}
           <Badge
             variant="secondary"
-            className="px-4 py-2 text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30 transition-all duration-300 hover:shadow-md"
+            className="rounded px-4 py-2 text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30"
           >
-            <Sparkles className="w-4 h-4 mr-2 text-[#0E5A43]" />
+            <Sparkles className="w-4 h-4 mr-2 text-white" />
             New Featured Stores
           </Badge>
           <Link
@@ -110,7 +100,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                 <div
                   key={store._id}
                   className={cn(
-                    "group relative transition-all duration-500",
+                    "group relative transition-all duration-300",
                     // Mobile: fixed width for horizontal scroll
                     "min-w-[280px] sm:min-w-[320px] snap-center",
                     // Desktop: auto width from grid
@@ -120,7 +110,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                   )}
                 >
                   {/* Store card wrapper */}
-                  <div className="relative rounded-2xl sm:rounded-3xl p-1 transition-all duration-300 group-hover:shadow-2xl hover:scale-[1.02]">
+                  <div className="relative rounded p-1 transition-all duration-300 group-hover:shadow-lg">
                     <StoreCard store={store} />
                   </div>
                 </div>
@@ -129,9 +119,6 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
           )}
         </div>
       </div>
-
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-24 lg:h-32 bg-background pointer-events-none" />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { Readable } from "stream";
+import { requireApiRole } from "@/lib/apiAuth";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
@@ -16,11 +17,24 @@ function bufferToStream(buffer: Buffer): Readable {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const auth = await requireApiRole(req, ["seller", "admin"]);
+  if (auth.response) return auth.response;
+
   const data = await req.formData();
   const file = data.get("file") as File;
 
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowedTypes.includes(file.type)) {
+    return NextResponse.json({ error: "Only image uploads are allowed" }, { status: 400 });
+  }
+
+  const maxSize = 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    return NextResponse.json({ error: "Image must be 5MB or smaller" }, { status: 400 });
   }
 
   const arrayBuffer = await file.arrayBuffer();

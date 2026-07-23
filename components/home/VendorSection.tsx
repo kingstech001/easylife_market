@@ -77,31 +77,17 @@ export function VendorSection() {
   const sellerPreview = useMemo(() => storePreviews.slice(0, 5), [storePreviews]);
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 ">
-      <div className="absolute inset-0 bg-muted/20" />
-      <div className="absolute inset-0 opacity-[0.04]">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "none",
-            backgroundSize: "28px 28px",
-          }}
-        />
-      </div>
-      <div className="absolute left-[-10%] top-8 h-48 w-48 rounded-full bg-[#0E5A43]/12 blur-3xl sm:h-64 sm:w-64" />
-      <div className="absolute bottom-0 right-[-8%] h-56 w-56 rounded-full bg-[#F4C430]/12 blur-3xl sm:h-72 sm:w-72" />
-
+    <section className="relative overflow-hidden border-b border-border/60 bg-muted/20 py-14 sm:py-18">
       <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-10">
           <div className="space-y-6 sm:space-y-7">
-            <Badge className="inline-flex border-0 bg-[#0E5A43] text-white px-4 py-2 text-sm font-semibold text-white shadow-sm">
+            <Badge className="inline-flex rounded border-0 bg-[#0E5A43] px-4 py-2 text-sm font-semibold text-white shadow-sm">
               <Rocket className="mr-2 h-4 w-4" />
               For Vendors
             </Badge>
 
             <div className="space-y-4">
-              <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-6xl">
+              <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
                 Turn your passion into
                 <span className="mt-2 block text-[#0E5A43]">
                   profit with a professional storefront
@@ -115,21 +101,21 @@ export function VendorSection() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm backdrop-blur">
+              <div className="rounded border border-border/70 bg-background p-4 shadow-sm">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Setup
                 </p>
                 <p className="mt-2 text-lg font-semibold text-foreground">Fast launch</p>
                 <p className="mt-1 text-sm text-muted-foreground">Start selling without technical friction.</p>
               </div>
-              <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm backdrop-blur">
+              <div className="rounded border border-border/70 bg-background p-4 shadow-sm">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Control
                 </p>
                 <p className="mt-2 text-lg font-semibold text-foreground">Simple management</p>
                 <p className="mt-1 text-sm text-muted-foreground">Track inventory and orders in one place.</p>
               </div>
-              <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm backdrop-blur">
+              <div className="rounded border border-border/70 bg-background p-4 shadow-sm">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Growth
                 </p>
@@ -142,7 +128,7 @@ export function VendorSection() {
               <Link href="/auth/register" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="h-12 w-full bg-[#0E5A43] text-white px-6 text-base font-semibold text-white shadow-lg shadow-[#0E5A43]/20 hover:bg-[#083B2D] sm:h-14 sm:w-auto sm:px-8"
+                  className="h-12 w-full bg-[#0E5A43] px-6 text-base font-semibold text-white shadow-lg shadow-[#0E5A43]/20 hover:bg-[#083B2D] sm:w-auto sm:px-8"
                 >
                   Create Your Store
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -160,7 +146,7 @@ export function VendorSection() {
               </Link>
             </div>
 
-            <div className="rounded-[28px] border border-border/70 bg-background/80 p-4 shadow-sm backdrop-blur sm:p-5">
+            <div className="rounded border border-border/70 bg-background p-4 shadow-sm sm:p-5">
               <p className="text-sm font-medium text-muted-foreground">
                 Join thousands of successful sellers already growing on EasyLife.
               </p>
@@ -168,7 +154,7 @@ export function VendorSection() {
                 {trustPoints.map((label) => (
                   <div
                     key={label}
-                    className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-2 text-sm text-foreground"
+                    className="inline-flex items-center gap-2 rounded border border-border/70 bg-muted/40 px-3 py-2 text-sm text-foreground"
                   >
                     <CheckCircle className="h-4 w-4 text-emerald-500" />
                     <span>{label}</span>
@@ -179,7 +165,7 @@ export function VendorSection() {
           </div>
 
           <div className="space-y-4 sm:space-y-5">
-            <div className="rounded-[32px] border border-border/70 bg-background/85 p-5 shadow-xl backdrop-blur sm:p-6">
+            <div className="rounded border border-border/70 bg-background p-5 shadow-lg sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
@@ -198,10 +184,10 @@ export function VendorSection() {
                   return (
                     <div
                       key={benefit.title}
-                      className="rounded-3xl border border-border/70 bg-muted/25 p-4 transition hover:border-[#0E5A43]/35 hover:bg-[#0E5A43]/[0.04]"
+                      className="rounded border border-border/70 bg-muted/25 p-4 transition hover:border-[#0E5A43]/35 hover:bg-[#0E5A43]/[0.04]"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0E5A43] text-white shadow-sm">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[#0E5A43] text-white shadow-sm">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>
@@ -217,7 +203,7 @@ export function VendorSection() {
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-[#0E5A43]/15 bg-muted/20 p-5 shadow-sm sm:p-6">
+            <div className="rounded border border-[#0E5A43]/15 bg-background p-5 shadow-sm sm:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                 Social proof
               </p>

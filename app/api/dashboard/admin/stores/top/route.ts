@@ -1,10 +1,14 @@
 // File: /app/api/stores/top/route.ts
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store from "@/models/Store"
+import { requireApiRole } from "@/lib/apiAuth"
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
 
     // Extract limit from query params (default to 5)

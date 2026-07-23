@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store from "@/models/Store"
 import Visit from "@/models/Visit"
+import { requireApiRole } from "@/lib/apiAuth"
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
 
     const { searchParams } = new URL(req.url)

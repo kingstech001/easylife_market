@@ -378,11 +378,11 @@ export default async function StorePage({ params }: StorePageProps) {
       : "Notify Me When Available";
 
     return (
-      <div className="min-h-screen bg-muted/20">
+      <div className="min-h-screen bg-background">
         <VisitTracker storeId={store.id} />
 
-        <section className="relative overflow-hidden">
-          <div className="relative h-[220px] w-full sm:h-[280px] lg:h-[360px]">
+        <section className="relative overflow-hidden border-b border-border/60 bg-background">
+          <div className="relative hidden w-full lg:block lg:h-[360px]">
             {store.banner_url ? (
               <>
                 <Image
@@ -393,23 +393,20 @@ export default async function StorePage({ params }: StorePageProps) {
                   priority
                   sizes="100vw"
                 />
-                <div className="absolute inset-0 bg-muted/20" />
-                <div className="absolute inset-0 bg-[#F4C430]/10" />
+                <div className="absolute inset-0 bg-black/55" />
               </>
             ) : (
               <>
-                <div className="absolute inset-0 bg-muted/20" />
-                <div className="absolute left-[-8%] top-[10%] h-40 w-40 rounded-full bg-[#0E5A43]/20 blur-3xl sm:h-56 sm:w-56" />
-                <div className="absolute bottom-[-10%] right-[-6%] h-44 w-44 rounded-full bg-primary/15 blur-3xl sm:h-64 sm:w-64" />
+                <div className="absolute inset-0 bg-[#083B2D]" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <StoreIcon className="h-20 w-20 text-primary/25 sm:h-28 sm:w-28" />
+                  <StoreIcon className="h-28 w-28 text-white/20" />
                 </div>
               </>
             )}
           </div>
 
-          <div className="relative mx-auto -mt-14 max-w-7xl px-4 pb-6 sm:-mt-16 sm:px-6 lg:-mt-20 lg:px-8">
-            <div className="overflow-hidden rounded-[28px] border border-border/70 bg-background/92 shadow-xl backdrop-blur-sm sm:rounded-[34px]">
+          <div className="relative mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:-mt-20 lg:px-8 lg:pb-8 lg:pt-0">
+            <div className="overflow-hidden rounded border border-border bg-card shadow-sm lg:shadow-xl">
               <div className="p-4 sm:p-6 lg:p-8">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex gap-4 sm:flex-row sm:items-start mb-4">
@@ -421,16 +418,16 @@ export default async function StorePage({ params }: StorePageProps) {
                             alt={`${store.name} logo`}
                             width={112}
                             height={112}
-                            className="h-20 w-20 rounded-[22px] border-4 border-background object-cover shadow-xl ring-1 ring-border/60 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
+                            className="h-20 w-20 rounded border border-border object-cover shadow-sm sm:h-24 sm:w-24 lg:h-28 lg:w-28"
                           />
-                          <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#0E5A43] text-white shadow-lg">
+                          <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded bg-[#0E5A43] text-white shadow-lg">
                             <ShieldCheck className="h-4 w-4" />
                           </div>
                         </div>
                       ) : (
                         <AvatarPlaceholder
                           name={store.name}
-                          className="h-20 w-20 rounded-[22px] border-4 border-background text-2xl shadow-xl ring-1 ring-border/60 sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-3xl"
+                          className="h-20 w-20 rounded border border-border text-2xl shadow-sm sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-3xl"
                         />
                       )}
                     </div>
@@ -455,7 +452,7 @@ export default async function StorePage({ params }: StorePageProps) {
                 <div className="flex items-center gap-1 justify-between sm:justify-start">
                   <Badge
                     variant="secondary"
-                    className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
+                    className="rounded bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                   >
                     <Star className="mr-1.5 h-3.5 w-3.5 fill-current text-[#0E5A43]" />
                     {reviewStats.reviewCount > 0
@@ -464,7 +461,7 @@ export default async function StorePage({ params }: StorePageProps) {
                   </Badge>
                   <Badge
                     variant="secondary"
-                    className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
+                    className="rounded bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                   >
                     {reviewStats.reviewCount} review
                     {reviewStats.reviewCount === 1 ? "" : "s"}
@@ -473,7 +470,7 @@ export default async function StorePage({ params }: StorePageProps) {
                     <Badge
                       key={category}
                       variant="secondary"
-                      className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
+                      className="rounded bg-muted px-3 py-1 text-[10px] font-medium text-foreground"
                     >
                       {category}
                     </Badge>
@@ -481,7 +478,7 @@ export default async function StorePage({ params }: StorePageProps) {
                 </div>
 
                 {store.description && (
-                  <div className="mt-5 rounded-[24px] border border-border/70 bg-muted/20 p-4 sm:mt-6 sm:p-5">
+                  <div className="mt-5 rounded border border-border/70 bg-muted/20 p-4 sm:mt-6 sm:p-5">
                     <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                       About this {isRestaurant ? "place" : "store"}
                     </p>
@@ -493,14 +490,16 @@ export default async function StorePage({ params }: StorePageProps) {
           </div>
         </section>
 
-        <section className="px-4 pb-12 pt-2 sm:px-6 lg:px-8 lg:pb-16">
+        <section className="px-4 pb-12 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-4">
           <div className="mx-auto max-w-7xl">
             <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                   {sectionTitle}
                 </h2>
-                
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {sectionCaption}
+                </p>
               </div>
             </div>
 
@@ -516,9 +515,9 @@ export default async function StorePage({ params }: StorePageProps) {
                 ))}
               </div>
             ) : (
-              <Card className="rounded-[30px] border-2 border-dashed bg-background shadow-none">
+              <Card className="rounded border-2 border-dashed bg-card shadow-none">
                 <CardContent className="px-6 py-14 text-center sm:px-8 sm:py-16">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#0E5A43]/10">
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded bg-[#0E5A43]/10">
                     {isRestaurant ? (
                       <Utensils className="h-10 w-10 text-[#0E5A43]" />
                     ) : (
@@ -531,7 +530,7 @@ export default async function StorePage({ params }: StorePageProps) {
                   <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
                     {emptyMessage}
                   </p>
-                  <Button variant="outline" className="mt-6 rounded-full px-6">
+                  <Button variant="outline" className="mt-6 rounded px-6">
                     {emptyButtonText}
                   </Button>
                 </CardContent>

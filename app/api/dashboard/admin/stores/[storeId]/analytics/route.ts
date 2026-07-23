@@ -1,14 +1,18 @@
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { connectToDB } from '@/lib/db'
 import Product from '@/models/Product'
 import Order from '@/models/Order' // optional: if you have orders
 import Store from '@/models/Store'
+import { requireApiRole } from '@/lib/apiAuth'
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   context: { params: Promise<{ storeId: string }> }
 ) {
   try {
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
 
     const { storeId } = await context.params

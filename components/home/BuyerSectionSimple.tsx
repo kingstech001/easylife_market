@@ -39,34 +39,19 @@ export function BuyerSection() {
   ];
 
   return (
-    <section className="relative py-16 md:py-24 bg-background overflow-hidden">
-      {/* Subtle Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: `none`,
-            backgroundSize: '40px 40px'
-          }}
-        />
-      </div>
-
-      {/* Minimal Accent */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#0E5A43]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#F4C430]/5 rounded-full blur-3xl" />
-
+    <section className="relative overflow-hidden border-b border-border/60 bg-background py-14 md:py-18">
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        <div className="text-center mb-12 md:mb-16">
+        <div className="text-center mb-10 md:mb-12">
           {/* Badge */}
           <div className="flex justify-center mb-6">
-            <Badge className="bg-[#0E5A43] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
+            <Badge className="rounded bg-[#0E5A43] text-white border-0 px-4 py-2 text-sm font-semibold shadow-sm">
               <Sparkles className="w-4 h-4 mr-2" />
               For Customers
             </Badge>
           </div>
 
           {/* Headline */}
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
             <span className="block text-foreground">
               Everything you need,
             </span>
@@ -76,7 +61,7 @@ export function BuyerSection() {
           </h2>
 
           {/* Supporting Paragraph */}
-          <p className="text-sm md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Shop from thousands of verified sellers, enjoy secure payments, and get your favorite products 
             delivered straight to your door. EasyLife makes online shopping simple, safe, and enjoyable.
           </p>
@@ -87,10 +72,10 @@ export function BuyerSection() {
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="group relative bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-[#0E5A43]/30 transition-all duration-300 hover:-translate-y-1"
+              className="group relative bg-card border border-border rounded p-6 shadow-sm hover:shadow-md hover:border-[#0E5A43]/30 transition-all duration-300"
             >
               {/* Icon */}
-              <div className="mb-4 inline-flex p-3 rounded-xl bg-[#0E5A43] text-white shadow-sm">
+              <div className="mb-4 inline-flex p-3 rounded bg-[#0E5A43] text-white shadow-sm">
                 <benefit.icon className="w-6 h-6" />
               </div>
 
@@ -135,7 +120,7 @@ export function BuyerSection() {
           <Link href="/allStoreProducts" className="w-full sm:w-auto">
             <Button
               size="lg"
-              className="w-full sm:w-auto h-14 px-8 text-lg font-bold bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
+              className="w-full sm:w-auto h-12 px-7 text-base font-semibold bg-[#0E5A43] text-white hover:bg-[#083B2D] shadow-lg transition-all duration-300 group"
             >
               Start Shopping
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -146,7 +131,7 @@ export function BuyerSection() {
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto h-14 px-8 text-lg bg-transparent font-bold border-2 hover:border-[#0E5A43] hover:bg-[#0E5A43]/5  transition-all duration-300"
+              className="w-full sm:w-auto h-12 px-7 text-base bg-transparent font-semibold border-2 hover:border-[#0E5A43] hover:bg-[#0E5A43]/5 transition-all duration-300"
             >
               Browse Stores
             </Button>

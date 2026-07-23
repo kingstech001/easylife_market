@@ -1,13 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { connectToDB } from "@/lib/db"
 import Store from "@/models/Store"
-import { getUserFromCookies } from "@/lib/auth"
+import { requireApiRole } from "@/lib/apiAuth"
 import type { ApiResponse } from "@/app/types/api"
 import { slugify } from "@/lib/utils"
 
 // -------------------- GET: Fetch All Stores --------------------
-export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+
     await connectToDB()
 
     const stores = await Store.find({ isPublished: true }).sort({ createdAt: -1 }).lean()
@@ -26,15 +29,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
 }
 
 // -------------------- POST: Create New Store --------------------
-export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     await connectToDB()
 
     // 1. Authenticate user
-    const user = await getUserFromCookies()
-    if (!user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
-    }
+    const auth = await requireApiRole(req, ["admin"])
+    if (auth.response) return auth.response
+    const user = auth.user!
 
     const body = await req.json()
     const { name, slug, description, logo_url, banner_url } = body
