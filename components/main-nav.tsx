@@ -18,13 +18,13 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
   ]
 
   return (
-    <div className="flex gap-6 md:gap-10 items-center">
+    <div className="flex gap- md:gap-10 items-center">
       <Link href="/" className="inline-flex items-center group">
-        <Image alt="EasyLife Logo" src={"/logo.png"} width={70} height={70} className="drop-shadow-lg"/>
+        <Image alt="EasyLife Logo" src={"/logo.png"} width={50} height={50} className="drop-shadow-lg"/>
         <div className="">
-          <span className="hidden md:block text-xl md:font-bold text-[#0E5A43]">
+          {/* <span className="hidden md:block text-xl md:font-bold text-[#0E5A43]">
             EasyLife
-          </span>
+          </span> */}
         </div>
       </Link>
       <nav className={cn("md:flex items-center space-x-4 lg:space-x-6 hidden", className)} {...props}>
