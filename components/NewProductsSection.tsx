@@ -63,7 +63,11 @@ async function getNewProducts(): Promise<ProductData[]> {
     await connectToDB();
 
     // Fetch 10 newest products with populated store data
-    const products = await Product.find({})
+    const products = await Product.find({
+      isActive: true,
+      isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
+    })
       .sort({ createdAt: -1 })
       .limit(10)
       .populate({

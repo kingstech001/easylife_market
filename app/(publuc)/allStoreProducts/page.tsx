@@ -33,6 +33,7 @@ async function getProducts(): Promise<TransformedProduct[]> {
     const products = await Product.find({
       isActive: true,
       isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
     })
       .populate({
         path: "storeId",

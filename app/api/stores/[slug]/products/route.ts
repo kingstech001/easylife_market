@@ -58,6 +58,7 @@ export async function GET(
       storeId: store._id,
       isActive: true,
       isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
     }
 
     // Add search query if provided

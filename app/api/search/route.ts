@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
     const productsPromise = Product.find({
       isActive: true,
       isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
       storeId: { $in: approvedStoreIds }, // ✅ Only fetch products from approved stores
       $or: [
         { name: searchRegex },

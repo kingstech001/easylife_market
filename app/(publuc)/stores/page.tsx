@@ -27,6 +27,7 @@ async function getStoresData() {
           storeId: { $in: storeIds },
           isActive: true,
           isDeleted: false,
+          inventoryQuantity: { $gt: 0 },
         },
       },
       { $group: { _id: "$storeId", count: { $sum: 1 } } },

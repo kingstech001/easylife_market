@@ -2,12 +2,11 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ShoppingCart, Heart, Loader2 } from "lucide-react"
 import { useCart } from "@/context/cart-context"
@@ -63,10 +62,10 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
   const needsCustomization = product.hasModifiers
   const shouldOpenProductPage = needsCustomization || product.hasVariants
   const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
-  const discountPercentage = hasDiscount
-    ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
-    : 0
 
+  if (product.inventory_quantity <= 0) {
+    return null
+  }
   // Parse variants if they come as a string
   let parsedVariants: Array<{
     color: { name: string; hex: string; _id?: string }
@@ -90,27 +89,6 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
     console.error('❌ Error parsing variants:', error)
     console.log('Raw variants value:', product.variants)
   }
-
-  // Enhanced debugging
-  useEffect(() => {
-    if (product.hasVariants) {
-      console.log('=== PRODUCT DEBUG ===')
-      console.log('Product Name:', product.name)
-      console.log('Has Variants Flag:', product.hasVariants)
-      console.log('Raw Variants:', product.variants)
-      console.log('Variants Type:', typeof product.variants)
-      console.log('Is Array:', Array.isArray(product.variants))
-      console.log('Parsed Variants:', parsedVariants)
-      console.log('Parsed Variants Length:', parsedVariants?.length)
-      
-      if (parsedVariants && parsedVariants.length > 0) {
-        console.log('First Variant:', parsedVariants[0])
-        console.log('First Variant Color:', parsedVariants[0]?.color)
-        console.log('First Variant Sizes:', parsedVariants[0]?.sizes)
-      }
-      console.log('===================')
-    }
-  }, [product.hasVariants, product.variants, product.name])
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -175,20 +153,6 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             />
 
-           
-
-            {product.inventory_quantity <= 5 && product.inventory_quantity > 0 && !product.hasVariants && (
-              <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-100 text-amber-800">
-                Low Stock
-              </Badge>
-            )}
-
-            {product.inventory_quantity === 0 && !product.hasVariants && (
-              <Badge variant="destructive" className="absolute top-2 right-2">
-                Out of Stock
-              </Badge>
-            )}
-
             {/* Wishlist Button - Shows on Hover */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -227,15 +191,6 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
                   </span>
                 )}
               </div>
-
-              {/* Stock Info */}
-              <div className="text-xs text-muted-foreground">
-                {product.inventory_quantity > 0 ? (
-                  <span>Stock: {product.inventory_quantity} available</span>
-                ) : (
-                  <span className="text-red-500">Out of stock</span>
-                )}
-              </div>
             </div>
         </CardContent>
 
@@ -251,14 +206,14 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
             <Button
               className="h-10 w-full rounded-xl text-sm font-semibold"
               onClick={handleAddToCart}
-              disabled={isAddingToCart || product.inventory_quantity === 0}
+              disabled={isAddingToCart}
             >
               {isAddingToCart ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <ShoppingCart className="mr-2 h-4 w-4" />
               )}
-              {product.inventory_quantity === 0 ? "Out of stock" : "Add to cart"}
+              Add to cart
             </Button>
           )}
         </CardFooter>

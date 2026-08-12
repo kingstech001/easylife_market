@@ -20,7 +20,11 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10)));
     const skip = (page - 1) * limit;
 
-    const filter = { isActive: true, isDeleted: false };
+    const filter = {
+      isActive: true,
+      isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
+    };
 
     // Run count and fetch in parallel
     const [totalCount, products] = await Promise.all([

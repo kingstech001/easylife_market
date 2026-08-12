@@ -257,23 +257,10 @@ export function StoreCard({ store }: StoreCardProps) {
             )}
           </div>
 
-          <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+          {/* <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
             {store.description || "No description available."}
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
-
-        {/* ── Product Count ─────────────────────────────────────────────────── */}
-        {store.productCount !== undefined && (
-          <CardContent className="pt-0 pb-4 mt-auto flex-shrink-0 px-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Package className="w-4 h-4" />
-              <span>
-                {store.productCount}{" "}
-                {store.productCount === 1 ? "product" : "products"}
-              </span>
-            </div>
-          </CardContent>
-        )}
       </Card>
     </Link>
   );

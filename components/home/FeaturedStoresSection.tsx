@@ -55,7 +55,14 @@ async function getFeaturedStores(): Promise<StoreData[]> {
 
     const storeIds = stores.map((store: any) => store._id);
     const productCounts = await Product.aggregate([
-      { $match: { storeId: { $in: storeIds } } },
+      {
+        $match: {
+          storeId: { $in: storeIds },
+          isActive: true,
+          isDeleted: false,
+          inventoryQuantity: { $gt: 0 },
+        },
+      },
       { $group: { _id: "$storeId", count: { $sum: 1 } } },
     ]);
     const countByStoreId = new Map(

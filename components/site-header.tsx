@@ -260,37 +260,37 @@ export function SiteHeader() {
             {/* Mobile Toggle */}
             <div className="flex items-center md:hidden justify-center space-x-2">
               {/* Cart - Only for non-sellers */}
-          {showShoppingFeatures ? (
-            <button
-              onClick={() => setCartOpen(true)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors relative hover:text-foreground",
-              )}
-            >
-              <ShoppingCart className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-              {itemCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute bottom-3 left-3 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#0E5A43] text-white border-0"
+              {showShoppingFeatures ? (
+                <button
+                  onClick={() => setCartOpen(true)}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 transition-colors relative hover:text-foreground",
+                  )}
                 >
-                  {itemCount > 9 ? "9+" : itemCount}
-                </Badge>
+                  <ShoppingCart className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                  {itemCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute bottom-3 left-3 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[9px] font-medium bg-[#0E5A43] text-white border-0"
+                    >
+                      {itemCount > 9 ? "9+" : itemCount}
+                    </Badge>
+                  )}
+                </button>
+              ) : (
+                /* Profile for sellers (replaces cart) */
+                <Link
+                  href={dashboardLink}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 transition-colors",
+                    pathname?.startsWith("/dashboard")
+                      ? "text-[#0E5A43]"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <User className="h-5 w-5" />
+                </Link>
               )}
-            </button>
-          ) : (
-            /* Profile for sellers (replaces cart) */
-            <Link
-              href={dashboardLink}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors",
-                pathname?.startsWith("/dashboard")
-                  ? "text-[#0E5A43]"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <User className="h-5 w-5" />
-            </Link>
-          )}
               {/* Theme Toggle */}
               <ThemeToggle />
             </div>
@@ -446,7 +446,7 @@ export function SiteHeader() {
             className={cn(
               "flex flex-col items-center justify-center gap-1 transition-colors",
               pathname === "/"
-                ? "text-[#e0ac29]"
+                ? "text-[#0E5A43]"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -492,7 +492,6 @@ export function SiteHeader() {
             </Link>
           )}
 
-          
           {authenticated ? (
             <div className="flex items-center justify-center">
               <Link href={dashboardLink}>

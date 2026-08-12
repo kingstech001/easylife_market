@@ -20,7 +20,12 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
     // Count products for each store in parallel
     const storesWithProductCount = await Promise.all(
       stores.map(async (store) => {
-        const productCount = await Product.countDocuments({ storeId: store._id });
+        const productCount = await Product.countDocuments({
+          storeId: store._id,
+          isActive: true,
+          isDeleted: false,
+          inventoryQuantity: { $gt: 0 },
+        });
         return {
           ...store,
           productCount,

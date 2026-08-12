@@ -24,6 +24,9 @@ async function getProductData(slug: string, productId: string) {
     const product = await Product.findOne({
       _id: productId,
       storeId: store._id,
+      isActive: true,
+      isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
     }).lean();
     if (!product) return null;
 
@@ -31,6 +34,9 @@ async function getProductData(slug: string, productId: string) {
     const relatedProducts = await Product.find({
       storeId: store._id,
       _id: { $ne: productId },
+      isActive: true,
+      isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
     })
       .limit(4)
       .lean();

@@ -192,12 +192,16 @@ async function getStoreProducts(
 
     const totalCount = await Product.countDocuments({
       isActive: true,
+      isDeleted: false,
       storeId,
+      inventoryQuantity: { $gt: 0 },
     });
 
     const products = await Product.find({
       isActive: true,
+      isDeleted: false,
       storeId,
+      inventoryQuantity: { $gt: 0 },
     })
       .select(
         "name price compareAtPrice inventoryQuantity hasVariants variants hasModifiers images",

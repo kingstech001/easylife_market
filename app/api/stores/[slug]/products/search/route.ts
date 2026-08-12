@@ -13,6 +13,7 @@ interface SearchFilters {
   storeId: mongoose.Types.ObjectId
   isActive: boolean
   isDeleted: boolean
+  inventoryQuantity: { $gt: number }
   $text?: { $search: string }
   categoryId?: mongoose.Types.ObjectId
   price?: {
@@ -66,6 +67,7 @@ export async function GET(request: Request, { params }: RouteParams): Promise<Ne
       storeId: store._id,
       isActive: true,
       isDeleted: false,
+      inventoryQuantity: { $gt: 0 },
     }
 
     // Text search

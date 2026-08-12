@@ -8,6 +8,26 @@ import { connectToDB } from "@/lib/db";
 import Store from "@/models/Store";
 
 // Zod validation schema
+const dayScheduleSchema = z.object({
+  open: z.boolean(),
+  openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: "Invalid opening time format",
+  }),
+  closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: "Invalid closing time format",
+  }),
+});
+
+const businessHoursSchema = z.object({
+  monday: dayScheduleSchema,
+  tuesday: dayScheduleSchema,
+  wednesday: dayScheduleSchema,
+  thursday: dayScheduleSchema,
+  friday: dayScheduleSchema,
+  saturday: dayScheduleSchema,
+  sunday: dayScheduleSchema,
+});
+
 const storeSchema = z.object({
   name: z.string().min(3, { message: "Store name must be at least 3 characters" }),
   slug: z.string().min(3).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
@@ -22,6 +42,7 @@ const storeSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }).optional(),
+  businessHours: businessHoursSchema.optional(),
 });
 
 export async function POST(req: Request) {
@@ -61,7 +82,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, slug, description, logo_url, banner_url, categories, location, locationCoords } = parsed.data;
+    const {
+      name,
+      slug,
+      description,
+      logo_url,
+      banner_url,
+      categories,
+      location,
+      locationCoords,
+      businessHours,
+    } = parsed.data;
 
     // Check if user already has a store
     const existingUserStore = await Store.findOne({ sellerId });
@@ -90,6 +121,7 @@ export async function POST(req: Request) {
       logo_url: logo_url || "",
       banner_url: banner_url || "",
       categories: categories || [],
+      ...(businessHours ? { businessHours } : {}),
     };
 
     // Only add location if address is provided
@@ -110,6 +142,7 @@ export async function POST(req: Request) {
       slug: storeData.slug,
       hasLocation: !!storeData.location,
       categoriesCount: storeData.categories.length,
+      hasBusinessHours: !!storeData.businessHours,
     });
 
     // Create store
@@ -132,6 +165,7 @@ export async function POST(req: Request) {
           logo_url: store.logo_url,
           banner_url: store.banner_url,
           categories: store.categories,
+          businessHours: store.businessHours,
         },
       },
       { status: 201 }

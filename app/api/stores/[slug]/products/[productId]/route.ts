@@ -54,6 +54,7 @@ export async function GET(
     const query: any = {
       _id: new mongoose.Types.ObjectId(productId),
       storeId: store._id,
+      inventoryQuantity: { $gt: 0 },
     }
 
     // Check if these fields exist before filtering on them
