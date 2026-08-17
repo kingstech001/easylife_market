@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { StoreCard } from "@/components/store-card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -75,11 +76,28 @@ const HERO_SWAP_DELAY_MS = 100;
 
 export default function StoresPageClient({ initialStores }: StoresPageClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const stores = initialStores;
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const handledClosedRedirect = useRef(false);
+
+  useEffect(() => {
+    const closedStore = searchParams.get("closed");
+    if (!closedStore || handledClosedRedirect.current) return;
+    handledClosedRedirect.current = true;
+
+    const reopens = searchParams.get("reopens");
+    toast.info(`${closedStore} is currently closed`, {
+      description:
+        !reopens || reopens === "No opening hours"
+          ? "Please check back later."
+          : `${reopens}. Please check back then.`,
+    });
+    router.replace("/stores", { scroll: false });
+  }, [router, searchParams]);
 
   const fetchNewBanner = async () => {
     try {

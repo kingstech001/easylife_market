@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect, unstable_rethrow } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,14 @@ import {
   StoreReviewsSection,
   type StoreReviewItem,
 } from "@/components/store-reviews-section";
+import {
+  DEFAULT_BUSINESS_HOURS as SHARED_DEFAULT_BUSINESS_HOURS,
+  getStoreStatus as getSharedStoreStatus,
+  getTodayKey as getSharedTodayKey,
+  isValidDaySchedule as isSharedValidDaySchedule,
+  resolveBusinessHours as resolveSharedBusinessHours,
+  type BusinessHours as SharedBusinessHours,
+} from "@/lib/store-hours";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -212,7 +220,7 @@ interface StoreData {
   owner_id: string;
   created_at: string;
   updated_at: string;
-  businessHours: BusinessHours;
+  businessHours: SharedBusinessHours;
   categories: string[];
 }
 
@@ -269,8 +277,8 @@ async function getStore(slug: string): Promise<StoreData | null> {
       owner_id: store.sellerId?.toString() || "",
       created_at: store.createdAt?.toISOString() || new Date().toISOString(),
       updated_at: store.updatedAt?.toISOString() || new Date().toISOString(),
-      businessHours: resolveBusinessHours(
-        store.businessHours as Partial<BusinessHours> | undefined,
+      businessHours: resolveSharedBusinessHours(
+        store.businessHours as Partial<SharedBusinessHours> | undefined,
       ),
       categories: (store.categories as string[]) || [],
     };
@@ -445,21 +453,29 @@ export default async function StorePage({ params }: StorePageProps) {
       notFound();
     }
 
+    const storeStatus = getSharedStoreStatus(store.businessHours);
+    if (!storeStatus.isOpen) {
+      const closedParams = new URLSearchParams({
+        closed: store.name,
+        reopens: storeStatus.detail,
+      });
+      redirect(`/stores?${closedParams.toString()}`);
+    }
+
     const { products: storeProducts, total: totalProducts } =
       await getStoreProducts(store.id, PRODUCTS_LIMIT);
     const { reviews: storeReviews, stats: reviewStats } =
       await getStoreReviews(store.id);
 
-    const todayKey = getTodayKey();
+    const todayKey = getSharedTodayKey();
     const rawSchedule = store.businessHours?.[todayKey];
-    const todaySchedule = isValidDaySchedule(rawSchedule)
+    const todaySchedule = isSharedValidDaySchedule(rawSchedule)
       ? rawSchedule
-      : DEFAULT_BUSINESS_HOURS[todayKey];
+      : SHARED_DEFAULT_BUSINESS_HOURS[todayKey];
 
     const openHour = todaySchedule.openTime;
     const closeHour = todaySchedule.closeTime;
     const isOpenToday = todaySchedule.open;
-    const storeStatus = getStoreStatus(store.businessHours);
 
     const isRestaurant = store.categories.some((cat) =>
       FOOD_CATEGORIES.includes(cat.toLowerCase().trim()),
@@ -769,6 +785,7 @@ export default async function StorePage({ params }: StorePageProps) {
       </div>
     );
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Critical error in StorePage:", error);
     notFound();
   }
