@@ -248,7 +248,7 @@ export function StoreCard({ store }: StoreCardProps) {
             </CardTitle>
             {/* ✅ Open pill — bottom right, only when open */}
             {status.isOpen && (
-              <div className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-green-500/90 backdrop-blur-sm rounded-full px-2.5 py-1">
+              <div className="absolute bottom-14 right-2 flex items-center gap-1.5 bg-green-500/90 backdrop-blur-sm rounded-full px-2.5 py-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0" />
                 <span className="text-white text-[10px] font-semibold">
                   {status.label}
@@ -257,9 +257,6 @@ export function StoreCard({ store }: StoreCardProps) {
             )}
           </div>
 
-          {/* <CardDescription className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-            {store.description || "No description available."}
-          </CardDescription> */}
         </CardHeader>
       </Card>
     </Link>
