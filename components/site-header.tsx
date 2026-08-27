@@ -14,6 +14,7 @@ import {
   User,
   LogIn,
   X,
+  Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,16 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+
+const FREE_DELIVERY_START = new Date("2026-09-01T00:00:00+01:00").getTime();
+const FREE_DELIVERY_END = new Date("2026-10-01T00:00:00+01:00").getTime();
+
+function getFreeDeliveryAnnouncement(now = Date.now()) {
+  if (now >= FREE_DELIVERY_END) return null;
+  return now < FREE_DELIVERY_START
+    ? "Free delivery within Ogrute starts September 1 and ends September 30"
+    : "Free delivery is live within Ogrute until September 30";
+}
 
 export function SiteHeader() {
   const router = useRouter();
@@ -42,6 +53,9 @@ export function SiteHeader() {
   const [authenticated, setAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [dashboardLink, setDashboardLink] = useState("/dashboard");
+  const [deliveryAnnouncement, setDeliveryAnnouncement] = useState(() =>
+    getFreeDeliveryAnnouncement(),
+  );
   const { items } = useCart();
   const { state: wishlistState } = useWishlist();
 
@@ -56,6 +70,13 @@ export function SiteHeader() {
 
   // Don't show cart and wishlist for sellers
   const showShoppingFeatures = userRole !== "seller";
+
+  useEffect(() => {
+    const updateAnnouncement = () =>
+      setDeliveryAnnouncement(getFreeDeliveryAnnouncement());
+    const interval = window.setInterval(updateAnnouncement, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     async function checkAuth() {
@@ -140,6 +161,26 @@ export function SiteHeader() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        {deliveryAnnouncement && (
+          <div className="overflow-hidden bg-[#0E5A43] py-2 text-white">
+            <p className="sr-only">{deliveryAnnouncement}</p>
+            <div
+              aria-hidden="true"
+              className="flex w-max animate-marquee-left items-center motion-reduce:animate-none"
+              style={{ animationDuration: "22s" }}
+            >
+              {Array.from({ length: 6 }).map((_, index) => (
+                <span
+                  key={index}
+                  className="flex min-w-[290px] items-center justify-center gap-2 px-6 text-xs font-semibold uppercase tracking-[0.12em] sm:min-w-[430px] sm:text-sm"
+                >
+                  <Truck className="h-4 w-4 shrink-0 text-[#f6cf66]" />
+                  {deliveryAnnouncement}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="max-w-[1280px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo and Main Nav */}

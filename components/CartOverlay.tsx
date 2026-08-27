@@ -18,6 +18,10 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFormatAmount } from "@/hooks/useFormatAmount";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { FaWhatsapp } from "react-icons/fa";
+
+const WHATSAPP_ORDER_NUMBER = "2348071427831";
 
 type CartOverlayProps = {
   onClose: () => void;
@@ -78,12 +82,42 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
     0,
   );
 
+  const handleWhatsAppCheckout = () => {
+    const itemLines = items.map((item) => {
+      const variantDetails = [
+        item.selectedVariant?.color?.name,
+        item.selectedVariant?.size ? `Size: ${item.selectedVariant.size}` : null,
+      ].filter(Boolean);
+      const variantText = variantDetails.length > 0
+        ? ` (${variantDetails.join(", ")})`
+        : "";
+
+      return `${item.quantity} × ${item.name}${variantText} — ${formatAmount(item.price * item.quantity)}`;
+    });
+    const message = [
+      "Hello EasyLife, I would like to order:",
+      "",
+      ...itemLines,
+      "",
+      `Subtotal: ${formatAmount(subtotal)}`,
+      "Delivery address: ......................................................",
+      "",
+      "Please confirm product availability and the final delivery fee.",
+    ].join("\n");
+
+    window.open(
+      `https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
   return (
     <>
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
+          "fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
           isVisible ? "opacity-100" : "opacity-0",
         )}
         onClick={handleClose}
@@ -92,7 +126,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
       {/* Cart Panel */}
       <div
         className={cn(
-          "fixed inset-y-0 right-0 z-50 bg-background w-full max-w-lg h-full shadow-2xl border-l overflow-hidden flex flex-col",
+          "fixed inset-y-0 right-0 z-[60] bg-background w-full max-w-lg h-full shadow-2xl border-l overflow-hidden flex flex-col",
           "transition-transform duration-300 ease-out",
           isVisible ? "translate-x-0" : "translate-x-full",
         )}
@@ -271,7 +305,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t bg-background p-2 space-y-4">
+          <div className="border-t bg-background p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] space-y-4">
             {/* Price Breakdown */}
             <Card className="border-0 shadow-sm bg-muted/50 mb-2">
               <CardContent className="p-4 space-y-3">
@@ -294,6 +328,27 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
+
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <Separator className="flex-1" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Or
+              </span>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleWhatsAppCheckout}
+              className="h-12 w-full rounded-xl bg-[#25D366] text-base font-semibold text-white shadow-lg transition-all hover:bg-[#1ebe5d] active:scale-[0.98]"
+              size="lg"
+            >
+              <FaWhatsapp className="mr-2 h-5 w-5" />
+              Complete order on WhatsApp
+            </Button>
+            <p className="text-center text-[10px] leading-relaxed text-muted-foreground sm:text-xs">
+              Availability and the final delivery fee will be confirmed on WhatsApp.
+            </p>
           </div>
         )}
       </div>
