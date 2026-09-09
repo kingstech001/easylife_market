@@ -18,57 +18,63 @@ export function getNetworkProfile(): NetworkProfile {
   }
 
   const connection =
-    (navigator as Navigator & {
-      connection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-      mozConnection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-      msConnection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-    }).connection ||
-    (navigator as Navigator & {
-      connection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-      mozConnection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-      msConnection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-    }).mozConnection ||
-    (navigator as Navigator & {
-      connection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-      mozConnection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-      msConnection?: {
-        effectiveType?: string;
-        saveData?: boolean;
-        downlink?: number;
-      };
-    }).msConnection;
+    (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+        mozConnection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+        msConnection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+      }
+    ).connection ||
+    (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+        mozConnection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+        msConnection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+      }
+    ).mozConnection ||
+    (
+      navigator as Navigator & {
+        connection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+        mozConnection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+        msConnection?: {
+          effectiveType?: string;
+          saveData?: boolean;
+          downlink?: number;
+        };
+      }
+    ).msConnection;
 
   const effectiveType = connection?.effectiveType ?? "unknown";
   const saveData = Boolean(connection?.saveData);

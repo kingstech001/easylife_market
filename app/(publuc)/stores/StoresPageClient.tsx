@@ -74,7 +74,9 @@ const HERO_SWAP_DELAY_MS = 100;
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function StoresPageClient({ initialStores }: StoresPageClientProps) {
+export default function StoresPageClient({
+  initialStores,
+}: StoresPageClientProps) {
   const router = useRouter();
   const [isSlowConnection, setIsSlowConnection] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
@@ -121,7 +123,7 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           setVisibleCount((current) => Math.min(current + 6, stores.length));
         }
       },
-      { rootMargin: "180px 0px" }
+      { rootMargin: "180px 0px" },
     );
 
     observer.observe(target);
@@ -155,7 +157,9 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
     }
   };
 
-  useEffect(() => { fetchNewBanner(); }, [isSlowConnection]);
+  useEffect(() => {
+    fetchNewBanner();
+  }, [isSlowConnection]);
   useEffect(() => {
     if (isSlowConnection) {
       return;
@@ -180,7 +184,12 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
         <div className="absolute inset-0">
           {heroBanner?.imageUrl ? (
             <>
-              <div className={cn("absolute inset-0 transition-opacity duration-700 hidden lg:block", isTransitioning ? "opacity-0" : "opacity-100")}>
+              <div
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-700 hidden lg:block",
+                  isTransitioning ? "opacity-0" : "opacity-100",
+                )}
+              >
                 <Image
                   key={heroBanner.id}
                   src={heroBanner.imageUrl}
@@ -204,36 +213,57 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           <div className="max-w-2xl hidden lg:block">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 mb-5">
               <Sparkles className="h-3 w-3 text-[#f6cf66]" />
-              <span className={cn("text-xs font-medium", heroBanner?.imageUrl ? "text-white/80" : "text-foreground/60")}>
+              <span
+                className={cn(
+                  "text-xs font-medium",
+                  heroBanner?.imageUrl ? "text-white/80" : "text-foreground/60",
+                )}
+              >
                 Discover trusted stores
               </span>
             </div>
 
-            <h1 className={cn(
-              "text-5xl font-bold tracking-tight leading-[1.15]",
-              heroBanner?.imageUrl ? "text-white" : "text-foreground"
-            )}>
+            <h1
+              className={cn(
+                "text-5xl font-bold tracking-tight leading-[1.15]",
+                heroBanner?.imageUrl ? "text-white" : "text-foreground",
+              )}
+            >
               {heroBanner?.title || "Explore stores across the marketplace"}
             </h1>
-            <p className={cn(
-              "mt-4 text-lg max-w-xl leading-relaxed",
-              heroBanner?.imageUrl ? "text-white/70" : "text-muted-foreground"
-            )}>
-              {heroBanner?.subtitle || "Browse growing brands, local vendors, and premium sellers in one place."}
+            <p
+              className={cn(
+                "mt-4 text-lg max-w-xl leading-relaxed",
+                heroBanner?.imageUrl
+                  ? "text-white/70"
+                  : "text-muted-foreground",
+              )}
+            >
+              {heroBanner?.subtitle ||
+                "Browse growing brands, local vendors, and premium sellers in one place."}
             </p>
           </div>
 
           {/* Search */}
           <form onSubmit={handleSearch} className="lg:mt-8 max-w-lg">
-            <div className={cn(
-              "flex items-center h-12 sm:h-13 rounded-xl overflow-hidden transition-all",
-              heroBanner?.imageUrl
-                ? "bg-muted/50 border border-border/60 lg:bg-white/10 lg:backdrop-blur-md lg:border-white/15"
-                : "bg-muted/50 border border-border/60",
-              searchFocused && "ring-2 ring-[#0E5A43]/20 border-[#0E5A43]",
-              searchFocused && heroBanner?.imageUrl && "lg:ring-[#0E5A43]/40 lg:border-[#0E5A43]/30"
-            )}>
-              <Search className={cn("ml-3.5 h-4 w-4 flex-shrink-0 text-muted-foreground", heroBanner?.imageUrl && "lg:text-white/40")} />
+            <div
+              className={cn(
+                "flex items-center h-12 sm:h-13 rounded-xl overflow-hidden transition-all",
+                heroBanner?.imageUrl
+                  ? "bg-muted/50 border border-border/60 lg:bg-white/10 lg:backdrop-blur-md lg:border-white/15"
+                  : "bg-muted/50 border border-border/60",
+                searchFocused && "ring-2 ring-[#0E5A43]/20 border-[#0E5A43]",
+                searchFocused &&
+                  heroBanner?.imageUrl &&
+                  "lg:ring-[#0E5A43]/40 lg:border-[#0E5A43]/30",
+              )}
+            >
+              <Search
+                className={cn(
+                  "ml-3.5 h-4 w-4 flex-shrink-0 text-muted-foreground",
+                  heroBanner?.imageUrl && "lg:text-white/40",
+                )}
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -243,12 +273,22 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
                 placeholder="Search stores, products..."
                 className={cn(
                   "flex-1 h-full px-3 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground",
-                  heroBanner?.imageUrl && "lg:text-white lg:placeholder:text-white/40"
+                  heroBanner?.imageUrl &&
+                    "lg:text-white lg:placeholder:text-white/40",
                 )}
               />
               {searchQuery && (
-                <button type="button" onClick={() => setSearchQuery("")} className="p-1.5 mr-1 rounded-md hover:bg-muted lg:hover:bg-white/10">
-                  <X className={cn("h-3.5 w-3.5 text-muted-foreground", heroBanner?.imageUrl && "lg:text-white/50")} />
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="p-1.5 mr-1 rounded-md hover:bg-muted lg:hover:bg-white/10"
+                >
+                  <X
+                    className={cn(
+                      "h-3.5 w-3.5 text-muted-foreground",
+                      heroBanner?.imageUrl && "lg:text-white/50",
+                    )}
+                  />
                 </button>
               )}
               <button
@@ -264,10 +304,22 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           {/* Stats — desktop only */}
           {stores.length > 0 && (
             <div className="mt-6 hidden lg:flex items-center gap-5">
-              <Stat value={stores.length} label="Active Stores" desktopLight={!!heroBanner?.imageUrl} />
-              <div className={cn("h-6 w-px bg-border", heroBanner?.imageUrl && "lg:bg-white/15")} />
               <Stat
-                value={stores.reduce((sum, s) => sum + (s.productCount || 0), 0)}
+                value={stores.length}
+                label="Active Stores"
+                desktopLight={!!heroBanner?.imageUrl}
+              />
+              <div
+                className={cn(
+                  "h-6 w-px bg-border",
+                  heroBanner?.imageUrl && "lg:bg-white/15",
+                )}
+              />
+              <Stat
+                value={stores.reduce(
+                  (sum, s) => sum + (s.productCount || 0),
+                  0,
+                )}
                 label="Products"
                 desktopLight={!!heroBanner?.imageUrl}
               />
@@ -289,8 +341,12 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
               <FaWhatsapp className="h-4 w-4 text-[#25D366]" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-semibold truncate">Advertise your business</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Reach active shoppers on EasyLife</p>
+              <p className="text-xs sm:text-sm font-semibold truncate">
+                Advertise your business
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                Reach active shoppers on EasyLife
+              </p>
             </div>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[#0E5A43] flex-shrink-0 transition-colors" />
@@ -306,7 +362,8 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
             </div>
             <h3 className="text-xl font-bold mb-2">No stores yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
-              Be the first to launch a store and start reaching customers across the marketplace.
+              Be the first to launch a store and start reaching customers across
+              the marketplace.
             </p>
             <Link href="/auth/register">
               <Button className="h-11 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white px-6">
@@ -357,13 +414,31 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Stat({ value, label, desktopLight }: { value: number; label: string; desktopLight: boolean }) {
+function Stat({
+  value,
+  label,
+  desktopLight,
+}: {
+  value: number;
+  label: string;
+  desktopLight: boolean;
+}) {
   return (
     <div>
-      <p className={cn("text-lg sm:text-xl font-bold text-foreground", desktopLight && "lg:text-white")}>
+      <p
+        className={cn(
+          "text-lg sm:text-xl font-bold text-foreground",
+          desktopLight && "lg:text-white",
+        )}
+      >
         {value.toLocaleString()}
       </p>
-      <p className={cn("text-[10px] sm:text-xs text-muted-foreground", desktopLight && "lg:text-white/50")}>
+      <p
+        className={cn(
+          "text-[10px] sm:text-xs text-muted-foreground",
+          desktopLight && "lg:text-white/50",
+        )}
+      >
         {label}
       </p>
     </div>

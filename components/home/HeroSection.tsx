@@ -5,12 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  ShoppingBag,
-  Store,
-  Package,
-} from "lucide-react";
+import { Search, ShoppingBag, Store, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isSlowNetwork } from "@/lib/network";
 
@@ -72,9 +67,15 @@ export default function HeroSection() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const [heroBanner, setHeroBanner] = useState<HeroBanner>(STATIC_HERO_BANNERS[0]);
-  const [storeSuggestions, setStoreSuggestions] = useState<StoreSuggestion[]>([]);
-  const [productSuggestions, setProductSuggestions] = useState<ProductSuggestion[]>([]);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner>(
+    STATIC_HERO_BANNERS[0],
+  );
+  const [storeSuggestions, setStoreSuggestions] = useState<StoreSuggestion[]>(
+    [],
+  );
+  const [productSuggestions, setProductSuggestions] = useState<
+    ProductSuggestion[]
+  >([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -152,7 +153,9 @@ export default function HeroSection() {
     const debounce = setTimeout(async () => {
       try {
         setIsLoadingSuggestions(true);
-        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`);
+        const response = await fetch(
+          `/api/search?q=${encodeURIComponent(trimmedQuery)}`,
+        );
         if (!response.ok) {
           setStoreSuggestions([]);
           setProductSuggestions([]);
@@ -209,7 +212,9 @@ export default function HeroSection() {
   const showSuggestions =
     isSuggestionsOpen &&
     searchQuery.trim().length >= 2 &&
-    (isLoadingSuggestions || storeSuggestions.length > 0 || productSuggestions.length > 0);
+    (isLoadingSuggestions ||
+      storeSuggestions.length > 0 ||
+      productSuggestions.length > 0);
 
   return (
     <section className="relative z-40 flex min-h-[560px] items-center isolate sm:min-h-[640px]">
@@ -232,170 +237,180 @@ export default function HeroSection() {
         <div className="absolute inset-0 z-0 bg-background" />
       )}
 
-        <div className="relative z-10 container mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-          <div className="max-w-5xl">
-            <div className="space-y-6 sm:space-y-7">
-              <div className="max-w-3xl space-y-4">
-                <h1
-                  className={cn(
-                    "text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl",
-                    heroBanner?.imageUrl
-                      ? "text-white drop-shadow-md"
-                      : "text-foreground"
-                  )}
-                >
-                  {heroHeading}
-                  <span className="block text-[#F4C430]">
-                    on EasyLife
-                  </span>
-                </h1>
-                <p
-                  className={cn(
-                    "max-w-2xl text-base leading-7 sm:text-lg",
-                    heroBanner?.imageUrl
-                      ? "text-white/85 drop-shadow-sm"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {heroSubheading}
-                </p>
-              </div>
-
-              <div ref={searchContainerRef} className="relative z-[90] max-w-2xl">
-                <form onSubmit={handleSearch} className="relative">
-                  <Input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => setIsSuggestionsOpen(true)}
-                    placeholder="Search for products, stores, or categories..."
-                    className={cn(
-                      "h-14 rounded pl-5 pr-20 text-sm shadow-lg sm:pr-24",
-                      "border-0 border-transparent",
-                      "outline-none",
-                      "ring-0 ring-offset-0",
-                      "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
-                      "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
-                      "[box-shadow:none]",
-                      "bg-white text-[#1F2937] placeholder:text-muted-foreground",
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="absolute right-1 top-1/2 h-auto -translate-y-1/2 rounded bg-[#0E5A43] p-4 text-white shadow-lg hover:bg-[#083B2D]"
-                  >
-                    <Search className="pointer-events-none" />
-                  </Button>
-                </form>
-
-                {showSuggestions && (
-                  <div className="absolute z-[100] mt-2 w-full overflow-hidden rounded-xl border border-white/20 bg-black/80 shadow-2xl backdrop-blur-md">
-                    {isLoadingSuggestions ? (
-                      <div className="px-4 py-3 text-sm text-white/70">Searching...</div>
-                    ) : (
-                      <div className="max-h-72 overflow-y-auto">
-                        {storeSuggestions.length > 0 && (
-                          <div className="border-b border-white/10">
-                            <p className="px-4 pt-3 pb-2 text-xs uppercase tracking-wide text-white/60">Stores</p>
-                            {storeSuggestions.map((store) => (
-                              <button
-                                key={store._id}
-                                type="button"
-                                className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-2 text-white"
-                                onClick={() => handleSuggestionClick(`/stores/${store.slug || store._id}`)}
-                              >
-                                <Store className="h-4 w-4 text-[#0E5A43]" />
-                                <span className="truncate">{store.businessName}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {productSuggestions.length > 0 && (
-                          <div>
-                            <p className="px-4 pt-3 pb-2 text-xs uppercase tracking-wide text-white/60">Products</p>
-                            {productSuggestions.map((product) => (
-                              <button
-                                key={product._id}
-                                type="button"
-                                className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                                onClick={() =>
-                                  handleSuggestionClick(
-                                    product.storeSlug
-                                      ? `/stores/${product.storeSlug}/products/${product._id}`
-                                      : `/Search?search=${encodeURIComponent(product.name)}`
-                                  )
-                                }
-                              >
-                                {product.image ? (
-                                  <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="h-8 w-8 rounded object-cover flex-shrink-0"
-                                  />
-                                ) : (
-                                  <div className="h-8 w-8 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
-                                    <Package className="h-4 w-4 text-[#0E5A43]" />
-                                  </div>
-                                )}
-                                <span className="truncate">{product.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+      <div className="relative z-10 container mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="max-w-5xl">
+          <div className="space-y-6 sm:space-y-7">
+            <div className="max-w-3xl space-y-4">
+              <h1
+                className={cn(
+                  "text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl",
+                  heroBanner?.imageUrl
+                    ? "text-white drop-shadow-md"
+                    : "text-foreground",
                 )}
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                {heroBanner?.buttonLink && heroBanner?.buttonText && (
-                  <Link href={heroBanner.buttonLink} className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="h-12 w-full bg-[#0E5A43] px-6 text-base font-semibold text-white shadow-lg hover:bg-[#083B2D] sm:w-auto"
-                    >
-                      {heroBanner.buttonText}
-                      <ShoppingBag className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
+              >
+                {heroHeading}
+                <span className="block text-[#F4C430]">on EasyLife</span>
+              </h1>
+              <p
+                className={cn(
+                  "max-w-2xl text-base leading-7 sm:text-lg",
+                  heroBanner?.imageUrl
+                    ? "text-white/85 drop-shadow-sm"
+                    : "text-muted-foreground",
                 )}
-                <Link href="/auth/login" className="w-full sm:w-auto">
+              >
+                {heroSubheading}
+              </p>
+            </div>
+
+            <div ref={searchContainerRef} className="relative z-[90] max-w-2xl">
+              <form onSubmit={handleSearch} className="relative">
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSuggestionsOpen(true)}
+                  placeholder="Search for products, stores, or categories..."
+                  className={cn(
+                    "h-14 rounded pl-5 pr-20 text-sm shadow-lg sm:pr-24",
+                    "border-0 border-transparent",
+                    "outline-none",
+                    "ring-0 ring-offset-0",
+                    "focus:border-0 focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus:[box-shadow:none]",
+                    "focus-visible:border-0 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:none]",
+                    "[box-shadow:none]",
+                    "bg-white text-[#1F2937] placeholder:text-muted-foreground",
+                  )}
+                />
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="absolute right-1 top-1/2 h-auto -translate-y-1/2 rounded bg-[#0E5A43] p-4 text-white shadow-lg hover:bg-[#083B2D]"
+                >
+                  <Search className="pointer-events-none" />
+                </Button>
+              </form>
+
+              {showSuggestions && (
+                <div className="absolute z-[100] mt-2 w-full overflow-hidden rounded-xl border border-white/20 bg-black/80 shadow-2xl backdrop-blur-md">
+                  {isLoadingSuggestions ? (
+                    <div className="px-4 py-3 text-sm text-white/70">
+                      Searching...
+                    </div>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto">
+                      {storeSuggestions.length > 0 && (
+                        <div className="border-b border-white/10">
+                          <p className="px-4 pt-3 pb-2 text-xs uppercase tracking-wide text-white/60">
+                            Stores
+                          </p>
+                          {storeSuggestions.map((store) => (
+                            <button
+                              key={store._id}
+                              type="button"
+                              className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-2 text-white"
+                              onClick={() =>
+                                handleSuggestionClick(
+                                  `/stores/${store.slug || store._id}`,
+                                )
+                              }
+                            >
+                              <Store className="h-4 w-4 text-[#0E5A43]" />
+                              <span className="truncate">
+                                {store.businessName}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {productSuggestions.length > 0 && (
+                        <div>
+                          <p className="px-4 pt-3 pb-2 text-xs uppercase tracking-wide text-white/60">
+                            Products
+                          </p>
+                          {productSuggestions.map((product) => (
+                            <button
+                              key={product._id}
+                              type="button"
+                              className="w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                              onClick={() =>
+                                handleSuggestionClick(
+                                  product.storeSlug
+                                    ? `/stores/${product.storeSlug}/products/${product._id}`
+                                    : `/Search?search=${encodeURIComponent(product.name)}`,
+                                )
+                              }
+                            >
+                              {product.image ? (
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  className="h-8 w-8 rounded object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="h-8 w-8 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-4 w-4 text-[#0E5A43]" />
+                                </div>
+                              )}
+                              <span className="truncate">{product.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {heroBanner?.buttonLink && heroBanner?.buttonText && (
+                <Link href={heroBanner.buttonLink} className="w-full sm:w-auto">
                   <Button
-                    variant="outline"
                     size="lg"
-                    className={cn(
-                      "h-12 w-full border-white/40 px-6 text-base font-semibold transition-all sm:w-auto",
-                      heroBanner?.imageUrl
-                        ? "bg-white/10 text-white hover:bg-white hover:text-[#083B2D]"
-                        : "bg-background hover:bg-muted/50 hover:border-[#0E5A43]/50"
-                    )}
+                    className="h-12 w-full bg-[#0E5A43] px-6 text-base font-semibold text-white shadow-lg hover:bg-[#083B2D] sm:w-auto"
                   >
-                    Create Store
-                    <Store className="ml-2 h-5 w-5" />
+                    {heroBanner.buttonText}
+                    <ShoppingBag className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-              </div>
+              )}
+              <Link href="/auth/login" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className={cn(
+                    "h-12 w-full border-white/40 px-6 text-base font-semibold transition-all sm:w-auto",
+                    heroBanner?.imageUrl
+                      ? "bg-white/10 text-white hover:bg-white hover:text-[#083B2D]"
+                      : "bg-background hover:bg-muted/50 hover:border-[#0E5A43]/50",
+                  )}
+                >
+                  Create Store
+                  <Store className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
+      </div>
 
-        {heroBanner && (
-          <div className="hidden absolute bottom-6 right-6 sm:flex gap-1.5 z-10">
-            {STATIC_HERO_BANNERS.map((banner, i) => (
-              <div
-                key={banner.id}
-                className={`rounded-full transition-all duration-300 ${
-                  i === currentBannerIndex
-                    ? "w-6 h-1.5 bg-[#0E5A43]"
-                    : "w-1.5 h-1.5 bg-white/40"
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {heroBanner && (
+        <div className="hidden absolute bottom-6 right-6 sm:flex gap-1.5 z-10">
+          {STATIC_HERO_BANNERS.map((banner, i) => (
+            <div
+              key={banner.id}
+              className={`rounded-full transition-all duration-300 ${
+                i === currentBannerIndex
+                  ? "w-6 h-1.5 bg-[#0E5A43]"
+                  : "w-1.5 h-1.5 bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

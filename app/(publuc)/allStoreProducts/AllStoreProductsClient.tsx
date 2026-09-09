@@ -50,7 +50,9 @@ export default function AllStoreProductsClient({
   const router = useRouter();
   const [isSlowConnection, setIsSlowConnection] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(initialBanner);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(
+    initialBanner,
+  );
   const [visibleCount, setVisibleCount] = useState(12);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const visibleProducts = initialProducts.slice(0, visibleCount);
@@ -93,7 +95,7 @@ export default function AllStoreProductsClient({
           });
         }
       },
-      { rootMargin: "200px 0px" }
+      { rootMargin: "200px 0px" },
     );
 
     observer.observe(target);
@@ -162,7 +164,10 @@ export default function AllStoreProductsClient({
             </div>
 
             <div className="max-w-2xl rounded border border-border bg-white p-2 shadow-sm lg:mt-7 lg:border-white/15 lg:shadow-xl">
-              <form onSubmit={handleSearch} className="relative flex items-center gap-2">
+              <form
+                onSubmit={handleSearch}
+                className="relative flex items-center gap-2"
+              >
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -173,7 +178,7 @@ export default function AllStoreProductsClient({
                     className={cn(
                       "h-12 rounded border-0 bg-transparent pl-11 pr-4 text-sm text-[#1F2937] shadow-none placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#F4C430] focus-visible:ring-offset-0",
                       "focus-visible:ring-2 focus-visible:ring-[#F4C430] focus-visible:ring-offset-0",
-                      "sm:h-14 sm:text-[15px]"
+                      "sm:h-14 sm:text-[15px]",
                     )}
                   />
                 </div>
@@ -240,15 +245,21 @@ export default function AllStoreProductsClient({
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14" id="products">
+      <section
+        className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14"
+        id="products"
+      >
         {initialProducts.length === 0 ? (
           <div className="rounded border border-dashed border-border bg-card p-10 text-center shadow-sm">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded bg-[#0E5A43]/10">
               <Package className="h-10 w-10 text-[#0E5A43]" />
             </div>
-            <h3 className="mt-6 text-xl font-semibold text-foreground">No products found</h3>
+            <h3 className="mt-6 text-xl font-semibold text-foreground">
+              No products found
+            </h3>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-              There are no products available right now. Check back shortly for new arrivals from stores and restaurants.
+              There are no products available right now. Check back shortly for
+              new arrivals from stores and restaurants.
             </p>
           </div>
         ) : (
@@ -262,7 +273,8 @@ export default function AllStoreProductsClient({
                   {isSlowConnection ? "Quick picks" : "Latest products"}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {visibleProducts.length} item{visibleProducts.length === 1 ? "" : "s"} ready to browse.
+                  {visibleProducts.length} item
+                  {visibleProducts.length === 1 ? "" : "s"} ready to browse.
                 </p>
               </div>
               {isSlowConnection && (

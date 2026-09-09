@@ -51,9 +51,13 @@ async function getProducts(): Promise<TransformedProduct[]> {
       .map((p: any) => {
         const productImages = p.images || [];
         const storeId =
-          typeof p.storeId === "string" ? p.storeId : p.storeId?._id?.toString() || "";
+          typeof p.storeId === "string"
+            ? p.storeId
+            : p.storeId?._id?.toString() || "";
         const storeSlug =
-          typeof p.storeId === "object" && p.storeId?.slug ? p.storeId.slug : "";
+          typeof p.storeId === "object" && p.storeId?.slug
+            ? p.storeId.slug
+            : "";
 
         return {
           id: p._id.toString(),
@@ -86,49 +90,59 @@ const BANNER_THEMES = [
     id: "restaurant-1",
     query: "restaurant dining food",
     title: "Discover Great Restaurants",
-    subtitle: "Order from your favorite local spots and enjoy meals made with care.",
-    fallbackImageUrl: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
+    subtitle:
+      "Order from your favorite local spots and enjoy meals made with care.",
+    fallbackImageUrl:
+      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
   },
   {
     id: "restaurant-2",
     query: "fresh meals restaurant kitchen",
     title: "Fresh and Delicious",
-    subtitle: "Explore restaurant meals, chef specials, and daily food favorites.",
-    fallbackImageUrl: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
+    subtitle:
+      "Explore restaurant meals, chef specials, and daily food favorites.",
+    fallbackImageUrl:
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
   },
   {
     id: "grocery-1",
     query: "grocery supermarket fresh produce",
     title: "Grocery and Food Stores",
     subtitle: "Shop fresh produce, pantry essentials, and everyday home needs.",
-    fallbackImageUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e",
+    fallbackImageUrl:
+      "https://images.unsplash.com/photo-1542838132-92c53300491e",
   },
   {
     id: "retail-1",
     query: "shopping ecommerce retail store",
     title: "Discover Quality Products",
     subtitle: "Browse our curated collection from trusted sellers.",
-    fallbackImageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
+    fallbackImageUrl:
+      "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
   },
   {
     id: "fashion-1",
     query: "fashion lifestyle clothing store",
     title: "Fashion Forward",
-    subtitle: "Discover standout styles, seasonal looks, and fashion essentials.",
-    fallbackImageUrl: "https://images.unsplash.com/photo-1445205170230-053b83016050",
+    subtitle:
+      "Discover standout styles, seasonal looks, and fashion essentials.",
+    fallbackImageUrl:
+      "https://images.unsplash.com/photo-1445205170230-053b83016050",
   },
   {
     id: "tech-1",
     query: "tech gadgets electronics store",
     title: "Tech and Innovation",
     subtitle: "Discover the latest gadgets, devices, and digital essentials.",
-    fallbackImageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661",
+    fallbackImageUrl:
+      "https://images.unsplash.com/photo-1498049794561-7780e7231661",
   },
 ];
 
 async function getHeroBanner() {
   try {
-    const theme = BANNER_THEMES[Math.floor(Math.random() * BANNER_THEMES.length)];
+    const theme =
+      BANNER_THEMES[Math.floor(Math.random() * BANNER_THEMES.length)];
     let imageUrl = theme.fallbackImageUrl;
 
     const unsplashKey = process.env.UNSPLASH_ACCESS_KEY;
@@ -139,7 +153,7 @@ async function getHeroBanner() {
           {
             headers: { Authorization: `Client-ID ${unsplashKey}` },
             signal: AbortSignal.timeout(1500),
-          }
+          },
         );
         if (res.ok) {
           const data = await res.json();
@@ -168,9 +182,6 @@ export default async function ProductsPage() {
   ]);
 
   return (
-    <AllStoreProductsClient
-      initialProducts={products}
-      initialBanner={banner}
-    />
+    <AllStoreProductsClient initialProducts={products} initialBanner={banner} />
   );
 }
