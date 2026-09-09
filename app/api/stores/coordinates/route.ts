@@ -63,7 +63,16 @@ export async function GET(req: NextRequest) {
       address: store.location?.address || null,
     }));
 
-    return NextResponse.json({ stores: result });
+    const productStoreMap = Object.fromEntries(
+      products
+        .filter((product: any) => product.storeId)
+        .map((product: any) => [
+          product._id.toString(),
+          product.storeId.toString(),
+        ]),
+    );
+
+    return NextResponse.json({ stores: result, productStoreMap });
   } catch (error) {
     console.error("Error fetching store coordinates:", error);
     return NextResponse.json(

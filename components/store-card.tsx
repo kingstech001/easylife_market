@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Clock } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { getStoreStatus, type BusinessHours } from "@/lib/store-hours";
@@ -27,22 +26,9 @@ interface StoreCardProps {
 export function StoreCard({ store }: StoreCardProps) {
   const status = getStoreStatus(store.businessHours);
 
-  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (status.isOpen) return;
-    event.preventDefault();
-    toast.info(`${store.name} is currently closed`, {
-      description:
-        status.detail === "No opening hours"
-          ? "Please check back later."
-          : `${status.detail}. Please check back then.`,
-    });
-  };
-
   return (
     <Link
       href={`/stores/${store.slug}`}
-      onClick={handleClick}
-      aria-disabled={!status.isOpen}
       className="block h-full w-full"
     >
       <Card className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl transition-all duration-300 hover:border-primary/50 hover:shadow-lg">

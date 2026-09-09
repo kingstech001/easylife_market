@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, redirect, unstable_rethrow } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 import { Card, CardContent } from "@/components/ui/card";
@@ -454,14 +454,6 @@ export default async function StorePage({ params }: StorePageProps) {
     }
 
     const storeStatus = getSharedStoreStatus(store.businessHours);
-    if (!storeStatus.isOpen) {
-      const closedParams = new URLSearchParams({
-        closed: store.name,
-        reopens: storeStatus.detail,
-      });
-      redirect(`/stores?${closedParams.toString()}`);
-    }
-
     const { products: storeProducts, total: totalProducts } =
       await getStoreProducts(store.id, PRODUCTS_LIMIT);
     const { reviews: storeReviews, stats: reviewStats } =
@@ -550,11 +542,6 @@ export default async function StorePage({ params }: StorePageProps) {
                   />
                 )}
               </div>
-
-              {/* <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#1F2937] shadow-sm">
-                <Clock className="h-3.5 w-3.5" />
-                {storeStatus.isOpen ? "Open now" : "Closed now"}
-              </div> */}
 
               <button
                 type="button"

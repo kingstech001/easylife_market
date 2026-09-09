@@ -21,6 +21,8 @@ type TransformedProduct = {
   updated_at: string;
 };
 
+const MAX_INITIAL_PRODUCTS = 60;
+
 async function getProducts(): Promise<TransformedProduct[]> {
   try {
     await connectToDB();
@@ -41,6 +43,7 @@ async function getProducts(): Promise<TransformedProduct[]> {
         model: "Store",
       })
       .sort({ createdAt: -1 })
+      .limit(MAX_INITIAL_PRODUCTS)
       .lean();
 
     return products

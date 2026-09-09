@@ -5,6 +5,7 @@ import Product from "@/models/Product"
 import Store from "@/models/Store"
 import CheckoutPayment from "@/models/CheckoutPayment"
 import { calculateMaxDeliveryFee } from "@/lib/delivery-fee"
+import { getStoreStatus, type BusinessHours } from "@/lib/store-hours"
 
 
 // Helper to get the correct base URL for all environments
@@ -283,6 +284,35 @@ export async function POST(request: NextRequest) {
     if (type === "checkout") {
       await connectToDB()
 
+      const checkoutStoreIds = await getStoreIdsForOrders(orders)
+      const checkoutStores = await Store.find(
+        { _id: { $in: checkoutStoreIds }, isPublished: true },
+        { name: 1, businessHours: 1, "location.coordinates": 1 },
+      ).lean()
+      const closedStores = checkoutStores
+        .map((store: any) => ({
+          name: store.name || "A store in your cart",
+          status: getStoreStatus(
+            store.businessHours as Partial<BusinessHours> | undefined,
+          ),
+        }))
+        .filter((store) => !store.status.isOpen)
+
+      if (closedStores.length > 0) {
+        const closedMessage = closedStores
+          .map(({ name, status }) =>
+            status.detail === "No opening hours"
+              ? `${name} is currently closed`
+              : `${name} is currently closed. ${status.detail}`,
+          )
+          .join("; ")
+
+        return NextResponse.json(
+          { error: `${closedMessage}. Please complete your order when the store reopens.` },
+          { status: 409 },
+        )
+      }
+
       // Verify delivery fee from coordinates if available. If the browser did
       // not send a pin, geocode the selected address so the order still saves
       // a usable delivery coordinate for admins.
@@ -314,13 +344,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (customerCoords?.lat && customerCoords?.lng) {
-        const storeIds = await getStoreIdsForOrders(orders)
-        const stores = await Store.find(
-          { _id: { $in: storeIds } },
-          { "location.coordinates": 1 }
-        ).lean()
-
-        const storesWithCoords = stores.filter(
+        const storesWithCoords = checkoutStores.filter(
           (s: any) =>
             s.location?.coordinates?.length === 2 &&
             !(s.location.coordinates[0] === 0 && s.location.coordinates[1] === 0)

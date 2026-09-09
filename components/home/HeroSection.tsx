@@ -12,6 +12,7 @@ import {
   Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isSlowNetwork } from "@/lib/network";
 
 interface HeroBanner {
   id: string;
@@ -80,6 +81,10 @@ export default function HeroSection() {
 
   const fetchRemoteBanner = useCallback(async () => {
     try {
+      if (isSlowNetwork()) {
+        return;
+      }
+
       const bannerRes = await fetch("/api/hero-banner", {
         signal: AbortSignal.timeout(6000),
         cache: "no-store",
@@ -129,6 +134,13 @@ export default function HeroSection() {
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
+
+    if (isSlowNetwork()) {
+      setStoreSuggestions([]);
+      setProductSuggestions([]);
+      setIsLoadingSuggestions(false);
+      return;
+    }
 
     if (trimmedQuery.length < 2) {
       setStoreSuggestions([]);

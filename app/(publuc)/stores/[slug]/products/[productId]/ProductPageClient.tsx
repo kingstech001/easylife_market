@@ -905,7 +905,7 @@ export default function ProductPageClient({
                         </div>
                       </div>
                       <Separator />
-                      <div className="flex items-start gap-4">
+                      {/* <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
                           <MapPin className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                         </div>
@@ -915,7 +915,7 @@ export default function ProductPageClient({
                             Real-time tracking available after {isRestaurant ? "dispatch" : "dispatch"}
                           </p>
                         </div>
-                      </div>
+                      </div> */}
                     </CardContent>
                   </Card>
                 </TabsContent>

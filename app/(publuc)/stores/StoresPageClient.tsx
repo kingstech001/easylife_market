@@ -3,8 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { StoreCard } from "@/components/store-card";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { isSlowNetwork } from "@/lib/network";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -76,30 +76,63 @@ const HERO_SWAP_DELAY_MS = 100;
 
 export default function StoresPageClient({ initialStores }: StoresPageClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [isSlowConnection, setIsSlowConnection] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const stores = initialStores;
+  const visibleStores = stores.slice(0, visibleCount);
   const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
-  const handledClosedRedirect = useRef(false);
 
   useEffect(() => {
-    const closedStore = searchParams.get("closed");
-    if (!closedStore || handledClosedRedirect.current) return;
-    handledClosedRedirect.current = true;
+    const slow = isSlowNetwork();
+    setIsSlowConnection(slow);
+    setVisibleCount(slow ? 6 : 6);
 
-    const reopens = searchParams.get("reopens");
-    toast.info(`${closedStore} is currently closed`, {
-      description:
-        !reopens || reopens === "No opening hours"
-          ? "Please check back later."
-          : `${reopens}. Please check back then.`,
-    });
-    router.replace("/stores", { scroll: false });
-  }, [router, searchParams]);
+    const handleConnectionChange = () => {
+      const nextSlow = isSlowNetwork();
+      setIsSlowConnection(nextSlow);
+      setVisibleCount(nextSlow ? 6 : 6);
+    };
+
+    window.addEventListener("online", handleConnectionChange);
+    window.addEventListener("offline", handleConnectionChange);
+    return () => {
+      window.removeEventListener("online", handleConnectionChange);
+      window.removeEventListener("offline", handleConnectionChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (visibleCount >= stores.length) {
+      return;
+    }
+
+    const target = sentinelRef.current;
+    if (!target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((current) => Math.min(current + 6, stores.length));
+        }
+      },
+      { rootMargin: "180px 0px" }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [stores.length, visibleCount]);
 
   const fetchNewBanner = async () => {
+    if (isSlowConnection) {
+      return;
+    }
+
     try {
       setIsTransitioning(true);
       const bannerRes = await fetch("/api/hero-banner", {
@@ -122,11 +155,14 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
     }
   };
 
-  useEffect(() => { fetchNewBanner(); }, []);
+  useEffect(() => { fetchNewBanner(); }, [isSlowConnection]);
   useEffect(() => {
+    if (isSlowConnection) {
+      return;
+    }
     const interval = setInterval(fetchNewBanner, HERO_ROTATION_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [isSlowConnection]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,41 +317,35 @@ export default function StoresPageClient({ initialStores }: StoresPageClientProp
           </div>
         ) : (
           <>
-            {/* Section header */}
-            <div className="flex items-center justify-between mb-4 sm:mb-5">
-              <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-[#0E5A43]" />
-                All Stores
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({stores.length})</span>
-              </h2>
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
+                  Active stores
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                  {isSlowConnection ? "Quick picks" : "Featured stores"}
+                </h2>
+              </div>
+              {isSlowConnection && (
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+                  Slow network
+                </span>
+              )}
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {stores.map((store) => (
-                <div
-                  key={store._id}
-                  className="group rounded-xl border border-border/50 bg-card overflow-hidden hover:border-[#0E5A43]/30 hover:shadow-lg hover:shadow-[#0E5A43]/5 transition-all duration-300"
-                >
-                  <StoreCard store={store} />
-                </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visibleStores.map((store) => (
+                <StoreCard key={store._id} store={store} />
               ))}
             </div>
 
-            {/* CTA */}
-            <div className="mt-8 sm:mt-10 rounded-xl border border-border/50 bg-muted/20 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-[#083B2D] font-semibold mb-1">Become a seller</p>
-                <h3 className="text-base sm:text-lg font-semibold">Open your store on EasyLife</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Start selling to thousands of customers today.</p>
+            <div ref={sentinelRef} className="h-2 w-full" />
+
+            {visibleCount < stores.length && (
+              <div className="mt-5 text-center text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Loading more stores...
               </div>
-              <Link href="/auth/register" className="flex-shrink-0">
-                <Button variant="outline" className="h-10 sm:h-11 rounded-xl border-border/60 hover:border-[#0E5A43]/40 hover:bg-[#0E5A43]/5 px-5 text-sm">
-                  Join now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+            )}
           </>
         )}
       </section>

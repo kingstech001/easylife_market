@@ -20,6 +20,7 @@ import { useFormatAmount } from "@/hooks/useFormatAmount";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { FaWhatsapp } from "react-icons/fa";
+import { toast } from "sonner";
 
 const WHATSAPP_ORDER_NUMBER = "2348071427831";
 
@@ -36,6 +37,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
   } = useCart();
   const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isOpeningWhatsApp, setIsOpeningWhatsApp] = useState(false);
   const itemCount = items.reduce(
     (sum: number, item: { quantity: number }) => sum + item.quantity,
     0,
@@ -82,18 +84,58 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
     0,
   );
 
-  const handleWhatsAppCheckout = () => {
-    const itemLines = items.map((item) => {
-      const variantDetails = [
-        item.selectedVariant?.color?.name,
-        item.selectedVariant?.size ? `Size: ${item.selectedVariant.size}` : null,
-      ].filter(Boolean);
-      const variantText = variantDetails.length > 0
-        ? ` (${variantDetails.join(", ")})`
-        : "";
+  const handleWhatsAppCheckout = async () => {
+    const orderWindow = window.open("", "_blank");
+    if (!orderWindow) {
+      toast.error("Please allow pop-ups to continue your order on WhatsApp.");
+      return;
+    }
+    orderWindow.opener = null;
+    setIsOpeningWhatsApp(true);
 
-      return `${item.quantity} × ${item.name}${variantText} — ${formatAmount(item.price * item.quantity)}`;
+    const storeIds = [...new Set(items.map((item) => item.storeId).filter(Boolean))];
+    const productIds = [...new Set(items.map((item) => item.productId).filter(Boolean))];
+    const params = new URLSearchParams();
+    if (storeIds.length > 0) params.set("ids", storeIds.join(","));
+    if (productIds.length > 0) params.set("productIds", productIds.join(","));
+
+    let stores: Array<{ storeId: string; name: string }> = [];
+    let productStoreMap: Record<string, string> = {};
+    try {
+      const response = await fetch(`/api/stores/coordinates?${params.toString()}`);
+      if (!response.ok) throw new Error("Could not load store names");
+      const data = await response.json();
+      stores = data.stores || [];
+      productStoreMap = data.productStoreMap || {};
+    } catch (error) {
+      console.error("Failed to load store names for WhatsApp order:", error);
+    }
+
+    const storeNames = new Map(stores.map((store) => [store.storeId, store.name]));
+    const groupedItems = new Map<string, typeof items>();
+    items.forEach((item) => {
+      const resolvedStoreId = storeNames.has(item.storeId)
+        ? item.storeId
+        : productStoreMap[item.productId] || item.storeId;
+      const storeName = storeNames.get(resolvedStoreId) || "Store";
+      groupedItems.set(storeName, [...(groupedItems.get(storeName) || []), item]);
     });
+
+    const itemLines = Array.from(groupedItems.entries()).flatMap(([storeName, storeItems]) => [
+      `*${storeName}*`,
+      ...storeItems.map((item) => {
+        const variantDetails = [
+          item.selectedVariant?.color?.name,
+          item.selectedVariant?.size ? `Size: ${item.selectedVariant.size}` : null,
+        ].filter(Boolean);
+        const variantText = variantDetails.length > 0
+          ? ` (${variantDetails.join(", ")})`
+          : "";
+
+        return `${item.quantity} × ${item.name}${variantText} — ${formatAmount(item.price * item.quantity)}`;
+      }),
+      "",
+    ]);
     const message = [
       "Hello EasyLife, I would like to order:",
       "",
@@ -105,11 +147,8 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
       "Please confirm product availability and the final delivery fee.",
     ].join("\n");
 
-    window.open(
-      `https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    orderWindow.location.href = `https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`;
+    setIsOpeningWhatsApp(false);
   };
 
   return (
@@ -342,9 +381,10 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
               onClick={handleWhatsAppCheckout}
               className="h-12 w-full rounded-xl bg-[#25D366] text-base font-semibold text-white shadow-lg transition-all hover:bg-[#1ebe5d] active:scale-[0.98]"
               size="lg"
+              disabled={isOpeningWhatsApp}
             >
               <FaWhatsapp className="mr-2 h-5 w-5" />
-              Complete order on WhatsApp
+              {isOpeningWhatsApp ? "Preparing your order..." : "Complete order on WhatsApp"}
             </Button>
             <p className="text-center text-[10px] leading-relaxed text-muted-foreground sm:text-xs">
               Availability and the final delivery fee will be confirmed on WhatsApp.

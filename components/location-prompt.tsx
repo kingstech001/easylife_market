@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { isSlowNetwork } from "@/lib/network"
 
 interface LocationData {
   latitude: number
@@ -27,6 +28,11 @@ export function LocationPrompt() {
     const locationDismissed = localStorage.getItem("locationPromptDismissed")
     
     // Show prompt only if location not stored and not dismissed
+    if (isSlowNetwork()) {
+      setShowPrompt(false)
+      return
+    }
+
     if (!storedLocation && !locationDismissed) {
       // Delay prompt by 2 seconds for better UX
       const timer = setTimeout(() => {
@@ -39,6 +45,10 @@ export function LocationPrompt() {
 
   const reverseGeocode = async (lat: number, lon: number): Promise<LocationData> => {
     try {
+      if (isSlowNetwork()) {
+        return { latitude: lat, longitude: lon }
+      }
+
       // Using OpenStreetMap Nominatim API (free, no API key needed)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`
@@ -70,6 +80,12 @@ export function LocationPrompt() {
     setError(null)
 
     try {
+      if (isSlowNetwork()) {
+        setIsLoading(false)
+        setError("Your connection looks weak. Please try again when the network is stronger.")
+        return
+      }
+
       // Check if geolocation is supported
       if (!navigator.geolocation) {
         throw new Error("Geolocation is not supported by your browser")
@@ -214,7 +230,7 @@ export function LocationPrompt() {
                   <div className="flex flex-col gap-2.5 sm:gap-3 pt-2">
                     <Button
                       onClick={handleEnableLocation}
-                      disabled={isLoading}
+                      disabled={isLoading || isSlowNetwork()}
                       className="w-full bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 text-white h-10 sm:h-11 text-sm sm:text-base"
                     >
                       {isLoading ? (

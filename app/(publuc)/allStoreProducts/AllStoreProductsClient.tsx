@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Package, Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isSlowNetwork } from "@/lib/network";
 import { CATEGORIES, buildCategorySearchUrl } from "@/components/CategoryGrid";
 
 type Product = {
@@ -47,8 +48,69 @@ export default function AllStoreProductsClient({
   initialBanner,
 }: AllStoreProductsClientProps) {
   const router = useRouter();
+  const [isSlowConnection, setIsSlowConnection] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [heroBanner] = useState<HeroBanner | null>(initialBanner);
+  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(initialBanner);
+  const [visibleCount, setVisibleCount] = useState(12);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const visibleProducts = initialProducts.slice(0, visibleCount);
+
+  useEffect(() => {
+    const slow = isSlowNetwork();
+    setIsSlowConnection(slow);
+    setVisibleCount(slow ? 12 : 12);
+
+    const handleConnectionChange = () => {
+      const nextSlow = isSlowNetwork();
+      setIsSlowConnection(nextSlow);
+      setVisibleCount(nextSlow ? 12 : 12);
+    };
+
+    window.addEventListener("online", handleConnectionChange);
+    window.addEventListener("offline", handleConnectionChange);
+    return () => {
+      window.removeEventListener("online", handleConnectionChange);
+      window.removeEventListener("offline", handleConnectionChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (visibleCount >= initialProducts.length) {
+      return;
+    }
+
+    const target = sentinelRef.current;
+    if (!target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((current) => {
+            const next = current + 12;
+            return Math.min(next, initialProducts.length);
+          });
+        }
+      },
+      { rootMargin: "200px 0px" }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [initialProducts.length, visibleCount]);
+
+  useEffect(() => {
+    if (isSlowConnection || !initialBanner) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setHeroBanner(initialBanner);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [initialBanner, isSlowConnection]);
 
   const categoryPreview = useMemo(() => CATEGORIES.slice(0, 8), []);
 
@@ -197,16 +259,21 @@ export default function AllStoreProductsClient({
                   Product catalogue
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                  Latest products
+                  {isSlowConnection ? "Quick picks" : "Latest products"}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {initialProducts.length} item{initialProducts.length === 1 ? "" : "s"} available now.
+                  {visibleProducts.length} item{visibleProducts.length === 1 ? "" : "s"} ready to browse.
                 </p>
               </div>
+              {isSlowConnection && (
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+                  Slow network
+                </span>
+              )}
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {initialProducts.map((product) => (
+              {visibleProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -215,6 +282,13 @@ export default function AllStoreProductsClient({
               ))}
             </div>
 
+            <div ref={sentinelRef} className="h-2 w-full" />
+
+            {visibleCount < initialProducts.length && (
+              <div className="mt-5 text-center text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Loading more products...
+              </div>
+            )}
           </>
         )}
       </section>

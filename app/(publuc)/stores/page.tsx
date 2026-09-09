@@ -6,6 +6,8 @@ import StoresPageClient from "./StoresPageClient";
 
 export const revalidate = 60;
 
+const MAX_STORE_CARDS = 30;
+
 async function getStoresData() {
   try {
     await connectToDB();
@@ -18,6 +20,7 @@ async function getStoresData() {
         "_id name slug description logo_url banner_url sellerId isPublished createdAt updatedAt businessHours",
       )
       .sort({ createdAt: -1 })
+      .limit(MAX_STORE_CARDS)
       .lean();
 
     const storeIds = stores.map((store: any) => store._id);

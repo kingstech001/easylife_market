@@ -249,7 +249,11 @@ export default function CheckoutPage() {
         }),
       })
       const initData = await initResponse.json()
-      if (!initResponse.ok) throw new Error(initData.error || "Failed to initialize payment")
+      if (!initResponse.ok) {
+        toast.error(initData.error || "Failed to initialize payment")
+        setIsInitializing(false)
+        return
+      }
       sessionStorage.setItem("pending_payment_reference", initData.reference)
       sessionStorage.setItem("paystack_redirect_initiated", "true")
       localStorage.removeItem("checkout_redirect_data")
