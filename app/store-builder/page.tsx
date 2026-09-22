@@ -754,9 +754,7 @@ export default function StoreBuilderPage() {
   const removeModifierOption = (gi: number, oi: number) => {
     setModifierGroups((prev) =>
       prev.map((g, i) =>
-        i === gi
-          ? { ...g, options: g.options.filter((_, j) => j !== oi) }
-          : g,
+        i === gi ? { ...g, options: g.options.filter((_, j) => j !== oi) } : g,
       ),
     );
   };
@@ -1298,7 +1296,8 @@ export default function StoreBuilderPage() {
                                         className="text-xs"
                                       >
                                         <Palette className="w-2 h-2 mr-1" />
-                                        {(p as any).variants?.length || 0} variants
+                                        {(p as any).variants?.length || 0}{" "}
+                                        variants
                                       </Badge>
                                     )}
                                     {/* ── NEW: modifiers badge ── */}
@@ -1452,7 +1451,9 @@ export default function StoreBuilderPage() {
                               className="data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-orange-600 rounded-lg"
                             >
                               <UtensilsCrossed className="w-4 h-4 mr-2" />
-                              <span className="hidden sm:inline">Modifiers</span>
+                              <span className="hidden sm:inline">
+                                Modifiers
+                              </span>
                             </TabsTrigger>
                           </TabsList>
 
@@ -1934,8 +1935,8 @@ export default function StoreBuilderPage() {
                                     Food Modifier Groups
                                   </h3>
                                   <p className="text-sm text-muted-foreground">
-                                    Let customers customise their order —
-                                    soups, proteins, extras, drinks
+                                    Let customers customise their order — soups,
+                                    proteins, extras, drinks
                                   </p>
                                 </div>
                               </div>
@@ -1968,9 +1969,8 @@ export default function StoreBuilderPage() {
                                   <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
                                     Example for <strong>Akpu</strong>: add a
                                     group <em>"Choose your soup"</em> →
-                                    Required, Multiple, min{" "}
-                                    <strong>1</strong>, max{" "}
-                                    <strong>2</strong> → options like{" "}
+                                    Required, Multiple, min <strong>1</strong>,
+                                    max <strong>2</strong> → options like{" "}
                                     <em>Ofe Onugbu, Egusi, Oha</em> with
                                     optional extra charges.
                                   </p>
@@ -1986,8 +1986,8 @@ export default function StoreBuilderPage() {
                                       No modifier groups yet
                                     </h3>
                                     <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
-                                      Add groups like "Choose your soup",
-                                      "Extra protein", "Drink options"
+                                      Add groups like "Choose your soup", "Extra
+                                      protein", "Drink options"
                                     </p>
                                     <Button
                                       type="button"
@@ -2021,9 +2021,7 @@ export default function StoreBuilderPage() {
                                               : gi,
                                           )
                                         }
-                                        onRemove={() =>
-                                          removeModifierGroup(gi)
-                                        }
+                                        onRemove={() => removeModifierGroup(gi)}
                                         onUpdateGroup={(patch) =>
                                           updateModifierGroup(gi, patch)
                                         }
@@ -2065,8 +2063,8 @@ export default function StoreBuilderPage() {
                                 </h3>
                                 <p className="text-muted-foreground text-sm mb-4 max-w-sm mx-auto">
                                   Enable modifiers to let customers pick soups,
-                                  proteins, sides, drinks and more when
-                                  ordering food items.
+                                  proteins, sides, drinks and more when ordering
+                                  food items.
                                 </p>
                                 <Button
                                   type="button"
@@ -2089,7 +2087,7 @@ export default function StoreBuilderPage() {
                             type="submit"
                             disabled={
                               isSavingProduct ||
-                              (products.length >= 10 && !editingProduct)
+                              (products.length >= 20 && !editingProduct)
                             }
                             className="bg-[#0E5A43] text-white hover:bg-[#0E5A43]/90 text-white shadow-lg hover:shadow-xl px-8 h-12 font-semibold"
                           >
@@ -2100,9 +2098,10 @@ export default function StoreBuilderPage() {
                               </>
                             ) : (
                               <>
-                                <
->
-                                {editingProduct ? "Update Product" : "Save Product"}
+                                <Check className="h-5 w-5 mr-2" />
+                                {editingProduct
+                                  ? "Update Product"
+                                  : "Save Product"}
                               </>
                             )}
                           </Button>
