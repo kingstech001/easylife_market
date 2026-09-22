@@ -1,77 +1,102 @@
-import { NextResponse } from "next/server"
-import Store from "@/models/Store"
-import Product from "@/models/Product"
-import { getUserFromCookies } from "@/lib/auth"
-import { connectToDB } from "@/lib/db"
+import { NextResponse } from "next/server";
+import Store from "@/models/Store";
+import Product from "@/models/Product";
+import { getUserFromCookies } from "@/lib/auth";
+import { connectToDB } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
-    await connectToDB()
+    await connectToDB();
 
-    const user = await getUserFromCookies()
+    const user = await getUserFromCookies();
     if (!user || (user.role !== "seller" && user.role !== "admin")) {
       return NextResponse.json(
-        { message: "Unauthorized. Only sellers or admins can access this route." },
+        {
+          message:
+            "Unauthorized. Only sellers or admins can access this route.",
+        },
         { status: 401 },
-      )
+      );
     }
 
-    let store
+    let store;
     if (user.role === "admin") {
-      store = await Store.findOne({ sellerId: user.id })
+      store = await Store.findOne({ sellerId: user.id });
     } else {
-      store = await Store.findOne({ sellerId: user.id })
+      store = await Store.findOne({ sellerId: user.id });
     }
 
     if (!store) {
-      return NextResponse.json({ message: "Store not found." }, { status: 404 })
+      return NextResponse.json(
+        { message: "Store not found." },
+        { status: 404 },
+      );
     }
 
-    const url = new URL(req.url)
-    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10))
-    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)))
-    const skip = (page - 1) * limit
+    const url = new URL(req.url);
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)),
+    );
+    const skip = (page - 1) * limit;
 
-    const filter = { storeId: store._id }
+    const filter = { storeId: store._id };
     const [totalCount, products] = await Promise.all([
       Product.countDocuments(filter),
-      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-    ])
+      Product.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+    ]);
 
     const productsWithId = products.map((product: any) => ({
       ...product,
       _id: product._id.toString(),
-    }))
+    }));
 
-    return NextResponse.json({
-      store,
-      products: productsWithId,
-      pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit), hasMore: skip + limit < totalCount },
-    }, { status: 200 })
+    return NextResponse.json(
+      {
+        store,
+        products: productsWithId,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          hasMore: skip + limit < totalCount,
+        },
+      },
+      { status: 200 },
+    );
   } catch (error) {
-    console.error("❌ GET /api/seller/products error:", error)
-    return NextResponse.json({ message: "Internal Server Error", error: String(error) }, { status: 500 })
+    console.error("❌ GET /api/seller/products error:", error);
+    return NextResponse.json(
+      { message: "Internal Server Error", error: String(error) },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(req: Request) {
   try {
-    console.log("📥 POST /api/dashboard/seller/products - Request received")
-    
-    await connectToDB()
+    console.log("📥 POST /api/dashboard/seller/products - Request received");
 
-    const user = await getUserFromCookies()
-    console.log("👤 User:", { id: user?.id, role: user?.role })
-    
+    await connectToDB();
+
+    const user = await getUserFromCookies();
+    console.log("👤 User:", { id: user?.id, role: user?.role });
+
     if (!user || (user.role !== "seller" && user.role !== "admin")) {
-      console.error("❌ Unauthorized user")
+      console.error("❌ Unauthorized user");
       return NextResponse.json(
         { message: "Unauthorized. Only sellers or admins can add products." },
-        { status: 401 }
-      )
+        { status: 401 },
+      );
     }
 
-    const body = await req.json()
+    const body = await req.json();
     console.log("📦 Request body:", {
       name: body.name,
       price: body.price,
@@ -83,7 +108,7 @@ export async function POST(req: Request) {
       variantCount: body.variants?.length,
       hasModifiers: body.hasModifiers,
       modifierGroupCount: body.modifierGroups?.length,
-    })
+    });
 
     const {
       name,
@@ -98,120 +123,153 @@ export async function POST(req: Request) {
       variants,
       hasModifiers,
       modifierGroups,
-    } = body
+    } = body;
 
     // ✅ Detailed validation with specific error messages
     if (!name) {
-      console.error("❌ Missing name")
-      return NextResponse.json({ message: "Product name is required" }, { status: 400 })
+      console.error("❌ Missing name");
+      return NextResponse.json(
+        { message: "Product name is required" },
+        { status: 400 },
+      );
     }
 
     if (!price || price <= 0) {
-      console.error("❌ Invalid price:", price)
-      return NextResponse.json({ message: "Valid price is required" }, { status: 400 })
+      console.error("❌ Invalid price:", price);
+      return NextResponse.json(
+        { message: "Valid price is required" },
+        { status: 400 },
+      );
     }
 
     if (inventoryQuantity === undefined || inventoryQuantity === null) {
-      console.error("❌ Missing inventory quantity")
-      return NextResponse.json({ message: "Inventory quantity is required" }, { status: 400 })
+      console.error("❌ Missing inventory quantity");
+      return NextResponse.json(
+        { message: "Inventory quantity is required" },
+        { status: 400 },
+      );
     }
 
     if (!storeId) {
-      console.error("❌ Missing storeId")
-      return NextResponse.json({ message: "Store ID is required" }, { status: 400 })
+      console.error("❌ Missing storeId");
+      return NextResponse.json(
+        { message: "Store ID is required" },
+        { status: 400 },
+      );
     }
 
     // ✅ Validate modifier groups when hasModifiers is true
     if (hasModifiers) {
       if (!modifierGroups || modifierGroups.length === 0) {
-        console.error("❌ hasModifiers is true but no modifierGroups provided")
+        console.error("❌ hasModifiers is true but no modifierGroups provided");
         return NextResponse.json(
-          { message: "At least one modifier group is required when hasModifiers is true" },
-          { status: 400 }
-        )
+          {
+            message:
+              "At least one modifier group is required when hasModifiers is true",
+          },
+          { status: 400 },
+        );
       }
 
       for (const group of modifierGroups) {
         if (!group.options || group.options.length === 0) {
           return NextResponse.json(
-            { message: `Modifier group "${group.name}" must have at least one option` },
-            { status: 400 }
-          )
+            {
+              message: `Modifier group "${group.name}" must have at least one option`,
+            },
+            { status: 400 },
+          );
         }
         if (group.selectionType === "single" && group.maxSelection !== 1) {
           return NextResponse.json(
-            { message: `Modifier group "${group.name}" is single-select but maxSelection is not 1` },
-            { status: 400 }
-          )
+            {
+              message: `Modifier group "${group.name}" is single-select but maxSelection is not 1`,
+            },
+            { status: 400 },
+          );
         }
         if (group.minSelection > group.maxSelection) {
           return NextResponse.json(
-            { message: `Modifier group "${group.name}" has minSelection greater than maxSelection` },
-            { status: 400 }
-          )
+            {
+              message: `Modifier group "${group.name}" has minSelection greater than maxSelection`,
+            },
+            { status: 400 },
+          );
         }
       }
     }
 
     // ✅ Find store with better error messages
-    console.log("🔍 Looking for store:", storeId)
-    let store
+    console.log("🔍 Looking for store:", storeId);
+    let store;
     if (user.role === "admin") {
-      store = await Store.findById(storeId)
+      store = await Store.findById(storeId);
     } else {
-      store = await Store.findOne({ _id: storeId, sellerId: user.id })
+      store = await Store.findOne({ _id: storeId, sellerId: user.id });
     }
 
     if (!store) {
-      console.error("❌ Store not found or unauthorized:", { storeId, userId: user.id })
+      console.error("❌ Store not found or unauthorized:", {
+        storeId,
+        userId: user.id,
+      });
       return NextResponse.json(
-        { message: "Store not found or you don't have permission to add products to it" },
-        { status: 404 }
-      )
+        {
+          message:
+            "Store not found or you don't have permission to add products to it",
+        },
+        { status: 404 },
+      );
     }
 
-    console.log("✅ Store found:", store._id)
+    console.log("✅ Store found:", store._id);
 
     // ✅ Check subscription plan limits
-    const subscriptionPlan = store.subscriptionPlan || "free"
-    console.log("📊 Subscription plan:", subscriptionPlan)
+    const subscriptionPlan = store.subscriptionPlan || "free";
+    console.log("📊 Subscription plan:", subscriptionPlan);
 
-    const productCount = await Product.countDocuments({ storeId: store._id })
-    console.log("📦 Current product count:", productCount)
+    const productCount = await Product.countDocuments({ storeId: store._id });
+    console.log("📦 Current product count:", productCount);
 
     // Plan limits based on your subscription tiers
     const planLimits: Record<string, number> = {
-      free: 10,      // Free: Up to 10 products
-      basic: 20,     // Basic: Up to 20 products  
-      standard: 50,  // Standard: Up to 50 products
+      free: 20, // Free: Up to 20 products
+      basic: 20, // Basic: Up to 20 products
+      standard: 50, // Standard: Up to 50 products
       premium: 999999, // Premium: Unlimited (using large number)
-    }
+    };
 
-    const productLimit = planLimits[subscriptionPlan] || 10
-    const isUnlimited = productLimit >= 999999
+    const productLimit = planLimits[subscriptionPlan] || 10;
+    const isUnlimited = productLimit >= 999999;
 
     if (productCount >= productLimit) {
-      console.error("❌ Product limit reached:", { current: productCount, limit: productLimit, plan: subscriptionPlan })
-      
+      console.error("❌ Product limit reached:", {
+        current: productCount,
+        limit: productLimit,
+        plan: subscriptionPlan,
+      });
+
       return NextResponse.json(
         {
-          message: isUnlimited 
-            ? "You've reached the maximum number of products." 
+          message: isUnlimited
+            ? "You've reached the maximum number of products."
             : `You've reached the product limit (${productLimit}) for your ${subscriptionPlan} plan. Upgrade to add more products.`,
           currentCount: productCount,
           limit: isUnlimited ? "unlimited" : productLimit,
           plan: subscriptionPlan,
           upgradeUrl: "/dashboard/seller/subscriptions",
         },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
 
-    console.log(`✅ Product limit check passed: ${productCount}/${isUnlimited ? '∞' : productLimit}`)
+    console.log(
+      `✅ Product limit check passed: ${productCount}/${isUnlimited ? "∞" : productLimit}`,
+    );
 
     // ✅ Create product
-    console.log("🚀 Creating product...")
-    
+    console.log("🚀 Creating product...");
+
     const productData = {
       name,
       description,
@@ -227,22 +285,26 @@ export async function POST(req: Request) {
       modifierGroups: hasModifiers ? modifierGroups || [] : [],
       storeId: store._id,
       sellerId: user.id,
-    }
-    
-    console.log("📝 Product data:", productData)
-    console.log(`[v0] Creating product with variants: hasVariants=${productData.hasVariants}, variantCount=${productData.variants.length}`)
-    console.log(`[v0] Creating product with modifiers: hasModifiers=${productData.hasModifiers}, modifierGroupCount=${productData.modifierGroups.length}`)
-    
-    const product = await Product.create(productData)
+    };
 
-    console.log("✅ Product created:", product._id)
+    console.log("📝 Product data:", productData);
+    console.log(
+      `[v0] Creating product with variants: hasVariants=${productData.hasVariants}, variantCount=${productData.variants.length}`,
+    );
+    console.log(
+      `[v0] Creating product with modifiers: hasModifiers=${productData.hasModifiers}, modifierGroupCount=${productData.modifierGroups.length}`,
+    );
+
+    const product = await Product.create(productData);
+
+    console.log("✅ Product created:", product._id);
 
     // Convert to plain object
-    const productObj = product.toObject()
+    const productObj = product.toObject();
     const productWithId = {
       ...productObj,
       _id: productObj._id.toString(),
-    }
+    };
 
     return NextResponse.json(
       {
@@ -253,28 +315,29 @@ export async function POST(req: Request) {
           currentCount: productCount + 1,
           limit: isUnlimited ? "unlimited" : productLimit,
           plan: subscriptionPlan,
-        }
+        },
       },
-      { status: 201 }
-    )
+      { status: 201 },
+    );
   } catch (error: any) {
-    console.error("❌ POST /api/seller/products error:", error)
-    console.error("Stack trace:", error.stack)
-    
+    console.error("❌ POST /api/seller/products error:", error);
+    console.error("Stack trace:", error.stack);
+
     if (error.code === 11000) {
       return NextResponse.json(
         { message: "A product with this name already exists in your store." },
-        { status: 409 }
-      )
+        { status: 409 },
+      );
     }
-    
+
     return NextResponse.json(
       {
         message: "Failed to create product",
         error: String(error),
-        details: process.env.NODE_ENV === "development" ? error.message : undefined,
+        details:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }

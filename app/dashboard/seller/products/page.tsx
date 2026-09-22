@@ -69,7 +69,7 @@ export default function ProductListPage() {
   const { formatAmount } = useFormatAmount();
 
   const PRODUCT_LIMITS: Record<string, number | null> = {
-    free: 10, // Up to 10 products
+    free: 20, // Up to 20 products
     basic: 20, // Up to 20 products
     standard: 50, // Up to 50 products
     premium: null, // Unlimited products
@@ -390,16 +390,18 @@ export default function ProductListPage() {
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-5 w-5 xs:h-6 xs:w-6 flex-shrink-0 p-0">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 xs:h-6 xs:w-6 flex-shrink-0 p-0"
+                                >
                                   <span className="sr-only">Open menu</span>
                                   <ArrowUpDown className="h-2.5 w-2.5 xs:h-3 xs:w-3 rotate-90" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    handleEditProduct(product._id)
-                                  }
+                                  onClick={() => handleEditProduct(product._id)}
                                 >
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
@@ -489,7 +491,8 @@ export default function ProductListPage() {
                               <TableCell>
                                 <img
                                   src={
-                                    product.images?.[0]?.url || "/placeholder.svg"
+                                    product.images?.[0]?.url ||
+                                    "/placeholder.svg"
                                   }
                                   alt={product.name}
                                   className="w-12 h-12 rounded-md object-cover"

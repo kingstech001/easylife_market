@@ -217,7 +217,7 @@ export default function HeroSection() {
       productSuggestions.length > 0);
 
   return (
-    <section className="relative z-40 flex min-h-[560px] items-center isolate sm:min-h-[640px]">
+    <section className="relative z-40 flex items-center isolate ">
       {heroBanner?.imageUrl ? (
         <div
           key={heroBanner.id}

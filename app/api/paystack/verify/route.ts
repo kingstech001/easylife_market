@@ -50,7 +50,7 @@ async function updateSubscription(
     expiryDate.setMonth(expiryDate.getMonth() + 1);
 
     // Determine product limit based on plan
-    let productLimit = 10;
+    let productLimit = 20;
     if (plan === "basic") productLimit = 20;
     else if (plan === "standard") productLimit = 50;
     else if (plan === "premium") productLimit = 999999;
@@ -185,11 +185,13 @@ async function verifyAndCalculateOrderAmount(
   console.log("===========================\n");
 
   return {
-    verifiedOrders: Array.from(ordersByStore.entries()).map(([storeId, order]) => ({
-      storeId,
-      items: order.items,
-      totalPrice: order.totalPrice,
-    })),
+    verifiedOrders: Array.from(ordersByStore.entries()).map(
+      ([storeId, order]) => ({
+        storeId,
+        items: order.items,
+        totalPrice: order.totalPrice,
+      }),
+    ),
     subtotal: calculatedTotal,
     deliveryFee,
     grandTotal,
@@ -218,14 +220,19 @@ async function createMainOrder(
       if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
         const firstProductId = items?.[0]?.productId;
         const product = firstProductId
-          ? await Product.findById(firstProductId).select("storeId").session(session).lean()
+          ? await Product.findById(firstProductId)
+              .select("storeId")
+              .session(session)
+              .lean()
           : null;
 
         resolvedStoreId = String((product as any)?.storeId || "").trim();
       }
 
       if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
-        throw new Error(`Invalid or missing storeId for order reference ${reference}`);
+        throw new Error(
+          `Invalid or missing storeId for order reference ${reference}`,
+        );
       }
 
       const subOrder = await Order.create(
@@ -421,15 +428,17 @@ async function getCheckoutMetadata(reference: string, paystackMetadata: any) {
       ...paystackShippingInfo,
       ...localShippingInfo,
       customerCoords:
-        localShippingInfo.customerCoords ||
-        paystackShippingInfo.customerCoords,
+        localShippingInfo.customerCoords || paystackShippingInfo.customerCoords,
     },
     deliveryFee:
-      (checkoutPayment as any).deliveryFee ?? paystackMetadata?.deliveryFee ?? 0,
+      (checkoutPayment as any).deliveryFee ??
+      paystackMetadata?.deliveryFee ??
+      0,
     paymentMethod:
       (checkoutPayment as any).paymentMethod || paystackMetadata?.paymentMethod,
     userId: (checkoutPayment as any).userId || paystackMetadata?.userId,
-    userEmail: (checkoutPayment as any).userEmail || paystackMetadata?.userEmail,
+    userEmail:
+      (checkoutPayment as any).userEmail || paystackMetadata?.userEmail,
   };
 }
 
@@ -497,7 +506,10 @@ export async function POST(request: NextRequest) {
     }
 
     const rawPaystackMetadata = verifyData.data.metadata ?? {};
-    const paystackMetadata = await getCheckoutMetadata(reference, rawPaystackMetadata);
+    const paystackMetadata = await getCheckoutMetadata(
+      reference,
+      rawPaystackMetadata,
+    );
     const paystackChannel = verifyData.data.channel || "card";
     const paidAmount = verifyData.data.amount / 100; // Convert from kobo to naira
 
@@ -919,7 +931,10 @@ export async function GET(request: NextRequest) {
     }
 
     const rawPaystackMetadata = verifyData.data.metadata ?? {};
-    const paystackMetadata = await getCheckoutMetadata(reference, rawPaystackMetadata);
+    const paystackMetadata = await getCheckoutMetadata(
+      reference,
+      rawPaystackMetadata,
+    );
     const paidAmount = verifyData.data.amount / 100;
 
     console.log(

@@ -4,7 +4,7 @@ import slugify from "slugify";
 
 // Plan -> default product limit mapping
 export const PLAN_PRODUCT_LIMIT: Record<string, number | null> = {
-  free: 10,
+  free: 20,
   basic: 20,
   standard: 50,
   premium: null,
@@ -16,18 +16,18 @@ export const PLAN_PRODUCT_LIMIT: Record<string, number | null> = {
 
 export interface IDaySchedule {
   open: boolean;
-  openTime: string;  // 24h "HH:MM", e.g. "09:00"
+  openTime: string; // 24h "HH:MM", e.g. "09:00"
   closeTime: string; // 24h "HH:MM", e.g. "18:00"
 }
 
 export interface IBusinessHours {
-  monday:    IDaySchedule;
-  tuesday:   IDaySchedule;
+  monday: IDaySchedule;
+  tuesday: IDaySchedule;
   wednesday: IDaySchedule;
-  thursday:  IDaySchedule;
-  friday:    IDaySchedule;
-  saturday:  IDaySchedule;
-  sunday:    IDaySchedule;
+  thursday: IDaySchedule;
+  friday: IDaySchedule;
+  saturday: IDaySchedule;
+  sunday: IDaySchedule;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,22 +76,43 @@ export interface IStore extends Document {
 
 const DayScheduleSchema = new Schema<IDaySchedule>(
   {
-    open:      { type: Boolean, default: false },
-    openTime:  { type: String,  default: "09:00" },
-    closeTime: { type: String,  default: "18:00" },
+    open: { type: Boolean, default: false },
+    openTime: { type: String, default: "09:00" },
+    closeTime: { type: String, default: "18:00" },
   },
   { _id: false },
 );
 
 const BusinessHoursSchema = new Schema<IBusinessHours>(
   {
-    monday:    { type: DayScheduleSchema, default: () => ({ open: true,  openTime: "09:00", closeTime: "18:00" }) },
-    tuesday:   { type: DayScheduleSchema, default: () => ({ open: true,  openTime: "09:00", closeTime: "18:00" }) },
-    wednesday: { type: DayScheduleSchema, default: () => ({ open: true,  openTime: "09:00", closeTime: "18:00" }) },
-    thursday:  { type: DayScheduleSchema, default: () => ({ open: true,  openTime: "09:00", closeTime: "18:00" }) },
-    friday:    { type: DayScheduleSchema, default: () => ({ open: true,  openTime: "09:00", closeTime: "18:00" }) },
-    saturday:  { type: DayScheduleSchema, default: () => ({ open: true,  openTime: "10:00", closeTime: "16:00" }) },
-    sunday:    { type: DayScheduleSchema, default: () => ({ open: false, openTime: "10:00", closeTime: "16:00" }) },
+    monday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: true, openTime: "09:00", closeTime: "18:00" }),
+    },
+    tuesday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: true, openTime: "09:00", closeTime: "18:00" }),
+    },
+    wednesday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: true, openTime: "09:00", closeTime: "18:00" }),
+    },
+    thursday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: true, openTime: "09:00", closeTime: "18:00" }),
+    },
+    friday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: true, openTime: "09:00", closeTime: "18:00" }),
+    },
+    saturday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: true, openTime: "10:00", closeTime: "16:00" }),
+    },
+    sunday: {
+      type: DayScheduleSchema,
+      default: () => ({ open: false, openTime: "10:00", closeTime: "16:00" }),
+    },
   },
   { _id: false },
 );
@@ -102,14 +123,14 @@ const BusinessHoursSchema = new Schema<IBusinessHours>(
 
 const StoreSchema = new Schema<IStore>(
   {
-    name:        { type: String, required: true, unique: true },
+    name: { type: String, required: true, unique: true },
     // ✅ unique:true already creates an index — no need for StoreSchema.index({ slug: 1 }) below
-    slug:        { type: String, unique: true },
+    slug: { type: String, unique: true },
     description: { type: String },
-    logo_url:    { type: String },
-    banner_url:  { type: String },
-    sellerId:    { type: Schema.Types.ObjectId, ref: "User", required: true },
-    email:       { type: String },
+    logo_url: { type: String },
+    banner_url: { type: String },
+    sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    email: { type: String },
 
     // ── Contact ───────────────────────────────────────────────────────────────
     phone: {
@@ -120,8 +141,8 @@ const StoreSchema = new Schema<IStore>(
 
     // ── Status & publishing ───────────────────────────────────────────────────
     isPublished: { type: Boolean, default: false },
-    isApproved:  { type: Boolean, default: false },
-    categories:  [{ type: String }],
+    isApproved: { type: Boolean, default: false },
+    categories: [{ type: String }],
 
     // ── Subscription ──────────────────────────────────────────────────────────
     productLimit: {
@@ -138,12 +159,12 @@ const StoreSchema = new Schema<IStore>(
       enum: ["active", "inactive", "expired", "cancelled"],
       default: "inactive",
     },
-    subscriptionExpiryDate:  { type: Date },
-    subscriptionStartDate:   { type: Date, default: null },
-    lastPaymentAmount:       { type: Number },
+    subscriptionExpiryDate: { type: Date },
+    subscriptionStartDate: { type: Date, default: null },
+    lastPaymentAmount: { type: Number },
     // ✅ index:true already creates an index — no need for StoreSchema.index({ lastPaymentReference: 1 }) below
-    lastPaymentReference:    { type: String, index: true },
-    lastPaymentDate:         { type: Date },
+    lastPaymentReference: { type: String, index: true },
+    lastPaymentDate: { type: Date },
 
     // ── Location ──────────────────────────────────────────────────────────────
     location: {
@@ -161,14 +182,14 @@ const StoreSchema = new Schema<IStore>(
         type: String,
         required: true,
       },
-      city:    { type: String, default: "Enugu"   },
-      state:   { type: String, default: "Enugu"   },
+      city: { type: String, default: "Enugu" },
+      state: { type: String, default: "Enugu" },
       country: { type: String, default: "Nigeria" },
     },
 
     // ── Business hours ────────────────────────────────────────────────────────
     businessHours: {
-      type:    BusinessHoursSchema,
+      type: BusinessHoursSchema,
       default: () => ({}),
     },
   },
@@ -203,7 +224,7 @@ StoreSchema.pre<IStore>("save", async function (next) {
       try {
         const address = this.location.address ?? "";
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-          address
+          address,
         )}&format=json&limit=1`;
         const response = await fetch(url, {
           headers: { "User-Agent": "EasyLifeMarketplace/1.0" },
@@ -225,7 +246,7 @@ StoreSchema.pre<IStore>("save", async function (next) {
               result.address?.city ||
               result.address?.town ||
               result.address?.village,
-            state:   result.address?.state,
+            state: result.address?.state,
             country: result.address?.country || "Nigeria",
           } as IStore["location"];
         }

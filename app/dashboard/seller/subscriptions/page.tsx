@@ -43,7 +43,7 @@ const plans: Plan[] = [
     price: 0,
     icon: <Sparkles className="h-6 w-6" />,
     features: [
-      "Up to 10 products",
+      "Up to 20 products",
       "Basic analytics",
       "Email support",
       "Standard commission rate",
@@ -136,7 +136,7 @@ export default function SubscriptionPage() {
     const fetchStoreAndPlan = async () => {
       try {
         const response = await fetch(
-          "/api/dashboard/seller/subscription/current?storeId=current"
+          "/api/dashboard/seller/subscription/current?storeId=current",
         );
         if (response.ok) {
           const data = await response.json();
@@ -239,7 +239,7 @@ export default function SubscriptionPage() {
         setLoadingPlan(null);
       }
     },
-    [currentPlan, storeId, sellerEmail]
+    [currentPlan, storeId, sellerEmail],
   );
 
   if (isLoading) {
@@ -363,12 +363,12 @@ export default function SubscriptionPage() {
                       currentPlan === plan.id
                         ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed"
                         : plan.id === "premium"
-                        ? "bg-violet-600 hover:bg-violet-700 text-white"
-                        : plan.id === "standard"
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        : plan.id === "basic"
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 text-white"
+                          ? "bg-violet-600 hover:bg-violet-700 text-white"
+                          : plan.id === "standard"
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : plan.id === "basic"
+                              ? "bg-blue-600 hover:bg-blue-700 text-white"
+                              : "bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900 text-white"
                     }`}
                   >
                     {loadingPlan === plan.id ? (

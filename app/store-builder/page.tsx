@@ -876,9 +876,9 @@ export default function StoreBuilderPage() {
     const editingId = editingProduct?.id || editingProduct?._id;
     const isCreating = !editingId;
 
-    if (products.length >= 10 && isCreating) {
+    if (products.length >= 20 && isCreating) {
       toast.error(
-        "Maximum of 10 products reached. Delete an existing product to add a new one.",
+        "Maximum of 20 products reached. Delete an existing product to add a new one.",
       );
       return;
     }
@@ -1224,6 +1224,7 @@ export default function StoreBuilderPage() {
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
                       className="text-center py-12 text-muted-foreground"
                     >
                       <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
@@ -2099,10 +2100,9 @@ export default function StoreBuilderPage() {
                               </>
                             ) : (
                               <>
-                                <Save className="h-5 w-5 mr-2" />
-                                {editingProduct
-                                  ? "Update Product"
-                                  : "Save Product"}
+                                <
+>
+                                {editingProduct ? "Update Product" : "Save Product"}
                               </>
                             )}
                           </Button>
