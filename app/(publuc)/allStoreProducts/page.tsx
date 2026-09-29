@@ -32,10 +32,20 @@ async function getProducts(): Promise<TransformedProduct[]> {
       console.error("Store model not found");
     }
 
+    const approvedStores = await Store.find({
+      isApproved: true,
+      isPublished: true,
+    })
+      .select("_id")
+      .lean();
+
+    const approvedStoreIds = approvedStores.map((store: any) => store._id);
+
     const products = await Product.find({
       isActive: true,
       isDeleted: false,
       inventoryQuantity: { $gt: 0 },
+      storeId: { $in: approvedStoreIds },
     })
       .populate({
         path: "storeId",

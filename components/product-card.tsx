@@ -1,106 +1,119 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ShoppingCart, Heart, Loader2 } from "lucide-react"
-import { useCart } from "@/context/cart-context"
-import { useWishlist } from "@/context/wishlist-context"
-import { toast } from "sonner"
-import { useFormatAmount } from "@/hooks/useFormatAmount"
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Heart, Loader2 } from "lucide-react";
+import { useCart } from "@/context/cart-context";
+import { useWishlist } from "@/context/wishlist-context";
+import { toast } from "sonner";
+import { useFormatAmount } from "@/hooks/useFormatAmount";
 
 interface Product {
-  id: string
-  name: string
-  description: string | null
-  price: number
-  compare_at_price: number | null
-  category_id?: string
-  inventory_quantity: number
-  images: { id: string; url: string; alt_text: string | null }[]
-  store_id: string
-  created_at: string
-  updated_at: string
-  hasVariants?: boolean
-  hasModifiers?: boolean
-  variants?: Array<{
-    color: { 
-      name: string
-      hex: string
-      _id?: string
-    }
-    sizes: Array<{ 
-      size: string
-      quantity: number
-      _id?: string
-    }>
-    priceAdjustment?: number
-    _id?: string
-  }> | string // Could be string if not parsed
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  compare_at_price: number | null;
+  category_id?: string;
+  inventory_quantity: number;
+  images: { id: string; url: string; alt_text: string | null }[];
+  store_id: string;
+  created_at: string;
+  updated_at: string;
+  hasVariants?: boolean;
+  hasModifiers?: boolean;
+  variants?:
+    | Array<{
+        color: {
+          name: string;
+          hex: string;
+          _id?: string;
+        };
+        sizes: Array<{
+          size: string;
+          quantity: number;
+          _id?: string;
+        }>;
+        priceAdjustment?: number;
+        _id?: string;
+      }>
+    | string; // Could be string if not parsed
 }
 
 interface ProductCardProps {
-  product: Product
-  storeSlug: string
-  isRestaurant?: boolean
+  product: Product;
+  storeSlug: string;
+  isRestaurant?: boolean;
 }
 
-export function ProductCard({ product, storeSlug, isRestaurant = false }: ProductCardProps) {
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  const { addToCart } = useCart()
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-  const { formatAmount } = useFormatAmount()
+export function ProductCard({
+  product,
+  storeSlug,
+  isRestaurant = false,
+}: ProductCardProps) {
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { formatAmount } = useFormatAmount();
 
-  const mainImage = product.images?.[0]
-  const productHref = `/stores/${storeSlug}/products/${product.id}`
-  const needsCustomization = product.hasModifiers
-  const shouldOpenProductPage = needsCustomization || product.hasVariants
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
+  const mainImage = product.images?.[0];
+  const productHref = `/stores/${storeSlug}/products/${product.id}`;
+  const needsCustomization = product.hasModifiers;
+  const shouldOpenProductPage = needsCustomization || product.hasVariants;
+  const hasDiscount =
+    product.compare_at_price && product.compare_at_price > product.price;
 
   if (product.inventory_quantity <= 0) {
-    return null
+    return null;
   }
   // Parse variants if they come as a string
-  let parsedVariants: Array<{
-    color: { name: string; hex: string; _id?: string }
-    sizes: Array<{ size: string; quantity: number; _id?: string }>
-    priceAdjustment?: number
-    _id?: string
-  }> | undefined
+  let parsedVariants:
+    | Array<{
+        color: { name: string; hex: string; _id?: string };
+        sizes: Array<{ size: string; quantity: number; _id?: string }>;
+        priceAdjustment?: number;
+        _id?: string;
+      }>
+    | undefined;
 
   try {
-    if (typeof product.variants === 'string') {
-      console.log('⚠️ Variants is a STRING, attempting to parse...')
-      parsedVariants = JSON.parse(product.variants)
-      console.log('✅ Successfully parsed variants:', parsedVariants)
+    if (typeof product.variants === "string") {
+      console.log("⚠️ Variants is a STRING, attempting to parse...");
+      parsedVariants = JSON.parse(product.variants);
+      console.log("✅ Successfully parsed variants:", parsedVariants);
     } else if (Array.isArray(product.variants)) {
-      parsedVariants = product.variants
-      console.log('✅ Variants is already an array:', parsedVariants)
+      parsedVariants = product.variants;
+      console.log("✅ Variants is already an array:", parsedVariants);
     } else {
-      console.log('❌ Variants is neither string nor array:', typeof product.variants, product.variants)
+      console.log(
+        "❌ Variants is neither string nor array:",
+        typeof product.variants,
+        product.variants,
+      );
     }
   } catch (error) {
-    console.error('❌ Error parsing variants:', error)
-    console.log('Raw variants value:', product.variants)
+    console.error("❌ Error parsing variants:", error);
+    console.log("Raw variants value:", product.variants);
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (product.inventory_quantity === 0) return
+    if (product.inventory_quantity === 0) return;
 
-    setIsAddingToCart(true)
+    setIsAddingToCart(true);
 
     // Simulate API call delay
     setTimeout(() => {
-      setIsAddingToCart(false)
+      setIsAddingToCart(false);
       addToCart({
         id: product.id,
         name: product.name,
@@ -109,14 +122,14 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
         image: product.images[0]?.url || "/placeholder.svg",
         storeId: product.store_id,
         productId: product.id,
-      })
-      toast.success("Added to cart")
-    }, 1000)
-  }
+      });
+      toast.success("Added to cart");
+    }, 1000);
+  };
 
   const toggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
     const wishlistItem = {
       id: product.id,
@@ -124,16 +137,16 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
       price: product.price,
       image: product.images[0]?.url || "/placeholder.svg",
       storeSlug: storeSlug,
-    }
+    };
 
     if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id)
-      toast.success("Removed from wishlist")
+      removeFromWishlist(product.id);
+      toast.success("Removed from wishlist");
     } else {
-      addToWishlist(wishlistItem)
-      toast.success("Added to wishlist")
+      addToWishlist(wishlistItem);
+      toast.success("Added to wishlist");
     }
-  }
+  };
 
   return (
     <motion.div
@@ -146,7 +159,10 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
         <Link href={productHref} className="block">
           <div className="relative aspect-square overflow-hidden">
             <Image
-              src={mainImage?.url || "/placeholder.svg?height=300&width=300&text=Product"}
+              src={
+                mainImage?.url ||
+                "/placeholder.svg?height=300&width=300&text=Product"
+              }
               alt={mainImage?.alt_text || product.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -156,7 +172,10 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
             {/* Wishlist Button - Shows on Hover */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: isHovered ? 1 : 0, scale: isHovered ? 1 : 0.8 }}
+              animate={{
+                opacity: isHovered ? 1 : 0,
+                scale: isHovered ? 1 : 0.8,
+              }}
               transition={{ duration: 0.2 }}
               className="absolute top-2 left-1/2 transform -translate-x-1/2"
             >
@@ -177,47 +196,74 @@ export function ProductCard({ product, storeSlug, isRestaurant = false }: Produc
         </Link>
 
         <CardContent className="p-2 flex-1 flex flex-col">
-            <div className=" flex-1">
-              <Link href={productHref}>
-                <h3 className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-              </Link>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-primary">{formatAmount(product.price)}</span>
-                {hasDiscount && (
-                  <span className="text-xs text-muted-foreground line-through">
-                    {formatAmount(product.compare_at_price!)}
-                  </span>
-                )}
-              </div>
-            </div>
+          <div className=" flex-1">
+            <Link href={productHref}>
+              <h3 className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                {product.name}
+              </h3>
+            </Link>
+          </div>
         </CardContent>
 
         <CardFooter className="p-2 pt-0">
           {shouldOpenProductPage ? (
-            <Button asChild className="h-10 w-full rounded-xl text-sm font-semibold `">
-              <Link href={productHref}>
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                {needsCustomization ? "Customize" : "Select options"}
-              </Link>
-            </Button>
+            <div className="flex items-center justify-between w-full gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg font-bold text-primary truncate">
+                  {formatAmount(product.price)}
+                </span>
+                {hasDiscount && (
+                  <span className="text-xs text-muted-foreground line-through truncate">
+                    {formatAmount(product.compare_at_price!)}
+                  </span>
+                )}
+              </div>
+
+              <Button
+                asChild
+                size="icon"
+                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                aria-label={
+                  needsCustomization
+                    ? "Customize product"
+                    : "Select product options"
+                }
+              >
+                <Link href={productHref}>
+                  <ShoppingCart className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           ) : (
-            <Button
-              className="h-10 w-full rounded-xl text-sm font-semibold"
-              onClick={handleAddToCart}
-              disabled={isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ShoppingCart className="mr-2 h-4 w-4" />
-              )}
-              Add to cart
-            </Button>
+            <div className="flex items-center justify-between w-full gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg font-bold text-primary truncate">
+                  {formatAmount(product.price)}
+                </span>
+                {hasDiscount && (
+                  <span className="text-xs text-muted-foreground line-through truncate">
+                    {formatAmount(product.compare_at_price!)}
+                  </span>
+                )}
+              </div>
+
+              <Button
+                size="icon"
+                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                aria-label="Add to cart"
+              >
+                {isAddingToCart ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShoppingCart className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           )}
         </CardFooter>
       </Card>
     </motion.div>
-  )
+  );
 }
