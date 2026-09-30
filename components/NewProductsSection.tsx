@@ -38,7 +38,7 @@ type ProductData = {
 };
 
 // Helper function to serialize variants (convert ObjectIds to strings)
-function serializeVariants(variants: any[]): ProductData['variants'] {
+function serializeVariants(variants: any[]): ProductData["variants"] {
   if (!variants || !Array.isArray(variants)) return undefined;
 
   return variants.map((variant) => ({
@@ -68,17 +68,22 @@ async function getNewProducts(): Promise<ProductData[]> {
       isDeleted: false,
       inventoryQuantity: { $gt: 0 },
     })
-      .sort({ createdAt: -1 })
-      .limit(10)
       .populate({
         path: "storeId",
-        select: "slug name",
+        select: "slug name isApproved isPublished",
         model: Store,
       })
+      .sort({ createdAt: -1 })
+      .limit(10)
       .lean();
 
+    const approvedProducts = products.filter((p: any) => {
+      const store = typeof p.storeId === "object" ? p.storeId : null;
+      return store && store.isApproved && store.isPublished;
+    });
+
     // Transform to match your Product type
-    const transformedProducts = products.map((p: any) => ({
+    const transformedProducts = approvedProducts.map((p: any) => ({
       _id: p._id.toString(),
       name: p.name,
       description: p.description || null,
@@ -90,12 +95,15 @@ async function getNewProducts(): Promise<ProductData[]> {
         url: img.url || "",
         alt_text: img.altText || img.alt_text || null,
       })),
-      store_id: typeof p.storeId === "object" ? p.storeId._id.toString() : p.storeId.toString(),
+      store_id:
+        typeof p.storeId === "object"
+          ? p.storeId._id.toString()
+          : p.storeId.toString(),
       store_slug: typeof p.storeId === "object" ? p.storeId.slug : undefined,
       created_at: p.createdAt || new Date().toISOString(),
       updated_at: p.updatedAt || new Date().toISOString(),
       hasVariants: p.hasVariants || false,
-      variants: serializeVariants(p.variants), // ✅ Serialize variants
+      variants: serializeVariants(p.variants),
     }));
 
     return transformedProducts;

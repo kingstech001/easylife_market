@@ -31,8 +31,8 @@ export function StoreCard({ store }: StoreCardProps) {
       href={`/stores/${store.slug}`}
       className="block h-full w-full"
     >
-      <Card className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl transition-all duration-300 hover:border-primary/50 hover:shadow-lg">
-        <div className="relative h-28 w-full flex-shrink-0 overflow-hidden bg-muted">
+      <Card className="group relative flex h-full w-full flex-col overflow-hidden rounded-xl transition-all duration-300 hover:border-primary/50 hover:shadow-lg p-0">
+        <div className="relative h-28 w-full flex-shrink-0 overflow-hidden bg-muted p-0">
           {store.banner_url ? (
             <Image
               src={store.banner_url}

@@ -45,26 +45,8 @@ interface FeaturedStoresClientProps {
 
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   return (
-    <section className="relative w-full overflow-hidden border-b border-border/60 bg-background py-12 sm:py-16">
+    <section className="relative w-full overflow-hidden  border-border/60 bg-background py-12 sm:py-16">
       <div className="container relative z-10 px-4 sm:px-6 mx-auto">
-        {/* Header Section */}
-        <div className="mb-8 flex items-center justify-between gap-4">
-          {/* Badge */}
-          <Badge
-            variant="secondary"
-            className="rounded px-4 py-2 text-sm font-semibold bg-[#0E5A43] text-white border-[#0E5A43]/30"
-          >
-            <Sparkles className="w-4 h-4 mr-2 text-white" />
-            New Featured Stores
-          </Badge>
-          <Link
-            href="/stores"
-            className="flex items-center text-xs md:text-sm font-medium text-[#0E5A43] hover:text-[#F4C430] transition-colors"
-          >
-            View All
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </div>
 
         {/* Store Cards Grid */}
         <div className="relative">
@@ -110,14 +92,22 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                   )}
                 >
                   {/* Store card wrapper */}
-                  <div className="relative rounded p-1 transition-all duration-300 group-hover:shadow-lg">
+                  <div className="relative rounded transition-all duration-300 group-hover:shadow-lg">
                     <StoreCard store={store} />
                   </div>
                 </div>
               ))}
             </div>
+            
           )}
         </div>
+        <Link
+            href="/stores"
+            className="flex justify-center items-center text-xs md:text-sm font-medium text-[#0E5A43] hover:text-[#147b5c] transition-colors"
+          >
+            View All
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
       </div>
     </section>
   );

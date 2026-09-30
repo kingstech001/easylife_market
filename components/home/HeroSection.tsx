@@ -217,7 +217,7 @@ export default function HeroSection() {
       productSuggestions.length > 0);
 
   return (
-    <section className="relative z-40 flex items-center isolate ">
+    <section className="relative z-40 flex min-h-[50vh] items-center isolate md:min-h-[58vh] lg:min-h-[60vh]">
       {heroBanner?.imageUrl ? (
         <div
           key={heroBanner.id}
@@ -237,7 +237,7 @@ export default function HeroSection() {
         <div className="absolute inset-0 z-0 bg-background" />
       )}
 
-      <div className="relative z-10 container mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <div className="relative z-10 container mx-auto px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="max-w-5xl">
           <div className="space-y-6 sm:space-y-7">
             <div className="max-w-3xl space-y-4">
@@ -365,7 +365,7 @@ export default function HeroSection() {
               )}
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex gap-3 sm:flex-row sm:items-center">
               {heroBanner?.buttonLink && heroBanner?.buttonText && (
                 <Link href={heroBanner.buttonLink} className="w-full sm:w-auto">
                   <Button
