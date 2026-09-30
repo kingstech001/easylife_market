@@ -237,7 +237,7 @@ export function ProductCard({
           ) : (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-lg font-bold text-primary truncate">
+                <span className="text-xs md:text-md font-bold text-primary truncate">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
