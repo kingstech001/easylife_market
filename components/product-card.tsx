@@ -249,7 +249,7 @@ export function ProductCard({
 
               <Button
                 size="icon"
-                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                className="h-6 w-6 rounded-sm shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute right-0"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 aria-label="Add to cart"
@@ -257,7 +257,7 @@ export function ProductCard({
                 {isAddingToCart ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <ShoppingCart className="h-4 w-4" />
+                  <ShoppingCart className="h-3 w-3" />
                 )}
               </Button>
             </div>
