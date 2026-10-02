@@ -205,15 +205,15 @@ export function ProductCard({
           </div>
         </CardContent>
 
-        <CardFooter className="p-2 pt-0 ">
+        <CardFooter className="p-2 pt-0">
           {shouldOpenProductPage ? (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-lg font-bold text-primary truncate">
+            <div className="flex w-full items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-1.5 overflow-visible">
+                <span className="whitespace-nowrap text-lg font-bold text-primary">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
-                  <span className="text-[10px] md:text-md text-muted-foreground line-through truncate">
+                  <span className="whitespace-nowrap text-[10px] text-muted-foreground line-through md:text-xs">
                     {formatAmount(product.compare_at_price!)}
                   </span>
                 )}
@@ -222,7 +222,7 @@ export function ProductCard({
               <Button
                 asChild
                 size="icon"
-                className="h-7 w-7 rounded-l shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-[190px] right-2"
+                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                 aria-label={
                   needsCustomization
                     ? "Customize product"
@@ -235,13 +235,13 @@ export function ProductCard({
               </Button>
             </div>
           ) : (
-            <div className="flex items-center justify-between w-full gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs md:text-md font-bold text-primary truncate">
+            <div className="flex w-full items-center justify-between gap-2">
+              <div className="flex flex-col-reverse min-w-0 overflow-visible">
+                <span className="whitespace-nowrap text-xs font-bold text-primary md:text-md">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
-                  <span className="text-[10px] text-muted-foreground line-through truncate">
+                  <span className="whitespace-nowrap text-[10px] text-muted-foreground line-through">
                     {formatAmount(product.compare_at_price!)}
                   </span>
                 )}
@@ -249,7 +249,7 @@ export function ProductCard({
 
               <Button
                 size="icon"
-                className="h-7 w-7 rounded-l shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-[190px] right-2"
+                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 aria-label="Add to cart"
