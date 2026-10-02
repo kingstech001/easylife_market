@@ -213,7 +213,7 @@ export function ProductCard({
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
-                  <span className="text-s md:text-md text-muted-foreground line-through truncate">
+                  <span className="text-[10px] md:text-md text-muted-foreground line-through truncate">
                     {formatAmount(product.compare_at_price!)}
                   </span>
                 )}
@@ -222,7 +222,7 @@ export function ProductCard({
               <Button
                 asChild
                 size="icon"
-                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-32 right-4"
+                className="h-7 w-7 rounded-l shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-[190px] right-2"
                 aria-label={
                   needsCustomization
                     ? "Customize product"
@@ -237,11 +237,11 @@ export function ProductCard({
           ) : (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-s md:text-md font-bold text-primary truncate">
+                <span className="text-xs md:text-md font-bold text-primary truncate">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
-                  <span className="text-xs text-muted-foreground line-through truncate">
+                  <span className="text-[10px] text-muted-foreground line-through truncate">
                     {formatAmount(product.compare_at_price!)}
                   </span>
                 )}
@@ -249,7 +249,7 @@ export function ProductCard({
 
               <Button
                 size="icon"
-                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-32 right-4"
+                className="h-7 w-7 rounded-l shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-[190px] right-2"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 aria-label="Add to cart"
