@@ -155,7 +155,7 @@ export function ProductCard({
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col ">
+      <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col  relative">
         <Link href={productHref} className="block">
           <div className="relative aspect-square overflow-hidden">
             <Image
@@ -205,7 +205,7 @@ export function ProductCard({
           </div>
         </CardContent>
 
-        <CardFooter className="p-2 pt-0 relative">
+        <CardFooter className="p-2 pt-0 ">
           {shouldOpenProductPage ? (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -213,7 +213,7 @@ export function ProductCard({
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
-                  <span className="text-xs text-muted-foreground line-through truncate">
+                  <span className="text-s md:text-md text-muted-foreground line-through truncate">
                     {formatAmount(product.compare_at_price!)}
                   </span>
                 )}
@@ -222,7 +222,7 @@ export function ProductCard({
               <Button
                 asChild
                 size="icon"
-                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-32 right-4"
                 aria-label={
                   needsCustomization
                     ? "Customize product"
@@ -237,7 +237,7 @@ export function ProductCard({
           ) : (
             <div className="flex items-center justify-between w-full gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs md:text-md font-bold text-primary truncate">
+                <span className="text-s md:text-md font-bold text-primary truncate">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
@@ -249,7 +249,7 @@ export function ProductCard({
 
               <Button
                 size="icon"
-                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                className="h-8 w-8 rounded-xl shrink-0 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 absolute top-32 right-4"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 aria-label="Add to cart"
