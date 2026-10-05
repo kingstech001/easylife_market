@@ -27,12 +27,25 @@ export const CATEGORIES: Category[] = [
   {
     name: "Restaurants",
     icon: CookingPot,
-    subcategories: ["Fast Food", "Fine Dining", "Cafes", "Bakeries", "food", "restaurants"],
+    subcategories: [
+      "Fast Food",
+      "Fine Dining",
+      "Cafes",
+      "Bakeries",
+      "food",
+      "restaurants",
+    ],
   },
   {
     name: "Electronics",
     icon: Tv,
-    subcategories: ["Television", "Cameras & Photo", "Home Audio", "Tv", "electronics"],
+    subcategories: [
+      "Television",
+      "Cameras & Photo",
+      "Home Audio",
+      "Tv",
+      "electronics",
+    ],
   },
   {
     name: "Vehicles",
@@ -42,12 +55,26 @@ export const CATEGORIES: Category[] = [
   {
     name: "Fashion",
     icon: Shirt,
-    subcategories: ["Clothing", "Shoes", "Accessories", "Jewelry", "Bags", "game wear", "sportswear"],
+    subcategories: [
+      "Clothing",
+      "Shoes",
+      "Accessories",
+      "Jewelry",
+      "Bags",
+      "game wear",
+      "sportswear",
+    ],
   },
   {
     name: "Home & Office",
     icon: Home,
-    subcategories: ["Furniture", "Decor", "Kitchen", "Garden Tools", "Office Product"],
+    subcategories: [
+      "Furniture",
+      "Decor",
+      "Kitchen",
+      "Garden Tools",
+      "Office Product",
+    ],
   },
   {
     name: "Computing",
@@ -62,7 +89,13 @@ export const CATEGORIES: Category[] = [
   {
     name: "Supermarket",
     icon: Apple,
-    subcategories: ["Groceries", "Fresh Produce", "Farm Tools", "Food", "Beverages"],
+    subcategories: [
+      "Groceries",
+      "Fresh Produce",
+      "Farm Tools",
+      "Food",
+      "Beverages",
+    ],
   },
   {
     name: "Health & Beauty",
@@ -88,30 +121,35 @@ export function buildCategorySearchUrl(category: Category): string {
 // ─── Mobile Grid Component (homepage — small screens only) ───────────────────
 export function CategoryGrid() {
   return (
-    <div className="block lg:hidden">
-      <h2 className="text-sm font-semibold text-muted-foreground text-center mb-4 uppercase tracking-wide">
-        Browse by Category
-      </h2>
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide container">
-        {CATEGORIES.map((category) => {
-          const Icon = category.icon;
-          return (
-            <Link
-              key={category.name}
-              href={buildCategorySearchUrl(category)}
-              className="group flex-shrink-0"
-            >
-              <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 hover:shadow-md transition-all duration-300 w-[72px]">
-                <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#0E5A43]/40 group-hover:bg-[#0E5A43]/10 group-hover:scale-110 transition-all duration-300">
-                  <Icon className={cn("h-4 w-4 text-[#0E5A43]")} />
+    <div className="w-full  px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1280px]">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#0E5A43]">
+            Browse by Category
+          </h2>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {CATEGORIES.map((category) => {
+            const Icon = category.icon;
+            return (
+              <Link
+                key={category.name}
+                href={buildCategorySearchUrl(category)}
+                className="group flex-shrink-0"
+              >
+                <div className="flex w-[78px] flex-col items-center gap-2 rounded-2xl border border-[#0E5A43]/10 bg-white/70 px-2 py-3 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0E5A43]/30 hover:bg-white">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0E5A43]/10 text-[#0E5A43] ring-1 ring-[#0E5A43]/10">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-[10px] font-semibold leading-tight text-[#0E5A43]">
+                    {category.name}
+                  </span>
                 </div>
-                <span className="text-[9px] font-semibold text-foreground text-center leading-tight line-clamp-2">
-                  {category.name}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -136,7 +174,9 @@ export function CategoryGridAll() {
             >
               <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 hover:shadow-md transition-all duration-300 w-[72px] lg:w-[80px]">
                 <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#0E5A43]/40 group-hover:bg-[#0E5A43]/10 group-hover:scale-110 transition-all duration-300">
-                  <Icon className={cn("h-4 w-4 lg:h-5 lg:w-5 text-[#0E5A43]")} />
+                  <Icon
+                    className={cn("h-4 w-4 lg:h-5 lg:w-5 text-[#0E5A43]")}
+                  />
                 </div>
                 <span className="text-[9px] lg:text-[10px] font-semibold text-foreground text-center leading-tight line-clamp-2">
                   {category.name}

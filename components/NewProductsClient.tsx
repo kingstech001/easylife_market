@@ -73,7 +73,7 @@ export function NewProductsClient({ products }: NewProductsClientProps) {
         </div>
 
         <Link
-            href="/stores"
+            href="/allStoreProducts"
             className="flex items-center text-xs md:text-sm font-medium text-[#0E5A43] hover:text-[#147b5c] transition-colors"
           >
             View All

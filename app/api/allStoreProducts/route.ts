@@ -17,7 +17,13 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = req.nextUrl;
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10)));
+    const limit = Math.min(
+      MAX_LIMIT,
+      Math.max(
+        1,
+        parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10),
+      ),
+    );
     const skip = (page - 1) * limit;
 
     const filter = {
@@ -26,10 +32,24 @@ export async function GET(req: NextRequest) {
       inventoryQuantity: { $gt: 0 },
     };
 
+    const approvedStores = await Store.find({
+      isApproved: true,
+      isPublished: true,
+    })
+      .select("_id")
+      .lean();
+
+    const approvedStoreIds = approvedStores.map((store: any) => store._id);
+
+    const productFilter = {
+      ...filter,
+      storeId: { $in: approvedStoreIds },
+    };
+
     // Run count and fetch in parallel
     const [totalCount, products] = await Promise.all([
-      Product.countDocuments(filter),
-      Product.find(filter)
+      Product.countDocuments(productFilter),
+      Product.find(productFilter)
         .populate({
           path: "storeId",
           select: "_id name slug",
@@ -90,7 +110,7 @@ export async function GET(req: NextRequest) {
         error: error instanceof Error ? error.message : "Unknown error",
         products: [],
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

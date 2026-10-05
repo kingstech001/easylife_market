@@ -14,7 +14,6 @@ import {
   User,
   LogIn,
   X,
-  Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +69,7 @@ export function SiteHeader() {
 
   // Don't show cart and wishlist for sellers
   const showShoppingFeatures = userRole !== "seller";
+  const isSearchPage = pathname?.startsWith("/Search") ?? false;
 
   useEffect(() => {
     const updateAnnouncement = () =>
@@ -160,28 +160,20 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        {/* {deliveryAnnouncement && (
-          <div className="overflow-hidden bg-[#0E5A43] py-2 text-white">
-            <p className="sr-only">{deliveryAnnouncement}</p>
-            <div
-              aria-hidden="true"
-              className="flex w-max animate-marquee-left items-center motion-reduce:animate-none"
-              style={{ animationDuration: "22s" }}
-            >
-              {Array.from({ length: 6 }).map((_, index) => (
-                <span
-                  key={index}
-                  className="flex min-w-[290px] items-center justify-center gap-2 px-6 text-xs font-semibold uppercase tracking-[0.12em] sm:min-w-[430px] sm:text-sm"
-                >
-                  <Truck className="h-4 w-4 shrink-0 text-[#f6cf66]" />
-                  {deliveryAnnouncement}
-                </span>
-              ))}
-            </div>
-          </div>
-        )} */}
-        <div className="max-w-[1280px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 w-full border-b border-[#0b4d3d]/40 bg-[#0E5A43] shadow-[0_10px_30px_rgba(14,90,67,0.18)]">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.12),_transparent_28%)]" />
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: "url('/icon.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "400px 400px",
+              backgroundPosition: "center",
+            }}
+          />
+        </div>
+        <div className="relative mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo and Main Nav */}
             <div className="flex items-center gap-6">
@@ -191,16 +183,7 @@ export function SiteHeader() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2">
               <nav className="flex items-center space-x-1">
-                {/* Search Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 hover:bg-[#0E5A43]/10 hover:text-[#0E5A43] transition-colors"
-                  onClick={() => setSearchOpen(!searchOpen)}
-                >
-                  <Search className="h-4 w-4" />
-                  <span className="sr-only">Search</span>
-                </Button>
+                
 
                 {/* Shopping Features - Only for non-sellers */}
                 {showShoppingFeatures && (
@@ -337,136 +320,257 @@ export function SiteHeader() {
             </div>
           </div>
 
-          {/* Search Bar - Desktop */}
-          <div
-            className={cn(
-              "search-container overflow-hidden transition-all duration-300 ease-in-out",
-              searchOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0",
-            )}
-          >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search for stores or products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 h-12 text-base border-border/50 focus:border-[#0E5A43]/50 focus:ring-[#0E5A43]/20"
-                autoFocus
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:text-[#0E5A43]"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSearchResults({ stores: [], products: [] });
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+          {/* Search Bar - Desktop (Always visible like mobile) */}
+          {!isSearchPage && (
+            <div
+              className={cn(
+                "search-container hidden md:block overflow-hidden transition-all duration-300 ease-in-out pb-3 md:pb-4",
+              )}
+            >
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search for stores or products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 w-full rounded-xl border-0 bg-white/90 pl-11 pr-11 text-sm text-slate-700 shadow-sm placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-[#0E5A43]"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:text-[#0E5A43]"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchResults({ stores: [], products: [] });
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Search Results */}
+              {searchQuery.length > 2 && (
+                <Card className="mt-2 max-h-80 overflow-y-auto border-border/50">
+                  {isSearching ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E5A43] mx-auto"></div>
+                      <p className="mt-2">Searching...</p>
+                    </div>
+                  ) : searchResults.stores.length === 0 &&
+                    searchResults.products.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No results found for "{searchQuery}"</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/50">
+                      {/* Stores Results */}
+                      {searchResults.stores.length > 0 && (
+                        <div className="p-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
+                            Stores
+                          </h3>
+                          <div className="space-y-1">
+                            {searchResults.stores.map((store: any) => (
+                              <Link
+                                key={store._id}
+                                href={`/stores/${store.slug || store._id}`}
+                                onClick={handleSearchResultClick}
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
+                              >
+                                {store.logo ? (
+                                  <img
+                                    src={store.logo || "/placeholder.svg"}
+                                    alt={store.businessName}
+                                    className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-lg bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
+                                    <Store className="h-5 w-5 text-[#0E5A43]" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">
+                                    {store.businessName}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground truncate line-clamp-1">
+                                    {store.description || store.location}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Products Results */}
+                      {searchResults.products.length > 0 && (
+                        <div className="p-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
+                            Products
+                          </h3>
+                          <div className="space-y-1">
+                            {searchResults.products.map((product: any) => (
+                              <Link
+                                key={product._id}
+                                href={`/stores/${product.storeSlug}/products/${product._id}`}
+                                onClick={handleSearchResultClick}
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
+                              >
+                                {product.image ? (
+                                  <img
+                                    src={product.image || "/placeholder.svg"}
+                                    alt={product.name}
+                                    className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-lg bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
+                                    <Package className="h-5 w-5 text-[#0E5A43]" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">
+                                    {product.name}
+                                  </p>
+                                  <p className="text-sm text-[#0E5A43] font-semibold">
+                                    ₦{product.price?.toLocaleString()}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
               )}
             </div>
+          )}
 
-            {/* Search Results */}
-            {searchQuery.length > 2 && (
-              <Card className="mt-2 max-h-80 overflow-y-auto border-border/50">
-                {isSearching ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E5A43] mx-auto"></div>
-                    <p className="mt-2">Searching...</p>
-                  </div>
-                ) : searchResults.stores.length === 0 &&
-                  searchResults.products.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No results found for "{searchQuery}"</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border/50">
-                    {/* Stores Results */}
-                    {searchResults.stores.length > 0 && (
-                      <div className="p-3">
-                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
-                          Stores
-                        </h3>
-                        <div className="space-y-1">
-                          {searchResults.stores.map((store: any) => (
-                            <Link
-                              key={store._id}
-                              href={`/stores/${store.slug || store._id}`}
-                              onClick={handleSearchResultClick}
-                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
-                            >
-                              {store.logo ? (
-                                <img
-                                  src={store.logo || "/placeholder.svg"}
-                                  alt={store.businessName}
-                                  className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="h-10 w-10 rounded-lg bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
-                                  <Store className="h-5 w-5 text-[#0E5A43]" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">
-                                  {store.businessName}
-                                </p>
-                                <p className="text-sm text-muted-foreground truncate line-clamp-1">
-                                  {store.description || store.location}
-                                </p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Products Results */}
-                    {searchResults.products.length > 0 && (
-                      <div className="p-3">
-                        <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-3">
-                          Products
-                        </h3>
-                        <div className="space-y-1">
-                          {searchResults.products.map((product: any) => (
-                            <Link
-                              key={product._id}
-                              href={`/stores/${product.storeSlug}/products/${product._id}`}
-                              onClick={handleSearchResultClick}
-                              className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
-                            >
-                              {product.image ? (
-                                <img
-                                  src={product.image || "/placeholder.svg"}
-                                  alt={product.name}
-                                  className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="h-10 w-10 rounded-lg bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
-                                  <Package className="h-5 w-5 text-[#0E5A43]" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">
-                                  {product.name}
-                                </p>
-                                <p className="text-sm text-[#0E5A43] font-semibold">
-                                  ₦{product.price?.toLocaleString()}
-                                </p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+          {/* Search Bar - Mobile (Always visible) */}
+          {!isSearchPage && (
+            <div className="md:hidden block w-full py-3 px-0 border-t border-border/40">
+              <div className="relative px-4 sm:px-6 lg:px-8">
+                <Search className="absolute left-7 sm:left-8 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Search stores & products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 h-10 text-sm border-border/50 focus:border-[#0E5A43]/50 focus:ring-[#0E5A43]/20"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-6 sm:right-8 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:text-[#0E5A43]"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchResults({ stores: [], products: [] });
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
-              </Card>
-            )}
-          </div>
+              </div>
+
+              {/* Mobile Search Results */}
+              {searchQuery.length > 2 && (
+                <Card className="mt-2 mx-4 sm:mx-6 lg:mx-8 max-h-60 overflow-y-auto border-border/50">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0E5A43] mx-auto"></div>
+                      <p className="mt-2 text-xs">Searching...</p>
+                    </div>
+                  ) : searchResults.stores.length === 0 &&
+                    searchResults.products.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">No results found</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/50">
+                      {/* Stores Results */}
+                      {searchResults.stores.length > 0 && (
+                        <div className="p-2">
+                          <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-2">
+                            Stores
+                          </h3>
+                          <div className="space-y-1">
+                            {searchResults.stores.map((store: any) => (
+                              <Link
+                                key={store._id}
+                                href={`/stores/${store.slug || store._id}`}
+                                onClick={handleSearchResultClick}
+                                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
+                              >
+                                {store.logo ? (
+                                  <img
+                                    src={store.logo || "/placeholder.svg"}
+                                    alt={store.businessName}
+                                    className="h-8 w-8 rounded object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="h-8 w-8 rounded bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
+                                    <Store className="h-3 w-3" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium truncate">
+                                    {store.businessName}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {searchResults.products.length > 0 && (
+                        <div className="p-2">
+                          <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-2">
+                            Products
+                          </h3>
+                          <div className="space-y-1">
+                            {searchResults.products.map((product: any) => (
+                              <Link
+                                key={product._id}
+                                href={`/stores/${product.storeSlug}/products/${product._id}`}
+                                onClick={handleSearchResultClick}
+                                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#0E5A43]/10 transition-colors"
+                              >
+                                {product.image ? (
+                                  <img
+                                    src={product.image || "/placeholder.svg"}
+                                    alt={product.name}
+                                    className="h-8 w-8 rounded object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="h-8 w-8 rounded bg-[#0E5A43] text-white flex items-center justify-center flex-shrink-0">
+                                    <Package className="h-3 w-3" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium truncate">
+                                    {product.name}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </header>
 

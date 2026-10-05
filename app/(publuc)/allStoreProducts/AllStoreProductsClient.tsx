@@ -264,7 +264,7 @@ export default function AllStoreProductsClient({
           </div>
         ) : (
           <>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            {/* <div className="flex items-center gap-4 flex-row sm:items-end justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
                   Product catalogue
@@ -282,7 +282,7 @@ export default function AllStoreProductsClient({
                   Slow network
                 </span>
               )}
-            </div>
+            </div> */}
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {visibleProducts.map((product) => (

@@ -10,6 +10,15 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {
@@ -109,53 +118,53 @@ body {
 }
 
 @keyframes marquee-left {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
 
-        @keyframes marquee-right {
-          from {
-            transform: translateX(-50%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
+@keyframes marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
 
-        .animate-marquee-left {
-          animation: marquee-left linear infinite;
-        }
+.animate-marquee-left {
+  animation: marquee-left linear infinite;
+}
 
-        .animate-marquee-right {
-          animation: marquee-right linear infinite;
-        }
+.animate-marquee-right {
+  animation: marquee-right linear infinite;
+}
 
-        .pause-animation {
-          animation-play-state: paused;
-        }
-      
-        .container {
+.pause-animation {
+  animation-play-state: paused;
+}
+
+.container {
   overflow: auto;
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .container::-webkit-scrollbar {
-  display: none;                /* Chrome, Safari */
+  display: none; /* Chrome, Safari */
 }
 
 .bg-size-200 {
-          background-size: 200%;
-        }
+  background-size: 200%;
+}
 
-        .bg-pos-0 {
-          background-position: 0%;
-        }
+.bg-pos-0 {
+  background-position: 0%;
+}
 
-        .hover\:bg-pos-100:hover {
-          background-position: 100%;
-        }
+.hover\:bg-pos-100:hover {
+  background-position: 100%;
+}

@@ -208,8 +208,8 @@ export function ProductCard({
         <CardFooter className="p-2 pt-0">
           {shouldOpenProductPage ? (
             <div className="flex w-full items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-1.5 overflow-visible">
-                <span className="whitespace-nowrap text-lg font-bold text-primary">
+              <div className="flex flex-col-reverse min-w-0 overflow-visible">
+                <span className="whitespace-nowrap text-lg font-bold text-[#0E5A43] dark:text-[#9fe7c7]">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
@@ -222,7 +222,7 @@ export function ProductCard({
               <Button
                 asChild
                 size="icon"
-                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-[#0E5A43] text-white shadow-sm hover:bg-[#147b5c] dark:bg-[#0E5A43] dark:hover:bg-[#1a8769]"
                 aria-label={
                   needsCustomization
                     ? "Customize product"
@@ -237,7 +237,7 @@ export function ProductCard({
           ) : (
             <div className="flex w-full items-center justify-between gap-2">
               <div className="flex flex-col-reverse min-w-0 overflow-visible">
-                <span className="whitespace-nowrap text-xs font-bold text-primary md:text-md">
+                <span className="whitespace-nowrap text-xs font-bold text-[#0E5A43] dark:text-[#9fe7c7] md:text-md">
                   {formatAmount(product.price)}
                 </span>
                 {hasDiscount && (
@@ -249,7 +249,7 @@ export function ProductCard({
 
               <Button
                 size="icon"
-                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-[#0E5A43] text-white shadow-sm hover:bg-[#147b5c] dark:bg-[#0E5A43] dark:hover:bg-[#1a8769]"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 aria-label="Add to cart"
