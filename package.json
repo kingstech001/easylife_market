@@ -13,6 +13,10 @@
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "latest",
+    "@iconify-react/emojione": "gitlab:iconify-icons/react#emojione",
+    "@iconify-react/emojione-v1": "gitlab:iconify-icons/react#emojione-v1",
+    "@iconify-react/flat-color-icons": "gitlab:iconify-icons/react#flat-color-icons",
+    "@iconify-react/fluent-emoji-flat": "gitlab:iconify-icons/react#fluent-emoji-flat",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.4",
     "@radix-ui/react-aspect-ratio": "^1.1.1",

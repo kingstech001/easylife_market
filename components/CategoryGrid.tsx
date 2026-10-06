@@ -1,32 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import type { ElementType } from "react";
 import {
   Smartphone,
-  Car,
-  Shirt,
-  Home,
-  Laptop,
   Package,
   Tv,
   HeartPulse,
   Apple,
-  CookingPot,
+  ChevronRight,
+  ArrowRight,
 } from "lucide-react";
+import PotOfFoodIcon from "@iconify-react/emojione-v1/pot-of-food";
+import ElectronicsIcon from "@iconify-react/flat-color-icons/electronics";
+import WomenClothesIcon from "@iconify-react/fluent-emoji-flat/womans-clothes";
+import MobilePhoneIcon from "@iconify-react/emojione-v1/mobile-phone";
+import ShoppingBagsIcon from "@iconify-react/emojione-v1/shopping-bags";
+import LipstickIcon from "@iconify-react/emojione-v1/lipstick";
 
 // Category type definition
 export type Category = {
   name: string;
-  icon: any;
+  icon: ElementType;
   subcategories: string[];
 };
 
 // Categories data
+// (subcategories double as search keywords, so the odd casing/duplicates are left as-is)
 export const CATEGORIES: Category[] = [
   {
     name: "Restaurants",
-    icon: CookingPot,
+    icon: PotOfFoodIcon,
     subcategories: [
       "Fast Food",
       "Fine Dining",
@@ -38,7 +42,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     name: "Electronics",
-    icon: Tv,
+    icon: ElectronicsIcon,
     subcategories: [
       "Television",
       "Cameras & Photo",
@@ -48,13 +52,8 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Vehicles",
-    icon: Car,
-    subcategories: ["Cars", "Automotive", "Trucks", "Spare Parts"],
-  },
-  {
     name: "Fashion",
-    icon: Shirt,
+    icon: WomenClothesIcon,
     subcategories: [
       "Clothing",
       "Shoes",
@@ -66,50 +65,38 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Home & Office",
-    icon: Home,
-    subcategories: [
-      "Furniture",
-      "Decor",
-      "Kitchen",
-      "Garden Tools",
-      "Office Product",
-    ],
-  },
-  {
-    name: "Computing",
-    icon: Laptop,
-    subcategories: ["Laptops", "Desktops", "Peripherals", "Software"],
-  },
-  {
-    name: "Phones & Tablets",
-    icon: Smartphone,
+    name: "Phones",
+    icon: MobilePhoneIcon,
     subcategories: ["Smartphones", "Tablets", "Accessories", "Smart Watches"],
   },
   {
     name: "Supermarket",
-    icon: Apple,
+    icon: ShoppingBagsIcon,
     subcategories: [
       "Groceries",
       "Fresh Produce",
       "Farm Tools",
       "Food",
       "Beverages",
+      "drinks",
+      "wine",
+      "beer",
+      "snacks",
     ],
   },
   {
-    name: "Health & Beauty",
-    icon: HeartPulse,
+    name: "Beauty",
+    icon: LipstickIcon,
     subcategories: ["Skincare", "Makeup", "Fragrances", "Health", "Wellness"],
   },
   {
-    name: "Other Categories",
+    name: "Other",
     icon: Package,
     subcategories: ["Books", "Toys", "Beauty", "Other"],
   },
 ];
 
-// ✅ Now exported so other pages can import it
+// Exported so other pages can import it
 export function buildCategorySearchUrl(category: Category): string {
   const allCategories = [category.name, ...category.subcategories];
   const categoryParams = allCategories
@@ -118,123 +105,119 @@ export function buildCategorySearchUrl(category: Category): string {
   return `/Search?${categoryParams}`;
 }
 
-// ─── Mobile Grid Component (homepage — small screens only) ───────────────────
+const hideScrollbar =
+  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/40";
+
+// ─── Mobile row (homepage, small screens) ────────────────────────────────────
 export function CategoryGrid() {
   return (
-    <div className="w-full  px-4 py-4 sm:px-6 lg:px-8">
+    <section
+      aria-labelledby="shop-by-category"
+      className="w-full px-4 py-5 sm:px-6 lg:px-8"
+    >
       <div className="mx-auto max-w-[1280px]">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#0E5A43]">
-            Browse by Category
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2
+            id="shop-by-category"
+            className="text-base font-semibold text-foreground"
+          >
+            Shop by category
           </h2>
+          <Link
+            href="/stores"
+            className="flex items-center text-xs font-medium text-[#0E5A43] transition-colors hover:text-[#147b5c] sm:inline-flex lg:text-sm"
+          >
+            View all
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {/* Negative margin lets the row scroll edge-to-edge while still lining up with the page padding */}
+        <ul
+          className={`-mx-4 flex snap-x gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${hideScrollbar}`}
+        >
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
             return (
-              <Link
-                key={category.name}
-                href={buildCategorySearchUrl(category)}
-                className="group flex-shrink-0"
-              >
-                <div className="flex w-[78px] flex-col items-center gap-2 rounded-2xl border border-[#0E5A43]/10 bg-white/70 px-2 py-3 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0E5A43]/30 hover:bg-white">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0E5A43]/10 text-[#0E5A43] ring-1 ring-[#0E5A43]/10">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <span className="text-[10px] font-semibold leading-tight text-[#0E5A43]">
+              <li key={category.name} className="shrink-0 snap-start">
+                <Link
+                  href={buildCategorySearchUrl(category)}
+                  className={`group flex w-[74px] flex-col items-center gap-2 rounded-xl p-1.5 text-center ${focusRing}`}
+                >
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-foreground/70 transition-colors duration-150 group-hover:bg-[#0E5A43] group-hover:text-white group-active:bg-[#0E5A43] group-active:text-white">
+                    <Icon className="h-6 w-6" />
+                  </span>
+                  <span className="line-clamp-2 text-xs font-medium leading-tight text-foreground/90">
                     {category.name}
                   </span>
-                </div>
-              </Link>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
-    </div>
+    </section>
   );
 }
 
-// ─── All Screen Grid (for allStoreProducts page) ──────────────────────────────
+// ─── Chip bar (allStoreProducts page) ────────────────────────────────────────
+// Scrolls sideways on small screens, wraps on desktop.
 export function CategoryGridAll() {
   return (
-    <div className="w-full">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-        Browse by Category
-      </p>
-      {/* Scrollable on mobile, wrapping grid on desktop */}
-      <div className="flex gap-3 overflow-x-auto pb-2 lg:overflow-visible lg:flex-wrap scrollbar-hide">
+    <nav aria-label="Product categories" className="w-full">
+      <p className="mb-2.5 text-sm font-semibold text-foreground">Categories</p>
+      <ul
+        className={`flex gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible ${hideScrollbar}`}
+      >
         {CATEGORIES.map((category) => {
           const Icon = category.icon;
           return (
-            <Link
-              key={category.name}
-              href={buildCategorySearchUrl(category)}
-              className="group flex-shrink-0 lg:flex-shrink"
-            >
-              <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/30 border border-border hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 hover:shadow-md transition-all duration-300 w-[72px] lg:w-[80px]">
-                <div className="p-2.5 rounded-full bg-background border border-border group-hover:border-[#0E5A43]/40 group-hover:bg-[#0E5A43]/10 group-hover:scale-110 transition-all duration-300">
-                  <Icon
-                    className={cn("h-4 w-4 lg:h-5 lg:w-5 text-[#0E5A43]")}
-                  />
-                </div>
-                <span className="text-[9px] lg:text-[10px] font-semibold text-foreground text-center leading-tight line-clamp-2">
-                  {category.name}
-                </span>
-              </div>
-            </Link>
+            <li key={category.name} className="shrink-0">
+              <Link
+                href={buildCategorySearchUrl(category)}
+                className={`group inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-border bg-background pl-3.5 pr-4 text-sm font-medium text-foreground/85 transition-colors hover:border-[#0E5A43] hover:text-[#0E5A43] dark:hover:border-emerald-400 dark:hover:text-emerald-400 ${focusRing}`}
+              >
+                <Icon className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-current" />
+                {category.name}
+              </Link>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </nav>
   );
 }
 
-// ─── Desktop Sidebar Component (search/product pages) ────────────────────────
+// ─── Desktop sidebar (search / product pages) ────────────────────────────────
 export function CategorySidebar() {
   return (
-    <aside className="hidden lg:block w-64 bg-background border-border sticky top-16 overflow-y-auto">
-      <div className="p-4">
-        <h2 className="text-sm font-bold text-foreground mb-4 tracking-wide px-3">
-          Browse by Category
-        </h2>
-        <nav className="space-y-1">
+    <aside className="sticky top-20 hidden max-h-[calc(100vh-6rem)] w-60 shrink-0 self-start overflow-y-auto rounded-xl border border-border bg-card lg:block">
+      <h2 className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">
+        Categories
+      </h2>
+
+      <nav aria-label="Categories" className="p-1.5">
+        <ul>
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
             return (
-              <Link
-                key={category.name}
-                href={buildCategorySearchUrl(category)}
-                className="group"
-              >
-                <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-muted/50 transition-all duration-200">
-                  <div className="p-2 rounded-lg bg-muted/50 border border-border group-hover:border-[#0E5A43]/30 group-hover:bg-[#0E5A43]/10 transition-all duration-200">
-                    <Icon className="h-5 w-5 text-[#0E5A43]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-[#0E5A43] transition-colors">
-                      {category.name}
-                    </p>
-                  </div>
-                  <svg
-                    className="h-4 w-4 text-muted-foreground group-hover:text-[#0E5A43] group-hover:translate-x-1 transition-all"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </Link>
+              <li key={category.name}>
+                <Link
+                  href={buildCategorySearchUrl(category)}
+                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground ${focusRing}`}
+                >
+                  <Icon className="h-[18px] w-[18px] shrink-0 text-muted-foreground transition-colors group-hover:text-[#0E5A43] dark:group-hover:text-emerald-400" />
+                  <span className="flex-1 truncate">{category.name}</span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </Link>
+              </li>
             );
           })}
-        </nav>
-      </div>
+        </ul>
+      </nav>
     </aside>
   );
 }

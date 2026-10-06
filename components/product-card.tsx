@@ -1,18 +1,14 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Heart, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { useWishlist } from "@/context/wishlist-context";
 import { toast } from "sonner";
 import { useFormatAmount } from "@/hooks/useFormatAmount";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -52,218 +48,167 @@ interface ProductCardProps {
   isRestaurant?: boolean;
 }
 
-export function ProductCard({
-  product,
-  storeSlug,
-  isRestaurant = false,
-}: ProductCardProps) {
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+export function ProductCard({ product, storeSlug }: ProductCardProps) {
+  const [justAdded, setJustAdded] = useState(false);
+  const resetTimer = useRef<number | null>(null);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatAmount } = useFormatAmount();
+
+  useEffect(() => {
+    return () => {
+      if (resetTimer.current) window.clearTimeout(resetTimer.current);
+    };
+  }, []);
 
   const mainImage = product.images?.[0];
   const productHref = `/stores/${storeSlug}/products/${product.id}`;
   const needsCustomization = product.hasModifiers;
   const shouldOpenProductPage = needsCustomization || product.hasVariants;
   const hasDiscount =
-    product.compare_at_price && product.compare_at_price > product.price;
+    !!product.compare_at_price && product.compare_at_price > product.price;
+  const wishlisted = isInWishlist(product.id);
 
   if (product.inventory_quantity <= 0) {
     return null;
   }
-  // Parse variants if they come as a string
-  let parsedVariants:
-    | Array<{
-        color: { name: string; hex: string; _id?: string };
-        sizes: Array<{ size: string; quantity: number; _id?: string }>;
-        priceAdjustment?: number;
-        _id?: string;
-      }>
-    | undefined;
 
-  try {
-    if (typeof product.variants === "string") {
-      console.log("⚠️ Variants is a STRING, attempting to parse...");
-      parsedVariants = JSON.parse(product.variants);
-      console.log("✅ Successfully parsed variants:", parsedVariants);
-    } else if (Array.isArray(product.variants)) {
-      parsedVariants = product.variants;
-      console.log("✅ Variants is already an array:", parsedVariants);
-    } else {
-      console.log(
-        "❌ Variants is neither string nor array:",
-        typeof product.variants,
-        product.variants,
-      );
-    }
-  } catch (error) {
-    console.error("❌ Error parsing variants:", error);
-    console.log("Raw variants value:", product.variants);
-  }
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (product.inventory_quantity === 0) return;
-
-    setIsAddingToCart(true);
-
-    // Simulate API call delay
-    setTimeout(() => {
-      setIsAddingToCart(false);
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        image: product.images[0]?.url || "/placeholder.svg",
-        storeId: product.store_id,
-        productId: product.id,
-      });
-      toast.success("Added to cart");
-    }, 1000);
-  };
-
-  const toggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const wishlistItem = {
+  const handleAddToCart = () => {
+    addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0]?.url || "/placeholder.svg",
-      storeSlug: storeSlug,
-    };
+      quantity: 1,
+      image: mainImage?.url || "/placeholder.svg",
+      storeId: product.store_id,
+      productId: product.id,
+    });
+    toast.success("Added to cart");
 
-    if (isInWishlist(product.id)) {
+    // Brief checkmark so the tap feels acknowledged
+    setJustAdded(true);
+    if (resetTimer.current) window.clearTimeout(resetTimer.current);
+    resetTimer.current = window.setTimeout(() => setJustAdded(false), 1400);
+  };
+
+  const toggleWishlist = () => {
+    if (wishlisted) {
       removeFromWishlist(product.id);
       toast.success("Removed from wishlist");
     } else {
-      addToWishlist(wishlistItem);
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: mainImage?.url || "/placeholder.svg",
+        storeSlug,
+      });
       toast.success("Added to wishlist");
     }
   };
 
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-    >
-      <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm h-full flex flex-col  relative">
-        <Link href={productHref} className="block">
-          <div className="relative aspect-square overflow-hidden">
-            <Image
-              src={
-                mainImage?.url ||
-                "/placeholder.svg?height=300&width=300&text=Product"
-              }
-              alt={mainImage?.alt_text || product.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-            />
+  const actionBtn = cn(
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors duration-200",
+    "border-border bg-background text-foreground hover:border-[#0E5A43] hover:bg-[#0E5A43] hover:text-white",
+    focusRing,
+  );
 
-            {/* Wishlist Button - Shows on Hover */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{
-                opacity: isHovered ? 1 : 0,
-                scale: isHovered ? 1 : 0.8,
-              }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-2 left-1/2 transform -translate-x-1/2"
-            >
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-8 w-8 bg-background/90 backdrop-blur-sm rounded-xl p-2 shadow-lg hover:bg-background transition border hover:border-primary/50 group/wishlist"
-                onClick={toggleWishlist}
-              >
-                <Heart
-                  className={`h-4 w-4 transition-colors backdrop-blur-sm ${
-                    isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-              </Button>
-            </motion.div>
-          </div>
+  return (
+    <article className="group flex h-full flex-col">
+      {/* Image */}
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+        <Link
+          href={productHref}
+          aria-label={product.name}
+          className={cn("absolute inset-0 block rounded-xl", focusRing)}
+        >
+          <Image
+            src={mainImage?.url || "/placeholder.svg"}
+            alt={mainImage?.alt_text || product.name}
+            fill
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          />
         </Link>
 
-        <CardContent className="p-2 flex-1 flex flex-col">
-          <div className=" flex-1">
-            <Link href={productHref}>
-              <h3 className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                {product.name}
-              </h3>
-            </Link>
-          </div>
-        </CardContent>
-
-        <CardFooter className="p-2 pt-0">
-          {shouldOpenProductPage ? (
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="flex flex-col-reverse min-w-0 overflow-visible">
-                <span className="whitespace-nowrap text-lg font-bold text-[#0E5A43] dark:text-[#9fe7c7]">
-                  {formatAmount(product.price)}
-                </span>
-                {hasDiscount && (
-                  <span className="whitespace-nowrap text-[10px] text-muted-foreground line-through md:text-xs">
-                    {formatAmount(product.compare_at_price!)}
-                  </span>
-                )}
-              </div>
-
-              <Button
-                asChild
-                size="icon"
-                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-[#0E5A43] text-white shadow-sm hover:bg-[#147b5c] dark:bg-[#0E5A43] dark:hover:bg-[#1a8769]"
-                aria-label={
-                  needsCustomization
-                    ? "Customize product"
-                    : "Select product options"
-                }
-              >
-                <Link href={productHref}>
-                  <ShoppingCart className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="flex flex-col-reverse min-w-0 overflow-visible">
-                <span className="whitespace-nowrap text-xs font-bold text-[#0E5A43] dark:text-[#9fe7c7] md:text-md">
-                  {formatAmount(product.price)}
-                </span>
-                {hasDiscount && (
-                  <span className="whitespace-nowrap text-[10px] text-muted-foreground line-through">
-                    {formatAmount(product.compare_at_price!)}
-                  </span>
-                )}
-              </div>
-
-              <Button
-                size="icon"
-                className="ml-auto h-10 w-10 shrink-0 rounded-xl bg-[#0E5A43] text-white shadow-sm hover:bg-[#147b5c] dark:bg-[#0E5A43] dark:hover:bg-[#1a8769]"
-                onClick={handleAddToCart}
-                disabled={isAddingToCart}
-                aria-label="Add to cart"
-              >
-                {isAddingToCart ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShoppingCart className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+        {/* Wishlist: always visible on touch screens, fades in on hover on desktop */}
+        <button
+          type="button"
+          onClick={toggleWishlist}
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={wishlisted}
+          className={cn(
+            "absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-background/90 text-foreground/70 shadow-sm backdrop-blur-sm transition-all duration-200 hover:text-foreground",
+            "md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100",
+            wishlisted && "md:opacity-100",
+            focusRing,
           )}
-        </CardFooter>
-      </Card>
-    </motion.div>
+        >
+          <Heart
+            className={cn(
+              "h-4 w-4 transition-colors",
+              wishlisted && "fill-red-500 text-red-500",
+            )}
+          />
+        </button>
+      </div>
+
+      {/* Details */}
+      <div className="flex flex-1 flex-col pt-3">
+        <Link
+          href={productHref}
+          className={cn("rounded-sm", focusRing)}
+        >
+          <h3 className="line-clamp-1 text-sm font-medium text-foreground transition-colors group-hover:text-[#0E5A43] dark:group-hover:text-emerald-400">
+            {product.name}
+          </h3>
+        </Link>
+
+        <div className="mt-1.5 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-col-reverse items-baseline gap-x-2">
+            <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums text-foreground">
+              {formatAmount(product.price)}
+            </span>
+            {hasDiscount && (
+              <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground line-through">
+                {formatAmount(product.compare_at_price!)}
+              </span>
+            )}
+          </div>
+
+          {shouldOpenProductPage ? (
+            <Link
+              href={productHref}
+              className={actionBtn}
+              aria-label={
+                needsCustomization ? "Customize product" : "Select options"
+              }
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              aria-label="Add to cart"
+              className={cn(
+                actionBtn,
+                justAdded &&
+                  "border-[#0E5A43] bg-[#0E5A43] text-white",
+              )}
+            >
+              {justAdded ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ShoppingCart className="h-4 w-4" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }

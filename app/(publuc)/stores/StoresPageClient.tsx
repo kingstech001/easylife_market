@@ -293,7 +293,7 @@ export default function StoresPageClient({
               )}
               <button
                 type="submit"
-                className="h-full px-4 sm:px-5 bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white text-sm font-medium transition-colors flex items-center gap-1.5"
+                className="h-full px-4 sm:px-5 bg-[#0E5A43] text-white hover:bg-[#083B2D] text-sm font-medium transition-colors flex items-center gap-1.5"
               >
                 <span className="hidden sm:inline">Search</span>
                 <ArrowRight className="h-4 w-4" />
@@ -366,7 +366,7 @@ export default function StoresPageClient({
               the marketplace.
             </p>
             <Link href="/auth/register">
-              <Button className="h-11 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white px-6">
+              <Button className="h-11 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] px-6">
                 Launch your store
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -390,9 +390,11 @@ export default function StoresPageClient({
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {/* Compact cards: smaller height, 3 per row on desktop.
+                Home page is unaffected (it uses the default variant). */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {visibleStores.map((store) => (
-                <StoreCard key={store._id} store={store} />
+                <StoreCard key={store._id} store={store} variant="compact" />
               ))}
             </div>
 

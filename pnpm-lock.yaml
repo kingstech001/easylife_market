@@ -14,6 +14,18 @@ importers:
       '@hookform/resolvers':
         specifier: latest
         version: 5.2.2(react-hook-form@7.69.0(react@18.3.1))
+      '@iconify-react/emojione':
+        specifier: gitlab:iconify-icons/react#emojione
+        version: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=62dce8817ca6823782c0017786c6e4baa6487c2e(react@18.3.1)
+      '@iconify-react/emojione-v1':
+        specifier: gitlab:iconify-icons/react#emojione-v1
+        version: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ba5e5bdf873b90b961ed62e33696e55258faaf61(react@18.3.1)
+      '@iconify-react/flat-color-icons':
+        specifier: gitlab:iconify-icons/react#flat-color-icons
+        version: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=3e2f496eb2fee52f723acd86309fdffc2cd09a87(react@18.3.1)
+      '@iconify-react/fluent-emoji-flat':
+        specifier: gitlab:iconify-icons/react#fluent-emoji-flat
+        version: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ea64ffc182ea1278b05020df4630fb432781be08(react@18.3.1)
       '@radix-ui/react-accordion':
         specifier: ^1.2.2
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -571,6 +583,30 @@ packages:
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
     peerDependencies:
       react-hook-form: ^7.55.0
+
+  '@iconify-react/emojione-v1@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ba5e5bdf873b90b961ed62e33696e55258faaf61':
+    resolution: {tarball: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ba5e5bdf873b90b961ed62e33696e55258faaf61}
+    version: 1.0.0
+
+  '@iconify-react/emojione@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=62dce8817ca6823782c0017786c6e4baa6487c2e':
+    resolution: {tarball: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=62dce8817ca6823782c0017786c6e4baa6487c2e}
+    version: 1.0.0
+
+  '@iconify-react/flat-color-icons@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=3e2f496eb2fee52f723acd86309fdffc2cd09a87':
+    resolution: {tarball: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=3e2f496eb2fee52f723acd86309fdffc2cd09a87}
+    version: 1.0.0
+
+  '@iconify-react/fluent-emoji-flat@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ea64ffc182ea1278b05020df4630fb432781be08':
+    resolution: {tarball: https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ea64ffc182ea1278b05020df4630fb432781be08}
+    version: 1.0.0
+
+  '@iconify/css-react@1.0.2':
+    resolution: {integrity: sha512-k33FKG4jGgd8odos+1HdSwCKZOQ5F1heQxwl/zDrA53tLg5IseDPMqsmQbcCEZ6E0Zgcrmfo4ceFSBmbuEvGtw==}
+    peerDependencies:
+      react: '>=18.0.0'
+
+  '@iconify/types@2.0.0':
+    resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -3339,6 +3375,37 @@ snapshots:
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.69.0(react@18.3.1)
+
+  '@iconify-react/emojione-v1@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ba5e5bdf873b90b961ed62e33696e55258faaf61(react@18.3.1)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@18.3.1)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/emojione@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=62dce8817ca6823782c0017786c6e4baa6487c2e(react@18.3.1)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@18.3.1)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/flat-color-icons@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=3e2f496eb2fee52f723acd86309fdffc2cd09a87(react@18.3.1)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@18.3.1)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/fluent-emoji-flat@https://gitlab.com/api/v4/projects/iconify-icons%2Freact/repository/archive.tar.gz?sha=ea64ffc182ea1278b05020df4630fb432781be08(react@18.3.1)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@18.3.1)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify/css-react@1.0.2(react@18.3.1)':
+    dependencies:
+      '@iconify/types': 2.0.0
+      react: 18.3.1
+
+  '@iconify/types@2.0.0': {}
 
   '@img/colour@1.0.0':
     optional: true
