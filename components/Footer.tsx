@@ -100,9 +100,6 @@ export function ModernFooter() {
                 <Link href="/" className="inline-flex items-center group">
                   <Image alt="" src={"/logo.png"} width={70} height={70} />
                   <div className="">
-                    <span className="font-bold text-lg sm:text-xl text-[#0E5A43]">
-                      EasyLife
-                    </span>
                   </div>
                 </Link>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-sm">

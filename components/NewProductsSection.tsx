@@ -1,13 +1,15 @@
 // components/NewProductsSection.tsx (Server Component)
 
 import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import { connectToDB } from "@/lib/db";
 import Product from "@/models/Product";
 import Store from "@/models/Store";
 import { NewProductsLoading } from "./NewProductsLoading";
 import { NewProductsClient } from "./NewProductsClient";
 
-// Product type
+// Only what the card needs. Variants are not sent: the card only checks the
+// `hasVariants` / `hasModifiers` flags, and variants can be a big chunk of the payload.
 type ProductData = {
   _id: string;
   name: string;
@@ -21,69 +23,72 @@ type ProductData = {
   created_at: string;
   updated_at: string;
   hasVariants?: boolean;
-  variants?: Array<{
-    color: {
-      name: string;
-      hex: string;
-      _id?: string;
-    };
-    sizes: Array<{
-      size: string;
-      quantity: number;
-      _id?: string;
-    }>;
-    priceAdjustment?: number;
-    _id?: string;
-  }>;
+  hasModifiers?: boolean;
 };
 
-// Helper function to serialize variants (convert ObjectIds to strings)
-function serializeVariants(variants: any[]): ProductData["variants"] {
-  if (!variants || !Array.isArray(variants)) return undefined;
+const PRODUCT_LIMIT = 10;
 
-  return variants.map((variant) => ({
-    color: {
-      name: variant.color.name,
-      hex: variant.color.hex,
-      _id: variant.color._id?.toString(), // ✅ Convert ObjectId to string
-    },
-    sizes: variant.sizes.map((size: any) => ({
-      size: size.size,
-      quantity: size.quantity,
-      _id: size._id?.toString(), // ✅ Convert ObjectId to string
-    })),
-    priceAdjustment: variant.priceAdjustment || 0,
-    _id: variant._id?.toString(), // ✅ Convert ObjectId to string
-  }));
-}
+const toISO = (d: unknown) =>
+  d ? new Date(d as string | number | Date).toISOString() : new Date().toISOString();
 
-// Fetch new products directly from database
-async function getNewProducts(): Promise<ProductData[]> {
-  try {
+// One round trip: newest in-stock products whose store is approved + published.
+// (The old version fetched 10, populated stores in a second query, THEN filtered,
+// so it could return fewer than 10 whenever a new product belonged to a hidden store.)
+//
+// Cached for 2 minutes so most visitors never hit MongoDB. It throws on failure on
+// purpose: unstable_cache doesn't cache errors, so a failed query can't get stuck
+// as "No New Products Yet".
+const fetchNewProducts = unstable_cache(
+  async (): Promise<ProductData[]> => {
     await connectToDB();
 
-    // Fetch 10 newest products with populated store data
-    const products = await Product.find({
-      isActive: true,
-      isDeleted: false,
-      inventoryQuantity: { $gt: 0 },
-    })
-      .populate({
-        path: "storeId",
-        select: "slug name isApproved isPublished",
-        model: Store,
-      })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
+    const products = await Product.aggregate([
+      {
+        $match: {
+          isActive: true,
+          isDeleted: false,
+          inventoryQuantity: { $gt: 0 },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: Store.collection.name,
+          let: { sid: "$storeId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$sid"] },
+                isApproved: true,
+                isPublished: true,
+              },
+            },
+            { $project: { slug: 1 } },
+          ],
+          as: "store",
+        },
+      },
+      { $unwind: "$store" }, // drops products whose store is not approved/published
+      { $limit: PRODUCT_LIMIT },
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          price: 1,
+          compareAtPrice: 1,
+          inventoryQuantity: 1,
+          images: { $slice: ["$images", 1] }, // the card only shows the first image
+          storeId: 1,
+          "store.slug": 1,
+          createdAt: 1,
+          updatedAt: 1,
+          hasVariants: 1,
+          hasModifiers: 1,
+        },
+      },
+    ]).option({ maxTimeMS: 5000 });
 
-    const approvedProducts = products.filter((p: any) => {
-      const store = typeof p.storeId === "object" ? p.storeId : null;
-      return store && store.isApproved && store.isPublished;
-    });
-
-    // Transform to match your Product type
-    const transformedProducts = approvedProducts.map((p: any) => ({
+    return products.map((p: any) => ({
       _id: p._id.toString(),
       name: p.name,
       description: p.description || null,
@@ -95,30 +100,40 @@ async function getNewProducts(): Promise<ProductData[]> {
         url: img.url || "",
         alt_text: img.altText || img.alt_text || null,
       })),
-      store_id:
-        typeof p.storeId === "object"
-          ? p.storeId._id.toString()
-          : p.storeId.toString(),
-      store_slug: typeof p.storeId === "object" ? p.storeId.slug : undefined,
-      created_at: p.createdAt || new Date().toISOString(),
-      updated_at: p.updatedAt || new Date().toISOString(),
-      hasVariants: p.hasVariants || false,
-      variants: serializeVariants(p.variants),
+      store_id: p.storeId.toString(),
+      store_slug: p.store?.slug,
+      created_at: toISO(p.createdAt),
+      updated_at: toISO(p.updatedAt),
+      hasVariants: !!p.hasVariants,
+      hasModifiers: !!p.hasModifiers,
     }));
+  },
+  ["new-products"],
+  { revalidate: 120, tags: ["new-products"] },
+);
 
-    return transformedProducts;
+async function getNewProducts(): Promise<ProductData[]> {
+  try {
+    return await fetchNewProducts();
   } catch (error) {
     console.error("Error fetching new products:", error);
     return [];
   }
 }
 
-export default async function NewProductsSection() {
+// The data fetch lives in this inner component so <Suspense> can actually stream:
+// the skeleton shows immediately and the rest of the page isn't held up.
+// (Before, the outer component awaited the query itself, so the fallback never showed
+// and the whole home page waited on this query.)
+async function NewProductsContent() {
   const products = await getNewProducts();
+  return <NewProductsClient products={products} />;
+}
 
+export default function NewProductsSection() {
   return (
     <Suspense fallback={<NewProductsLoading />}>
-      <NewProductsClient products={products} />
+      <NewProductsContent />
     </Suspense>
   );
 }

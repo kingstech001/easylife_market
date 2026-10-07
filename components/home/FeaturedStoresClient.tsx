@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Store, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StoreCard } from "@/components/store-card";
 
@@ -46,9 +46,16 @@ const SPEED_PX_PER_SEC = 40;
 const RESUME_DELAY_MS = 1500;
 const DRAG_THRESHOLD_PX = 6;
 
+// Matches the card widths set in the className below, so Next/Image
+// requests the right size instead of a much larger (or smaller) one.
+const CARD_IMAGE_SIZES =
+  "(min-width: 1280px) 920px, (min-width: 1024px) 660px, (min-width: 768px) 500px, (min-width: 640px) 420px, 300px";
+
 export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const posRef = useRef(0);
+  const periodRef = useRef(0); // width of one full set of cards, measured once, not every frame
+  const visibleRef = useRef(true);
   const pausedRef = useRef(false);
   const resumeTimerRef = useRef<number | null>(null);
   const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
@@ -56,33 +63,41 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   // Only duplicate the list (for a seamless loop) when it actually overflows
   const [loop, setLoop] = useState(false);
 
-  // Distance of one full "set" of cards (card widths + gaps)
-  const getPeriod = () => {
-    const el = scrollRef.current;
-    if (!el || !loop) return 0;
-    const first = el.children[0] as HTMLElement | undefined;
-    const second = el.children[stores.length] as HTMLElement | undefined;
-    if (!first || !second) return 0;
-    return second.offsetLeft - first.offsetLeft;
-  };
-
-  // Decide if content overflows enough to need looping
-  useEffect(() => {
+  // Measure layout only when something changes (mount, resize, clones added)
+  const measure = useCallback(() => {
     const el = scrollRef.current;
     if (!el || stores.length === 0) return;
 
-    const check = () => {
-      const last = el.children[stores.length - 1] as HTMLElement | undefined;
-      const first = el.children[0] as HTMLElement | undefined;
-      if (!first || !last) return;
-      const setWidth = last.offsetLeft + last.offsetWidth - first.offsetLeft;
-      setLoop(setWidth > el.clientWidth + 4);
-    };
+    const first = el.children[0] as HTMLElement | undefined;
+    const last = el.children[stores.length - 1] as HTMLElement | undefined;
+    if (!first || !last) return;
 
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, [stores]);
+    const setWidth = last.offsetLeft + last.offsetWidth - first.offsetLeft;
+    setLoop(setWidth > el.clientWidth + 4);
+
+    const second = el.children[stores.length] as HTMLElement | undefined;
+    periodRef.current = second ? second.offsetLeft - first.offsetLeft : 0;
+  }, [stores.length]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure, loop]);
+
+  // Don't animate while the carousel is off-screen
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => {
+      visibleRef.current = entry.isIntersecting;
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [stores.length]);
 
   // Auto-scroll animation
   useEffect(() => {
@@ -90,7 +105,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
     if (!el || !loop) return;
 
     const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
+      "(prefers-reduced-motion: reduce)",
     ).matches;
     if (reduceMotion) return;
 
@@ -104,8 +119,8 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
       if (pausedRef.current) {
         posRef.current = el.scrollLeft; // stay in sync with user scrolling
-      } else {
-        const period = getPeriod();
+      } else if (visibleRef.current) {
+        const period = periodRef.current;
         posRef.current += (SPEED_PX_PER_SEC * dt) / 1000;
         if (period > 0 && posRef.current >= period) posRef.current -= period;
         el.scrollLeft = posRef.current;
@@ -115,7 +130,6 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loop, stores]);
 
   useEffect(() => {
@@ -140,7 +154,7 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el || !loop || !pausedRef.current) return;
-    const period = getPeriod();
+    const period = periodRef.current;
     if (period <= 0) return;
     if (el.scrollLeft >= period) el.scrollLeft -= period;
     else if (el.scrollLeft <= 0) el.scrollLeft += period;
@@ -259,7 +273,11 @@ export function FeaturedStoresClient({ stores }: FeaturedStoresClientProps) {
                     className="group relative min-w-[300px] shrink-0 transition-all duration-300 hover:z-10 sm:min-w-[420px] md:min-w-[500px] lg:min-w-[660px] xl:min-w-[920px]"
                   >
                     <div className="relative rounded-xl transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
-                      <StoreCard store={store} />
+                      <StoreCard
+                        store={store}
+                        priority={i === 0}
+                        sizes={CARD_IMAGE_SIZES}
+                      />
                     </div>
                   </div>
                 );

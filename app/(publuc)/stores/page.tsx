@@ -4,6 +4,7 @@ import Product from "@/models/Product";
 import Store from "@/models/Store";
 import StoresPageClient from "./StoresPageClient";
 
+// Rendered once, served from the CDN, refreshed in the background every minute
 export const revalidate = 60;
 
 const MAX_STORE_CARDS = 30;
@@ -21,48 +22,43 @@ async function getStoresData() {
       )
       .sort({ createdAt: -1 })
       .limit(MAX_STORE_CARDS)
+      .maxTimeMS(5000)
       .lean();
 
-    const storeIds = stores.map((store: any) => store._id);
-    const productCounts = await Product.aggregate([
-      {
-        $match: {
-          storeId: { $in: storeIds },
+    // The page only shows ONE number (total products), so a single count is
+    // enough. The old version grouped per store and sent counts nobody used.
+    const totalProducts = stores.length
+      ? await Product.countDocuments({
+          storeId: { $in: stores.map((s: any) => s._id) },
           isActive: true,
           isDeleted: false,
           inventoryQuantity: { $gt: 0 },
-        },
-      },
-      { $group: { _id: "$storeId", count: { $sum: 1 } } },
-    ]);
-    const countByStoreId = new Map(
-      productCounts.map((item: { _id: any; count: number }) => [
-        item._id.toString(),
-        item.count,
-      ]),
-    );
+        })
+      : 0;
 
-    return stores.map((store: any) => ({
-      _id: store._id.toString(),
-      name: store.name,
-      slug: store.slug,
-      description: store.description,
-      logo_url: store.logo_url,
-      banner_url: store.banner_url,
-      sellerId: store.sellerId?.toString(),
-      isPublished: store.isPublished,
-      createdAt: store.createdAt?.toISOString() || new Date().toISOString(),
-      updatedAt: store.updatedAt?.toISOString() || new Date().toISOString(),
-      productCount: countByStoreId.get(store._id.toString()) || 0,
-      businessHours: store.businessHours || null,
-    }));
+    return {
+      totalProducts,
+      stores: stores.map((store: any) => ({
+        _id: store._id.toString(),
+        name: store.name,
+        slug: store.slug,
+        description: store.description,
+        logo_url: store.logo_url,
+        banner_url: store.banner_url,
+        sellerId: store.sellerId?.toString(),
+        isPublished: store.isPublished,
+        createdAt: store.createdAt?.toISOString() || new Date().toISOString(),
+        updatedAt: store.updatedAt?.toISOString() || new Date().toISOString(),
+        businessHours: store.businessHours || null,
+      })),
+    };
   } catch (error) {
     console.error("[Server] Error fetching stores:", error);
-    return [];
+    return { totalProducts: 0, stores: [] };
   }
 }
 
 export default async function StoresPage() {
-  const stores = await getStoresData();
-  return <StoresPageClient initialStores={stores} />;
+  const { stores, totalProducts } = await getStoresData();
+  return <StoresPageClient initialStores={stores} totalProducts={totalProducts} />;
 }

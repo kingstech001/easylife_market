@@ -126,13 +126,7 @@ export function CategoryGrid() {
           >
             Shop by category
           </h2>
-          <Link
-            href="/stores"
-            className="flex items-center text-xs font-medium text-[#0E5A43] transition-colors hover:text-[#147b5c] sm:inline-flex lg:text-sm"
-          >
-            View all
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
+          
         </div>
 
         {/* Negative margin lets the row scroll edge-to-edge while still lining up with the page padding */}

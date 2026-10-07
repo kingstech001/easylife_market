@@ -1,51 +1,45 @@
-import { Card, CardContent } from "@/components/ui/card"
+// app/stores/[slug]/loading.tsx
+// Mirrors the real page: back link, banner with overlapping logo, info block, product grid.
 
 export default function StoreDetailLoading() {
   return (
-    <div className="min-h-screen bg-background animate-pulse">
-      {/* Banner */}
-      <div className="relative h-[220px] w-full sm:h-[280px] lg:h-[360px] bg-muted" />
+    <div aria-busy="true" aria-label="Loading store" className="min-h-screen bg-background">
+      <div className="border-b border-border/60">
+        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6 lg:px-8">
+          <div className="mb-4 h-4 w-24 animate-pulse rounded bg-muted" />
 
-      {/* Store info */}
-      <div className="relative mx-auto -mt-14 max-w-7xl px-4 pb-6 sm:-mt-16 sm:px-6 lg:-mt-20 lg:px-8">
-        <div className="rounded-[28px] border border-border/70 bg-background p-4 sm:p-6 lg:p-8 shadow-xl">
-          <div className="flex gap-4 mb-4">
-            <div className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 bg-muted rounded-[22px]" />
-            <div className="space-y-3 flex-1">
-              <div className="h-8 bg-muted rounded w-56" />
-              <div className="flex gap-2">
-                <div className="h-6 bg-muted rounded-full w-20" />
-                <div className="h-6 bg-muted rounded-full w-24" />
-              </div>
-            </div>
+          <div className="relative">
+            <div className="aspect-[2/1] w-full animate-pulse rounded-2xl bg-muted sm:aspect-[2.4/1] lg:aspect-[3/1]" />
+            <div className="absolute -bottom-8 left-4 h-16 w-16 animate-pulse rounded-2xl border-4 border-background bg-muted-foreground/20 sm:-bottom-10 sm:left-6 sm:h-20 sm:w-20 lg:h-24 lg:w-24" />
           </div>
-          <div className="h-20 bg-muted rounded-[24px] mt-5" />
+
+          <div className="space-y-3 pb-6 pt-11 sm:pt-14 lg:pt-16">
+            <div className="h-8 w-56 animate-pulse rounded bg-muted" />
+            <div className="flex gap-4">
+              <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-36 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="h-4 w-full max-w-xl animate-pulse rounded bg-muted" />
+          </div>
         </div>
       </div>
 
-      {/* Products */}
-      <div className="px-4 pb-12 pt-2 sm:px-6 lg:px-8 lg:pb-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8">
-            <div className="h-8 bg-muted rounded w-48 mb-2" />
-            <div className="h-5 bg-muted rounded w-72" />
-          </div>
+      <div className="mx-auto max-w-6xl px-4 pb-12 pt-8 sm:px-6 lg:px-8">
+        <div className="mb-6 space-y-2">
+          <div className="h-7 w-48 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-72 max-w-full animate-pulse rounded bg-muted" />
+        </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="aspect-square bg-muted" />
-                  <div className="p-3 space-y-2">
-                    <div className="h-4 bg-muted rounded w-full" />
-                    <div className="h-5 bg-muted rounded w-20" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <div className="aspect-square animate-pulse rounded-xl bg-muted" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,42 +1,84 @@
+// app/Search/page.tsx  (Server Component)
+
 import { Suspense } from "react";
-import SearchResultsPage from "@/components/Searchresultspage";
 import { CategorySidebar } from "@/components/CategoryGrid";
-import { Search } from "lucide-react";
+import { SearchToolbar } from "@/components/SearchToolbar";
+import {
+  SearchResultsClient,
+  SearchResultsSkeleton,
+} from "@/components/Searchresultspage";
+import { searchProducts, SEARCH_PAGE_SIZE } from "@/lib/search-products";
 
 export const metadata = {
   title: "Search Results | EasyLife",
   description: "Search for products across all stores on EasyLife marketplace",
 };
 
-function SearchLoading() {
+type SearchParams = {
+  search?: string;
+  q?: string;
+  category?: string | string[];
+};
+
+// Fetches the first page on the server, so products arrive with the HTML
+// instead of after "download JS → hydrate → fetch → filter".
+async function SearchResults({
+  query,
+  categories,
+}: {
+  query: string;
+  categories: string[];
+}) {
+  let initial: Awaited<ReturnType<typeof searchProducts>> | null = null;
+  let failed = false;
+
+  try {
+    initial = await searchProducts({
+      q: query,
+      categories,
+      page: 1,
+      limit: SEARCH_PAGE_SIZE,
+    });
+  } catch (error) {
+    console.error("[Search] Failed to load products:", error);
+    failed = true;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-6">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Search className="w-8 h-8 text-primary animate-pulse" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <h3 className="text-xl font-semibold">Loading search...</h3>
-          <p className="text-sm text-muted-foreground">Please wait a moment</p>
-        </div>
-      </div>
-    </div>
+    <SearchResultsClient
+      query={query}
+      categories={categories}
+      initialProducts={initial?.products ?? []}
+      initialHasMore={initial?.hasMore ?? false}
+      failed={failed}
+    />
   );
 }
 
-export default function SearchPage() {
+export default async function SearchPage({
+  searchParams,
+}: {
+  // Promise in Next 15+, plain object in Next 14: `await` handles both
+  searchParams: Promise<SearchParams> | SearchParams;
+}) {
+  const sp = await searchParams;
+
+  const query = (sp.search || sp.q || "").trim().slice(0, 100);
+  const categories = ([] as string[]).concat(sp.category ?? []).slice(0, 40);
+  const key = JSON.stringify([query, categories]);
+
   return (
-    <div className="md:flex min-h-screen">
-      {/* Sidebar - Desktop only */}
+    <div className="mx-auto flex min-h-screen w-full max-w-[1400px] items-start gap-6 lg:px-6 lg:pt-6">
+      {/* Sidebar: desktop only (hides itself below lg) */}
       <CategorySidebar />
 
-      {/* Main Content */}
-      <main className="flex-1">
-        <Suspense fallback={<SearchLoading />}>
-          <SearchResultsPage />
+      <main className="min-w-0 flex-1">
+        {/* Outside Suspense, so the search box never disappears while results load */}
+        <SearchToolbar query={query} categories={categories} />
+
+        {/* key forces the skeleton to show again whenever the search changes */}
+        <Suspense key={key} fallback={<SearchResultsSkeleton />}>
+          <SearchResults query={query} categories={categories} />
         </Suspense>
       </main>
     </div>

@@ -23,9 +23,20 @@ interface StoreCardProps {
     businessHours?: BusinessHours | null;
   };
   variant?: "default" | "compact";
+  /** Load the banner immediately (use for the first card above the fold). */
+  priority?: boolean;
+  /** Override the banner's `sizes` hint when the card is rendered at a custom width. */
+  sizes?: string;
 }
 
-export function StoreCard({ store, variant = "default" }: StoreCardProps) {
+const DEFAULT_SIZES = "(max-width: 768px) 280px, (max-width: 1024px) 50vw, 25vw";
+
+export function StoreCard({
+  store,
+  variant = "default",
+  priority = false,
+  sizes,
+}: StoreCardProps) {
   const status = getStoreStatus(store.businessHours);
   const compact = variant === "compact";
 
@@ -46,8 +57,9 @@ export function StoreCard({ store, variant = "default" }: StoreCardProps) {
                 src={store.banner_url}
                 alt={`${store.name} banner`}
                 fill
+                priority={priority}
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 280px, (max-width: 1024px) 50vw, 25vw"
+                sizes={sizes ?? DEFAULT_SIZES}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground/60">
@@ -87,8 +99,9 @@ export function StoreCard({ store, variant = "default" }: StoreCardProps) {
                   src={store.logo_url}
                   alt={`${store.name} logo`}
                   fill
+                  priority={priority}
                   className="object-cover"
-                  sizes="80px"
+                  sizes="112px"
                 />
               </div>
             </div>

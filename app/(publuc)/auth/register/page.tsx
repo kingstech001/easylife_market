@@ -8,17 +8,15 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ArrowLeft,
+  Check,
   Eye,
   EyeOff,
   Loader2,
-  Lock,
-  Mail,
   ShoppingBag,
   Store,
-  User,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -28,14 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -79,8 +69,37 @@ const registerSchema = z
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const fieldBaseClass =
-  "peer h-14 rounded border-border bg-background px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#0E5A43]/30 focus-visible:ring-offset-0 focus-visible:border-[#0E5A43]/50";
+const inputClass =
+  "h-11 rounded-lg border-border bg-background px-3.5 text-base shadow-none transition-colors placeholder:text-muted-foreground/70 focus-visible:border-[#0E5A43] focus-visible:ring-4 focus-visible:ring-[#0E5A43]/10 focus-visible:ring-offset-0 sm:text-sm";
+
+const passwordRules = [
+  { label: "8+ characters", test: (v: string) => v.length >= 8 },
+  { label: "Uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "Lowercase letter", test: (v: string) => /[a-z]/.test(v) },
+  { label: "Number", test: (v: string) => /\d/.test(v) },
+  { label: "Special character", test: (v: string) => /[^\w\s]/.test(v) },
+];
+
+const highlights = [
+  "Open a store and list your products",
+  "Discover trusted stores and save favourites",
+  "Secure email verification",
+];
+
+const roleOptions = [
+  {
+    value: "seller" as const,
+    label: "Seller",
+    hint: "Open a store and sell",
+    icon: Store,
+  },
+  {
+    value: "buyer" as const,
+    label: "Buyer",
+    hint: "Shop from stores",
+    icon: ShoppingBag,
+  },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -100,6 +119,8 @@ export default function RegisterPage() {
       acceptTerms: false,
     },
   });
+
+  const passwordValue = form.watch("password") ?? "";
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
@@ -135,412 +156,405 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
-        <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-          <div className="hidden rounded border-0 border-border bg-muted/20 p-8 shadow-none lg:flex lg:flex-col lg:justify-between">
-            <div>
-              <div className="inline-flex items-center rounded border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
-                Join EasyLife
-              </div>
-              <h1 className="mt-6 max-w-md text-4xl font-semibold leading-tight tracking-tight text-foreground">
-                Build your account and start trading with confidence
-              </h1>
-              <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground">
-                Create a buyer or seller account, discover great stores, and
-                start selling or shopping on a marketplace designed to feel
-                simple, modern, and reliable.
-              </p>
-            </div>
+    <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      {/* ── Brand panel (desktop, stays in view while the form scrolls) ──── */}
+      <aside className="relative hidden overflow-hidden bg-[#0E5A43] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-between lg:self-start lg:p-12">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(0,0,0,0.25),_transparent_45%)]" />
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: "url('/icon.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "400px 400px",
+              backgroundPosition: "center",
+            }}
+          />
+        </div>
 
-            <div className="grid gap-4">
-              <div className="rounded border border-border bg-background p-5 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0E5A43]/12 text-[#083B2D]">
-                    <Store className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      For sellers
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Launch your store, manage products, and grow your
-                      visibility with tools built for business.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <Link
+          href="/"
+          aria-label="EasyLife home"
+          className="relative inline-flex w-fit items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        >
+          <Image
+            src="/logo.png"
+            alt="EasyLife"
+            width={48}
+            height={48}
+            priority
+            className="drop-shadow-lg"
+          />
+        </Link>
 
-              <div className="rounded border border-border bg-background p-5 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0E5A43]/12 text-[#083B2D]">
-                    <ShoppingBag className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      For buyers
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Discover trusted stores, save favorites, and shop across
-                      categories from one account.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="relative max-w-md">
+          <h2 className="text-4xl font-semibold leading-[1.15] tracking-tight">
+            Join EasyLife.
+          </h2>
+          <p className="mt-4 text-base leading-7 text-white/75">
+            Create an account to shop from trusted stores, or open your own
+            and start selling.
+          </p>
+
+          <ul className="mt-8 space-y-3 text-sm text-white/85">
+            {highlights.map((item) => (
+              <li key={item} className="flex items-center gap-3">
+                <Check className="h-4 w-4 shrink-0 text-[#f6cf66]" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-white/50">
+          © {new Date().getFullYear()} EasyLife
+        </p>
+      </aside>
+
+      {/* ── Form ────────────────────────────────────────────────────────── */}
+      <main className="flex min-h-screen flex-col px-6 py-6 sm:px-10 lg:px-16">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            aria-label="EasyLife home"
+            className="inline-flex items-center lg:hidden"
+          >
+            <Image
+              src="/logo.png"
+              alt="EasyLife"
+              width={40}
+              height={40}
+              priority
+            />
+          </Link>
+          <Link
+            href="/"
+            className="ml-auto inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Link>
+        </div>
+
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Create your account
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              It only takes a minute. We&apos;ll email you a code to verify it.
+            </p>
           </div>
 
-          <Card className="w-full rounded border-0 border-border bg-card shadow-none">
-            <CardHeader className="space-y-5 p-5 pb-3 text-center sm:p-7 sm:pb-4">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded border border-border bg-background shadow-sm">
-                <Image
-                  src="/logo.png"
-                  alt="EasyLife logo"
-                  width={64}
-                  height={64}
-                  priority
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
+              {/* Name */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-medium">
+                        First name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          autoComplete="given-name"
+                          autoFocus
+                          disabled={isLoading}
+                          className={inputClass}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-medium">
+                        Last name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          autoComplete="family-name"
+                          disabled={isLoading}
+                          className={inputClass}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
-              <div className="space-y-2">
-                <CardTitle className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                  Create your account
-                </CardTitle>
-                <CardDescription className="mx-auto max-w-md text-sm leading-6 sm:text-base">
-                  Join EasyLife to start buying, selling, and growing with a
-                  streamlined marketplace experience.
-                </CardDescription>
-              </div>
-            </CardHeader>
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium">Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        disabled={isLoading}
+                        className={inputClass}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <CardContent className="p-5 pt-2 sm:p-7 sm:pt-3">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-5"
-                >
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem className="relative">
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                              <Input
-                                placeholder=" "
-                                {...field}
-                                disabled={isLoading}
-                                className={cn(fieldBaseClass, "pl-11")}
-                              />
-                              <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                                First Name
-                              </FormLabel>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              {/* Password */}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium">
+                      Password
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          disabled={isLoading}
+                          className={`${inputClass} pr-11`}
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          disabled={isLoading}
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                          aria-pressed={showPassword}
+                          className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/40"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
 
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem className="relative">
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                              <Input
-                                placeholder=" "
-                                {...field}
-                                disabled={isLoading}
-                                className={cn(fieldBaseClass, "pl-11")}
-                              />
-                              <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                                Last Name
-                              </FormLabel>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="relative">
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type="email"
-                              placeholder=" "
-                              {...field}
-                              disabled={isLoading}
-                              className={cn(fieldBaseClass, "pl-11")}
-                            />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                              Email Address
-                            </FormLabel>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem className="relative">
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder=" "
-                              {...field}
-                              disabled={isLoading}
-                              className={cn(fieldBaseClass, "pl-11 pr-12")}
-                            />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                              Password
-                            </FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded hover:bg-muted"
-                              onClick={() => setShowPassword(!showPassword)}
-                              disabled={isLoading}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <p className="text-xs leading-5 text-muted-foreground">
-                          Use at least 8 characters with uppercase, lowercase,
-                          number, and special character.
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem className="relative">
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type={showConfirmPassword ? "text" : "password"}
-                              placeholder=" "
-                              {...field}
-                              disabled={isLoading}
-                              className={cn(fieldBaseClass, "pl-11 pr-12")}
-                            />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                              Confirm Password
-                            </FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded hover:bg-muted"
-                              onClick={() =>
-                                setShowConfirmPassword(!showConfirmPassword)
-                              }
-                              disabled={isLoading}
-                            >
-                              {showConfirmPassword ? (
-                                <EyeOff className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <div>
-                          <FormLabel className="text-sm font-medium text-foreground">
-                            I want to register as
-                          </FormLabel>
-                        </div>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            className="flex"
-                            disabled={isLoading}
+                    {/* Live requirements */}
+                    <ul className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5">
+                      {passwordRules.map((rule) => {
+                        const met = rule.test(passwordValue);
+                        return (
+                          <li
+                            key={rule.label}
+                            className={cn(
+                              "flex items-center gap-1.5 text-xs transition-colors",
+                              met
+                                ? "text-[#0E5A43] dark:text-emerald-400"
+                                : "text-muted-foreground",
+                            )}
                           >
-                            <label
-                              htmlFor="seller"
-                              className={cn(
-                                "flex flex-1 cursor-pointer items-start gap-3 rounded border p-4 transition",
-                                field.value === "seller"
-                                  ? "border-[#0E5A43]/50 bg-[#0E5A43]/[0.06] shadow-sm"
-                                  : "border-border/70 bg-background hover:border-[#0E5A43]/30",
-                              )}
-                            >
-                              <RadioGroupItem
-                                value="seller"
-                                id="seller"
-                                className="mt-1 border-2 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
-                              />
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <Store className="h-4 w-4 text-[#083B2D]" />
-                                  <span className="font-medium text-foreground">
-                                    Seller
-                                  </span>
-                                </div>
-                              </div>
-                            </label>
-
-                            <label
-                              htmlFor="buyer"
-                              className={cn(
-                                "flex flex-1 cursor-pointer items-start gap-3 rounded border p-4 transition",
-                                field.value === "buyer"
-                                  ? "border-[#0E5A43]/50 bg-[#0E5A43]/[0.06] shadow-sm"
-                                  : "border-border/70 bg-background hover:border-[#0E5A43]/30",
-                              )}
-                            >
-                              <RadioGroupItem
-                                value="buyer"
-                                id="buyer"
-                                className="mt-1 border-2 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
-                              />
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <ShoppingBag className="h-4 w-4 text-[#083B2D]" />
-                                  <span className="font-medium text-foreground">
-                                    Buyer
-                                  </span>
-                                </div>
-                              </div>
-                            </label>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="acceptTerms"
-                    render={({ field }) => (
-                      <FormItem className="rounded border border-border bg-muted/20 p-4 sm:p-5">
-                        <div className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isLoading}
-                              className="mt-1 border-2 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
-                            />
-                          </FormControl>
-                          <div className="space-y-2 leading-none">
-                            <FormLabel className="cursor-pointer text-sm font-normal leading-6 text-muted-foreground">
-                              By clicking{" "}
-                              <span className="font-medium text-foreground">
-                                Create Account
+                            {met ? (
+                              <Check className="h-3.5 w-3.5 shrink-0" />
+                            ) : (
+                              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                                <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
                               </span>
-                              , you agree to our{" "}
-                              <Link
-                                href="/terms"
-                                className="text-[#0E5A43] hover:text-[#083B2D] underline underline-offset-2"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Terms and Conditions
-                              </Link>{" "}
-                              and{" "}
-                              <Link
-                                href="/privacy"
-                                className="text-[#0E5A43] hover:text-[#083B2D] underline underline-offset-2"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Privacy Policy
-                              </Link>
-                            </FormLabel>
-                          </div>
-                        </div>
-                        <FormMessage className="mt-2 text-[13px]" />
-                      </FormItem>
-                    )}
-                  />
+                            )}
+                            {rule.label}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <Button
-                    type="submit"
-                    className="h-12 w-full rounded bg-[#0E5A43] text-sm font-semibold text-white shadow-sm transition hover:bg-[#083B2D]"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      <>
-                        <User className="mr-2 h-4 w-4" />
-                        Create Account
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
+              {/* Confirm password */}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium">
+                      Confirm password
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          disabled={isLoading}
+                          className={`${inputClass} pr-11`}
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          disabled={isLoading}
+                          aria-label={
+                            showConfirmPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                          aria-pressed={showConfirmPassword}
+                          className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/40"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <CardFooter className="flex flex-col space-y-4 p-5 pt-1 sm:p-7 sm:pt-2">
-              <div className="relative w-full">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border/60" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-[0.16em]">
-                  <span className="bg-card px-3 text-muted-foreground">
-                    Already have an account?
-                  </span>
-                </div>
-              </div>
+              {/* Role */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-medium">
+                      I want to join as
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="grid grid-cols-2 gap-3"
+                        disabled={isLoading}
+                      >
+                        {roleOptions.map(({ value, label, hint, icon: Icon }) => (
+                          <label
+                            key={value}
+                            htmlFor={value}
+                            className={cn(
+                              "flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition-colors",
+                              field.value === value
+                                ? "border-[#0E5A43] bg-[#0E5A43]/5 ring-1 ring-[#0E5A43]"
+                                : "border-border hover:border-foreground/30",
+                              isLoading && "cursor-not-allowed opacity-60",
+                            )}
+                          >
+                            <RadioGroupItem
+                              value={value}
+                              id={value}
+                              className="mt-0.5 data-[state=checked]:border-[#0E5A43] data-[state=checked]:text-[#0E5A43]"
+                            />
+                            <span className="min-w-0">
+                              <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                                <Icon
+                                  className="h-4 w-4 text-muted-foreground"
+                                  strokeWidth={1.75}
+                                />
+                                {label}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-muted-foreground">
+                                {hint}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <Link href="/auth/login" className="w-full">
-                <Button
-                  variant="outline"
-                  className="h-12 w-full rounded border-border bg-background hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/[0.05] hover:text-[#083B2D]"
-                  disabled={isLoading}
-                >
-                  Sign In Instead
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
+              {/* Terms */}
+              <FormField
+                control={form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <div className="flex items-start gap-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                          className="mt-0.5 data-[state=checked]:border-[#0E5A43] data-[state=checked]:bg-[#0E5A43]"
+                        />
+                      </FormControl>
+                      <FormLabel className="cursor-pointer text-sm font-normal leading-5 text-muted-foreground">
+                        I agree to the{" "}
+                        <Link
+                          href="/terms"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2 hover:text-[#0E5A43]"
+                        >
+                          Terms and Conditions
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          href="/privacy"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-foreground underline underline-offset-2 hover:text-[#0E5A43]"
+                        >
+                          Privacy Policy
+                        </Link>
+                        .
+                      </FormLabel>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#0E5A43] text-sm font-semibold text-white transition-colors hover:bg-[#083B2D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#0E5A43]/25 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
+              </button>
+            </form>
+          </Form>
+
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/auth/login"
+              className="font-medium text-[#0E5A43] hover:underline dark:text-emerald-400"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import {
-  Search, Package, Loader2, X, Store, ArrowLeft, SlidersHorizontal,
-  ChevronRight, MapPin, Sparkles,
-} from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  Search,
+  Package,
+  Loader2,
+  X,
+  Store,
+  ChevronRight,
+  MapPin,
+} from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { CATEGORIES, CategoryGrid, buildCategorySearchUrl } from "@/components/CategoryGrid";
+import { CATEGORIES, buildCategorySearchUrl } from "@/components/CategoryGrid";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -25,7 +26,6 @@ type Product = {
   price: number;
   compare_at_price: number | null;
   category?: string;
-  category_id?: string;
   inventory_quantity: number;
   images: { id: string; url: string; alt_text: string | null }[];
   store_id: string;
@@ -33,28 +33,7 @@ type Product = {
   created_at: string;
   updated_at: string;
   hasVariants?: boolean;
-  variants?: any;
-};
-
-type ApiProduct = {
-  _id: string;
-  name: string;
-  description?: string | null;
-  price: number;
-  category?: string;
-  compareAtPrice?: number | null;
-  compare_at_price?: number | null;
-  primaryImage?: string;
-  images?: { id?: string; _id?: string; url: string; alt_text?: string | null; altText?: string | null }[];
-  inventoryQuantity?: number;
-  inventory_quantity?: number;
-  hasVariants?: boolean;
-  variants?: any;
-  storeId?: string | { _id: string; name: string; slug: string };
-  createdAt?: string;
-  created_at?: string;
-  updatedAt?: string;
-  updated_at?: string;
+  hasModifiers?: boolean;
 };
 
 type StoreResult = {
@@ -66,248 +45,186 @@ type StoreResult = {
   slug?: string;
 };
 
+interface SearchResultsClientProps {
+  query: string;
+  categories: string[];
+  initialProducts: Product[];
+  initialHasMore: boolean;
+  failed?: boolean;
+}
+
+const hideScrollbar =
+  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
+
+const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Skeleton (Suspense fallback in page.tsx)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PRODUCTS_PER_PAGE = 12;
+export function SearchResultsSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading results"
+      className="space-y-6 px-4 pb-10 pt-5 sm:px-6 lg:px-0"
+    >
+      <div className="space-y-2">
+        <div className="h-7 w-56 animate-pulse rounded-md bg-muted" />
+        <div className="h-4 w-32 animate-pulse rounded-md bg-muted" />
+      </div>
 
-function expandCategories(categoryNames: string[]): string[] {
-  const expandedCategories = new Set<string>();
-  categoryNames.forEach((catName) => {
-    const categoryLower = catName.toLowerCase().trim();
-    expandedCategories.add(categoryLower);
-    const matchedCategory = CATEGORIES.find(
-      (cat) => cat.name.toLowerCase() === categoryLower
-    );
-    if (matchedCategory) {
-      matchedCategory.subcategories.forEach((sub) => {
-        expandedCategories.add(sub.toLowerCase());
-      });
-    }
-  });
-  return Array.from(expandedCategories);
+      <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="space-y-3">
+            <div className="aspect-square animate-pulse rounded-xl bg-muted" />
+            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Page
+// Results
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function SearchResultsPage() {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("search") || searchParams.get("q") || "";
-  const categoryParams = useMemo(() => searchParams.getAll("category"), [searchParams]);
+export function SearchResultsClient({
+  query,
+  categories,
+  initialProducts,
+  initialHasMore,
+  failed = false,
+}: SearchResultsClientProps) {
+  const router = useRouter();
 
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
-  const [storeResults, setStoreResults] = useState<StoreResult[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // The first page arrives already filtered from the server.
+  // (page.tsx re-keys this tree whenever the search changes, so state resets for free.)
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [inView, setInView] = useState(false);
 
-  const observerTarget = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [storeResults, setStoreResults] = useState<StoreResult[]>([]);
+  const [storesLoaded, setStoresLoaded] = useState(!query);
 
-  const transformProduct = useCallback((p: ApiProduct): Product => {
-    let productImages = p.images || [];
-    if (productImages.length === 0 && p.primaryImage) {
-      productImages = [{ id: "1", _id: "1", url: p.primaryImage, alt_text: null, altText: null }];
-    }
-    const storeId = typeof p.storeId === "string" ? p.storeId : p.storeId?._id || "";
-    const storeSlug = typeof p.storeId === "object" && p.storeId?.slug ? p.storeId.slug : "";
-    return {
-      id: p._id,
-      name: p.name,
-      description: p.description || null,
-      price: p.price,
-      category: p.category,
-      compare_at_price: p.compareAtPrice || p.compare_at_price || null,
-      inventory_quantity: p.inventoryQuantity ?? p.inventory_quantity ?? 0,
-      images: productImages.map((img: any) => ({
-        id: img.id || img._id?.toString() || "",
-        url: img.url || "",
-        alt_text: img.alt_text || img.altText || null,
-      })),
-      store_id: storeId,
-      store_slug: storeSlug,
-      created_at: p.createdAt || p.created_at || new Date().toISOString(),
-      updated_at: p.updatedAt || p.updated_at || new Date().toISOString(),
-      hasVariants: p.hasVariants,
-      variants: p.variants,
-    };
-  }, []);
+  const observerTarget = useRef<HTMLDivElement | null>(null);
+  const fetchingRef = useRef(false);
 
-  // Fetch products with pagination
-  const apiPageRef = useRef(1);
-  const hasMoreApiPages = useRef(true);
-  const isFetchingRef = useRef(false);
-
-  const fetchProductsPage = useCallback(async (page: number, append: boolean) => {
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
-    try {
-      if (!append) setLoading(true);
-      const response = await fetch(`/api/allStoreProducts?page=${page}&limit=48`);
-      if (!response.ok) throw new Error("Failed to fetch products");
-      const data = await response.json();
-      const newProducts = (data.products || []).map(transformProduct);
-      hasMoreApiPages.current = data.pagination?.hasMore ?? false;
-      if (append) {
-        setAllProducts((prev) => [...prev, ...newProducts]);
-      } else {
-        setAllProducts(newProducts);
-      }
-      setError(null);
-    } catch (err: any) {
-      setError(err.message || "Failed to load products");
-    } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, [transformProduct]);
-
+  // Stores load separately, so they never delay the products
   useEffect(() => {
-    apiPageRef.current = 1;
-    hasMoreApiPages.current = true;
-    fetchProductsPage(1, false);
-  }, [fetchProductsPage]);
-
-  // Fetch store results for search query
-  useEffect(() => {
-    if (!searchQuery.trim()) { setStoreResults([]); return; }
-    async function fetchSearchResults() {
+    if (!query) return;
+    const controller = new AbortController();
+    (async () => {
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+        const response = await fetch(
+          `/api/search?q=${encodeURIComponent(query)}`,
+          { signal: controller.signal },
+        );
         if (!response.ok) return;
         const data = await response.json();
         setStoreResults(data.stores || []);
       } catch (err) {
-        console.error("Search API error:", err);
+        if ((err as Error).name !== "AbortError") {
+          console.error("Search API error:", err);
+        }
+      } finally {
+        if (!controller.signal.aborted) setStoresLoaded(true);
       }
-    }
-    fetchSearchResults();
-  }, [searchQuery]);
+    })();
+    return () => controller.abort();
+  }, [query]);
 
-  // Filter products
-  useEffect(() => {
-    if (allProducts.length === 0) {
-      setFilteredProducts([]); setDisplayedProducts([]); return;
-    }
-    const searchTerm = searchQuery.toLowerCase().trim();
-    const expandedCategories = expandCategories(categoryParams);
-    if (!searchTerm && expandedCategories.length === 0) {
-      setFilteredProducts(allProducts);
-      setDisplayedProducts(allProducts.slice(0, PRODUCTS_PER_PAGE));
-      setHasMore(allProducts.length > PRODUCTS_PER_PAGE);
-      setPage(1);
-      return;
-    }
-    const filtered = allProducts.filter((product) => {
-      const productName = product.name.toLowerCase();
-      const productDesc = (product.description || "").toLowerCase();
-      const productCategory = (product.category || "").toLowerCase();
-      if (searchTerm) {
-        if (!productName.includes(searchTerm) && !productDesc.includes(searchTerm) && !productCategory.includes(searchTerm)) return false;
-      }
-      if (expandedCategories.length > 0) {
-        const categoryMatches = expandedCategories.some(
-          (cat) => productCategory.includes(cat) || productName.includes(cat) || productDesc.includes(cat)
-        );
-        if (!categoryMatches) return false;
-      }
-      return true;
-    });
-    setFilteredProducts(filtered);
-    setDisplayedProducts(filtered.slice(0, PRODUCTS_PER_PAGE));
-    setHasMore(filtered.length > PRODUCTS_PER_PAGE);
-    setPage(1);
-  }, [searchQuery, categoryParams, allProducts]);
-
-  // Infinite scroll — loads from local filtered list, fetches next API page when exhausted
-  const loadMoreProducts = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+  // ── Infinite scroll (next pages come pre-filtered from the server) ─────────
+  const loadMore = useCallback(async () => {
+    if (fetchingRef.current || !hasMore) return;
+    fetchingRef.current = true;
     setLoadingMore(true);
 
-    const startIndex = page * PRODUCTS_PER_PAGE;
-    const endIndex = startIndex + PRODUCTS_PER_PAGE;
-    const newProducts = filteredProducts.slice(startIndex, endIndex);
+    try {
+      const params = new URLSearchParams();
+      if (query) params.set("search", query);
+      categories.forEach((c) => params.append("category", c));
+      params.set("page", String(page + 1));
 
-    if (newProducts.length > 0) {
-      setDisplayedProducts((prev) => [...prev, ...newProducts]);
-      setPage((prev) => prev + 1);
-      setHasMore(endIndex < filteredProducts.length || hasMoreApiPages.current);
-    } else if (hasMoreApiPages.current) {
-      // Fetch next API page
-      apiPageRef.current += 1;
-      await fetchProductsPage(apiPageRef.current, true);
-      // After new data is appended, the filter useEffect will update filteredProducts
-    } else {
+      const res = await fetch(`/api/search-products?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load more products");
+      const data: { products: Product[]; hasMore: boolean } = await res.json();
+
+      setProducts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...data.products.filter((p) => !seen.has(p.id))];
+      });
+      setPage((p) => p + 1);
+      setHasMore(!!data.hasMore);
+    } catch {
+      // Keep what's already on screen; just stop paging
       setHasMore(false);
+    } finally {
+      fetchingRef.current = false;
+      setLoadingMore(false);
     }
-
-    setLoadingMore(false);
-  }, [page, filteredProducts, hasMore, loadingMore, fetchProductsPage]);
+  }, [hasMore, page, query, categories]);
 
   useEffect(() => {
+    const el = observerTarget.current;
+    if (!el) return;
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting && hasMore && !loadingMore) loadMoreProducts(); },
-      { threshold: 0.1, rootMargin: "100px" }
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "300px" },
     );
-    const currentTarget = observerTarget.current;
-    if (currentTarget) observer.observe(currentTarget);
-    return () => { if (currentTarget) observer.unobserve(currentTarget); };
-  }, [hasMore, loadingMore, loadMoreProducts]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (localSearchQuery.trim()) {
-      window.location.href = `/Search?search=${encodeURIComponent(localSearchQuery.trim())}`;
-    }
-  };
+  useEffect(() => {
+    if (inView && hasMore && !loadingMore) loadMore();
+  }, [inView, hasMore, loadingMore, loadMore]);
 
-  const clearSearch = () => { window.location.href = "/Search"; };
-
-  const currentQuery = searchQuery || (categoryParams.length > 0 ? categoryParams[0] : "");
+  // ── Derived display values ─────────────────────────────────────────────────
+  const activeCategory = CATEGORIES.find(
+    (c) => c.name.toLowerCase() === categories[0]?.toLowerCase(),
+  );
+  const hasFilter = !!query || categories.length > 0;
   const hasStores = storeResults.length > 0;
-  const hasProducts = displayedProducts.length > 0;
-  const totalResults = filteredProducts.length + storeResults.length;
+  const hasProducts = products.length > 0;
 
-  // ── Loading ────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="relative w-14 h-14 mx-auto">
-            <div className="w-14 h-14 border-[3px] border-muted border-t-[#0E5A43] rounded-full animate-spin" />
-            <Search className="absolute inset-0 m-auto w-5 h-5 text-[#0E5A43]" />
-          </div>
-          <div>
-            <p className="text-sm font-medium">Searching...</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Finding the best matches</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const heading = query
+    ? `Results for “${query}”`
+    : activeCategory
+      ? activeCategory.name
+      : categories[0]
+        ? titleCase(categories[0])
+        : "All products";
+
+  const productCount = `${products.length}${hasMore ? "+" : ""} product${
+    products.length === 1 && !hasMore ? "" : "s"
+  }`;
 
   // ── Error ──────────────────────────────────────────────────────────────────
-  if (error) {
+  if (failed) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background p-4">
-        <div className="max-w-sm w-full text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-destructive/10 flex items-center justify-center">
-            <Package className="h-8 w-8 text-destructive" />
+      <div className="flex min-h-[50vh] items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-4 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+            <Package className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold">Something went wrong</h3>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button onClick={() => window.location.reload()} className="rounded-xl h-11 w-full">
-            Try Again
-          </Button>
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">Couldn’t load products</h3>
+            <p className="text-sm text-muted-foreground">
+              Something went wrong on our side. Please try again.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="h-11 w-full rounded-xl bg-[#0E5A43] text-sm font-semibold text-white transition-colors hover:bg-[#083B2D]"
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
@@ -315,189 +232,166 @@ export default function SearchResultsPage() {
 
   // ── Main ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-[100dvh] bg-background">
-      {/* ── Sticky search bar ─────────────────────────────────────────────── */}
-      <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-xl border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
-          <form onSubmit={handleSearch} className="relative max-w-xl mx-auto">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={localSearchQuery}
-              onChange={(e) => setLocalSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              placeholder="Search products, stores, categories..."
-              className={cn(
-                "w-full h-11 pl-10 pr-20 rounded-xl bg-muted/50 border text-sm outline-none transition-all",
-                searchFocused
-                  ? "border-[#0E5A43] ring-2 ring-[#0E5A43]/15 bg-background"
-                  : "border-border/50 hover:border-border"
-              )}
-            />
-            {localSearchQuery && (
-              <button
-                type="button"
-                onClick={() => { setLocalSearchQuery(""); searchInputRef.current?.focus(); }}
-                className="absolute right-[4.5rem] top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
-              >
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
+    <div className="space-y-8 px-4 pb-10 pt-5 sm:px-6 lg:px-0">
+      {/* Heading */}
+      <header className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
+            {heading}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {productCount}
+            {hasStores && (
+              <>
+                {" · "}
+                {storeResults.length} store
+                {storeResults.length === 1 ? "" : "s"}
+              </>
             )}
-            <Button
-              type="submit"
-              size="sm"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3.5 rounded-lg bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white text-xs font-medium shadow-sm"
-            >
-              Search
-            </Button>
-          </form>
-
-          {/* Category scroll */}
-          <div className="mt-2.5">
-            <CategoryGrid />
-          </div>
-
-          {/* Active filters */}
-          {currentQuery && (
-            <div className="flex items-center gap-2 mt-2.5 sm:mt-3">
-              <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-medium">
-                {totalResults} result{totalResults !== 1 ? "s" : ""}
-              </span>
-              <div className="h-3 w-px bg-border" />
-              <button
-                onClick={clearSearch}
-                className="inline-flex items-center gap-1.5 text-xs bg-[#0E5A43]/10 text-[#083B2D] dark:text-[#0E5A43] px-2.5 py-1 rounded-full hover:bg-[#0E5A43]/20 transition-colors font-medium"
-              >
-                {currentQuery}
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          )}
+          </p>
         </div>
-      </div>
+        {hasFilter && (
+          <Link
+            href="/Search"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground/80 transition-colors hover:border-[#0E5A43] hover:text-[#0E5A43]"
+          >
+            <X className="h-3 w-3" />
+            Clear
+          </Link>
+        )}
+      </header>
 
-      {/* ── Results ───────────────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
-
-        {/* ── Stores ── */}
-        {hasStores && (
-          <section>
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <Store className="h-4 w-4 text-[#0E5A43]" />
-                Stores
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({storeResults.length})</span>
-              </h2>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-3">
-              {storeResults.map((store) => (
-                <Link
-                  key={store._id}
-                  href={`/stores/${store.slug || store._id}`}
-                  className="flex-shrink-0 w-[260px] sm:w-auto flex items-center gap-3 p-3 sm:p-3.5 rounded-xl border border-border/50 hover:border-[#0E5A43]/40 bg-card hover:bg-[#0E5A43]/[0.03] transition-all group active:scale-[0.98]"
-                >
-                  {store.logo ? (
-                    <img
-                      src={store.logo}
-                      alt={store.businessName}
-                      className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg object-cover flex-shrink-0 border border-border/50"
-                    />
-                  ) : (
-                    <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg bg-[#0E5A43]/10 flex items-center justify-center flex-shrink-0">
-                      <Store className="h-5 w-5 text-[#0E5A43]" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate group-hover:text-[#0E5A43] transition-colors">
-                      {store.businessName}
-                    </p>
-                    {(store.description || store.location) && (
-                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-                        {store.location && <MapPin className="h-2.5 w-2.5 flex-shrink-0" />}
-                        {store.description || store.location}
-                      </p>
-                    )}
+      {/* Stores */}
+      {hasStores && (
+        <section aria-labelledby="stores-heading">
+          <h2
+            id="stores-heading"
+            className="mb-3 text-base font-semibold text-foreground"
+          >
+            Stores
+          </h2>
+          <div
+            className={`-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-3 ${hideScrollbar}`}
+          >
+            {storeResults.map((store) => (
+              <Link
+                key={store._id}
+                href={`/stores/${store.slug || store._id}`}
+                className="group flex w-[260px] shrink-0 items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-[#0E5A43]/50 sm:w-auto sm:shrink"
+              >
+                {store.logo ? (
+                  <img
+                    src={store.logo}
+                    alt={store.businessName}
+                    className="h-11 w-11 shrink-0 rounded-lg border border-border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <Store className="h-5 w-5" strokeWidth={1.75} />
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-[#0E5A43] flex-shrink-0 transition-colors" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-[#0E5A43] dark:group-hover:text-emerald-400">
+                    {store.businessName}
+                  </p>
+                  {(store.description || store.location) && (
+                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                      {!store.description && store.location && (
+                        <MapPin className="h-3 w-3 shrink-0" />
+                      )}
+                      <span className="truncate">
+                        {store.description || store.location}
+                      </span>
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-[#0E5A43]" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Products */}
+      {hasProducts && (
+        <section aria-labelledby="products-heading">
+          {hasStores && (
+            <h2
+              id="products-heading"
+              className="mb-3 text-base font-semibold text-foreground"
+            >
+              Products
+            </h2>
+          )}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                storeSlug={product.store_slug || ""}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Empty state (waits for stores, so it doesn't flash before they arrive) */}
+      {!hasProducts && !hasStores && !hasMore && storesLoaded && (
+        <div className="mx-auto max-w-sm py-16 text-center sm:py-24">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+            <Search className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">Nothing found</h3>
+          <p className="mb-6 text-sm text-muted-foreground">
+            {hasFilter ? (
+              <>
+                We couldn’t find anything for{" "}
+                <span className="font-medium text-foreground">
+                  “{query || activeCategory?.name || categories[0]}”
+                </span>
+                . Check the spelling or try a broader term.
+              </>
+            ) : (
+              "There are no products to show right now."
+            )}
+          </p>
+
+          <p className="mb-3 text-xs font-medium text-muted-foreground">
+            Or browse a category
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {CATEGORIES.slice(0, 6).map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.name}
+                  href={buildCategorySearchUrl(cat)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-background pl-3 pr-3.5 text-sm font-medium text-foreground/80 transition-colors hover:border-[#0E5A43] hover:text-[#0E5A43]"
+                >
+                  <Icon className="h-4 w-4" strokeWidth={1.75} />
+                  {cat.name}
                 </Link>
-              ))}
-            </div>
-          </section>
-        )}
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-        {/* ── Products ── */}
-        {hasProducts ? (
-          <section>
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <Package className="h-4 w-4 text-[#0E5A43]" />
-                Products
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">({filteredProducts.length})</span>
-              </h2>
-            </div>
-
-            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {displayedProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  storeSlug={product.store_slug || ""}
-                />
-              ))}
-            </div>
-
-            {/* Infinite scroll target */}
-            <div ref={observerTarget} className="py-6">
-              {loadingMore && (
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
-                  <span className="text-xs text-muted-foreground">Loading more...</span>
-                </div>
-              )}
-              {!hasMore && displayedProducts.length > 0 && (
-                <p className="text-center text-xs text-muted-foreground">
-                  All {displayedProducts.length} products loaded
-                </p>
-              )}
-            </div>
-          </section>
-        ) : (
-          !hasStores && (
-            <div className="max-w-sm mx-auto text-center py-16 sm:py-24">
-              <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-muted/50 flex items-center justify-center">
-                <Search className="h-7 w-7 text-muted-foreground/50" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">No results found</h3>
-              <p className="text-sm text-muted-foreground mb-6 px-4">
-                {currentQuery
-                  ? <>We couldn&apos;t find anything matching <span className="font-medium text-foreground">&quot;{currentQuery}&quot;</span></>
-                  : "Try searching for a product, store, or category"}
-              </p>
-
-              {/* Suggested categories */}
-              <div className="space-y-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Try a category</p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {CATEGORIES.slice(0, 6).map((cat) => {
-                    const Icon = cat.icon;
-                    return (
-                      <Link
-                        key={cat.name}
-                        href={buildCategorySearchUrl(cat)}
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-border/50 hover:border-[#0E5A43]/40 hover:bg-[#0E5A43]/5 transition-all"
-                      >
-                        <Icon className="h-3 w-3 text-[#0E5A43]" />
-                        {cat.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )
-        )}
+      {/* Infinite-scroll sentinel */}
+      <div
+        ref={observerTarget}
+        className="flex min-h-10 items-center justify-center"
+      >
+        {loadingMore ? (
+          <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
+            Loading more
+          </span>
+        ) : !hasMore && products.length > 24 ? (
+          <span className="text-xs text-muted-foreground">
+            You’ve reached the end
+          </span>
+        ) : null}
       </div>
     </div>
   );

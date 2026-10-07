@@ -7,17 +7,8 @@ import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-  Lock,
-  Mail,
-  ShieldCheck,
-  ShoppingBag,
-} from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -27,17 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
-import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -46,8 +28,14 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const fieldBaseClass =
-  "peer h-14 rounded border-border bg-background px-4 pt-5 text-sm shadow-none transition focus-visible:ring-2 focus-visible:ring-[#0E5A43]/30 focus-visible:ring-offset-0 focus-visible:border-[#0E5A43]/50";
+const inputClass =
+  "h-11 rounded-lg border-border bg-background px-3.5 text-base shadow-none transition-colors placeholder:text-muted-foreground/70 focus-visible:border-[#0E5A43] focus-visible:ring-4 focus-visible:ring-[#0E5A43]/10 focus-visible:ring-offset-0 sm:text-sm";
+
+const highlights = [
+  "Track your orders and saved items",
+  "Manage your store, products and sales",
+  "Secure, private sign-in",
+];
 
 function getSafeRedirectPath() {
   if (typeof window === "undefined") return null;
@@ -119,226 +107,222 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
-        <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
-          <div className="hidden rounded border-0 border-border bg-muted/20 p-8 shadow-none lg:flex lg:flex-col lg:justify-between">
-            <div>
-              <div className="inline-flex items-center rounded border border-[#0E5A43]/20 bg-[#0E5A43]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
-                Welcome Back
-              </div>
-              <h1 className="mt-6 max-w-md text-4xl font-semibold leading-tight tracking-tight text-foreground">
-                Sign in and continue your EasyLife journey
-              </h1>
-              <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground">
-                Access your buyer or seller account, manage your activity, and
-                continue shopping or growing your store with a cleaner, more
-                focused experience.
-              </p>
-            </div>
+    <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      {/* ── Brand panel (desktop) ───────────────────────────────────────── */}
+      <aside className="relative hidden overflow-hidden bg-[#0E5A43] text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(0,0,0,0.25),_transparent_45%)]" />
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: "url('/icon.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "400px 400px",
+              backgroundPosition: "center",
+            }}
+          />
+        </div>
 
-            <div className="grid gap-4">
-              <div className="rounded border border-border bg-background p-5 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0E5A43]/12 text-[#083B2D]">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      Secure access
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Your account is protected with email verification, private
-                      sessions, and role-based access.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <Link
+          href="/"
+          aria-label="EasyLife home"
+          className="relative inline-flex w-fit items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        >
+          <Image
+            src="/logo.png"
+            alt="EasyLife"
+            width={48}
+            height={48}
+            priority
+            className="drop-shadow-lg"
+          />
+        </Link>
 
-              <div className="rounded border border-border bg-background p-5 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-[#0E5A43]/12 text-[#083B2D]">
-                    <ShoppingBag className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      Everything in one place
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      Jump back into your store dashboard, orders, favorites,
-                      and shopping activity without friction.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="relative max-w-md">
+          <h2 className="text-4xl font-semibold leading-[1.15] tracking-tight">
+            Welcome back.
+          </h2>
+          <p className="mt-4 text-base leading-7 text-white/75">
+            Sign in to pick up where you left off, whether you&apos;re
+            shopping or running your store.
+          </p>
+
+          <ul className="mt-8 space-y-3 text-sm text-white/85">
+            {highlights.map((item) => (
+              <li key={item} className="flex items-center gap-3">
+                <Check className="h-4 w-4 shrink-0 text-[#f6cf66]" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-white/50">
+          © {new Date().getFullYear()} EasyLife
+        </p>
+      </aside>
+
+      {/* ── Form ────────────────────────────────────────────────────────── */}
+      <main className="flex min-h-screen flex-col px-6 py-6 sm:px-10 lg:px-16">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            aria-label="EasyLife home"
+            className="inline-flex items-center lg:hidden"
+          >
+            <Image
+              src="/logo.png"
+              alt="EasyLife"
+              width={40}
+              height={40}
+              priority
+            />
+          </Link>
+          <Link
+            href="/"
+            className="ml-auto inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Link>
+        </div>
+
+        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Sign in
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Enter your email and password to continue.
+            </p>
           </div>
 
-          <Card className="w-full border-0 border-border shadow-none">
-            <CardHeader className="space-y-5 p-5 pb-3 text-center sm:p-7 sm:pb-4">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded border border-border bg-background shadow-sm">
-                <Image
-                  src="/logo.png"
-                  alt="EasyLife logo"
-                  width={64}
-                  height={64}
-                  priority
-                />
-              </div>
-
-              <div className="space-y-2">
-                <CardTitle className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                  Sign in to your account
-                </CardTitle>
-                <CardDescription className="mx-auto max-w-md text-sm leading-6 sm:text-base">
-                  Welcome back. Enter your details to continue buying, selling,
-                  and managing your EasyLife account.
-                </CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent className="p-5 pt-2 sm:p-7 sm:pt-3">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-5"
-                >
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="relative">
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type="email"
-                              placeholder=" "
-                              {...field}
-                              disabled={isLoading}
-                              className={cn(fieldBaseClass, "pl-11")}
-                            />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                              Email Address
-                            </FormLabel>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem className="relative">
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder=" "
-                              {...field}
-                              disabled={isLoading}
-                              className={cn(fieldBaseClass, "pl-11 pr-12")}
-                            />
-                            <FormLabel className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-3 peer-focus:text-xs peer-focus:text-[#0E5A43] peer-[:not(:placeholder-shown)]:top-3 peer-[:not(:placeholder-shown)]:text-xs">
-                              Password
-                            </FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-2 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded hover:bg-muted"
-                              onClick={() => setShowPassword(!showPassword)}
-                              disabled={isLoading}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex gap-3 sm:flex-row sm:items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="remember"
-                        checked={rememberMe}
-                        onCheckedChange={(checked) =>
-                          setRememberMe(checked as boolean)
-                        }
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium">Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        autoFocus
                         disabled={isLoading}
+                        className={inputClass}
+                        {...field}
                       />
-                      <label
-                        htmlFor="remember"
-                        className="cursor-pointer text-sm font-medium leading-none text-foreground"
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-sm font-medium">
+                        Password
+                      </FormLabel>
+                      <Link
+                        href="/auth/forgot-password"
+                        tabIndex={isLoading ? -1 : 0}
+                        className="text-sm font-medium text-[#0E5A43] transition-colors hover:text-[#083B2D] hover:underline dark:text-emerald-400"
                       >
-                        Remember me
-                      </label>
+                        Forgot password?
+                      </Link>
                     </div>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter your password"
+                          autoComplete="current-password"
+                          disabled={isLoading}
+                          className={`${inputClass} pr-11`}
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          disabled={isLoading}
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                          aria-pressed={showPassword}
+                          className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/40"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                    <Link
-                      href="/auth/forgot-password"
-                      className="text-sm font-medium text-[#083B2D] transition-colors hover:text-[#0E5A43]"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="h-12 w-full rounded bg-[#0E5A43] text-sm font-semibold text-white shadow-sm transition hover:bg-[#083B2D]"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="mr-2 h-4 w-4" />
-                        Sign In
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-
-            <CardFooter className="flex flex-col space-y-4 p-5 pt-1 sm:p-7 sm:pt-2">
-              <div className="relative w-full">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border/60" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-[0.16em]">
-                  <span className="bg-card px-3 text-muted-foreground">
-                    Don&apos;t have an account?
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) =>
+                    setRememberMe(checked as boolean)
+                  }
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="remember"
+                  className="cursor-pointer select-none text-sm text-foreground/80"
+                >
+                  Keep me signed in
+                </label>
               </div>
 
-              <Link href="/auth/register" className="w-full">
-                <Button
-                  variant="outline"
-                  className="h-12 w-full rounded border-border bg-background hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/[0.05] hover:text-[#083B2D]"
-                  disabled={isLoading}
-                >
-                  Create an Account
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#0E5A43] text-sm font-semibold text-white transition-colors hover:bg-[#083B2D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#0E5A43]/25 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </button>
+            </form>
+          </Form>
+
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            New to EasyLife?{" "}
+            <Link
+              href="/auth/register"
+              className="font-medium text-[#0E5A43] hover:underline dark:text-emerald-400"
+            >
+              Create an account
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-xs text-muted-foreground/80">
+            Want to sell? You can open a store right after signing up.
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
