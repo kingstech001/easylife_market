@@ -116,21 +116,19 @@ export function CategoryGrid() {
   return (
     <section
       aria-labelledby="shop-by-category"
-      className="w-full px-4 py-5 sm:px-6 lg:px-8"
+      className="w-full py-5 px-8 lg:px-8"
     >
-      <div className="mx-auto max-w-[1280px]">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2
-            id="shop-by-category"
-            className="text-base font-semibold text-foreground"
-          >
-            Shop by category
-          </h2>
-          
-        </div>
+      <div className="mx-auto ">
+        
+        <p
+          id="shop-by-category"
+          className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground/80"
+        >
+          Shop by category
+        </p>
 
         {/* Negative margin lets the row scroll edge-to-edge while still lining up with the page padding */}
-        <ul
+        <ul 
           className={`-mx-4 flex snap-x gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${hideScrollbar}`}
         >
           {CATEGORIES.map((category) => {

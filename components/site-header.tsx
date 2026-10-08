@@ -89,7 +89,10 @@ export function SiteHeader() {
   const showShoppingFeatures = userRole !== "seller";
   // Pages that already have their own search bar
   const hideHeaderSearch =
-    (pathname?.startsWith("/Search") ?? false) || pathname === "/stores";
+    (pathname?.startsWith("/Search") ?? false) ||
+    pathname === "/stores" ||
+    // All store products page (matched case-insensitively, any nesting)
+    (pathname?.toLowerCase().includes("allstoreproducts") ?? false);
 
   // Shrink + add glass effect once the page scrolls
   useEffect(() => {

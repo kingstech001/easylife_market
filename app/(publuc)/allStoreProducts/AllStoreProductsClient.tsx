@@ -4,10 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Package, Search } from "lucide-react";
+import { ArrowRight, Loader2, Package, Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isSlowNetwork } from "@/lib/network";
 import { CATEGORIES, buildCategorySearchUrl } from "@/components/CategoryGrid";
@@ -43,248 +41,233 @@ interface AllStoreProductsClientProps {
   initialBanner: HeroBanner | null;
 }
 
+const PAGE_STEP = 12;
+
+const hideScrollbar =
+  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
+
+const chipClass =
+  "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-background pl-3 pr-3.5 text-sm font-medium text-foreground/80 transition-colors hover:border-[#0E5A43] hover:text-[#0E5A43] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/40";
+
 export default function AllStoreProductsClient({
   initialProducts,
   initialBanner,
 }: AllStoreProductsClientProps) {
   const router = useRouter();
   const [isSlowConnection, setIsSlowConnection] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [bannerLoaded, setBannerLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [heroBanner, setHeroBanner] = useState<HeroBanner | null>(
-    initialBanner,
-  );
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [visibleCount, setVisibleCount] = useState(PAGE_STEP);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const visibleProducts = initialProducts.slice(0, visibleCount);
 
+  // Connection quality
   useEffect(() => {
-    const slow = isSlowNetwork();
-    setIsSlowConnection(slow);
-    setVisibleCount(slow ? 12 : 12);
-
-    const handleConnectionChange = () => {
-      const nextSlow = isSlowNetwork();
-      setIsSlowConnection(nextSlow);
-      setVisibleCount(nextSlow ? 12 : 12);
-    };
-
-    window.addEventListener("online", handleConnectionChange);
-    window.addEventListener("offline", handleConnectionChange);
+    const update = () => setIsSlowConnection(isSlowNetwork());
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
     return () => {
-      window.removeEventListener("online", handleConnectionChange);
-      window.removeEventListener("offline", handleConnectionChange);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
     };
   }, []);
 
+  // The hero image only exists on desktop, so phones shouldn't download it
   useEffect(() => {
-    if (visibleCount >= initialProducts.length) {
-      return;
-    }
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
+  // Reveal more products as the sentinel scrolls into view
+  useEffect(() => {
+    if (visibleCount >= initialProducts.length) return;
     const target = sentinelRef.current;
-    if (!target) {
-      return;
-    }
+    if (!target) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleCount((current) => {
-            const next = current + 12;
-            return Math.min(next, initialProducts.length);
-          });
+          setVisibleCount((c) => Math.min(c + PAGE_STEP, initialProducts.length));
         }
       },
-      { rootMargin: "200px 0px" },
+      { rootMargin: "300px 0px" },
     );
 
     observer.observe(target);
     return () => observer.disconnect();
   }, [initialProducts.length, visibleCount]);
 
-  useEffect(() => {
-    if (isSlowConnection || !initialBanner) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setHeroBanner(initialBanner);
-    }, 0);
-
-    return () => window.clearTimeout(timeout);
-  }, [initialBanner, isSlowConnection]);
-
   const categoryPreview = useMemo(() => CATEGORIES.slice(0, 8), []);
+
+  const showBanner = isDesktop && !isSlowConnection && !!initialBanner?.imageUrl;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedQuery = searchQuery.trim();
-    if (trimmedQuery) {
-      router.push(`/Search?search=${encodeURIComponent(trimmedQuery)}`);
-    }
+    const q = searchQuery.trim();
+    if (q) router.push(`/Search?search=${encodeURIComponent(q)}`);
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-background lg:bg-[#083B2D]">
         <div className="absolute inset-0 hidden lg:block">
-          {heroBanner?.imageUrl ? (
+          {showBanner ? (
             <>
-              <div className="absolute inset-0">
-                <Image
-                  key={heroBanner.id}
-                  src={heroBanner.imageUrl}
-                  alt={heroBanner.title || "Hero banner"}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover"
-                />
-              </div>
+              <Image
+                key={initialBanner!.id}
+                src={initialBanner!.imageUrl}
+                alt={initialBanner!.title || "Hero banner"}
+                fill
+                priority
+                sizes="100vw"
+                onLoad={() => setBannerLoaded(true)}
+                className={cn(
+                  "object-cover transition-opacity duration-700",
+                  bannerLoaded ? "opacity-100" : "opacity-0",
+                )}
+              />
               <div className="absolute inset-0 bg-black/60" />
             </>
           ) : (
-            <div className="absolute inset-0 bg-[#083B2D]" />
+            <div
+              className="absolute inset-0 opacity-[0.1]"
+              style={{
+                backgroundImage: "url('/pattern.svg')",
+                backgroundRepeat: "repeat",
+                backgroundSize: "480px 480px",
+              }}
+            />
           )}
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-16">
-          <div className="max-w-4xl">
-            <div className="hidden space-y-4 lg:block">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F4C430]">
-                Product catalogue
-              </p>
-              <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
-                {heroBanner?.title || "Discover quality products"}
+          <div className="max-w-3xl">
+            <div className="hidden lg:block">
+              <h1 className="max-w-3xl text-5xl font-semibold leading-[1.15] tracking-tight text-white">
+                {initialBanner?.title || "Discover quality products"}
               </h1>
-              <p className="max-w-2xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7 lg:text-lg">
-                {heroBanner?.subtitle ||
-                  "Browse products from trusted sellers, food spots, and growing local businesses in one polished marketplace."}
+              <p className="mt-4 max-w-2xl text-lg leading-7 text-white/80">
+                {initialBanner?.subtitle ||
+                  "Browse products from trusted sellers, food spots, and growing local businesses in one place."}
               </p>
             </div>
 
-            <div className="max-w-2xl rounded border border-border bg-white p-2 shadow-sm lg:mt-7 lg:border-white/15 lg:shadow-xl">
-              <form
-                onSubmit={handleSearch}
-                className="relative flex items-center gap-2"
+            <form onSubmit={handleSearch} role="search" className="max-w-2xl lg:mt-8">
+              <div
+                className={cn(
+                  "flex h-12 items-center overflow-hidden rounded-xl border border-border bg-background transition-shadow",
+                  "focus-within:border-[#0E5A43] focus-within:ring-4 focus-within:ring-[#0E5A43]/10",
+                  "lg:h-14 lg:border-transparent lg:bg-white lg:shadow-xl lg:focus-within:border-transparent lg:focus-within:ring-[#F4C430]/40",
+                )}
               >
-                <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products, food, gadgets, fashion..."
-                    className={cn(
-                      "h-12 rounded border-0 bg-transparent pl-11 pr-4 text-sm text-[#1F2937] shadow-none placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#F4C430] focus-visible:ring-offset-0",
-                      "focus-visible:ring-2 focus-visible:ring-[#F4C430] focus-visible:ring-offset-0",
-                      "sm:h-14 sm:text-[15px]",
-                    )}
-                  />
-                </div>
-                <Button
+                <Search className="ml-4 h-4 w-4 shrink-0 text-muted-foreground" />
+                <input
+                  type="text"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  autoComplete="off"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products, food, gadgets, fashion..."
+                  aria-label="Search products"
+                  className="h-full flex-1 bg-transparent px-3 text-base text-foreground outline-none placeholder:text-muted-foreground sm:text-sm lg:text-slate-900 lg:placeholder:text-slate-400"
+                />
+                <button
                   type="submit"
-                  className="h-11 rounded bg-[#0E5A43] px-4 text-sm font-semibold text-white hover:bg-[#083B2D] sm:h-12 sm:px-5"
+                  className="flex h-full items-center gap-2 bg-[#0E5A43] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#083B2D] sm:px-6"
                 >
-                  <ArrowRight className=" h-4 w-4" />
-                </Button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded  border-border bg-card sm:p-2">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
-                Browse categories
-              </p>
-            </div>
-            <Link
-              href="/Search"
-              className="hidden text-sm font-medium text-muted-foreground transition hover:text-foreground sm:inline-flex"
-            >
-              View all
-            </Link>
-          </div>
-
-          <div className="mt-5 flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide sm:gap-3">
-            {categoryPreview.map((category) => {
-              const Icon = category.icon;
-
-              return (
-                <Link
-                  key={category.name}
-                  href={buildCategorySearchUrl(category)}
-                  className="flex min-w-[92px] snap-start flex-col items-center rounded border border-transparent transition hover:border-[#0E5A43]/25 hover:bg-[#0E5A43]/5 sm:min-w-[128px]"
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded bg-background shadow-sm ring-1 ring-border/60 transition-all">
-                    <Icon className="h-5 w-5 text-[#0E5A43]" />
-                  </div>
-                  <p className="mt-4 text-[10px] font-semibold leading-5 text-foreground">
-                    {category.name}
-                  </p>
-                </Link>
-              );
-            })}
-
-            <Link
-              href="/Search"
-              className="flex min-w-[92px] snap-start flex-col items-center rounded border border-transparent p-2 transition hover:border-[#0E5A43]/25 hover:bg-[#0E5A43]/5 sm:min-w-[128px]"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded bg-[#0E5A43] text-white shadow-sm">
-                <ArrowRight className="h-5 w-5" />
+                  <span className="hidden sm:inline">Search</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
               </div>
-              <p className="mt-4 text-[10px] font-semibold leading-5 text-foreground">
-                Explore more
-              </p>
-            </Link>
+            </form>
           </div>
         </div>
       </section>
 
+      {/* ── Categories ────────────────────────────────────────────────────── */}
       <section
-        className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14"
+        aria-labelledby="browse-categories"
+        className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"
+      >
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 id="browse-categories" className="text-base font-semibold">
+            Browse categories
+          </h2>
+          <Link
+            href="/Search"
+            className="text-sm font-medium text-[#0E5A43] underline-offset-4 hover:underline dark:text-emerald-400"
+          >
+            View all
+          </Link>
+        </div>
+
+        <ul
+          className={`-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 ${hideScrollbar}`}
+        >
+          {categoryPreview.map((category) => {
+            const Icon = category.icon;
+            return (
+              <li key={category.name} className="shrink-0">
+                <Link href={buildCategorySearchUrl(category)} className={chipClass}>
+                  <Icon className="h-4 w-4" strokeWidth={1.75} />
+                  {category.name}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {/* ── Products ──────────────────────────────────────────────────────── */}
+      <section
         id="products"
+        aria-labelledby="products-heading"
+        className="mx-auto max-w-7xl px-4 pb-12 pt-8 sm:px-6 lg:px-8 lg:pb-16"
       >
         {initialProducts.length === 0 ? (
-          <div className="rounded border border-dashed border-border bg-card p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded bg-[#0E5A43]/10">
-              <Package className="h-10 w-10 text-[#0E5A43]" />
+          <div className="rounded-2xl border border-dashed border-border px-6 py-14 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Package className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="mt-6 text-xl font-semibold text-foreground">
-              No products found
-            </h3>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-              There are no products available right now. Check back shortly for
-              new arrivals from stores and restaurants.
+            <h2 id="products-heading" className="text-lg font-semibold text-foreground">
+              No products yet
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              There are no products available right now. Check back soon for new
+              arrivals from stores and restaurants.
             </p>
           </div>
         ) : (
           <>
-            {/* <div className="flex items-center gap-4 flex-row sm:items-end justify-between">
+            <div className="mb-6 flex items-end justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
-                  Product catalogue
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                <h2
+                  id="products-heading"
+                  className="text-xl font-semibold tracking-tight sm:text-2xl"
+                >
                   {isSlowConnection ? "Quick picks" : "Latest products"}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {visibleProducts.length} item
-                  {visibleProducts.length === 1 ? "" : "s"} ready to browse.
+                  {initialProducts.length}{" "}
+                  {initialProducts.length === 1 ? "product" : "products"} from
+                  trusted stores
                 </p>
               </div>
               {isSlowConnection && (
-                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                   Slow network
                 </span>
               )}
-            </div> */}
+            </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4 xl:grid-cols-5">
               {visibleProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -297,8 +280,12 @@ export default function AllStoreProductsClient({
             <div ref={sentinelRef} className="h-2 w-full" />
 
             {visibleCount < initialProducts.length && (
-              <div className="mt-5 text-center text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                Loading more products...
+              <div
+                className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+                role="status"
+              >
+                <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
+                Loading more products
               </div>
             )}
           </>
@@ -306,4 +293,4 @@ export default function AllStoreProductsClient({
       </section>
     </div>
   );
-}
+} 

@@ -5,29 +5,39 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import {
-  ShoppingBag, MapPin, ChevronRight, Shield, ArrowLeft, Trash2,
-  Package, CreditCard, Minus, Plus, Lock, CheckCircle, Loader2,
-  ChevronDown, User, Mail, Phone as PhoneIcon, MapPinned, Truck,
+  ShoppingBag, ChevronRight, Shield, ArrowLeft, Package, Lock, Loader2,
+  ChevronDown, Truck, Check, Minus, Plus,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { AnimatedContainer } from "@/components/ui/animated-container"
 import { MapAddressPicker } from "@/components/ui/map-address-picker"
 import { useCart } from "@/context/cart-context"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useFormatAmount } from "@/hooks/useFormatAmount"
-import { Badge } from "@/components/ui/badge"
-import { calculateMaxDeliveryFee, DELIVERY_TIERS } from "@/lib/delivery-fee"
+import { calculateMaxDeliveryFee } from "@/lib/delivery-fee"
 
 const CHECKOUT_STORAGE_KEY = "checkout_form_data"
 
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+
+const primaryBtn =
+  "inline-flex h-12 items-center justify-center rounded-lg bg-[#0E5A43] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#083B2D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#0E5A43]/25 disabled:cursor-not-allowed disabled:opacity-60"
+
+const secondaryBtn =
+  "inline-flex h-12 items-center justify-center rounded-lg border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#0E5A43]/15 disabled:cursor-not-allowed disabled:opacity-60"
+
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items: cartItems, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart()
+  const {
+    items: cartItems,
+    updateQuantity,
+    removeFromCart,
+    getTotalPrice,
+    clearCart,
+    getCartItemKey,
+  } = useCart()
   const [activeStep, setActiveStep] = useState<"information" | "payment">("information")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isInitializing, setIsInitializing] = useState(false)
@@ -148,7 +158,6 @@ export default function CheckoutPage() {
         window.location.replace("/checkout")
         return
       }
-      console.log("Payment verified successfully, clearing cart...")
       clearCart()
       localStorage.removeItem(CHECKOUT_STORAGE_KEY)
       localStorage.removeItem("checkout_redirect_data")
@@ -334,21 +343,41 @@ export default function CheckoutPage() {
   const subtotal = getTotalPrice()
   const total = subtotal + shipping
   const disabled = isProcessing || isInitializing
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+
+  const summaryProps = {
+    cartItems,
+    subtotal,
+    shipping,
+    total,
+    formatAmount,
+    updateQuantity,
+    removeFromCart,
+    getCartItemKey,
+    disabled,
+    activeStep,
+    deliveryPending: !hasDeliveryCoords,
+  }
 
   // ── Empty cart ─────────────────────────────────────────────────────────────
   if (cartItems.length === 0 && !isProcessing) {
     return (
-      <div className="min-h-[100dvh] bg-background flex items-center justify-center px-4">
-        <div className="text-center max-w-sm mx-auto">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-muted/60 flex items-center justify-center">
-            <ShoppingBag className="h-9 w-9 text-muted-foreground" />
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
+        <div className="mx-auto max-w-sm text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+            <ShoppingBag className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
-          <p className="text-sm text-muted-foreground mb-6">Add some items to your cart before checking out.</p>
-          <Button onClick={() => router.push("/stores")} size="lg" className="rounded-xl h-12 w-full">
-            <ShoppingBag className="mr-2 h-4 w-4" />
-            Start Shopping
-          </Button>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight">Your cart is empty</h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Add some items to your cart before checking out.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/stores")}
+            className={cn(primaryBtn, "w-full")}
+          >
+            Start shopping
+          </button>
         </div>
       </div>
     )
@@ -359,313 +388,289 @@ export default function CheckoutPage() {
     <div className="min-h-[100dvh] bg-background">
       {/* Processing overlay */}
       {isProcessing && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card border border-border/50 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
-            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" />
-            <h3 className="text-lg font-bold mb-1">Verifying Payment</h3>
-            <p className="text-sm text-muted-foreground">Please wait while we confirm your payment...</p>
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+        >
+          <div className="mx-4 max-w-sm rounded-xl border border-border bg-card p-8 text-center shadow-xl">
+            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-[#0E5A43] dark:text-emerald-400" />
+            <h3 className="mb-1 text-base font-semibold">Verifying payment</h3>
+            <p className="text-sm text-muted-foreground">
+              Please wait while we confirm your payment...
+            </p>
           </div>
         </div>
       )}
 
-      {/* ── Sticky header ──────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex h-14 items-center justify-between">
             <button
               type="button"
               onClick={() => router.push("/allStoreProducts")}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
               disabled={disabled}
+              className={cn(
+                "-ml-1 flex items-center gap-1.5 rounded p-1 text-sm text-muted-foreground transition-colors hover:text-foreground",
+                focusRing,
+              )}
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Shop</span>
+              <span className="hidden sm:inline">Back to shop</span>
             </button>
-            <div className="flex items-center gap-2">
+
+            <h1 className="flex items-center gap-2 text-sm font-semibold">
               <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-sm font-semibold">Checkout</span>
-            </div>
-            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
-              <Shield className="h-3 w-3" />
-              <span className="hidden sm:inline">Secured</span>
-            </div>
+              Checkout
+            </h1>
+
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Shield className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Secure</span>
+            </span>
           </div>
 
-          {/* Step progress */}
-          <div className="flex items-center justify-center gap-0 pb-3 ">
-            <StepPill
-              step={1}
-              label="Details"
-              isActive={activeStep === "information"}
-              isComplete={!!isInfoValid && activeStep === "payment"}
-              onClick={() => !disabled && setActiveStep("information")}
-            />
-            <div className="flex-shrink-0 w-6 sm:w-10 flex items-center justify-center">
-              <div className={cn("h-px w-full", isInfoValid ? "bg-primary" : "bg-border")} />
-            </div>
-            <StepPill
-              step={2}
-              label="Pay"
-              isActive={activeStep === "payment"}
-              isComplete={false}
-              onClick={() => isInfoValid && !disabled && setActiveStep("payment")}
-              disabled={!isInfoValid}
-            />
-          </div>
+          <Steps
+            activeStep={activeStep}
+            infoValid={!!isInfoValid}
+            disabled={disabled}
+            onSelect={setActiveStep}
+          />
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 lg:pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
-
-          {/* ── Order summary (mobile inline - top) ───────────────────────── */}
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5 lg:gap-12">
+          {/* ── Order summary (mobile: collapsible, closed by default) ────── */}
           <div className="lg:hidden">
-            <SectionTitle icon={Package} title="Order Summary" />
-            <div className="mt-3">
-              <OrderSummaryContent
-                cartItems={cartItems}
-                subtotal={subtotal}
-                shipping={shipping}
-                total={total}
-                formatAmount={formatAmount}
-                updateQuantity={updateQuantity}
-                removeFromCart={removeFromCart}
-                disabled={disabled}
-                activeStep={activeStep}
-              />
+            <button
+              type="button"
+              onClick={() => setShowOrderSummary((v) => !v)}
+              aria-expanded={showOrderSummary}
+              aria-controls="mobile-order-summary"
+              className={cn(
+                "flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm",
+                focusRing,
+              )}
+            >
+              <span className="flex items-center gap-2 font-medium text-[#0E5A43] dark:text-emerald-400">
+                <Package className="h-4 w-4" />
+                {showOrderSummary ? "Hide" : "Show"} order summary
+                <ChevronDown
+                  className={cn("h-4 w-4 transition-transform", showOrderSummary && "rotate-180")}
+                />
+              </span>
+              <span className="font-semibold tabular-nums">{formatAmount(total)}</span>
+            </button>
+
+            <div
+              id="mobile-order-summary"
+              className={cn(
+                "grid transition-[grid-template-rows] duration-200 ease-out",
+                showOrderSummary ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+              )}
+            >
+              <div className="min-h-0 overflow-hidden" aria-hidden={!showOrderSummary}>
+                <div className="pt-3">
+                  <OrderSummaryContent {...summaryProps} />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* ── Main column ──────────────────────────────────────────────── */}
-          <div className="lg:col-span-3 space-y-4 sm:space-y-5">
-
+          {/* ── Main column ───────────────────────────────────────────────── */}
+          <div className="space-y-8 lg:col-span-3">
             {activeStep === "information" && (
               <>
-                {/* Contact info */}
-                <AnimatedContainer animation="fadeIn">
-                  <div className="space-y-4">
-                    <SectionTitle icon={User} title="Contact" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <FloatingInput label="First Name" required value={info.firstName} onChange={(v) => setInfo({ ...info, firstName: v })} disabled={disabled} />
-                      <FloatingInput label="Last Name" required value={info.lastName} onChange={(v) => setInfo({ ...info, lastName: v })} disabled={disabled} />
-                    </div>
-                    <FloatingInput label="Email" required type="email" value={info.email} onChange={(v) => setInfo({ ...info, email: v })} disabled={disabled} />
-                    <FloatingInput label="Phone" type="tel" value={info.phone} onChange={(v) => setInfo({ ...info, phone: v })} disabled={disabled} />
+                {/* Contact */}
+                <section aria-labelledby="contact-heading" className="space-y-4">
+                  <h2 id="contact-heading" className="text-lg font-semibold tracking-tight">
+                    Contact
+                  </h2>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field id="firstName" label="First name" required autoComplete="given-name" value={info.firstName} onChange={(v) => setInfo({ ...info, firstName: v })} disabled={disabled} />
+                    <Field id="lastName" label="Last name" required autoComplete="family-name" value={info.lastName} onChange={(v) => setInfo({ ...info, lastName: v })} disabled={disabled} />
                   </div>
-                </AnimatedContainer>
-
-                <Separator className="my-1" />
+                  <Field id="email" label="Email" required type="email" autoComplete="email" value={info.email} onChange={(v) => setInfo({ ...info, email: v })} disabled={disabled} />
+                  <Field id="phone" label="Phone" type="tel" inputMode="tel" autoComplete="tel" value={info.phone} onChange={(v) => setInfo({ ...info, phone: v })} disabled={disabled} />
+                </section>
 
                 {/* Delivery */}
-                <AnimatedContainer animation="fadeIn" delay={0.05}>
-                  <div className="space-y-4">
-                    <SectionTitle icon={MapPinned} title="Delivery" />
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">State *</Label>
-                      <select
-                        value={info.state}
-                        onChange={(e) => setInfo({ ...info, state: e.target.value })}
-                        className="w-full h-12 rounded-xl border border-border/60 px-3 text-sm bg-background focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all"
-                        disabled={disabled}
-                      >
-                        <option value="">Select a state</option>
-                        <option value="Enugu">Enugu</option>
-                      </select>
-                    </div>
+                <section aria-labelledby="delivery-heading" className="space-y-4 border-t border-border pt-8">
+                  <h2 id="delivery-heading" className="text-lg font-semibold tracking-tight">
+                    Delivery
+                  </h2>
 
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Delivery Address *</Label>
-                      <MapAddressPicker
-                        value={info.address}
-                        onChange={(address) => setInfo({ ...info, address })}
-                        onSelect={handleAddressSelect}
-                        placeholder="Tap to pick your delivery address on map"
-                      />
-                      {!hasDeliveryCoords && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          Confirm the delivery pin on the map to calculate delivery and continue.
-                        </p>
-                      )}
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="state" className="text-sm font-medium">
+                      State <span className="text-muted-foreground">*</span>
+                    </Label>
+                    <select
+                      id="state"
+                      value={info.state}
+                      onChange={(e) => setInfo({ ...info, state: e.target.value })}
+                      className="h-11 w-full rounded-lg border border-border bg-background px-3 text-base outline-none transition-colors focus:border-[#0E5A43] focus:ring-4 focus:ring-[#0E5A43]/10 disabled:opacity-60 sm:text-sm"
+                      disabled={disabled}
+                    >
+                      <option value="">Select a state</option>
+                      <option value="Enugu">Enugu</option>
+                    </select>
+                  </div>
 
-                    {/* Delivery fee */}
-                    {isCalculatingFee && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Calculating delivery fee...
-                      </div>
-                    )}
-                    {deliveryInfo && !isCalculatingFee && (
-                      <div className="flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 px-3.5 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <Truck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                          <div>
-                            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200">Delivery Fee</p>
-                            {deliveryInfo.distanceKm > 0 && (
-                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                                ~{deliveryInfo.distanceKm} km &middot; {deliveryInfo.tierLabel}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                          {formatAmount(shipping)}
-                        </span>
-                      </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">
+                      Delivery address <span className="text-muted-foreground">*</span>
+                    </Label>
+                    <MapAddressPicker
+                      value={info.address}
+                      onChange={(address) => setInfo({ ...info, address })}
+                      onSelect={handleAddressSelect}
+                      placeholder="Tap to pick your delivery address on map"
+                    />
+                    {!hasDeliveryCoords && (
+                      <p className="text-xs text-amber-700 dark:text-amber-400">
+                        Confirm the delivery pin on the map to calculate delivery and continue.
+                      </p>
                     )}
                   </div>
-                </AnimatedContainer>
 
-                {/* Continue button */}
+                  {isCalculatingFee && (
+                    <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground" role="status">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Calculating delivery fee...
+                    </div>
+                  )}
+                  {deliveryInfo && !isCalculatingFee && (
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Truck className="h-4 w-4 text-[#0E5A43] dark:text-emerald-400" />
+                        <div>
+                          <p className="text-sm font-medium">Delivery fee</p>
+                          {deliveryInfo.distanceKm > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              ~{deliveryInfo.distanceKm} km &middot; {deliveryInfo.tierLabel}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold tabular-nums">
+                        {formatAmount(shipping)}
+                      </span>
+                    </div>
+                  )}
+                </section>
+
                 <div className="pt-2">
-                  <Button
+                  <button
+                    type="button"
                     onClick={handleContinue}
-                    className="w-full rounded-xl text-base font-semibold shadow-lg active:scale-[0.98] transition-all"
                     disabled={!isInfoValid || disabled}
-                    size="lg"
+                    className={cn(primaryBtn, "w-full gap-1.5")}
                   >
-                    Continue to Payment
-                    <ChevronRight className="ml-1.5 h-4 w-4" />
-                  </Button>
+                    Continue to payment
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               </>
             )}
 
             {activeStep === "payment" && (
               <>
-                {/* Review info */}
-                <AnimatedContainer animation="fadeIn">
+                {/* Review */}
+                <section aria-labelledby="review-heading" className="space-y-3">
+                  <h2 id="review-heading" className="text-lg font-semibold tracking-tight">
+                    Review
+                  </h2>
+                  <div className="divide-y divide-border rounded-lg border border-border">
+                    <ReviewRow label="Contact" onEdit={handleBack} disabled={disabled}>
+                      <p>{info.email}</p>
+                      {info.phone && <p className="text-muted-foreground">{info.phone}</p>}
+                    </ReviewRow>
+                    <ReviewRow label="Deliver to" onEdit={handleBack} disabled={disabled}>
+                      <p>
+                        {info.firstName} {info.lastName}
+                      </p>
+                      <p className="text-muted-foreground">{info.address}</p>
+                    </ReviewRow>
+                  </div>
+                </section>
+
+                {/* Payment method */}
+                <section
+                  aria-labelledby="payment-heading"
+                  className="space-y-3 border-t border-border pt-8"
+                >
+                  <h2 id="payment-heading" className="text-lg font-semibold tracking-tight">
+                    Payment
+                  </h2>
+                  <div className="flex items-center gap-4 rounded-lg border-2 border-[#0E5A43] bg-[#0E5A43]/[0.03] p-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
+                      <Image
+                        src="/paystack.jpeg"
+                        alt="Paystack"
+                        width={36}
+                        height={36}
+                        className="object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">Paystack</p>
+                      <p className="text-xs text-muted-foreground">Card, bank transfer, or USSD</p>
+                    </div>
+                    <span
+                      aria-hidden
+                      className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0E5A43] text-white"
+                    >
+                      <Check className="h-3 w-3" />
+                    </span>
+                  </div>
+
+                  <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                    <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    Your payment is processed securely by Paystack. We never store your card
+                    details, and all prices are verified on our servers.
+                  </p>
+                </section>
+
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="w-full text-left rounded-xl border border-border/50 p-3.5 sm:p-4 hover:border-primary/30 transition-colors group"
                     disabled={disabled}
+                    className={cn(secondaryBtn, "gap-1.5")}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Delivering to</span>
-                      <span className="text-xs text-primary font-medium group-hover:underline">Edit</span>
-                    </div>
-                    <p className="text-sm font-medium">{info.firstName} {info.lastName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{info.address}</p>
-                    {info.phone && <p className="text-xs text-muted-foreground mt-0.5">{info.phone}</p>}
+                    <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                </AnimatedContainer>
-
-                {/* Payment method */}
-                <AnimatedContainer animation="fadeIn" delay={0.05}>
-                  <div className="space-y-3">
-                    <SectionTitle icon={CreditCard} title="Payment" />
-                    <div className="rounded-xl border-2 border-primary/20 bg-primary/[0.02] p-4 flex items-center gap-4">
-                      <div className="h-11 w-11 rounded-lg overflow-hidden flex-shrink-0 bg-white flex items-center justify-center border">
-                        <Image src="/paystack.jpeg" alt="Paystack" width={36} height={36} className="object-contain" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">Paystack</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Card, bank transfer, or USSD</p>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] gap-1 border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-300">
-                        <Shield className="h-2.5 w-2.5" />
-                        Secure
-                      </Badge>
-                    </div>
-                  </div>
-                </AnimatedContainer>
-
-                {/* Security note */}
-                <AnimatedContainer animation="fadeIn" delay={0.1}>
-                  <div className="flex items-start gap-2.5 rounded-xl bg-muted/40 px-3.5 py-3">
-                    <Shield className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
-                      Your payment is processed securely by Paystack. We never store your card details. All prices are verified server-side.
-                    </p>
-                  </div>
-                </AnimatedContainer>
-
-                {/* Action buttons */}
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleBack}
-                    className="h-13 rounded-xl border-border/60 px-5"
-                    disabled={disabled}
-                  >
-                    <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-                  </Button>
-                  <Button
+                  <button
+                    type="button"
                     onClick={handlePayNow}
-                    className="flex-1 h-13 rounded-xl text-base font-semibold shadow-lg active:scale-[0.98] transition-all"
                     disabled={disabled}
+                    className={cn(primaryBtn, "flex-1 gap-2")}
                   >
                     {isInitializing ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Initializing...</>
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Initializing...
+                      </>
                     ) : (
-                      <><Lock className="mr-2 h-4 w-4" /> Pay {formatAmount(total)}</>
+                      <>
+                        <Lock className="h-4 w-4" /> Pay {formatAmount(total)}
+                      </>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </>
             )}
           </div>
 
           {/* ── Order summary (desktop sidebar) ──────────────────────────── */}
-          <div className="hidden lg:block lg:col-span-2">
+          <aside className="hidden lg:col-span-2 lg:block" aria-label="Order summary">
             <div className="sticky top-28">
-              <OrderSummaryContent
-                cartItems={cartItems}
-                subtotal={subtotal}
-                shipping={shipping}
-                total={total}
-                formatAmount={formatAmount}
-                updateQuantity={updateQuantity}
-                removeFromCart={removeFromCart}
-                disabled={disabled}
-                activeStep={activeStep}
-              />
+              <OrderSummaryContent {...summaryProps} />
             </div>
-          </div>
+          </aside>
         </div>
-      </div>
-
-      {/* ── Mobile sticky bottom bar ───────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 lg:hidden">
-        <div className="px-4 py-3 space-y-2">
-          {/* Expandable summary */}
-          <button
-            type="button"
-            onClick={() => setShowOrderSummary(!showOrderSummary)}
-            className="w-full flex items-center justify-between text-sm"
-          >
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <Package className="h-4 w-4" />
-              {cartItems.length} item{cartItems.length > 1 ? "s" : ""}
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showOrderSummary && "rotate-180")} />
-            </span>
-            <span className="font-bold text-base">{formatAmount(total)}</span>
-          </button>
-
-          {showOrderSummary && (
-            <div className="max-h-[40vh] overflow-y-auto border-t border-border/30 pt-3 space-y-3">
-              {cartItems.map((item) => (
-                <div key={`m-${item.id}`} className="flex items-center gap-3">
-                  <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{item.name}</p>
-                    <p className="text-[10px] text-muted-foreground">Qty: {item.quantity}</p>
-                  </div>
-                  <span className="text-xs font-semibold">{formatAmount(item.price * item.quantity)}</span>
-                </div>
-              ))}
-              <Separator />
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-medium">{formatAmount(subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span className="font-medium">{formatAmount(shipping)}</span></div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      </main>
     </div>
   )
 }
@@ -674,169 +679,284 @@ export default function CheckoutPage() {
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StepPill({
-  step, label, isActive, isComplete, onClick, disabled,
+function Steps({
+  activeStep, infoValid, disabled, onSelect,
 }: {
-  step: number; label: string; isActive: boolean; isComplete: boolean; onClick: () => void; disabled?: boolean;
+  activeStep: "information" | "payment"
+  infoValid: boolean
+  disabled: boolean
+  onSelect: (step: "information" | "payment") => void
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
+  const detailsDone = infoValid && activeStep === "payment"
+
+  const stepClass = (active: boolean) =>
+    cn(
+      "flex items-center gap-2 rounded px-1 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+      active ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
+      focusRing,
+    )
+
+  const bubble = (active: boolean, done: boolean, n: number) => (
+    <span
       className={cn(
-        "flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all disabled:opacity-40",
-        isActive
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : isComplete
-            ? "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
-            : "text-muted-foreground"
+        "flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold",
+        active || done ? "bg-[#0E5A43] text-white" : "bg-muted text-muted-foreground",
       )}
     >
-      {isComplete ? (
-        <CheckCircle className="h-3.5 w-3.5" />
-      ) : (
-        <span className={cn(
-          "h-5 w-5 rounded-full text-[10px] font-bold flex items-center justify-center",
-          isActive ? "bg-primary-foreground/20" : "bg-muted"
-        )}>{step}</span>
-      )}
-      {label}
-    </button>
+      {done ? <Check className="h-3 w-3" /> : n}
+    </span>
   )
-}
 
-function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-        <Icon className="h-4 w-4 text-primary" />
-      </div>
-      <h2 className="text-base font-semibold">{title}</h2>
-    </div>
+    <nav aria-label="Checkout steps" className="pb-3">
+      <ol className="flex items-center justify-center gap-3">
+        <li>
+          <button
+            type="button"
+            onClick={() => !disabled && onSelect("information")}
+            aria-current={activeStep === "information" ? "step" : undefined}
+            className={stepClass(activeStep === "information")}
+          >
+            {bubble(activeStep === "information", detailsDone, 1)}
+            Details
+          </button>
+        </li>
+        <li aria-hidden className="h-px w-8 bg-border sm:w-12" />
+        <li>
+          <button
+            type="button"
+            onClick={() => infoValid && !disabled && onSelect("payment")}
+            disabled={!infoValid}
+            aria-current={activeStep === "payment" ? "step" : undefined}
+            className={stepClass(activeStep === "payment")}
+          >
+            {bubble(activeStep === "payment", false, 2)}
+            Payment
+          </button>
+        </li>
+      </ol>
+    </nav>
   )
 }
 
-function FloatingInput({
-  label, value, onChange, required, type = "text", disabled,
+function Field({
+  id, label, value, onChange, required, type = "text", disabled, autoComplete, inputMode,
 }: {
-  label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string; disabled?: boolean;
+  id: string
+  label: string
+  value: string
+  onChange: (v: string) => void
+  required?: boolean
+  type?: string
+  disabled?: boolean
+  autoComplete?: string
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"]
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">
-        {label}{required && " *"}
+      <Label htmlFor={id} className="text-sm font-medium">
+        {label}
+        {required ? (
+          <span className="text-muted-foreground"> *</span>
+        ) : (
+          <span className="font-normal text-muted-foreground"> (optional)</span>
+        )}
       </Label>
       <Input
+        id={id}
         type={type}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 rounded-xl border-border/60 focus:border-primary focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:ring-offset-0 text-sm transition-all"
         disabled={disabled}
+        className="h-11 rounded-lg border-border bg-background text-base shadow-none transition-colors focus-visible:border-[#0E5A43] focus-visible:ring-4 focus-visible:ring-[#0E5A43]/10 focus-visible:ring-offset-0 sm:text-sm"
       />
     </div>
   )
 }
 
-function OrderSummaryContent({
-  cartItems, subtotal, shipping, total, formatAmount, updateQuantity, removeFromCart, disabled, activeStep,
+function ReviewRow({
+  label, children, onEdit, disabled,
 }: {
-  cartItems: any[]; subtotal: number; shipping: number; total: number;
-  formatAmount: (n: number) => string; updateQuantity: (id: string, qty: number) => void;
-  removeFromCart: (id: string) => void; disabled: boolean; activeStep: string;
+  label: string
+  children: React.ReactNode
+  onEdit: () => void
+  disabled?: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-      <div className="px-5 py-4 border-b border-border/30">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Order Summary</h3>
-          <Badge variant="secondary" className="text-[10px]">{cartItems.length} items</Badge>
-        </div>
+    <div className="flex items-start gap-4 px-4 py-3 text-sm">
+      <span className="w-20 shrink-0 text-muted-foreground">{label}</span>
+      <div className="min-w-0 flex-1 space-y-0.5 break-words">{children}</div>
+      <button
+        type="button"
+        onClick={onEdit}
+        disabled={disabled}
+        className={cn(
+          "shrink-0 rounded text-sm font-medium text-[#0E5A43] hover:underline dark:text-emerald-400",
+          focusRing,
+        )}
+      >
+        Edit
+      </button>
+    </div>
+  )
+}
+
+// "Soup: Egusi · Meat: Beef, Fish": add-ons picked on the product page
+function getAddOnText(item: any): string {
+  const raw = item?.selectedModifiers
+  if (!Array.isArray(raw)) return ""
+  return raw
+    .filter((g: any) => g && Array.isArray(g.options) && g.options.length > 0)
+    .map((g: any) => `${g.groupName}: ${g.options.map((o: any) => o.name).join(", ")}`)
+    .join(" · ")
+}
+
+function OrderSummaryContent({
+  cartItems, subtotal, shipping, total, formatAmount, updateQuantity, removeFromCart,
+  getCartItemKey, disabled, activeStep, deliveryPending,
+}: {
+  cartItems: any[]
+  subtotal: number
+  shipping: number
+  total: number
+  formatAmount: (n: number) => string
+  updateQuantity: (id: string, qty: number, key?: string) => void
+  removeFromCart: (id: string, key?: string) => void
+  getCartItemKey: (id: string, variant?: any, modifiers?: any) => string
+  disabled: boolean
+  activeStep: string
+  deliveryPending: boolean
+}) {
+  const count = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-muted/20">
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <h3 className="text-sm font-semibold">Order summary</h3>
+        <span className="text-xs text-muted-foreground">
+          {count} {count === 1 ? "item" : "items"}
+        </span>
       </div>
 
-      <div className="px-5 py-4 space-y-3 lg:max-h-[320px] lg:overflow-y-auto">
-        {cartItems.map((item) => (
-          <div
-            key={`d-${item.id}-${item.selectedVariant?.color?.hex || ""}-${item.selectedVariant?.size || ""}`}
-            className="flex gap-3 group"
-          >
-            <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/30">
-              <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium leading-tight line-clamp-2">{item.name}</p>
-                <button
-                  type="button"
-                  onClick={() => removeFromCart(item.id)}
-                  disabled={disabled}
-                  className="text-muted-foreground hover:text-destructive transition-colors lg:opacity-0 lg:group-hover:opacity-100 p-0.5 flex-shrink-0"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+      <ul className="divide-y divide-border px-5 lg:max-h-[22rem] lg:overflow-y-auto">
+        {cartItems.map((item) => {
+          // Same key the cart uses, so the right variant / add-on combination is changed
+          const itemKey = getCartItemKey(item.id, item.selectedVariant, item.selectedModifiers)
+          const addOns = getAddOnText(item)
+          const color = item.selectedVariant?.color
+          const size = item.selectedVariant?.size
+
+          return (
+            <li key={itemKey} className="flex gap-3 py-4">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                <Image
+                  src={item.image || "/placeholder.svg"}
+                  alt={item.name}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
               </div>
-              {item.selectedVariant && (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {item.selectedVariant.color && (
-                    <>
-                      <div className="w-2.5 h-2.5 rounded-full border" style={{ backgroundColor: item.selectedVariant.color.hex }} />
-                      <span className="text-[10px] text-muted-foreground">{item.selectedVariant.color.name}</span>
-                    </>
-                  )}
-                  {item.selectedVariant.size && (
-                    <span className="text-[10px] text-muted-foreground">{item.selectedVariant.color ? " / " : ""}Size: {item.selectedVariant.size}</span>
-                  )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="line-clamp-2 text-sm font-medium leading-snug">{item.name}</p>
+                  <p className="shrink-0 text-sm font-semibold tabular-nums">
+                    {formatAmount(item.price * item.quantity)}
+                  </p>
                 </div>
-              )}
-              <div className="flex items-center justify-between mt-1.5">
-                <div className="flex items-center rounded-lg border border-border/50 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    disabled={item.quantity <= 1 || disabled}
-                    className="h-6 w-6 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
+
+                {(color || size) && (
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                    {color && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          aria-hidden
+                          className="h-2.5 w-2.5 rounded-full border border-black/15"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        {color.name}
+                      </span>
+                    )}
+                    {color && size && <span aria-hidden>·</span>}
+                    {size && <span>Size {size}</span>}
+                  </p>
+                )}
+
+                {addOns && (
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground" title={addOns}>
+                    {addOns}
+                  </p>
+                )}
+
+                <div className="mt-2 flex items-center justify-between">
+                  <div
+                    className="inline-flex h-7 items-center rounded-md border border-border"
+                    role="group"
+                    aria-label={`Quantity of ${item.name}`}
                   >
-                    <Minus className="h-2.5 w-2.5" />
-                  </button>
-                  <span className="px-2 text-[10px] font-bold min-w-[1.5rem] text-center">{item.quantity}</span>
+                    <button
+                      type="button"
+                      aria-label="Decrease quantity"
+                      onClick={() => updateQuantity(item.id, item.quantity - 1, itemKey)}
+                      disabled={item.quantity <= 1 || disabled}
+                      className="flex h-7 w-7 items-center justify-center rounded-l-md transition-colors hover:bg-muted disabled:opacity-40"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="min-w-[1.75rem] text-center text-xs font-medium tabular-nums">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Increase quantity"
+                      onClick={() => updateQuantity(item.id, item.quantity + 1, itemKey)}
+                      disabled={disabled}
+                      className="flex h-7 w-7 items-center justify-center rounded-r-md transition-colors hover:bg-muted disabled:opacity-40"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    aria-label={`Remove ${item.name}`}
+                    onClick={() => removeFromCart(item.id, itemKey)}
                     disabled={disabled}
-                    className="h-6 w-6 flex items-center justify-center hover:bg-muted transition-colors"
+                    className="rounded text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-destructive hover:underline disabled:opacity-40"
                   >
-                    <Plus className="h-2.5 w-2.5" />
+                    Remove
                   </button>
                 </div>
-                <span className="text-sm font-semibold">{formatAmount(item.price * item.quantity)}</span>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            </li>
+          )
+        })}
+      </ul>
 
-      <div className="border-t border-border/30 px-5 py-4 space-y-2.5 bg-muted/20">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span className="font-medium">{formatAmount(subtotal)}</span>
+      <dl className="space-y-2 border-t border-border px-5 py-4 text-sm">
+        <div className="flex justify-between">
+          <dt className="text-muted-foreground">Subtotal</dt>
+          <dd className="tabular-nums">{formatAmount(subtotal)}</dd>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Delivery</span>
-          <span className="font-medium">{shipping > 0 ? formatAmount(shipping) : "---"}</span>
+        <div className="flex justify-between">
+          <dt className="text-muted-foreground">Delivery</dt>
+          <dd className={cn("tabular-nums", deliveryPending && shipping === 0 && "text-muted-foreground")}>
+            {shipping > 0 ? formatAmount(shipping) : deliveryPending ? "Add address" : formatAmount(0)}
+          </dd>
         </div>
-        <Separator />
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold">Total</span>
-          <span className="text-xl font-bold text-primary">{formatAmount(total)}</span>
+        <div className="flex items-baseline justify-between border-t border-border pt-3">
+          <dt className="text-base font-semibold">Total</dt>
+          <dd className="text-xl font-semibold tabular-nums">{formatAmount(total)}</dd>
         </div>
-      </div>
+      </dl>
 
       {activeStep === "payment" && (
-        <div className="border-t border-border/30 px-5 py-3 bg-amber-50/50 dark:bg-amber-950/10">
-          <p className="text-[10px] text-amber-700 dark:text-amber-300">
-            Final amount will be validated against current prices when you click Pay.
-          </p>
-        </div>
+        <p className="border-t border-border bg-amber-50/60 px-5 py-3 text-xs text-amber-800 dark:bg-amber-950/10 dark:text-amber-300">
+          The final amount is checked against current prices when you pay.
+        </p>
       )}
     </div>
   )

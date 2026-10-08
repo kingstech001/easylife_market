@@ -52,9 +52,12 @@ export function NewProductsClient({ products }: NewProductsClientProps) {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+        
+        <p
+          className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground/80"
+        >
           New arrivals
-        </h2>
+        </p>
 
         <Link
           href="/allStoreProducts"
