@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, PencilLine, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface StoreReviewItem {
   id: string;
@@ -29,6 +27,12 @@ interface StoreReviewsSectionProps {
   initialStats: StoreReviewStats;
 }
 
+const INITIAL_VISIBLE = 3;
+const RATING_LABELS = ["", "Poor", "Fair", "Good", "Very good", "Excellent"];
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
 function formatReviewDate(value: string) {
   try {
     return new Intl.DateTimeFormat("en-NG", {
@@ -41,6 +45,31 @@ function formatReviewDate(value: string) {
   }
 }
 
+// Read-only stars (rounded to the nearest whole star)
+function Stars({ value, className }: { value: number; className?: string }) {
+  const filled = Math.round(value);
+  return (
+    <span
+      className={cn("inline-flex items-center gap-0.5", className)}
+      role="img"
+      aria-label={`${value.toFixed(1)} out of 5 stars`}
+    >
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          aria-hidden
+          className={cn(
+            "h-4 w-4",
+            n <= filled
+              ? "fill-[#F4C430] text-[#F4C430]"
+              : "text-muted-foreground/30",
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
 export function StoreReviewsSection({
   storeSlug,
   initialReviews,
@@ -48,16 +77,16 @@ export function StoreReviewsSection({
 }: StoreReviewsSectionProps) {
   const [reviews, setReviews] = useState(initialReviews);
   const [stats, setStats] = useState(initialStats);
+  const [formOpen, setFormOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const ratingLabel = useMemo(() => {
-    if (stats.reviewCount === 0) {
-      return "No ratings yet";
-    }
-    return `${stats.averageRating.toFixed(1)} average rating`;
-  }, [stats]);
+  const shownRating = hoverRating || rating;
+  const visibleReviews = showAll ? reviews : reviews.slice(0, INITIAL_VISIBLE);
+  const hiddenCount = reviews.length - visibleReviews.length;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,13 +127,15 @@ export function StoreReviewsSection({
 
       setReviews((current) => {
         const withoutExisting = current.filter(
-          (review) => review.userId !== nextReview.userId
+          (review) => review.userId !== nextReview.userId,
         );
         return [nextReview, ...withoutExisting].slice(0, 10);
       });
       setStats(data.stats);
       setComment("");
       setRating(0);
+      setHoverRating(0);
+      setFormOpen(false);
       toast.success(data.message || "Review saved successfully.");
     } catch {
       toast.error("Something went wrong while saving your review.");
@@ -114,148 +145,186 @@ export function StoreReviewsSection({
   }
 
   return (
-    <section className="mt-10 sm:mt-12">
-      <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card className="rounded-[30px] border border-border/70 bg-background/90 shadow-sm">
-          <CardContent className="p-5 pt-5 sm:p-6 sm:pt-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0E5A43]/12 text-[#083B2D]">
-                <PencilLine className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
-                  Leave a review
-                </p>
-                <h3 className="mt-2 text-xl font-semibold text-foreground">
-                  Share your experience with this store
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Logged-in users can rate the store and help other shoppers make better decisions.
-                </p>
-              </div>
-            </div>
+    <section aria-labelledby="reviews-heading" className="mt-10 sm:mt-12">
+      {/* Summary + action */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border pb-4">
+        <div>
+          <h2
+            id="reviews-heading"
+            className="text-xl font-semibold tracking-tight text-foreground"
+          >
+            Reviews
+          </h2>
+          <div className="mt-1.5 flex items-center gap-2 text-sm">
+            {stats.reviewCount > 0 ? (
+              <>
+                <span className="text-lg font-semibold tabular-nums text-foreground">
+                  {stats.averageRating.toFixed(1)}
+                </span>
+                <Stars value={stats.averageRating} />
+                <span className="text-muted-foreground">
+                  ({stats.reviewCount} review{stats.reviewCount === 1 ? "" : "s"})
+                </span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">No reviews yet</span>
+            )}
+          </div>
+        </div>
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-              <div>
-                <p className="mb-2 text-sm font-medium text-foreground">Your rating</p>
-                <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setFormOpen((open) => !open)}
+          aria-expanded={formOpen}
+          aria-controls="review-form"
+          className={cn(
+            "inline-flex h-9 items-center rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted",
+            focusRing,
+          )}
+        >
+          {formOpen ? "Cancel" : "Write a review"}
+        </button>
+      </div>
+
+      {/* Write a review (collapsed by default, keeps the section short) */}
+      <div
+        id="review-form"
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-out",
+          formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden" aria-hidden={!formOpen}>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 border-b border-border py-5"
+          >
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-foreground">
+                Your rating
+              </p>
+              <div className="flex items-center gap-3">
+                <div
+                  role="radiogroup"
+                  aria-label="Your rating"
+                  className="flex items-center"
+                  onMouseLeave={() => setHoverRating(0)}
+                >
                   {[1, 2, 3, 4, 5].map((value) => (
                     <button
                       key={value}
                       type="button"
+                      role="radio"
+                      aria-checked={rating === value}
+                      aria-label={`${value} star${value > 1 ? "s" : ""}`}
+                      tabIndex={formOpen ? 0 : -1}
                       onClick={() => setRating(value)}
-                      className="rounded-full p-1.5 transition hover:bg-[#0E5A43]/10"
-                      aria-label={`Rate ${value} star${value > 1 ? "s" : ""}`}
+                      onMouseEnter={() => setHoverRating(value)}
+                      className={cn("rounded p-1", focusRing)}
                     >
                       <Star
-                        className={`h-6 w-6 ${
-                          value <= rating
-                            ? "fill-[#0E5A43] text-[#0E5A43]"
-                            : "text-muted-foreground/40"
-                        }`}
+                        className={cn(
+                          "h-6 w-6 transition-colors",
+                          value <= shownRating
+                            ? "fill-[#F4C430] text-[#F4C430]"
+                            : "text-muted-foreground/40",
+                        )}
                       />
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-sm font-medium text-foreground">Your review</p>
-                <Textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Tell other shoppers what stood out about this store..."
-                  className="min-h-[140px] rounded-2xl border-border/70 bg-background px-4 py-3 text-sm leading-6"
-                  maxLength={500}
-                />
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {comment.trim().length}/500 characters
-                </p>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="h-11 rounded-full px-6 text-white hover:bg-[#083B2D]"
-              >
-                {isSubmitting ? "Submitting..." : "Submit review"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[30px] border border-border/70 bg-background/90 shadow-sm">
-          <CardContent className="p-5 pt-5 sm:p-6 sm:pt-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#083B2D]">
-                  Customer reviews
-                </p>
-                <h3 className="mt-2 text-xl font-semibold text-foreground">
-                  What shoppers are saying
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {ratingLabel}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground">
-                  <Star className="mr-1.5 h-3.5 w-3.5 fill-[#0E5A43] text-[#0E5A43]" />
-                  {stats.reviewCount > 0 ? stats.averageRating.toFixed(1) : "New"}
-                </Badge>
-                <Badge variant="secondary" className="rounded-full px-3 py-1 text-sm">
-                  {stats.reviewCount} review{stats.reviewCount === 1 ? "" : "s"}
-                </Badge>
+                <span className="text-sm text-muted-foreground" aria-live="polite">
+                  {RATING_LABELS[shownRating]}
+                </span>
               </div>
             </div>
 
-            {reviews.length > 0 ? (
-              <div className="mt-5 space-y-4">
-                {reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="font-semibold text-foreground">{review.reviewerName}</p>
-                        <div className="mt-1 flex items-center gap-1">
-                          {Array.from({ length: 5 }).map((_, index) => (
-                            <Star
-                              key={index}
-                              className={`h-4 w-4 ${
-                                index < review.rating
-                                  ? "fill-[#0E5A43] text-[#0E5A43]"
-                                  : "text-muted-foreground/30"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {formatReviewDate(review.updatedAt || review.createdAt)}
-                      </p>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {review.comment}
-                    </p>
-                  </div>
-                ))}
+            <div>
+              <label
+                htmlFor="review-comment"
+                className="mb-1.5 block text-sm font-medium text-foreground"
+              >
+                Your review
+              </label>
+              <Textarea
+                id="review-comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="What stood out about this store?"
+                className="min-h-[96px] rounded-lg border-border bg-background px-3.5 py-2.5 text-base leading-6 shadow-none focus-visible:border-[#0E5A43] focus-visible:ring-4 focus-visible:ring-[#0E5A43]/10 focus-visible:ring-offset-0 sm:text-sm"
+                maxLength={500}
+                tabIndex={formOpen ? 0 : -1}
+              />
+              <div className="mt-1.5 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>
+                  You need to be signed in. A new review replaces your earlier one.
+                </span>
+                <span className="shrink-0 tabular-nums">
+                  {comment.trim().length}/500
+                </span>
               </div>
-            ) : (
-              <div className="mt-5 rounded-3xl border border-dashed border-border bg-muted/20 p-8 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E5A43]/10 text-[#083B2D]">
-                  <MessageSquare className="h-6 w-6" />
-                </div>
-                <h4 className="mt-4 text-lg font-semibold text-foreground">No reviews yet</h4>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Be the first to share your experience and help others discover this store.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              tabIndex={formOpen ? 0 : -1}
+              className={cn(
+                "inline-flex h-10 items-center justify-center rounded-lg bg-[#0E5A43] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#083B2D] disabled:cursor-not-allowed disabled:opacity-60",
+                focusRing,
+              )}
+            >
+              {isSubmitting ? "Submitting..." : "Submit review"}
+            </button>
+          </form>
+        </div>
       </div>
+
+      {/* Reviews */}
+      {reviews.length > 0 ? (
+        <>
+          <ul className="divide-y divide-border">
+            {visibleReviews.map((review) => (
+              <li key={review.id} className="py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {review.reviewerName}
+                    </p>
+                    <Stars value={review.rating} className="mt-1 [&>svg]:h-3.5 [&>svg]:w-3.5" />
+                  </div>
+                  <time
+                    dateTime={review.updatedAt || review.createdAt}
+                    className="shrink-0 text-xs text-muted-foreground"
+                  >
+                    {formatReviewDate(review.updatedAt || review.createdAt)}
+                  </time>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {review.comment}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          {(hiddenCount > 0 || showAll) && reviews.length > INITIAL_VISIBLE && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className={cn(
+                "mt-1 rounded text-sm font-medium text-[#0E5A43] underline-offset-4 hover:underline dark:text-emerald-400",
+                focusRing,
+              )}
+            >
+              {showAll ? "Show fewer" : `Show ${hiddenCount} more`}
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="py-6 text-sm text-muted-foreground">
+          Be the first to share your experience with this store.
+        </p>
+      )}
     </section>
   );
 }
