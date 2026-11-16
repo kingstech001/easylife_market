@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
@@ -44,7 +45,7 @@ export function StoreStatusBadge({ openTime, closeTime, isOpenToday = true }: St
   if (!mounted) {
     return (
       <Badge variant="secondary" className="flex items-center gap-1.5">
-        <div className="h-2 w-2 bg-gray-400 rounded-full" />
+        <BrandLoader size={20} />
         Loading...
       </Badge>
     )

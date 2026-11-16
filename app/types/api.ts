@@ -31,6 +31,7 @@ export interface ProductResponse {
   created_at: Date;
   updated_at: Date;
   hasVariants: boolean;
+  hasModifiers?: boolean;
   variants?: ProductVariant[];
 }
 

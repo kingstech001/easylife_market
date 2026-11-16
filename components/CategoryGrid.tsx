@@ -129,7 +129,7 @@ export function CategoryGrid() {
 
         {/* Negative margin lets the row scroll edge-to-edge while still lining up with the page padding */}
         <ul 
-          className={`-mx-4 flex snap-x gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${hideScrollbar}`}
+          className={`-mx-4 flex justify-between snap-x gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8  ${hideScrollbar}`}
         >
           {CATEGORIES.map((category) => {
             const Icon = category.icon;

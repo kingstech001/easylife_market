@@ -3,15 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Search,
-  Package,
-  Loader2,
-  X,
-  Store,
-  ChevronRight,
-  MapPin,
-} from "lucide-react";
+import { Search, Package, X, Store, ChevronRight, MapPin } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { ProductCard } from "@/components/product-card";
 import { CATEGORIES, buildCategorySearchUrl } from "@/components/CategoryGrid";
 
@@ -63,28 +56,7 @@ const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function SearchResultsSkeleton() {
-  return (
-    <div
-      aria-busy="true"
-      aria-label="Loading results"
-      className="space-y-6 px-4 pb-10 pt-5 sm:px-6 lg:px-0"
-    >
-      <div className="space-y-2">
-        <div className="h-7 w-56 animate-pulse rounded-md bg-muted" />
-        <div className="h-4 w-32 animate-pulse rounded-md bg-muted" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="space-y-3">
-            <div className="aspect-square animate-pulse rounded-xl bg-muted" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -384,7 +356,7 @@ export function SearchResultsClient({
       >
         {loadingMore ? (
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
+            <BrandLoader className="h-4 w-4 text-[#0E5A43]" />
             Loading more
           </span>
         ) : !hasMore && products.length > 24 ? (

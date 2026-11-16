@@ -6,28 +6,8 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Loader2,
-  StoreIcon,
-  Building2,
-  ImageIcon,
-  Upload,
-  Check,
-  RotateCcw,
-  MapPin,
-  Link2,
-  FileText,
-  Sparkles,
-  X,
-  Phone,
-  ChevronRight,
-  ChevronLeft,
-  User,
-  AlertCircle,
-  Eye,
-  ArrowLeft,
-  Camera,
-} from "lucide-react";
+import { StoreIcon, Building2, ImageIcon, Upload, Check, RotateCcw, MapPin, Link2, FileText, Sparkles, X, Phone, ChevronRight, ChevronLeft, User, AlertCircle, Eye, ArrowLeft, Camera } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -1142,7 +1122,7 @@ export default function CreateStorePage() {
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <BrandLoader className="mr-2 h-4 w-4" />
                         Creating...
                       </>
                     ) : (

@@ -112,7 +112,7 @@ export function PaystackButton({
     >
       {isLoading ? (
         <>
-          <LoadingSpinner  />
+          <LoadingSpinner size={20} />
           Initializing Payment...
         </>
       ) : (

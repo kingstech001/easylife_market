@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -475,7 +476,7 @@ export default function AdminOrdersPage() {
                 disabled={isLoading}
                 className="hover:bg-accent"
               >
-                <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 sm:mr-2" />}
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button variant="outline" size="sm" className="hover:bg-accent">
@@ -565,29 +566,7 @@ export default function AdminOrdersPage() {
           animate="visible"
           transition={{ delay: 0.2 }}
         >
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="space-y-2 flex-1">
-                        <div className="h-5 bg-muted rounded w-32"></div>
-                        <div className="h-4 bg-muted rounded w-48"></div>
-                      </div>
-                      <div className="h-6 bg-muted rounded w-24"></div>
-                    </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="h-12 bg-muted rounded"></div>
-                      <div className="h-12 bg-muted rounded"></div>
-                      <div className="h-12 bg-muted rounded"></div>
-                      <div className="h-12 bg-muted rounded"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : orders.length === 0 ? (
+          {isLoading ? <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div> : orders.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="p-12 sm:p-16 text-center">
                 <div className="flex flex-col items-center gap-4">

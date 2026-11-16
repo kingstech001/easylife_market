@@ -1,4 +1,5 @@
 "use client";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -168,7 +169,7 @@ export function SiteHeader() {
           <div
             className="absolute inset-0 opacity-10"
             style={{
-              backgroundImage: "url('/icon.png')",
+              backgroundImage: "url('/header-pattern.svg')",
               backgroundRepeat: "repeat",
               backgroundSize: "400px 400px",
               backgroundPosition: "center",
@@ -609,7 +610,7 @@ function SearchBox({
           <div className="max-h-[min(70vh,28rem)] overflow-y-auto overscroll-contain">
             {loading && !hasResults ? (
               <div className="flex items-center justify-center gap-3 p-8 text-sm text-muted-foreground">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#0E5A43] border-t-transparent" />
+                <BrandLoader className="h-5 w-5" />
                 Searching...
               </div>
             ) : !hasResults ? (

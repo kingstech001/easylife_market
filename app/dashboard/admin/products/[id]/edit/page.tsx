@@ -6,7 +6,8 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { ArrowLeft, Loader2, Save } from "lucide-react"
+import { ArrowLeft, Save } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -170,7 +171,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   if (loadingProduct) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="animate-spin mr-2 h-6 w-6" />
+        <BrandLoader className="mr-2 h-6 w-6" />
         Loading product...
       </div>
     )
@@ -190,7 +191,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         <Button onClick={form.handleSubmit(onSubmit)} disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <BrandLoader className="mr-2 h-4 w-4" />
               Saving...
             </>
           ) : (

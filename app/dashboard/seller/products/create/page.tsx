@@ -6,30 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeft,
-  ImageIcon,
-  Loader2,
-  Package,
-  Tag,
-  Layers,
-  Upload,
-  Check,
-  Info,
-  Trash2,
-  Save,
-  RotateCcw,
-  Palette,
-  UtensilsCrossed,
-  ChevronDown,
-  ChevronUp,
-  GripVertical,
-  AlertCircle,
-  CheckCircle2,
-  Plus,
-  ToggleLeft,
-  ToggleRight,
-} from "lucide-react";
+import { ArrowLeft, ImageIcon, Package, Tag, Layers, Upload, Check, Info, Trash2, Save, RotateCcw, Palette, UtensilsCrossed, ChevronDown, ChevronUp, GripVertical, AlertCircle, CheckCircle2, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import {
   Form,
   FormItem,
@@ -797,7 +775,7 @@ export default function CreateProductPage() {
   if (isStoreLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <BrandLoader className="h-20 w-20 text-primary" />
         <span className="ml-4 text-lg text-muted-foreground">Loading store information...</span>
       </div>
     );
@@ -1131,7 +1109,7 @@ export default function CreateProductPage() {
                               <div className="space-y-3 sm:space-y-4">
                                 <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full flex items-center justify-center">
                                   {isUploadingImages ? (
-                                    <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground animate-spin" />
+                                    <BrandLoader className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                                   ) : (
                                     <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                                   )}
@@ -1531,7 +1509,7 @@ export default function CreateProductPage() {
                       >
                         {isSubmitting ? (
                           <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <BrandLoader className="mr-2 h-4 w-4" />
                             Uploading...
                           </>
                         ) : (

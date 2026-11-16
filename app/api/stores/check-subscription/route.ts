@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Store from "@/models/Store";
 import { enforceProductLimitForStore } from "@/lib/subscriptions/enforceProductLimit";
 import { connectToDB } from "@/lib/db";
+import { PLAN_PRODUCT_LIMIT, resolveProductLimit } from "@/lib/subscriptions/productLimits";
 
 /**
  * POST /api/stores/check-subscription
@@ -37,12 +38,7 @@ export async function POST(request: NextRequest) {
     let wasDowngraded = false;
 
     // ✅ Single source of truth for limits
-    const PLAN_LIMITS: Record<string, number | null> = {
-      free: 20,
-      basic: 20,
-      standard: 50,
-      premium: null,
-    };
+    const PLAN_LIMITS = PLAN_PRODUCT_LIMIT;
 
     // Check if subscription has expired
     const hasExpired =
@@ -116,7 +112,7 @@ export async function POST(request: NextRequest) {
           subscriptionPlan: store.subscriptionPlan,
           subscriptionStatus: store.subscriptionStatus,
           subscriptionExpiryDate: store.subscriptionExpiryDate,
-          productLimit: store.productLimit,
+          productLimit: resolveProductLimit(store.subscriptionPlan, store.productLimit),
         },
         enforcement: enforcementResult,
       },

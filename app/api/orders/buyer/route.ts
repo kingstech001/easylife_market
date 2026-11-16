@@ -86,24 +86,40 @@ export async function POST(request: NextRequest) {
 
     await connectToDB()
 
+    // Read every product once: collect the unique IDs across ALL orders and fetch
+    // them in a single query (previously one findById per item).
+    // Keys are lower-cased so an upper-case hex ID still matches, as findById allowed.
+    const productIds: string[] = Array.from(
+      new Set(
+        ordersData.flatMap((orderData: any) =>
+          orderData.items
+            .map((item: any) => item.productId)
+            .filter(Boolean)
+            .map((id: unknown) => String(id)),
+        ),
+      ),
+    )
+    const products = await Product.find({ _id: { $in: productIds } }).select("name")
+    const productsById = new Map(
+      products.map((product) => [product._id.toString().toLowerCase(), product]),
+    )
+
     const createdSubOrders = []
     let totalAmount = 0
 
     for (const orderData of ordersData) {
-      const enrichedItems = await Promise.all(
-        orderData.items.map(async (item: any) => {
-          const product = await Product.findById(item.productId).select("name")
-          if (!product) {
-            throw new Error(`Product not found: ${item.productId}`)
-          }
-          return {
-            productId: item.productId,
-            productName: item.productName || product.name,
-            quantity: item.quantity,
-            priceAtPurchase: item.priceAtPurchase,
-          }
-        }),
-      )
+      const enrichedItems = orderData.items.map((item: any) => {
+        const product = productsById.get(String(item.productId).toLowerCase())
+        if (!product) {
+          throw new Error(`Product not found: ${item.productId}`)
+        }
+        return {
+          productId: item.productId,
+          productName: item.productName || product.name,
+          quantity: item.quantity,
+          priceAtPurchase: item.priceAtPurchase,
+        }
+      })
 
       const subOrder = await Order.create({
         storeId: orderData.storeId,

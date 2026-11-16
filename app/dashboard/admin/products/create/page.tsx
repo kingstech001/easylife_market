@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation"
 import { z } from "zod"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, ImageIcon, Loader2, ShoppingBag, Package, Tag, Layers, Check } from "lucide-react"
+import { ArrowLeft, ImageIcon, ShoppingBag, Package, Tag, Layers, Check } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Form, FormItem, FormLabel, FormControl, FormDescription, FormMessage, FormField } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -396,7 +397,7 @@ export default function CreateProductPage() {
                   <Button type="submit" disabled={isSubmitting || loadingMeta} className="w-full sm:w-auto">
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
+                        <BrandLoader className="mr-2 h-4 w-4" /> Creating...
                       </>
                     ) : (
                       <>

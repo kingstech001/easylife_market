@@ -1,4 +1,5 @@
 "use client";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useEffect, useState } from "react";
 import { MapPin, X, Navigation, AlertCircle } from "lucide-react";
@@ -258,7 +259,7 @@ export function LocationPrompt() {
                     >
                       {isLoading ? (
                         <>
-                          <span className="animate-spin mr-2">⌛</span>
+                          <BrandLoader size={20} className="mr-2" />
                           Getting Location...
                         </>
                       ) : (

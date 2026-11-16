@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useState, useEffect } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
@@ -39,18 +40,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   return null
 }
 
-const LoadingSkeleton = () => (
-  <div className="space-y-4">
-    <div className="flex items-center justify-between">
-      <div className="space-y-2">
-        <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
-        <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
-      </div>
-      <div className="h-6 w-20 bg-muted animate-pulse rounded-full"></div>
-    </div>
-    <div className="h-[280px] bg-muted/30 animate-pulse rounded-lg"></div>
-  </div>
-)
+const LoadingSkeleton = () => <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
 
 const ErrorState = ({ error }: { error: string }) => (
   <div className="flex flex-col items-center justify-center h-[320px] text-center space-y-3">
@@ -135,11 +125,7 @@ export function VisitorsChart() {
   }, [user, authLoading])
 
   if (isLoading) {
-    return (
-      <Card className="p-6">
-        <LoadingSkeleton />
-      </Card>
-    )
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
   }
 
   if (error) {

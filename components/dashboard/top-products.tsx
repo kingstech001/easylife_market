@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, PackageOpen } from "lucide-react";
+import { PackageOpen } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
@@ -81,7 +82,7 @@ export function TopProducts({ limit = 5 }: TopProductsProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BrandLoader className="h-20 w-20 text-primary" />
         <span className="ml-3 text-muted-foreground">
           Loading top products...
         </span>

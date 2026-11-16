@@ -2,17 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Clock,
-  ImageIcon,
-  Loader2,
-  MapPin,
-  Palette,
-  Save,
-  Store,
-  Upload,
-} from "lucide-react";
+import { ArrowLeft, Clock, ImageIcon, MapPin, Palette, Save, Store, Upload } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -268,7 +259,7 @@ export default function StoreSettingsPage() {
   if (isFetching) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0E5A43]" />
+        <BrandLoader className="h-20 w-20 text-[#0E5A43]" />
         <span className="text-sm text-muted-foreground">
           Loading store settings...
         </span>
@@ -304,7 +295,7 @@ export default function StoreSettingsPage() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <BrandLoader className="mr-2 h-4 w-4" />
                 Saving...
               </>
             ) : (
@@ -490,7 +481,7 @@ export default function StoreSettingsPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <BrandLoader className="mr-2 h-4 w-4" />
                   Saving...
                 </>
               ) : (
@@ -536,7 +527,7 @@ export default function StoreSettingsPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <BrandLoader className="mr-2 h-4 w-4" />
                   Saving...
                 </>
               ) : (
@@ -616,7 +607,7 @@ export default function StoreSettingsPage() {
 
                     {isUploadingLogo && (
                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-[#0E5A43]" />
+                        <BrandLoader className="h-6 w-6 text-[#0E5A43]" />
                       </div>
                     )}
                   </button>
@@ -635,7 +626,7 @@ export default function StoreSettingsPage() {
                     >
                       {isUploadingLogo ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <BrandLoader className="mr-2 h-4 w-4" />
                           Uploading...
                         </>
                       ) : (
@@ -702,7 +693,7 @@ export default function StoreSettingsPage() {
 
                   {isUploadingBanner && (
                     <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                      <Loader2 className="h-7 w-7 animate-spin text-[#0E5A43]" />
+                      <BrandLoader className="h-7 w-7 text-[#0E5A43]" />
                     </div>
                   )}
                 </button>
@@ -721,7 +712,7 @@ export default function StoreSettingsPage() {
                 >
                   {isUploadingBanner ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <BrandLoader className="mr-2 h-4 w-4" />
                       Uploading...
                     </>
                   ) : (
@@ -743,7 +734,7 @@ export default function StoreSettingsPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <BrandLoader className="mr-2 h-4 w-4" />
                   Saving...
                 </>
               ) : (

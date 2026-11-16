@@ -9,6 +9,7 @@ import { WishlistProvider } from "@/context/wishlist-context";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LocationPrompt } from "@/components/location-prompt";
+import { AppWelcomeLoader } from "@/components/app-welcome-loader";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,9 +29,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <WishlistProvider>
               <CartProvider>
-                <LocationPrompt />
-                {children}
-                <Toaster position="bottom-right" richColors />
+                <AppWelcomeLoader>
+                  <LocationPrompt />
+                  {children}
+                  <Toaster position="bottom-right" richColors />
+                </AppWelcomeLoader>
               </CartProvider>
             </WishlistProvider>
           </ThemeProvider>

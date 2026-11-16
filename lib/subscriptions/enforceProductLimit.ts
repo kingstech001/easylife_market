@@ -3,6 +3,7 @@ import Product from "@/models/Product";
 import Store from "@/models/Store";
 import mongoose from "mongoose";
 import { connectToDB } from "../db";
+import { resolveProductLimit } from "./productLimits";
 
 /**
  * Enforce product limit for a store.
@@ -27,7 +28,12 @@ export async function enforceProductLimitForStore(
     throw new Error("Store not found");
   }
 
-  const limit = store.productLimit ?? null; // null -> unlimited
+  const limit = resolveProductLimit(store.subscriptionPlan, store.productLimit);
+  if (store.productLimit !== limit) {
+    store.productLimit = limit;
+    store.markModified("productLimit");
+    await store.save();
+  }
   console.log(
     `📋 Store plan: ${store.subscriptionPlan}, limit: ${
       limit === null ? "unlimited" : limit
@@ -125,7 +131,7 @@ export async function enforceProductLimitForStore(
   if (visibleIds.length > 0) {
     ops.push(
       Product.updateMany(
-        { _id: { $in: visibleIds }, isDeleted: false },
+        { _id: { $in: visibleIds }, isDeleted: false, isActive: { $ne: true } },
         { $set: { isActive: true, deactivatedAt: null } }
       )
     );
@@ -135,7 +141,7 @@ export async function enforceProductLimitForStore(
   if (invisibleIds.length > 0) {
     ops.push(
       Product.updateMany(
-        { _id: { $in: invisibleIds }, isDeleted: false },
+        { _id: { $in: invisibleIds }, isDeleted: false, isActive: true },
         { $set: { isActive: false, deactivatedAt: new Date() } }
       )
     );
@@ -173,7 +179,7 @@ export async function enforceProductLimitForStore(
 //   console.log(`🔄 Setting store ${storeId} to plan: ${plan}`);
 
 //   const planLimits: Record<string, number | null> = {
-//     free: 10,
+//     free: 20,
 //     basic: 20,
 //     standard: 50,
 //     premium: null,

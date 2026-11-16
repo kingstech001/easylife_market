@@ -2,7 +2,8 @@
 
 import { useEffect, useState, Suspense, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { CheckCircle, Loader2, XCircle, ArrowRight, Clock, Sparkles, CreditCard, Package } from "lucide-react"
+import { CheckCircle, XCircle, ArrowRight, Clock, Sparkles, CreditCard, Package } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner"
 
 // This forces the route to be dynamic and not prerendered
@@ -247,7 +248,7 @@ function SubscriptionSuccessContent() {
 
         <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
           <div className="p-4 rounded-full bg-[#0E5A43] text-white w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-            <Loader2 className="w-12 h-12 text-[#0E5A43] animate-spin" />
+            <BrandLoader className="h-20 w-20 text-[#0E5A43]" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-3 text-foreground">
             Processing Payment
@@ -430,7 +431,7 @@ function SubscriptionSuccessContent() {
         </div>
         
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin text-[#0E5A43]" />
+          <BrandLoader className="w-4 h-4 text-[#0E5A43]" />
           <span>Redirecting to subscriptions...</span>
         </div>
       </div>
@@ -448,11 +449,8 @@ function SubscriptionSuccessLoading() {
       </div>
       <div className="max-w-md w-full bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8 text-center relative z-10">
         <div className="p-4 rounded-full bg-[#0E5A43] text-white w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-          <Loader2 className="w-12 h-12 text-[#0E5A43] animate-spin" />
+          <BrandLoader className="h-20 w-20 text-[#0E5A43]" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground mb-3 text-foreground">
-          Loading...
-        </h1>
         <p className="text-muted-foreground text-lg">
           Please wait while we verify your payment...
         </p>

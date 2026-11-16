@@ -68,11 +68,14 @@ export default function SellerDashboardPage() {
         console.log("✅ Subscription check complete:", data);
 
         if (data.wasDowngraded) {
+          const deactivated = data.enforcement?.deactivated || 0;
           setSubscriptionAlert({
             show: true,
-            message: `Your subscription has expired. You've been downgraded to the free plan. ${
-              data.enforcement?.deactivated || 0
-            } products have been deactivated.`,
+            message: `Your subscription has expired. Your store is now on the Free plan, which allows ${data.store.productLimit} active products.${
+              deactivated > 0
+                ? ` ${deactivated} product${deactivated === 1 ? " was" : "s were"} deactivated because they exceed this limit.`
+                : " All your products are within this limit."
+            }`,
             type: "warning",
           });
           toast.warning("Subscription Expired", {
@@ -81,7 +84,7 @@ export default function SellerDashboardPage() {
         } else if (data.enforcement?.deactivated > 0) {
           setSubscriptionAlert({
             show: true,
-            message: `${data.enforcement.deactivated} products have been deactivated due to your plan limit.`,
+            message: `Your ${data.store.subscriptionPlan} plan allows ${data.store.productLimit} active products. ${data.enforcement.deactivated} product${data.enforcement.deactivated === 1 ? " was" : "s were"} deactivated because they exceed this limit.`,
             type: "info",
           });
         }

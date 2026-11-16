@@ -1,4 +1,5 @@
 "use client";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -65,35 +66,7 @@ export default function StoresPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
-          <div className="animate-pulse space-y-8">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-muted rounded-xl"></div>
-              <div className="space-y-2">
-                <div className="h-8 bg-muted rounded w-64"></div>
-                <div className="h-4 bg-muted rounded w-48"></div>
-              </div>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="border-0 shadow-sm backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="h-40 bg-muted rounded-lg animate-pulse"></div>
-                      <div className="h-6 bg-muted rounded w-3/4 animate-pulse"></div>
-                      <div className="h-4 bg-muted rounded w-full animate-pulse"></div>
-                      <div className="h-4 bg-muted rounded w-1/2 animate-pulse"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>;
   }
 
   if (error) {

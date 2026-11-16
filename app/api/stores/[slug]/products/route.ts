@@ -107,7 +107,7 @@ export async function GET(
 
     // Fetch products and total count - use any type for lean() results
     const [products, totalCount]: [any[], number] = await Promise.all([
-      Product.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+      Product.find(filter).sort({ ...sort, _id: -1 }).skip(skip).limit(limit).lean(),
       Product.countDocuments(filter),
     ])
 
@@ -136,7 +136,8 @@ export async function GET(
           created_at: product.createdAt || new Date(),
           updated_at: product.updatedAt || new Date(),
           // ⭐ CORRECT VARIANT STRUCTURE ⭐
-          hasVariants: hasVariants,
+          hasVariants: !!product.hasVariants || !!hasVariants,
+          hasModifiers: !!product.hasModifiers,
           variants: hasVariants ? product.variants.map((variant: any) => ({
             color: {
               name: variant.color?.name || '',

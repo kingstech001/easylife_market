@@ -239,7 +239,7 @@ export async function POST(req: Request) {
       premium: 999999, // Premium: Unlimited (using large number)
     };
 
-    const productLimit = planLimits[subscriptionPlan] || 10;
+    const productLimit = planLimits[subscriptionPlan] ?? planLimits.free;
     const isUnlimited = productLimit >= 999999;
 
     if (productCount >= productLimit) {

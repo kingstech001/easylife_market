@@ -3,6 +3,7 @@ import { connectToDB } from "@/lib/db";
 import Store from "@/models/Store";
 import { enforceProductLimitForStore } from "@/lib/subscriptions/enforceProductLimit";
 import { getUserFromCookies } from "@/lib/auth";
+import { resolveProductLimit } from "@/lib/subscriptions/productLimits";
 
 const PLAN_DURATIONS: Record<string, number> = {
   free: 0,
@@ -423,7 +424,7 @@ export async function GET(request: NextRequest) {
           storeId: store._id.toString(),
           plan: store.subscriptionPlan || "free",
           status: store.subscriptionStatus || "active",
-          productLimit: store.productLimit || 10,
+          productLimit: resolveProductLimit(store.subscriptionPlan, store.productLimit),
           expiryDate: store.subscriptionExpiryDate,
           email: user.email,
         },
@@ -456,7 +457,7 @@ export async function GET(request: NextRequest) {
         storeId: store._id.toString(),
         plan: store.subscriptionPlan || "free",
         status: store.subscriptionStatus || "active",
-        productLimit: store.productLimit || 10,
+        productLimit: resolveProductLimit(store.subscriptionPlan, store.productLimit),
         expiryDate: store.subscriptionExpiryDate,
         email: user.email,
       },

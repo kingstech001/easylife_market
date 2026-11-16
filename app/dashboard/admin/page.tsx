@@ -2,15 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  BarChart3,
-  TrendingUp,
-  ArrowUpRight,
-  ShoppingBag,
-  Users,
-  Eye,
-  Loader2,
-} from "lucide-react";
+import { BarChart3, TrendingUp, ArrowUpRight, ShoppingBag, Users, Eye } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import {
   Card,
   CardContent,
@@ -122,24 +115,7 @@ export default function AnalyticsOverview() {
 
   // ✅ Show loading while auth or data is loading
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container max-w-7xl mx-auto px-4 py-12 space-y-8">
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-muted rounded w-64"></div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="p-6">
-                    <div className="h-20 bg-muted rounded"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>;
   }
 
   return (

@@ -8,7 +8,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Clock } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import {
   Form,
   FormControl,
@@ -493,7 +494,7 @@ function VerifyEmailForm() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <BrandLoader className="mr-2 h-4 w-4" />
                 Verifying...
               </>
             ) : (
@@ -528,7 +529,7 @@ export default function VerifyEmailPage() {
       fallback={
         <AuthShell>
           <div className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-[#0E5A43] dark:text-emerald-400" />
+            <BrandLoader className="h-6 w-6 text-[#0E5A43] dark:text-emerald-400" />
           </div>
         </AuthShell>
       }

@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,23 +28,7 @@ export function CartSummaryWidget() {
 
   // Don't render cart data until mounted (prevents hydration mismatch)
   if (!mounted) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            Your Cart
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-8">
-          <div className="animate-pulse">
-            <div className="h-12 w-12 bg-muted rounded-full mx-auto mb-4" />
-            <div className="h-4 bg-muted rounded w-32 mx-auto mb-2" />
-            <div className="h-4 bg-muted rounded w-48 mx-auto" />
-          </div>
-        </CardContent>
-      </Card>
-    )
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
   }
 
   if (cartItems.length === 0) {

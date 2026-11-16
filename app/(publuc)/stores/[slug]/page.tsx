@@ -1,11 +1,12 @@
 // app/stores/[slug]/page.tsx
 import type { Metadata } from "next";
 import { cache } from "react";
+import { addMonths } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { ArrowLeft, Package, ShieldCheck, Star, Store as StoreIcon, Utensils } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
+import { ProductGrid } from "@/components/ProductGrid";
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder";
 import { VisitTracker } from "@/components/visit-tracker";
 import ExpandableText from "@/components/ExpandableText";
@@ -59,6 +60,7 @@ interface StoreData {
   banner_url?: string;
   businessHours: BusinessHours;
   categories: string[];
+  createdAt: string | null;
 }
 
 interface ProductData {
@@ -92,7 +94,7 @@ const getStore = cache(async (slug: string): Promise<StoreData | null> => {
 
     const store = await Store.findOne({ slug, isPublished: true })
       .select(
-        "name slug description logo_url banner_url businessHours categories",
+        "name slug description logo_url banner_url businessHours categories createdAt",
       )
       .lean();
 
@@ -109,6 +111,7 @@ const getStore = cache(async (slug: string): Promise<StoreData | null> => {
         store.businessHours as Partial<BusinessHours> | undefined,
       ),
       categories: (store.categories as string[]) || [],
+      createdAt: store.createdAt?.toISOString() || null,
     };
   } catch (error) {
     console.error("Error fetching store:", error);
@@ -131,8 +134,8 @@ async function getStoreProducts(storeId: string): Promise<ProductData[]> {
       .select(
         "name price compareAtPrice inventoryQuantity hasVariants hasModifiers images storeId createdAt updatedAt",
       )
-      .sort({ createdAt: -1 })
-      .limit(PRODUCTS_LIMIT)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(PRODUCTS_LIMIT + 1)
       .lean();
 
     return products.map((product: any) => ({
@@ -261,10 +264,15 @@ export default async function StorePage({ params }: StorePageProps) {
       FOOD_CATEGORIES.includes(cat.toLowerCase().trim()),
     );
 
-    const sectionTitle = isRestaurant ? "Our menu" : "Featured products";
+    const now = Date.now();
+    const createdAt = store.createdAt ? new Date(store.createdAt) : null;
+    const isNewStore = createdAt !== null &&
+      createdAt.getTime() <= now && now < addMonths(createdAt, 1).getTime();
+
+    const sectionTitle = isRestaurant ? "Our menu" : "Products";
     const sectionCaption = isRestaurant
       ? "Fresh picks from today's menu and customer favourites."
-      : "A selection of products available from this store right now.";
+      : "Browse products available from this store right now.";
     const emptyTitle = isRestaurant ? "Menu coming soon" : "Products coming soon";
     const emptyMessage = isRestaurant
       ? `${store.name} is preparing their menu. Check back soon.`
@@ -335,12 +343,12 @@ export default async function StorePage({ params }: StorePageProps) {
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {reviewStats.reviewCount > 0 && (
                 <a
                   href="#reviews"
                   className="inline-flex items-center gap-1.5 text-sm text-foreground hover:underline"
                 >
                   <Star className="h-4 w-4 fill-[#F4C430] text-[#F4C430]" />
-                  {reviewStats.reviewCount > 0 ? (
                     <>
                       <span className="font-medium">
                         {reviewStats.averageRating.toFixed(1)}
@@ -349,21 +357,25 @@ export default async function StorePage({ params }: StorePageProps) {
                         ({reviewStats.reviewCount})
                       </span>
                     </>
-                  ) : (
-                    <span className="text-muted-foreground">New store</span>
-                  )}
                 </a>
+                )}
+
+                {isNewStore && (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-[#0E5A43] dark:bg-emerald-950 dark:text-emerald-400">
+                    New store
+                  </span>
+                )}
 
                 <LiveStoreStatus businessHours={store.businessHours} />
 
-                {store.categories.slice(0, 3).map((category) => (
+                {/* {store.categories.slice(0, 3).map((category) => (
                   <span
                     key={category}
                     className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground/80"
                   >
                     {category}
                   </span>
-                ))}
+                ))} */}
               </div>
 
               {store.description && (
@@ -388,16 +400,14 @@ export default async function StorePage({ params }: StorePageProps) {
             </div>
 
             {storeProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4">
-                {storeProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    storeSlug={store.slug}
-                    isRestaurant={isRestaurant}
-                  />
-                ))}
-              </div>
+              <ProductGrid
+                key={store.id}
+                initialProducts={storeProducts.slice(0, PRODUCTS_LIMIT)}
+                initialHasMore={storeProducts.length > PRODUCTS_LIMIT}
+                pageSize={PRODUCTS_LIMIT}
+                storeSlug={store.slug}
+                isRestaurant={isRestaurant}
+              />
             ) : (
               <div className="rounded-2xl border border-dashed border-border px-6 py-14 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">

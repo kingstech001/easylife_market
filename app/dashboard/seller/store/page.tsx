@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Store, Edit, Loader2, AlertCircle, MapPin, Calendar, ExternalLink, Phone } from "lucide-react"
+import { Store, Edit, AlertCircle, MapPin, Calendar, ExternalLink, Phone } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -63,7 +64,7 @@ export default function StoreViewPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BrandLoader className="h-20 w-20 text-primary" />
         <span className="ml-3 text-muted-foreground">Loading your store...</span>
       </div>
     )

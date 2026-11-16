@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Save } from "lucide-react"
+import { Save } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -186,7 +187,7 @@ export default function SettingsPage() {
                   <Button type="submit" disabled={isProfileLoading}>
                     {isProfileLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <BrandLoader className="mr-2 h-4 w-4" />
                         Saving...
                       </>
                     ) : (
@@ -263,7 +264,7 @@ export default function SettingsPage() {
                   <Button type="submit" disabled={isNotificationsLoading}>
                     {isNotificationsLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <BrandLoader className="mr-2 h-4 w-4" />
                         Saving...
                       </>
                     ) : (

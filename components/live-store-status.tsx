@@ -1,4 +1,5 @@
 "use client";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useEffect, useState } from "react";
 import { getStoreStatus, type BusinessHours } from "@/lib/store-hours";
@@ -31,10 +32,7 @@ export function LiveStoreStatus({
 
   if (!status) {
     return (
-      <span
-        aria-hidden
-        className={cn("inline-block h-4 w-36 animate-pulse rounded bg-muted", className)}
-      />
+      <BrandLoader size={24} className={className} />
     );
   }
 

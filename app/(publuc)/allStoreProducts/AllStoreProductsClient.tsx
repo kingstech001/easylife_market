@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2, Package, Search } from "lucide-react";
+import { ArrowRight, Package, Search } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { ProductCard } from "@/components/product-card";
 import { cn } from "@/lib/utils";
 import { isSlowNetwork } from "@/lib/network";
@@ -284,7 +285,7 @@ export default function AllStoreProductsClient({
                 className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground"
                 role="status"
               >
-                <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
+                <BrandLoader className="h-4 w-4 text-[#0E5A43]" />
                 Loading more products
               </div>
             )}

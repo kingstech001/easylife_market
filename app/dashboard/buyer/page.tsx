@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -82,30 +83,7 @@ export default function BuyerDashboardPage() {
   }, [])
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen min-w-0 max-w-full overflow-x-clip bg-background">
-        <div className="mx-auto min-w-0 max-w-7xl px-0 py-4 sm:px-4 sm:py-8">
-          <div className="animate-pulse space-y-5 sm:space-y-8">
-            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <div className="h-12 w-12 shrink-0 bg-muted rounded-xl"></div>
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="h-8 max-w-48 bg-muted rounded"></div>
-                <div className="h-4 max-w-64 bg-muted rounded"></div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-28 bg-muted rounded-2xl sm:h-32"></div>
-              ))}
-            </div>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="h-96 bg-muted rounded-lg"></div>
-              <div className="h-96 bg-muted rounded-lg"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
   }
 
   return (
@@ -129,7 +107,7 @@ export default function BuyerDashboardPage() {
 
             <div className="grid w-full grid-cols-[auto_1fr] gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
               <Button variant="outline" size="sm" className="h-10 rounded-xl px-3" onClick={() => window.location.reload()} disabled={isLoading}>
-                <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 sm:mr-2" />}
                 <span className="sr-only sm:not-sr-only">Refresh</span>
               </Button>
               <Button asChild className="h-10 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D]">

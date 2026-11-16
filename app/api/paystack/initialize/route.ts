@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { isValidObjectId } from "mongoose"
 import { getUserFromCookies } from "@/lib/auth"
 import { connectToDB } from "@/lib/db"
 import Product from "@/models/Product"
@@ -92,6 +93,31 @@ async function verifyAndCalculateOrderAmount(orders: any[], deliveryFee: number 
   let calculatedTotal = 0
   const ordersByStore = new Map<string, { items: any[]; totalPrice: number }>()
 
+  // Read every product once: collect the unique IDs across ALL orders and fetch
+  // them in a single query (previously one findById per item). Only well-formed
+  // IDs go into the query, so one malformed ID can't fail the whole lookup; it
+  // simply isn't found and is reported in order below, as before.
+  // Keys are lower-cased so an upper-case hex ID still matches, as findById allowed.
+  const productIds: string[] = Array.from(
+    new Set(
+      orders.flatMap((orderGroup: any) =>
+        Array.isArray(orderGroup?.items)
+          ? orderGroup.items
+              .map((item: any) => item?.productId)
+              .filter(Boolean)
+              .map((id: unknown) => String(id))
+          : [],
+      ),
+    ),
+  ).filter((id) => isValidObjectId(id))
+
+  const fetchedProducts = await Product.find({ _id: { $in: productIds } })
+    .select("name price isDeleted isActive inventoryQuantity storeId")
+    .lean()
+  const productsById = new Map<string, any>(
+    fetchedProducts.map((p: any) => [String(p._id).toLowerCase(), p]),
+  )
+
   for (const orderGroup of orders) {
     const { storeId, items } = orderGroup
 
@@ -100,7 +126,7 @@ async function verifyAndCalculateOrderAmount(orders: any[], deliveryFee: number 
     }
 
     for (const item of items) {
-      const product = await Product.findById(item.productId).lean()
+      const product = productsById.get(String(item.productId).toLowerCase())
 
       if (!product) {
         throw new Error(`Product ${item.productId} not found`)

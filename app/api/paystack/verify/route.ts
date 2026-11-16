@@ -115,17 +115,47 @@ async function verifyAndCalculateOrderAmount(
   console.log("=== Starting Order Verification ===");
   console.log("Delivery Fee (from metadata):", deliveryFee);
 
+  // Normalize ObjectId strings so uppercase/mixed-case hex still matches
+  const normalizeId = (id: unknown): string =>
+    String(id ?? "").trim().toLowerCase();
+
+  // Validate order group shapes first (preserves original per-group error)
   for (const orderGroup of orders) {
     const { storeId, items } = orderGroup;
-
     if (!items || !Array.isArray(items) || items.length === 0) {
       throw new Error(`Invalid items for store ${storeId}`);
     }
+  }
+
+  // Collect unique product IDs across all order groups
+  const productIdSet = new Set<string>();
+  for (const orderGroup of orders) {
+    for (const item of orderGroup.items) {
+      const key = normalizeId(item.productId);
+      if (key) productIdSet.add(key);
+    }
+  }
+  const productIds = Array.from(productIdSet).filter((id) =>
+    mongoose.Types.ObjectId.isValid(id),
+  );
+
+  // Single query for all products
+  const products = productIds.length
+    ? await Product.find({ _id: { $in: productIds } }).lean()
+    : [];
+
+  const productMap = new Map<string, any>();
+  for (const product of products) {
+    productMap.set(normalizeId((product as any)._id), product);
+  }
+
+  for (const orderGroup of orders) {
+    const { storeId, items } = orderGroup;
 
     console.log(`\n--- Verifying Store ${storeId || "from product"} ---`);
 
     for (const item of items) {
-      const product = await Product.findById(item.productId).lean();
+      const product = productMap.get(normalizeId(item.productId));
 
       if (!product) {
         throw new Error(`Product ${item.productId} not found`);
@@ -213,20 +243,49 @@ async function createMainOrder(
 
     const createdSubOrders = [];
 
+    // Normalize ObjectId strings so uppercase/mixed-case hex still matches
+    const normalizeId = (id: unknown): string =>
+      String(id ?? "").trim().toLowerCase();
+
+    // Identify groups whose storeId is invalid/missing and need a product fallback
+    const fallbackProductIdSet = new Set<string>();
+    for (const orderGroup of verifiedOrders) {
+      const candidateStoreId = String(orderGroup.storeId || "").trim();
+      if (!mongoose.Types.ObjectId.isValid(candidateStoreId)) {
+        const firstProductId = normalizeId(orderGroup.items?.[0]?.productId);
+        if (firstProductId && mongoose.Types.ObjectId.isValid(firstProductId)) {
+          fallbackProductIdSet.add(firstProductId);
+        }
+      }
+    }
+
+    // Single query for all fallback products (skipped when none are needed)
+    const productStoreIdMap = new Map<string, string>();
+    if (fallbackProductIdSet.size > 0) {
+      const fallbackProducts = await Product.find({
+        _id: { $in: Array.from(fallbackProductIdSet) },
+      })
+        .select("storeId")
+        .session(session)
+        .lean();
+
+      for (const product of fallbackProducts) {
+        productStoreIdMap.set(
+          normalizeId((product as any)._id),
+          String((product as any).storeId || "").trim(),
+        );
+      }
+    }
+
     for (const orderGroup of verifiedOrders) {
       const { storeId, items, totalPrice } = orderGroup;
       let resolvedStoreId = String(storeId || "").trim();
 
       if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {
-        const firstProductId = items?.[0]?.productId;
-        const product = firstProductId
-          ? await Product.findById(firstProductId)
-              .select("storeId")
-              .session(session)
-              .lean()
-          : null;
-
-        resolvedStoreId = String((product as any)?.storeId || "").trim();
+        const firstProductId = normalizeId(items?.[0]?.productId);
+        resolvedStoreId = firstProductId
+          ? productStoreIdMap.get(firstProductId) || ""
+          : "";
       }
 
       if (!mongoose.Types.ObjectId.isValid(resolvedStoreId)) {

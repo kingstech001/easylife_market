@@ -17,21 +17,36 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
       .limit(4) // Limit in database, not on client
       .lean(); // Use lean() for better performance
 
-    // Count products for each store in parallel
-    const storesWithProductCount = await Promise.all(
-      stores.map(async (store) => {
-        const productCount = await Product.countDocuments({
-          storeId: store._id,
-          isActive: true,
-          isDeleted: false,
-          inventoryQuantity: { $gt: 0 },
-        });
-        return {
-          ...store,
-          productCount,
-        };
-      })
+    // One aggregation counts the products for ALL of these stores at once
+    // (previously: one countDocuments query per store)
+    const storeIds = stores.map((store) => store._id);
+    const counts =
+      storeIds.length > 0
+        ? await Product.aggregate([
+            {
+              $match: {
+                storeId: { $in: storeIds },
+                isActive: true,
+                isDeleted: false,
+                inventoryQuantity: { $gt: 0 },
+              },
+            },
+            { $group: { _id: "$storeId", count: { $sum: 1 } } },
+          ])
+        : [];
+
+    const countByStoreId = new Map<string, number>(
+      counts.map((row: { _id: unknown; count: number }) => [
+        String(row._id),
+        row.count,
+      ]),
     );
+
+    // Stores with no matching products get productCount: 0
+    const storesWithProductCount = stores.map((store) => ({
+      ...store,
+      productCount: countByStoreId.get(String(store._id)) ?? 0,
+    }));
 
     return NextResponse.json(
       {

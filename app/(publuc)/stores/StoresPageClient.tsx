@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronRight, Loader2, Search, Store, X } from "lucide-react";
+import { ArrowRight, ChevronRight, Search, Store, X } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { FaWhatsapp } from "react-icons/fa";
 import { StoreCard } from "@/components/store-card";
 import { cn } from "@/lib/utils";
@@ -373,7 +374,7 @@ export default function StoresPageClient({
 
             {visibleCount < stores.length && (
               <div className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin text-[#0E5A43]" />
+                <BrandLoader className="h-4 w-4 text-[#0E5A43]" />
                 Loading more stores
               </div>
             )}

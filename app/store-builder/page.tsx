@@ -5,34 +5,8 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeft,
-  Loader2,
-  Plus,
-  Trash2,
-  Save,
-  ImageIcon,
-  Package,
-  Store,
-  Settings,
-  Upload,
-  X,
-  Edit3,
-  Tag,
-  Box,
-  Sparkles,
-  LucideImage,
-  Check,
-  Palette,
-  UtensilsCrossed,
-  ChevronDown,
-  ChevronUp,
-  GripVertical,
-  AlertCircle,
-  CheckCircle2,
-  ToggleLeft,
-  ToggleRight,
-} from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, ImageIcon, Package, Store, Settings, Upload, X, Edit3, Tag, Box, Sparkles, LucideImage, Check, Palette, UtensilsCrossed, ChevronDown, ChevronUp, GripVertical, AlertCircle, CheckCircle2, ToggleLeft, ToggleRight } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -1055,24 +1029,7 @@ export default function StoreBuilderPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-6">
-          <div className="relative">
-            <div className="w-20 h-20 border-4 border-muted border-t-[#0E5A43] rounded-full animate-spin mx-auto" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Store className="w-8 h-8 text-[#0E5A43] animate-pulse" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Loading your store</h3>
-            <p className="text-muted-foreground">
-              Setting up your workspace...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>;
   }
 
   return (
@@ -1110,7 +1067,7 @@ export default function StoreBuilderPage() {
           >
             {isPublishingStore ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...
+                <BrandLoader className="mr-2 h-4 w-4" /> Publishing...
               </>
             ) : (
               <>
@@ -2093,7 +2050,7 @@ export default function StoreBuilderPage() {
                           >
                             {isSavingProduct ? (
                               <>
-                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                <BrandLoader className="h-5 w-5 mr-2" />
                                 {editingProduct ? "Updating..." : "Saving..."}
                               </>
                             ) : (

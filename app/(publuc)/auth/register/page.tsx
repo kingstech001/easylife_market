@@ -7,15 +7,8 @@ import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeft,
-  Check,
-  Eye,
-  EyeOff,
-  Loader2,
-  ShoppingBag,
-  Store,
-} from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, ShoppingBag, Store } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 import {
   Form,
@@ -534,7 +527,7 @@ export default function RegisterPage() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <BrandLoader className="mr-2 h-4 w-4" />
                     Creating account...
                   </>
                 ) : (

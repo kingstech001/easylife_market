@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
@@ -42,38 +43,7 @@ export default function StoreAnalyticsPage() {
   }, [storeId])
 
   if (loading)
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
-          <div className="animate-pulse space-y-8">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-muted rounded-xl"></div>
-              <div className="space-y-2">
-                <div className="h-8 bg-muted rounded w-64"></div>
-                <div className="h-4 bg-muted rounded w-48"></div>
-              </div>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="border-0 shadow-sm backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
-                        <div className="h-8 bg-muted rounded w-32 animate-pulse"></div>
-                      </div>
-                      <div className="p-3 bg-muted rounded-xl animate-pulse">
-                        <div className="h-6 w-6"></div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
 
   if (error)
     return (

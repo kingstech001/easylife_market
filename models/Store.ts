@@ -3,12 +3,8 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
 import slugify from "slugify";
 
 // Plan -> default product limit mapping
-export const PLAN_PRODUCT_LIMIT: Record<string, number | null> = {
-  free: 20,
-  basic: 20,
-  standard: 50,
-  premium: null,
-};
+import { PLAN_PRODUCT_LIMIT } from "@/lib/subscriptions/productLimits";
+export { PLAN_PRODUCT_LIMIT } from "@/lib/subscriptions/productLimits";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Business Hours types

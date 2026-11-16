@@ -4,10 +4,8 @@ import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import {
-  ShoppingBag, ChevronRight, Shield, ArrowLeft, Package, Lock, Loader2,
-  ChevronDown, Truck, Check, Minus, Plus,
-} from "lucide-react"
+import { ShoppingBag, ChevronRight, Shield, ArrowLeft, Package, Lock, ChevronDown, Truck, Check, Minus, Plus } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MapAddressPicker } from "@/components/ui/map-address-picker"
@@ -394,7 +392,7 @@ export default function CheckoutPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
         >
           <div className="mx-4 max-w-sm rounded-xl border border-border bg-card p-8 text-center shadow-xl">
-            <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-[#0E5A43] dark:text-emerald-400" />
+            <BrandLoader className="mx-auto mb-4 h-20 w-20 text-[#0E5A43] dark:text-emerald-400" />
             <h3 className="mb-1 text-base font-semibold">Verifying payment</h3>
             <p className="text-sm text-muted-foreground">
               Please wait while we confirm your payment...
@@ -537,7 +535,7 @@ export default function CheckoutPage() {
 
                   {isCalculatingFee && (
                     <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground" role="status">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <BrandLoader className="h-3.5 w-3.5" />
                       Calculating delivery fee...
                     </div>
                   )}
@@ -650,7 +648,7 @@ export default function CheckoutPage() {
                   >
                     {isInitializing ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Initializing...
+                        <BrandLoader className="h-4 w-4" /> Initializing...
                       </>
                     ) : (
                       <>

@@ -3,6 +3,7 @@
 import { CategoryGrid } from "@/components/CategoryGrid";
 import FeaturedStoresSection from "@/components/home/FeaturedStoresSection";
 import NewProductsSection from "@/components/NewProductsSection";
+import DiscoverySection from "@/components/home/DiscoverySection";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
         <CategoryGrid />
       </div>
       <NewProductsSection />
+      <DiscoverySection />
     </div>
   );
 }

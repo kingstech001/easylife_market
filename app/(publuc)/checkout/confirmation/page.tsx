@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle, Loader2, Package, Home } from "lucide-react";
+import { CheckCircle, Package, Home } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -121,8 +122,7 @@ function PaymentConfirmationContent() {
 function PaymentConfirmationLoading() {
   return (
     <div className="h-screen flex flex-col items-center justify-center text-center">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
+      <BrandLoader className="h-20 w-20 text-primary" />
     </div>
   );
 }

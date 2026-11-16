@@ -1,4 +1,5 @@
 "use client"
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
@@ -221,7 +222,7 @@ export default function BuyerOrdersPage() {
 
             <div className="flex gap-3 w-full md:w-auto">
               <Button variant="outline" size="sm" onClick={fetchOrders} disabled={isLoading} className="w-full md:w-auto">
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Refresh
               </Button>
               <Button variant="outline" size="sm" className="w-full md:w-auto">
@@ -284,23 +285,7 @@ export default function BuyerOrdersPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded w-32"></div>
-                        <div className="h-3 bg-muted rounded w-48"></div>
-                      </div>
-                      <div className="h-6 bg-muted rounded w-20"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredOrders.length === 0 ? (
+          {isLoading ? <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div> : filteredOrders.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

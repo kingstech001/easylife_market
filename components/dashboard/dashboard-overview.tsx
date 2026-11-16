@@ -1,4 +1,5 @@
 "use client";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { useEffect, useState } from "react";
 import {
@@ -38,7 +39,7 @@ export function DashboardOverview() {
       .catch(console.error);
   }, []);
 
-  if (!data) return <div>Loading...</div>;
+  if (!data) return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

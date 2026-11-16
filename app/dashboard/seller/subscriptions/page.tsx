@@ -373,7 +373,7 @@ export default function SubscriptionPage() {
                   >
                     {loadingPlan === plan.id ? (
                       <>
-                        <LoadingSpinner />
+                        <LoadingSpinner size={20} />
                         Processing...
                       </>
                     ) : currentPlan === plan.id ? (
