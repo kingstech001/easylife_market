@@ -1,7 +1,7 @@
-import { Spinner } from "@/components/ui/spinner";
 // app/checkout/payment-success/page.tsx
 "use client"
 
+import { Spinner } from "@/components/ui/spinner";
 import { Suspense, useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle, XCircle, Clock, ArrowRight, Sparkles, Package, CreditCard } from "lucide-react";
