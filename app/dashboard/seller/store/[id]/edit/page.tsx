@@ -1,4 +1,5 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -295,7 +296,7 @@ export default function StoreSettingsPage() {
           >
             {isLoading ? (
               <>
-                <BrandLoader className="mr-2 h-4 w-4" />
+                <Spinner className="mr-2 h-4 w-4" />
                 Saving...
               </>
             ) : (
@@ -481,7 +482,7 @@ export default function StoreSettingsPage() {
             >
               {isLoading ? (
                 <>
-                  <BrandLoader className="mr-2 h-4 w-4" />
+                  <Spinner className="mr-2 h-4 w-4" />
                   Saving...
                 </>
               ) : (
@@ -527,7 +528,7 @@ export default function StoreSettingsPage() {
             >
               {isLoading ? (
                 <>
-                  <BrandLoader className="mr-2 h-4 w-4" />
+                  <Spinner className="mr-2 h-4 w-4" />
                   Saving...
                 </>
               ) : (
@@ -607,7 +608,7 @@ export default function StoreSettingsPage() {
 
                     {isUploadingLogo && (
                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                        <BrandLoader className="h-6 w-6 text-[#0E5A43]" />
+                        <Spinner className="h-6 w-6 text-[#0E5A43]" />
                       </div>
                     )}
                   </button>
@@ -626,7 +627,7 @@ export default function StoreSettingsPage() {
                     >
                       {isUploadingLogo ? (
                         <>
-                          <BrandLoader className="mr-2 h-4 w-4" />
+                          <Spinner className="mr-2 h-4 w-4" />
                           Uploading...
                         </>
                       ) : (
@@ -693,7 +694,7 @@ export default function StoreSettingsPage() {
 
                   {isUploadingBanner && (
                     <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                      <BrandLoader className="h-7 w-7 text-[#0E5A43]" />
+                      <Spinner className="h-7 w-7 text-[#0E5A43]" />
                     </div>
                   )}
                 </button>
@@ -712,7 +713,7 @@ export default function StoreSettingsPage() {
                 >
                   {isUploadingBanner ? (
                     <>
-                      <BrandLoader className="mr-2 h-4 w-4" />
+                      <Spinner className="mr-2 h-4 w-4" />
                       Uploading...
                     </>
                   ) : (
@@ -734,7 +735,7 @@ export default function StoreSettingsPage() {
             >
               {isLoading ? (
                 <>
-                  <BrandLoader className="mr-2 h-4 w-4" />
+                  <Spinner className="mr-2 h-4 w-4" />
                   Saving...
                 </>
               ) : (

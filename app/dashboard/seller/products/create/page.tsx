@@ -1,4 +1,5 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 import React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -1109,7 +1110,7 @@ export default function CreateProductPage() {
                               <div className="space-y-3 sm:space-y-4">
                                 <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-full flex items-center justify-center">
                                   {isUploadingImages ? (
-                                    <BrandLoader className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                                    <Spinner className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                                   ) : (
                                     <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                                   )}
@@ -1509,7 +1510,7 @@ export default function CreateProductPage() {
                       >
                         {isSubmitting ? (
                           <>
-                            <BrandLoader className="mr-2 h-4 w-4" />
+                            <Spinner className="mr-2 h-4 w-4" />
                             Uploading...
                           </>
                         ) : (

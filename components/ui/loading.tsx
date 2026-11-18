@@ -2,32 +2,36 @@
 
 import { CheckCircle2, AlertCircle } from "lucide-react"
 import { BrandLoader } from "@/components/ui/brand-loader"
+import { Spinner } from "@/components/ui/spinner"
 export { BrandLoader } from "@/components/ui/brand-loader"
 
 type LoadingProps = { size?: number; text?: string }
 type LoadingState = "loading" | "success" | "error"
 
-export function LoadingSpinner({ size = 48, text }: LoadingProps) {
+export function LoadingSpinner({ size = 28, text }: LoadingProps) {
   return <span className="inline-flex flex-col items-center justify-center gap-2">
-    <BrandLoader size={size} aria-label={text || "Loading"} />
+    <Spinner size={size} aria-label={text || "Loading"} />
     {text && <span className="text-center text-sm text-muted-foreground">{text}</span>}
   </span>
 }
 
 export function PageLoader({ text }: { text?: string }) {
-  return <div className="flex min-h-[60vh] items-center justify-center p-6"><LoadingSpinner size={96} text={text} /></div>
+  return <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-6">
+    <BrandLoader size={96} aria-label={text || "Loading page"} />
+    {text && <p className="text-sm text-muted-foreground">{text}</p>}
+  </div>
 }
 
 export function AdvancedLoader({ text, size = "md" }: {
   variant?: "spinner" | "pulse" | "dots" | "bars"; text?: string; size?: "sm" | "md" | "lg"
 }) {
-  return <LoadingSpinner size={{ sm: 28, md: 64, lg: 96 }[size]} text={text} />
+  return <LoadingSpinner size={{ sm: 20, md: 28, lg: 40 }[size]} text={text} />
 }
 
 export function LoadingStateIndicator({ state = "loading", text, successText = "Done!", errorText = "Error" }: {
   state?: LoadingState; text?: string; successText?: string; errorText?: string
 }) {
-  if (state === "loading") return <LoadingSpinner size={48} text={text} />
+  if (state === "loading") return <LoadingSpinner size={28} text={text} />
   return <div className="flex flex-col items-center justify-center gap-2">
     {state === "success" ? <CheckCircle2 className="h-8 w-8 text-green-500" /> : <AlertCircle className="h-8 w-8 text-destructive" />}
     <p className="text-sm font-medium">{state === "success" ? successText : errorText}</p>
@@ -35,11 +39,11 @@ export function LoadingStateIndicator({ state = "loading", text, successText = "
 }
 
 export function SkeletonLoader(_props: { count?: number; lines?: number }) {
-  return <div className="flex min-h-48 items-center justify-center p-6"><LoadingSpinner size={80} /></div>
+  return <div className="flex min-h-48 items-center justify-center p-6"><LoadingSpinner size={32} /></div>
 }
 
 export function SkeletonCard(_props: { count?: number; lines?: number }) {
-  return <div className="flex min-h-48 items-center justify-center p-6"><LoadingSpinner size={80} /></div>
+  return <div className="flex min-h-48 items-center justify-center p-6"><LoadingSpinner size={32} /></div>
 }
 
 export function ProgressLoader({
@@ -53,7 +57,7 @@ export function ProgressLoader({
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 w-full max-w-xs">
-      <BrandLoader size={64} />
+      <Spinner size={28} />
       {/* <p className="text-sm text-muted-foreground text-center">{text}</p> */}
       <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
         <div

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/loading";
+import { LoadingSpinner, PageLoader } from "@/components/ui/loading";
 
 type SubscriptionPlan = "free" | "basic" | "standard" | "premium";
 
@@ -245,7 +245,7 @@ export default function SubscriptionPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner text="Please wait..." />
+        <PageLoader />
       </div>
     );
   }

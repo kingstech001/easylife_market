@@ -1,4 +1,5 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -535,7 +536,7 @@ export default function CheckoutPage() {
 
                   {isCalculatingFee && (
                     <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground" role="status">
-                      <BrandLoader className="h-3.5 w-3.5" />
+                      <Spinner className="h-3.5 w-3.5" />
                       Calculating delivery fee...
                     </div>
                   )}
@@ -648,7 +649,7 @@ export default function CheckoutPage() {
                   >
                     {isInitializing ? (
                       <>
-                        <BrandLoader className="h-4 w-4" /> Initializing...
+                        <Spinner className="h-4 w-4" /> Initializing...
                       </>
                     ) : (
                       <>

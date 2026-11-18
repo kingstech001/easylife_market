@@ -1,10 +1,10 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Package, Edit, Trash2, PlusCircle, ArrowUpDown, Crown } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -330,7 +330,7 @@ export default function ProductListPage() {
             <CardContent className="px-0 pb-0">
               {loading ? (
                 <div className="flex items-center justify-center h-48">
-                  <BrandLoader className="h-20 w-20 text-primary" />
+                  <Spinner className="h-8 w-8 text-primary" />
                   <span className="ml-3 text-muted-foreground">
                     Loading products...
                   </span>

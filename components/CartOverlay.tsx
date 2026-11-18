@@ -1,9 +1,9 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useCart } from "@/context/cart-context";
 import Image from "next/image";
 import { ChevronDown, Minus, Plus, ShoppingBag, ShieldCheck, X } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -561,7 +561,7 @@ export default function CartOverlay({ onClose }: CartOverlayProps) {
                 )}
               >
                 {isOpeningWhatsApp ? (
-                  <BrandLoader className="h-4 w-4" />
+                  <Spinner className="h-4 w-4" />
                 ) : (
                   <FaWhatsapp className="h-5 w-5 text-[#25D366]" />
                 )}

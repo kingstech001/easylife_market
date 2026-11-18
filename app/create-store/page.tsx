@@ -1,14 +1,29 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import type React from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { StoreIcon, Building2, ImageIcon, Upload, Check, RotateCcw, MapPin, Link2, FileText, Sparkles, X, Phone, ChevronRight, ChevronLeft, User, AlertCircle, Eye, ArrowLeft, Camera } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
-import { Button } from "@/components/ui/button";
+import {
+  ArrowLeft,
+  Camera,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  ImageIcon,
+  MapPin,
+  Pill,
+  RotateCcw,
+  ShoppingBag,
+  Sparkles,
+  StoreIcon,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react";
 import {
   Form,
   FormControl,
@@ -20,10 +35,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { slugify, cn } from "@/lib/utils";
-import { AnimatedContainer } from "@/components/ui/animated-container";
 import { MapAddressPicker } from "@/components/ui/map-address-picker";
 import {
   BusinessHoursEditor,
@@ -68,65 +81,108 @@ const PREVIEW_STORAGE_KEY = "create_store_previews";
 const HOURS_STORAGE_KEY = "create_store_hours";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Step config
+// Steps + categories
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STEPS = [
   {
     id: 1,
     title: "Identity",
-    fullTitle: "Store Identity",
-    subtitle: "Name, URL & description",
-    icon: Building2,
+    heading: "Store identity",
+    subtitle: "What is your store called?",
     fields: ["name", "slug", "description", "categories"] as const,
   },
   {
     id: 2,
     title: "Contact",
-    fullTitle: "Contact & Hours",
-    subtitle: "Location, phone & schedule",
-    icon: User,
+    heading: "Contact and hours",
+    subtitle: "Where customers find you, and when you're open.",
     fields: ["location", "phone"] as const,
   },
   {
     id: 3,
     title: "Branding",
-    fullTitle: "Visual Identity",
-    subtitle: "Logo & banner required",
-    icon: ImageIcon,
+    heading: "Logo and banner",
+    subtitle: "Both are required before your store can go live.",
     fields: ["logo_url", "banner_url"] as const,
   },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Category options
-// ─────────────────────────────────────────────────────────────────────────────
-
 const CATEGORY_OPTIONS: {
   value: StoreCategory;
   label: string;
-  emoji: string;
+  icon: LucideIcon;
   description: string;
 }[] = [
   {
     value: "restaurants",
     label: "Restaurant",
-    emoji: "🍽️",
+    icon: UtensilsCrossed,
     description: "Restaurants, cafes, food trucks, cloud kitchens",
   },
   {
     value: "shop",
     label: "Shop",
-    emoji: "🛍️",
+    icon: ShoppingBag,
     description: "Mini marts, supermarkets, electronics, beauty",
   },
   {
     value: "pharmacy",
     label: "Pharmacy",
-    emoji: "💊",
+    icon: Pill,
     description: "Pharmacies, drug stores, health retailers",
   },
 ];
+
+const inputClass =
+  "h-11 rounded-lg border-border bg-background text-base shadow-none transition-colors placeholder:text-muted-foreground/70 focus-visible:border-[#0E5A43] focus-visible:ring-4 focus-visible:ring-[#0E5A43]/10 focus-visible:ring-offset-0 sm:text-sm";
+
+const primaryBtn =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0E5A43] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#083B2D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#0E5A43]/25 disabled:cursor-not-allowed disabled:opacity-60";
+
+const secondaryBtn =
+  "inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#0E5A43]/15 disabled:opacity-60";
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E5A43]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Image helper: shrink big photos before they are stored or sent.
+// A 5 MB photo as base64 is ~6.7 MB: too big for localStorage (draft saving) and
+// for many hosts' request-size limits. This keeps the look and cuts it to a few
+// hundred KB. Falls back to the original if anything goes wrong.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fileToDataUrl(file: File, maxDimension: number): Promise<string> {
+  const original = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new window.Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = original;
+    });
+
+    const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return original;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const compressed = canvas.toDataURL("image/webp", 0.85);
+    return compressed.length < original.length ? compressed : original;
+  } catch {
+    return original;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
@@ -141,6 +197,7 @@ export default function CreateStorePage() {
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [businessHours, setBusinessHours] = useState<BusinessHours>(
     DEFAULT_BUSINESS_HOURS
@@ -150,6 +207,9 @@ export default function CreateStorePage() {
   const [logoError, setLogoError] = useState(false);
   const [bannerError, setBannerError] = useState(false);
   const [storeCoords, setStoreCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
@@ -197,28 +257,38 @@ export default function CreateStorePage() {
       }
       if (savedHours) setBusinessHours(JSON.parse(savedHours));
     } catch {}
+    setDraftLoaded(true);
   }, [form]);
 
-  // ── Auto-save form ──────────────────────────────────────────────────────────
+  // ── Auto-save form fields ───────────────────────────────────────────────────
   useEffect(() => {
     const sub = form.watch((values) => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
-        localStorage.setItem(
-          PREVIEW_STORAGE_KEY,
-          JSON.stringify({ logo: logoPreview, banner: bannerPreview })
-        );
       } catch {}
     });
     return () => sub.unsubscribe();
-  }, [form, logoPreview, bannerPreview]);
+  }, [form]);
+
+  // ── Auto-save previews (only when an image changes, not on every keystroke) ──
+  // Waits for the draft to load first, so it can't overwrite the saved previews.
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      localStorage.setItem(
+        PREVIEW_STORAGE_KEY,
+        JSON.stringify({ logo: logoPreview, banner: bannerPreview })
+      );
+    } catch {}
+  }, [draftLoaded, logoPreview, bannerPreview]);
 
   // ── Auto-save hours ─────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!draftLoaded) return;
     try {
       localStorage.setItem(HOURS_STORAGE_KEY, JSON.stringify(businessHours));
     } catch {}
-  }, [businessHours]);
+  }, [draftLoaded, businessHours]);
 
   // ── Auto-slug ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -286,29 +356,30 @@ export default function CreateStorePage() {
     else if (id === currentStep + 1) await handleNext();
   };
 
-  const handleFileUpload = (
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setPreview: (v: string) => void,
     setError: (v: boolean) => void,
     formField: "logo_url" | "banner_url",
-    label: string
+    label: string,
+    maxDimension: number
   ) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error(`${label} must be less than 5MB`);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const r = ev.target?.result as string;
-      setPreview(r);
+    try {
+      const result = await fileToDataUrl(file, maxDimension);
+      setPreview(result);
       setError(false);
       form.setValue(formField, "uploaded", { shouldDirty: true });
       toast.success(`${label} uploaded`);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
+    } catch {
+      toast.error(`Could not read that ${label.toLowerCase()} file`);
+    }
   };
 
   // ── Submit ──────────────────────────────────────────────────────────────────
@@ -377,203 +448,126 @@ export default function CreateStorePage() {
 
   const isLastStep = currentStep === STEPS.length;
   const readyToLaunch = !!logoPreview && !!bannerPreview;
-  const progress = ((currentStep - 1) / (STEPS.length - 1)) * 100;
+  const step = STEPS[currentStep - 1];
+  const categoryLabel = CATEGORY_OPTIONS.find(
+    (c) => c.value === watchedCategories
+  )?.label;
+
+  const previewProps = {
+    name: watchedName,
+    description: watchedDescription,
+    category: categoryLabel,
+    location: watchedLocation,
+    logo: logoPreview,
+    banner: bannerPreview,
+  };
 
   return (
-    <main className="min-h-[100dvh] bg-background pb-8">
+    <main className="min-h-[100dvh] bg-background pb-12">
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className={cn(
+              "-ml-1 flex items-center gap-1.5 rounded p-1 text-sm text-muted-foreground transition-colors hover:text-foreground",
+              focusRing
+            )}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+
+          <div className="text-center leading-tight">
+            <h1 className="text-sm font-semibold">Create your store</h1>
+            <p className="text-xs text-muted-foreground">
+              Step {currentStep} of {STEPS.length}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {hasDraft && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm("Discard your draft and start over?")) {
+                    clearDraft();
+                  }
+                }}
+                aria-label="Discard draft"
+                title="Discard draft"
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive",
+                  focusRing
+                )}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => router.back()}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors -ml-1 p-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back</span>
-            </button>
-
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-[#0E5A43] text-white flex items-center justify-center">
-                <StoreIcon className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-white" />
-              </div>
-              <div className="leading-tight">
-                <p className="text-sm sm:text-base font-semibold">
-                  Create Store
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  Step {currentStep}/{STEPS.length}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {hasDraft && (
-                <button
-                  type="button"
-                  onClick={clearDraft}
-                  className="text-xs text-destructive/70 hover:text-destructive transition-colors p-1"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
+              onClick={() => setShowPreview((v) => !v)}
+              aria-pressed={showPreview}
+              aria-label="Toggle preview"
+              title="Preview"
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg transition-colors lg:hidden",
+                showPreview
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+                focusRing
               )}
-              <button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                className={cn(
-                  "p-1.5 rounded-lg transition-colors",
-                  showPreview
-                    ? "bg-[#0E5A43]/10 text-[#0E5A43]"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Eye className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-0.5 -mx-4 sm:-mx-6 bg-border/30">
-            <div
-              className="h-full bg-[#0E5A43] text-white transition-all duration-500 ease-out"
-              style={{ width: `${progress}%` }}
-            />
+            >
+              <Eye className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-5 sm:pt-8">
-        {/* ── Step pills ──────────────────────────────────────────────────── */}
-        <div className="flex gap-2 mb-5 sm:mb-6 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
-          {STEPS.map((step) => {
-            const isActive = currentStep === step.id;
-            const isComplete = completedSteps.includes(step.id);
-            const clickable = step.id <= currentStep || isComplete;
-            const StepIcon = step.icon;
-            return (
-              <button
-                key={step.id}
-                type="button"
-                disabled={!clickable}
-                onClick={() => clickable && handleStepClick(step.id)}
-                className={cn(
-                  "flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-300 flex-1 justify-center min-w-0",
-                  "disabled:opacity-40 disabled:cursor-not-allowed",
-                  isActive
-                    ? "bg-[#0E5A43] text-white shadow-md shadow-[#0E5A43]/25"
-                    : isComplete
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                      : "bg-muted/50 text-muted-foreground border border-border/50"
-                )}
-              >
-                {isComplete ? (
-                  <Check className="h-3.5 w-3.5 flex-shrink-0" />
-                ) : (
-                  <StepIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                )}
-                <span className="truncate">{step.title}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-8">
+        <Stepper
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          onSelect={handleStepClick}
+        />
 
-        {/* ── Live preview card ────────────────────────────────────────────── */}
-        {showPreview && (
-          <AnimatedContainer animation="slideUp" className="mb-5 sm:mb-6">
-            <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
-              {/* Banner */}
-              <div className="aspect-[3/1] bg-muted relative overflow-hidden">
-                {bannerPreview ? (
-                  <img
-                    src={bannerPreview}
-                    alt="Banner preview"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
-                  </div>
-                )}
-                {/* Logo overlay */}
-                <div className="absolute -bottom-5 left-4 sm:left-5">
-                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-[3px] border-card bg-muted overflow-hidden shadow-lg">
-                    {logoPreview ? (
-                      <img
-                        src={logoPreview}
-                        alt="Logo preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center">
-                        <StoreIcon className="h-5 w-5 text-muted-foreground/30" />
-                      </div>
-                    )}
-                  </div>
-                </div>
+        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-14">
+          <div className="min-w-0 max-w-xl">
+            {/* Preview (phones and tablets) */}
+            {showPreview && (
+              <div className="mb-8 lg:hidden">
+                <StorePreview {...previewProps} />
               </div>
-              {/* Info */}
-              <div className="pt-8 pb-4 px-4 sm:px-5">
-                <h3 className="font-semibold text-sm sm:text-base truncate">
-                  {watchedName || "Your Store Name"}
-                </h3>
-                {watchedDescription && (
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                    {watchedDescription}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 mt-2 flex-wrap">
-                  {watchedCategories && (
-                    <span className="text-[10px] sm:text-xs bg-[#0E5A43]/10 text-[#0E5A43] px-2 py-0.5 rounded-full font-medium">
-                      {
-                        CATEGORY_OPTIONS.find(
-                          (c) => c.value === watchedCategories
-                        )?.label
-                      }
-                    </span>
-                  )}
-                  {watchedLocation && (
-                    <span className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      <span className="truncate max-w-[150px]">
-                        {watchedLocation}
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </div>
+            )}
+
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                {step.heading}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">{step.subtitle}</p>
             </div>
-          </AnimatedContainer>
-        )}
 
-        {/* ── Form ───────────────────────────────────────────────────────────── */}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            {/* STEP 1 — Store Identity */}
-            {currentStep === 1 && (
-              <AnimatedContainer animation="slideUp" delay={0.05}>
-                <Card className="border border-border/50 shadow-sm bg-card">
-                  <CardContent className="p-4 sm:p-6 space-y-5">
-                    <SectionHeading
-                      icon={Building2}
-                      title="Store Identity"
-                      subtitle="What is your store called?"
-                    />
-
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
+                {/* STEP 1: identity */}
+                {currentStep === 1 && (
+                  <>
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs sm:text-sm">
-                            Store Name{" "}
-                            <span className="text-destructive">*</span>
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-medium">
+                            Store name <span className="text-muted-foreground">*</span>
                           </FormLabel>
                           <FormControl>
-                            <IconInput
-                              icon={StoreIcon}
+                            <Input
                               placeholder="e.g., Fashion Hub"
-                              field={field}
+                              autoComplete="organization"
+                              autoFocus
+                              className={inputClass}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -585,27 +579,25 @@ export default function CreateStorePage() {
                       control={form.control}
                       name="slug"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs sm:text-sm">
-                            Store URL{" "}
-                            <span className="text-destructive">*</span>
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-medium">
+                            Store URL <span className="text-muted-foreground">*</span>
                           </FormLabel>
                           <FormControl>
-                            <div className="flex items-stretch overflow-hidden rounded-xl border border-border/50 focus-within:border-[#0E5A43] focus-within:ring-1 focus-within:ring-[#0E5A43]/20 transition-all">
-                              <div className="flex items-center px-2.5 sm:px-3 bg-muted/50 border-r border-border/50">
-                                <Link2 className="h-3.5 w-3.5 text-muted-foreground sm:mr-1.5 flex-shrink-0" />
-                                <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">
-                                  /stores/
-                                </span>
-                              </div>
+                            <div className="flex items-stretch overflow-hidden rounded-lg border border-border transition-colors focus-within:border-[#0E5A43] focus-within:ring-4 focus-within:ring-[#0E5A43]/10">
+                              <span className="flex items-center border-r border-border bg-muted/50 px-3 text-sm text-muted-foreground">
+                                /stores/
+                              </span>
                               <Input
-                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-11 sm:h-12 text-sm"
+                                className="h-11 border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-sm"
+                                autoCapitalize="none"
+                                autoCorrect="off"
                                 {...field}
                               />
                             </div>
                           </FormControl>
-                          <FormDescription className="text-[10px] sm:text-xs">
-                            Auto-generated from your store name
+                          <FormDescription className="text-xs">
+                            Created from your store name. You can edit it.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -616,123 +608,101 @@ export default function CreateStorePage() {
                       control={form.control}
                       name="description"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs sm:text-sm">
-                            Description
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-medium">
+                            Description{" "}
+                            <span className="font-normal text-muted-foreground">(optional)</span>
                           </FormLabel>
                           <FormControl>
-                            <div className="relative">
-                              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Textarea
-                                placeholder="Tell customers what makes your store special..."
-                                className="pl-10 min-h-[100px] sm:min-h-[110px] rounded-xl border-border/50 focus:border-[#0E5A43] focus-visible:ring-1 focus-visible:ring-[#0E5A43]/20 focus-visible:ring-offset-0 resize-none transition-all text-sm"
-                                {...field}
-                              />
-                            </div>
+                            <Textarea
+                              placeholder="Tell customers what makes your store special..."
+                              className="min-h-[110px] resize-none rounded-lg border-border bg-background text-base shadow-none focus-visible:border-[#0E5A43] focus-visible:ring-4 focus-visible:ring-[#0E5A43]/10 focus-visible:ring-offset-0 sm:text-sm"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    {/* Category selector */}
                     <FormField
                       control={form.control}
                       name="categories"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs sm:text-sm">
-                            Store Category
-                          </FormLabel>
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-medium">Store category</FormLabel>
                           <FormControl>
-                            <div className="grid grid-cols-1 gap-2.5 mt-1">
+                            <div
+                              role="radiogroup"
+                              aria-label="Store category"
+                              className="grid gap-2.5 pt-0.5"
+                            >
                               {CATEGORY_OPTIONS.map((opt) => {
-                                const isSelected = field.value === opt.value;
+                                const selected = field.value === opt.value;
+                                const Icon = opt.icon;
                                 return (
                                   <button
                                     key={opt.value}
                                     type="button"
+                                    role="radio"
+                                    aria-checked={selected}
                                     onClick={() => field.onChange(opt.value)}
                                     className={cn(
-                                      "flex items-center gap-3 sm:gap-4 w-full rounded-xl border-2 px-3 sm:px-4 py-3 text-left transition-all duration-200 active:scale-[0.98]",
-                                      isSelected
-                                        ? "border-[#0E5A43] bg-[#0E5A43]/5 shadow-sm shadow-[#0E5A43]/10"
-                                        : "border-border/50 hover:border-[#0E5A43]/40 hover:bg-muted/30"
+                                      "flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
+                                      selected
+                                        ? "border-[#0E5A43] bg-[#0E5A43]/5 ring-1 ring-[#0E5A43]"
+                                        : "border-border hover:border-foreground/30",
+                                      focusRing
                                     )}
                                   >
-                                    <div
+                                    <Icon
                                       className={cn(
-                                        "h-10 w-10 sm:h-11 sm:w-11 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 transition-colors",
-                                        isSelected
-                                          ? "bg-[#0E5A43]/15"
-                                          : "bg-muted/50"
+                                        "h-5 w-5 shrink-0",
+                                        selected
+                                          ? "text-[#0E5A43] dark:text-emerald-400"
+                                          : "text-muted-foreground"
                                       )}
-                                    >
-                                      {opt.emoji}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p
-                                        className={cn(
-                                          "text-sm font-semibold leading-tight",
-                                          isSelected
-                                            ? "text-[#0E5A43]"
-                                            : "text-foreground"
-                                        )}
-                                      >
-                                        {opt.label}
-                                      </p>
-                                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                      strokeWidth={1.75}
+                                    />
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block text-sm font-medium">{opt.label}</span>
+                                      <span className="block text-xs text-muted-foreground">
                                         {opt.description}
-                                      </p>
-                                    </div>
-                                    <div
+                                      </span>
+                                    </span>
+                                    <span
+                                      aria-hidden
                                       className={cn(
-                                        "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
-                                        isSelected
-                                          ? "border-[#0E5A43] bg-[#0E5A43]"
+                                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                                        selected
+                                          ? "border-[#0E5A43] bg-[#0E5A43] text-white"
                                           : "border-border"
                                       )}
                                     >
-                                      {isSelected && (
-                                        <Check className="h-3 w-3 text-white" />
-                                      )}
-                                    </div>
+                                      {selected && <Check className="h-3 w-3" />}
+                                    </span>
                                   </button>
                                 );
                               })}
                             </div>
                           </FormControl>
-                          <FormDescription className="text-[10px] sm:text-xs">
-                            Choose the category that best describes your store
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </CardContent>
-                </Card>
-              </AnimatedContainer>
-            )}
+                  </>
+                )}
 
-            {/* STEP 2 — Contact & Hours */}
-            {currentStep === 2 && (
-              <AnimatedContainer animation="slideUp" delay={0.05}>
-                <Card className="border border-border/50 shadow-sm bg-card">
-                  <CardContent className="p-4 sm:p-6 space-y-5">
-                    <SectionHeading
-                      icon={User}
-                      title="Contact & Hours"
-                      subtitle="Location, phone & opening times"
-                    />
-
+                {/* STEP 2: contact and hours */}
+                {currentStep === 2 && (
+                  <>
                     <FormField
                       control={form.control}
                       name="location"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs sm:text-sm">
-                            Store Address{" "}
-                            <span className="text-destructive">*</span>
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-medium">
+                            Store address <span className="text-muted-foreground">*</span>
                           </FormLabel>
                           <FormControl>
                             <MapAddressPicker
@@ -745,8 +715,8 @@ export default function CreateStorePage() {
                               placeholder="Tap to search your store address"
                             />
                           </FormControl>
-                          <FormDescription className="text-[10px] sm:text-xs">
-                            Search or tap the map to set your address
+                          <FormDescription className="text-xs">
+                            Search, or tap the map to set your address.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -757,386 +727,157 @@ export default function CreateStorePage() {
                       control={form.control}
                       name="phone"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs sm:text-sm">
-                            Business Phone
-                            <span className="ml-1.5 text-[10px] sm:text-xs font-normal text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 sm:px-2 py-0.5 rounded-full inline-flex items-center">
-                              WhatsApp preferred
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-sm font-medium">
+                            Business phone{" "}
+                            <span className="font-normal text-muted-foreground">
+                              (optional, WhatsApp preferred)
                             </span>
                           </FormLabel>
                           <FormControl>
-                            <IconInput
-                              icon={Phone}
-                              placeholder="+234 800 000 0000"
-                              field={field}
+                            <Input
                               type="tel"
+                              inputMode="tel"
+                              autoComplete="tel"
+                              placeholder="+234 800 000 0000"
+                              className={inputClass}
+                              {...field}
                             />
                           </FormControl>
-                          <FormDescription className="text-[10px] sm:text-xs">
-                            Admin will contact you on this number
+                          <FormDescription className="text-xs">
+                            Our team will contact you on this number.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="border-t border-border/40 pt-5">
+                    <div className="border-t border-border pt-6">
                       <BusinessHoursEditor
                         value={businessHours}
                         onChange={setBusinessHours}
                         showHeading
                       />
                     </div>
-                  </CardContent>
-                </Card>
-              </AnimatedContainer>
-            )}
+                  </>
+                )}
 
-            {/* STEP 3 — Visual Identity */}
-            {currentStep === 3 && (
-              <AnimatedContainer animation="slideUp" delay={0.05}>
-                <Card className="border border-border/50 shadow-sm bg-card">
-                  <CardContent className="p-4 sm:p-6 space-y-5">
-                    <SectionHeading
-                      icon={ImageIcon}
-                      title="Visual Identity"
-                      subtitle="Logo & banner are required to launch"
+                {/* STEP 3: branding */}
+                {currentStep === 3 && (
+                  <>
+                    <ImageUpload
+                      variant="logo"
+                      label="Store logo"
+                      hint="Square image, at least 200×200px. PNG or JPG, up to 5 MB."
+                      preview={logoPreview}
+                      showError={logoError && !logoPreview}
+                      inputRef={logoInputRef}
+                      onFile={(e) =>
+                        handleFileUpload(e, setLogoPreview, setLogoError, "logo_url", "Logo", 512)
+                      }
+                      onRemove={() => {
+                        setLogoPreview(null);
+                        form.setValue("logo_url", "");
+                        setLogoError(true);
+                      }}
                     />
 
-                    <div className="flex items-start gap-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 px-3 sm:px-4 py-2.5 sm:py-3">
-                      <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-[10px] sm:text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                        Both a <strong>logo</strong> and{" "}
-                        <strong>banner</strong> must be uploaded before your
-                        store can go live.
-                      </p>
-                    </div>
+                    <div className="border-t border-border" />
 
-                    {/* ── Logo ── */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs sm:text-sm font-medium">
-                          Store Logo{" "}
-                          <span className="text-destructive">*</span>
-                        </p>
-                        {logoPreview && (
-                          <span className="text-[10px] sm:text-xs text-emerald-600 flex items-center gap-1">
-                            <Check className="h-3 w-3" /> Uploaded
-                          </span>
-                        )}
-                      </div>
+                    <ImageUpload
+                      variant="banner"
+                      label="Store banner"
+                      hint="Wide image, about 1200×400px. PNG or JPG, up to 5 MB."
+                      preview={bannerPreview}
+                      showError={bannerError && !bannerPreview}
+                      inputRef={bannerInputRef}
+                      onFile={(e) =>
+                        handleFileUpload(e, setBannerPreview, setBannerError, "banner_url", "Banner", 1600)
+                      }
+                      onRemove={() => {
+                        setBannerPreview(null);
+                        form.setValue("banner_url", "");
+                        setBannerError(true);
+                      }}
+                    />
+                  </>
+                )}
 
-                      <div className="flex items-center gap-4">
-                        <div className="relative group flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              document.getElementById("logo-upload")?.click()
-                            }
-                            className={cn(
-                              "h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-dashed bg-muted/30 overflow-hidden flex items-center justify-center transition-all active:scale-95",
-                              logoError && !logoPreview
-                                ? "border-destructive/60 bg-destructive/5"
-                                : logoPreview
-                                  ? "border-emerald-400/60"
-                                  : "border-border/60 hover:border-[#0E5A43]/50"
-                            )}
-                          >
-                            {logoPreview ? (
-                              <img
-                                src={logoPreview}
-                                alt="Logo"
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="text-center p-2">
-                                <Camera
-                                  className={cn(
-                                    "h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1",
-                                    logoError
-                                      ? "text-destructive/50"
-                                      : "text-muted-foreground"
-                                  )}
-                                />
-                                <p
-                                  className={cn(
-                                    "text-[9px] sm:text-[10px]",
-                                    logoError
-                                      ? "text-destructive/70 font-medium"
-                                      : "text-muted-foreground"
-                                  )}
-                                >
-                                  {logoError ? "Required" : "Tap to add"}
-                                </p>
-                              </div>
-                            )}
-                          </button>
-                          {logoPreview && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setLogoPreview(null);
-                                form.setValue("logo_url", "");
-                                setLogoError(true);
-                              }}
-                              className="absolute -top-1.5 -right-1.5 h-6 w-6 bg-destructive text-white rounded-full flex items-center justify-center shadow-md transition-transform active:scale-90"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="flex-1 space-y-2">
-                          <Button
-                            variant="outline"
-                            type="button"
-                            size="sm"
-                            className={cn(
-                              "w-full h-10 sm:h-11 rounded-xl transition-colors text-xs sm:text-sm",
-                              logoError && !logoPreview
-                                ? "border-destructive/50 text-destructive hover:border-destructive hover:bg-destructive/5"
-                                : "border-border/50 hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5"
-                            )}
-                            onClick={() =>
-                              document.getElementById("logo-upload")?.click()
-                            }
-                          >
-                            <Upload className="mr-2 h-3.5 w-3.5" />
-                            {logoPreview ? "Change Logo" : "Upload Logo"}
-                          </Button>
-                          {logoError && !logoPreview && (
-                            <p className="text-[10px] sm:text-xs text-destructive flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              Logo is required to launch
-                            </p>
-                          )}
-                          <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center">
-                            200x200px &middot; PNG/JPG &middot; Max 5MB
-                          </p>
-                        </div>
-                      </div>
-                      <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          handleFileUpload(
-                            e,
-                            setLogoPreview,
-                            setLogoError,
-                            "logo_url",
-                            "Logo"
-                          )
-                        }
-                      />
-                    </div>
-
-                    <div className="border-t border-border/40" />
-
-                    {/* ── Banner ── */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs sm:text-sm font-medium">
-                          Store Banner{" "}
-                          <span className="text-destructive">*</span>
-                        </p>
-                        {bannerPreview && (
-                          <span className="text-[10px] sm:text-xs text-emerald-600 flex items-center gap-1">
-                            <Check className="h-3 w-3" /> Uploaded
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document.getElementById("banner-upload")?.click()
-                          }
-                          className={cn(
-                            "aspect-[3/1] w-full rounded-xl border-2 border-dashed bg-muted/30 overflow-hidden flex items-center justify-center transition-all active:scale-[0.99]",
-                            bannerError && !bannerPreview
-                              ? "border-destructive/60 bg-destructive/5"
-                              : bannerPreview
-                                ? "border-emerald-400/60"
-                                : "border-border/60 hover:border-[#0E5A43]/50"
-                          )}
-                        >
-                          {bannerPreview ? (
-                            <img
-                              src={bannerPreview}
-                              alt="Banner"
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="text-center p-4">
-                              <ImageIcon
-                                className={cn(
-                                  "h-6 w-6 sm:h-7 sm:w-7 mx-auto mb-1.5",
-                                  bannerError
-                                    ? "text-destructive/50"
-                                    : "text-muted-foreground"
-                                )}
-                              />
-                              <p
-                                className={cn(
-                                  "text-[10px] sm:text-xs",
-                                  bannerError
-                                    ? "text-destructive/70 font-medium"
-                                    : "text-muted-foreground"
-                                )}
-                              >
-                                {bannerError
-                                  ? "Banner is required"
-                                  : "Tap to upload banner"}
-                              </p>
-                            </div>
-                          )}
-                        </button>
-                        {bannerPreview && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setBannerPreview(null);
-                              form.setValue("banner_url", "");
-                              setBannerError(true);
-                            }}
-                            className="absolute top-2 right-2 h-7 w-7 bg-destructive text-white rounded-full flex items-center justify-center shadow-md transition-transform active:scale-90"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        type="button"
-                        size="sm"
-                        className={cn(
-                          "w-full h-10 sm:h-11 rounded-xl transition-colors text-xs sm:text-sm",
-                          bannerError && !bannerPreview
-                            ? "border-destructive/50 text-destructive hover:border-destructive hover:bg-destructive/5"
-                            : "border-border/50 hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5"
-                        )}
-                        onClick={() =>
-                          document.getElementById("banner-upload")?.click()
-                        }
-                      >
-                        <Upload className="mr-2 h-3.5 w-3.5" />
-                        {bannerPreview ? "Change Banner" : "Upload Banner"}
-                      </Button>
-
-                      {bannerError && !bannerPreview && (
-                        <p className="text-[10px] sm:text-xs text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                          Banner is required to launch
-                        </p>
+                {/* Navigation */}
+                <div className="space-y-3 border-t border-border pt-6">
+                  {isLastStep && (
+                    <p
+                      className={cn(
+                        "text-sm",
+                        readyToLaunch
+                          ? "text-[#0E5A43] dark:text-emerald-400"
+                          : "text-muted-foreground"
                       )}
-                      <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center">
-                        1200x400px &middot; PNG/JPG &middot; Max 5MB
-                      </p>
-                      <input
-                        id="banner-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          handleFileUpload(
-                            e,
-                            setBannerPreview,
-                            setBannerError,
-                            "banner_url",
-                            "Banner"
-                          )
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </AnimatedContainer>
-            )}
-
-            {/* ── Navigation ─────────────────────────────────────────────────── */}
-            <AnimatedContainer animation="fadeIn" delay={0.1}>
-              {/* Status message */}
-              <div className="text-center mb-3">
-                {isLastStep ? (
-                  !readyToLaunch ? (
-                    <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      Upload{" "}
-                      {!logoPreview && !bannerPreview
-                        ? "a logo & banner"
-                        : !logoPreview
-                          ? "your logo"
-                          : "your banner"}{" "}
-                      to enable launch
+                      aria-live="polite"
+                    >
+                      {readyToLaunch
+                        ? "Everything is ready. You can launch your store."
+                        : `Upload ${
+                            !logoPreview && !bannerPreview
+                              ? "a logo and a banner"
+                              : !logoPreview
+                                ? "your logo"
+                                : "your banner"
+                          } to launch.`}
                     </p>
-                  ) : (
-                    <p className="text-[10px] sm:text-xs text-emerald-600 flex items-center justify-center gap-1">
-                      <Check className="h-3 w-3" /> Ready to launch!
-                    </p>
-                  )
-                ) : (
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {STEPS.length - currentStep} step
-                    {STEPS.length - currentStep > 1 ? "s" : ""} remaining
-                  </p>
-                )}
-              </div>
+                  )}
 
-              <div className="flex gap-3">
-                {currentStep > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={handleBack}
-                    className="h-12 sm:h-13 px-4 sm:px-6 rounded-xl border-2 hover:border-[#0E5A43]/50 hover:bg-[#0E5A43]/5 active:scale-[0.98] transition-all text-sm"
-                  >
-                    <ChevronLeft className="mr-1 h-4 w-4" /> Back
-                  </Button>
-                )}
-
-                {!isLastStep ? (
-                  <Button
-                    type="button"
-                    size="lg"
-                    onClick={handleNext}
-                    className="flex-1 h-12 sm:h-13 px-6 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D] text-white shadow-lg shadow-[#0E5A43]/20 hover:shadow-xl active:scale-[0.98] transition-all duration-300 text-sm sm:text-base font-medium"
-                  >
-                    Continue <ChevronRight className="ml-1.5 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={isSubmitting}
-                    className={cn(
-                      "flex-1 h-12 sm:h-13 px-6 rounded-xl text-white shadow-lg transition-all duration-300 text-sm sm:text-base font-medium active:scale-[0.98]",
-                      readyToLaunch
-                        ? "bg-[#0E5A43] text-white hover:bg-[#083B2D] shadow-[#0E5A43]/20 hover:shadow-xl"
-                        : "bg-[#0E5A43]/50 cursor-not-allowed opacity-70"
+                  <div className="flex items-center gap-3">
+                    {currentStep > 1 && (
+                      <button type="button" onClick={handleBack} className={secondaryBtn}>
+                        <ChevronLeft className="h-4 w-4" /> Back
+                      </button>
                     )}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <BrandLoader className="mr-2 h-4 w-4" />
-                        Creating...
-                      </>
+
+                    {!isLastStep ? (
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className={cn(primaryBtn, "ml-auto")}
+                      >
+                        Continue <ChevronRight className="h-4 w-4" />
+                      </button>
                     ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Launch Store
-                      </>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className={cn(
+                          primaryBtn,
+                          "ml-auto",
+                          !readyToLaunch && "opacity-60"
+                        )}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Spinner className="h-4 w-4" />
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Launch store
+                          </>
+                        )}
+                      </button>
                     )}
-                  </Button>
-                )}
-              </div>
-            </AnimatedContainer>
-          </form>
-        </Form>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </div>
+
+          {/* Live preview (desktop) */}
+          <aside className="hidden lg:block" aria-label="Store preview">
+            <div className="sticky top-24">
+              <StorePreview {...previewProps} />
+            </div>
+          </aside>
+        </div>
       </div>
     </main>
   );
@@ -1146,49 +887,262 @@ export default function CreateStorePage() {
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SectionHeading({
-  icon: Icon,
-  title,
-  subtitle,
+function Stepper({
+  currentStep,
+  completedSteps,
+  onSelect,
 }: {
-  icon: React.ElementType;
-  title: string;
-  subtitle: string;
+  currentStep: number;
+  completedSteps: number[];
+  onSelect: (id: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 mb-1">
-      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-[#0E5A43]/10 flex items-center justify-center flex-shrink-0">
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-[#0E5A43]" />
-      </div>
-      <div>
-        <h2 className="text-base sm:text-lg font-semibold">{title}</h2>
-        <p className="text-[10px] sm:text-xs text-muted-foreground">
-          {subtitle}
-        </p>
+    <nav aria-label="Progress">
+      <ol className="flex items-center">
+        {STEPS.map((s, index) => {
+          const active = currentStep === s.id;
+          const complete = completedSteps.includes(s.id);
+          const clickable = s.id <= currentStep || complete;
+          const last = index === STEPS.length - 1;
+
+          return (
+            <li key={s.id} className={cn("flex items-center", !last && "flex-1")}>
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => clickable && onSelect(s.id)}
+                aria-current={active ? "step" : undefined}
+                className={cn(
+                  "flex items-center gap-2.5 rounded text-sm disabled:cursor-not-allowed",
+                  active ? "font-semibold text-foreground" : "text-muted-foreground",
+                  clickable && !active && "hover:text-foreground",
+                  focusRing
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
+                    active || complete
+                      ? "bg-[#0E5A43] text-white"
+                      : "border border-border bg-background text-muted-foreground"
+                  )}
+                >
+                  {complete && !active ? <Check className="h-3.5 w-3.5" /> : s.id}
+                </span>
+                <span className="hidden sm:inline">{s.title}</span>
+                {/* On phones only the current step shows its name */}
+                {active && <span className="sm:hidden">{s.title}</span>}
+              </button>
+
+              {!last && (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mx-3 h-px flex-1 sm:mx-4",
+                    complete ? "bg-[#0E5A43]" : "bg-border"
+                  )}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+function StorePreview({
+  name,
+  description,
+  category,
+  location,
+  logo,
+  banner,
+}: {
+  name?: string;
+  description?: string;
+  category?: string;
+  location?: string;
+  logo: string | null;
+  banner: string | null;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-medium text-muted-foreground">Preview</p>
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="relative aspect-[3/1] bg-muted">
+          {banner ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={banner} alt="Banner preview" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+            </div>
+          )}
+          <div className="absolute -bottom-6 left-4 h-14 w-14 overflow-hidden rounded-xl border-4 border-card bg-muted shadow-sm">
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="Logo preview" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <StoreIcon className="h-5 w-5 text-muted-foreground/40" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-9">
+          <h3 className="truncate text-base font-semibold">
+            {name || "Your store name"}
+          </h3>
+          {description && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{description}</p>
+          )}
+          {(category || location) && (
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              {category && (
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground/80">
+                  {category}
+                </span>
+              )}
+              {location && (
+                <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{location}</span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function IconInput({
-  icon: Icon,
-  placeholder,
-  field,
-  type = "text",
+function ImageUpload({
+  variant,
+  label,
+  hint,
+  preview,
+  showError,
+  inputRef,
+  onFile,
+  onRemove,
 }: {
-  icon: React.ElementType;
-  placeholder: string;
-  field: any;
-  type?: string;
+  variant: "logo" | "banner";
+  label: string;
+  hint: string;
+  preview: string | null;
+  showError: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onFile: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemove: () => void;
 }) {
+  const open = () => inputRef.current?.click();
+  const isLogo = variant === "logo";
+
+  const dropzone = (
+    <button
+      type="button"
+      onClick={open}
+      aria-label={preview ? `Change ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}
+      className={cn(
+        "flex items-center justify-center overflow-hidden border-2 border-dashed bg-muted/30 transition-colors",
+        isLogo ? "h-24 w-24 shrink-0 rounded-xl" : "aspect-[3/1] w-full rounded-xl",
+        showError
+          ? "border-destructive/60 bg-destructive/5"
+          : preview
+            ? "border-solid border-border"
+            : "border-border hover:border-[#0E5A43]/50",
+        focusRing
+      )}
+    >
+      {preview ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={preview} alt={label} className="h-full w-full object-cover" />
+      ) : isLogo ? (
+        <Camera
+          className={cn("h-6 w-6", showError ? "text-destructive/60" : "text-muted-foreground")}
+          strokeWidth={1.75}
+        />
+      ) : (
+        <span className="flex flex-col items-center gap-1.5 text-center">
+          <ImageIcon
+            className={cn("h-6 w-6", showError ? "text-destructive/60" : "text-muted-foreground")}
+            strokeWidth={1.75}
+          />
+          <span className="text-xs text-muted-foreground">Click to upload a banner</span>
+        </span>
+      )}
+    </button>
+  );
+
+  const actions = (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-4 text-sm">
+        <button
+          type="button"
+          onClick={open}
+          className={cn(
+            "rounded font-medium text-[#0E5A43] hover:underline dark:text-emerald-400",
+            focusRing
+          )}
+        >
+          {preview ? "Change" : `Upload ${isLogo ? "logo" : "banner"}`}
+        </button>
+        {preview && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className={cn(
+              "rounded text-muted-foreground transition-colors hover:text-destructive",
+              focusRing
+            )}
+          >
+            Remove
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      {showError && (
+        <p className="text-xs text-destructive" role="alert">
+          {label} is required to launch.
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="relative">
-      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input
-        type={type}
-        placeholder={placeholder}
-        className="pl-10 h-11 sm:h-12 rounded-xl border-border/50 focus:border-[#0E5A43] focus-visible:ring-1 focus-visible:ring-[#0E5A43]/20 focus-visible:ring-offset-0 transition-all text-sm"
-        {...field}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">
+          {label} <span className="text-muted-foreground">*</span>
+        </p>
+        {preview && (
+          <span className="flex items-center gap-1 text-xs text-[#0E5A43] dark:text-emerald-400">
+            <Check className="h-3 w-3" /> Added
+          </span>
+        )}
+      </div>
+
+      {isLogo ? (
+        <div className="flex items-center gap-4">
+          {dropzone}
+          {actions}
+        </div>
+      ) : (
+        <>
+          {dropzone}
+          {actions}
+        </>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onFile}
       />
     </div>
   );

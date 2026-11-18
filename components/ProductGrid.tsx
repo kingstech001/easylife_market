@@ -1,9 +1,9 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useCallback, useEffect, useRef, useState, type ComponentProps } from "react";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
-import { BrandLoader } from "@/components/ui/brand-loader";
 
 type Product = ComponentProps<typeof ProductCard>["product"];
 
@@ -82,7 +82,7 @@ export function ProductGrid({ initialProducts, initialHasMore, pageSize, storeSl
       </div>
       {hasMore && (
         <div ref={sentinel} className="flex min-h-20 flex-col items-center justify-center gap-3">
-          {loading ? <BrandLoader size={64} aria-label="Loading more products" /> : (
+          {loading ? <Spinner size={32} aria-label="Loading more products" /> : (
             <>
               {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
               <Button variant="outline" onClick={() => void loadMore()}>

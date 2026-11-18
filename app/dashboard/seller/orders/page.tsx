@@ -1,5 +1,5 @@
 "use client"
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
@@ -201,7 +201,7 @@ export default function SellerOrdersPage() {
 
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={fetchOrders} disabled={isLoading}>
-                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                {isLoading ? <Spinner size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Refresh
               </Button>
               <Button variant="outline" size="sm">

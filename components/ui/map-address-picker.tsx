@@ -1,7 +1,7 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { MapPin, Search, X, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -342,7 +342,7 @@ export function MapAddressPicker({
                   className="w-full h-10 pl-10 pr-3 rounded-xl bg-muted/50 border border-border/50 text-sm outline-none focus:border-[#0E5A43] transition-colors"
                 />
                 {isSearching && (
-                  <BrandLoader className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Spinner className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 )}
               </div>
             </div>

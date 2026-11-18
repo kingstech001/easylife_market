@@ -1,5 +1,5 @@
 "use client"
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
@@ -222,7 +222,7 @@ export default function BuyerOrdersPage() {
 
             <div className="flex gap-3 w-full md:w-auto">
               <Button variant="outline" size="sm" onClick={fetchOrders} disabled={isLoading} className="w-full md:w-auto">
-                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                {isLoading ? <Spinner size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Refresh
               </Button>
               <Button variant="outline" size="sm" className="w-full md:w-auto">
@@ -285,7 +285,7 @@ export default function BuyerOrdersPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          {isLoading ? <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div> : filteredOrders.length === 0 ? (
+          {isLoading ? <div className="flex min-h-48 items-center justify-center p-6"><Spinner size={32} /></div> : filteredOrders.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

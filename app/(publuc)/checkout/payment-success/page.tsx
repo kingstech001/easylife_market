@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/spinner";
 // app/checkout/payment-success/page.tsx
 "use client"
 
@@ -472,7 +473,7 @@ function PaymentSuccessContent() {
         </div>
         
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <BrandLoader className="w-4 h-4 text-[#0E5A43]" />
+          <Spinner className="w-4 h-4 text-[#0E5A43]" />
           <span>Redirecting to order details...</span>
         </div>
       </div>

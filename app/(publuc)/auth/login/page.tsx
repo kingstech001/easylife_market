@@ -1,4 +1,5 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +9,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Check, Eye, EyeOff } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 import {
   Form,
@@ -300,7 +300,7 @@ export default function LoginPage() {
               >
                 {isLoading ? (
                   <>
-                    <BrandLoader className="mr-2 h-4 w-4" />
+                    <Spinner className="mr-2 h-4 w-4" />
                     Signing in...
                   </>
                 ) : (

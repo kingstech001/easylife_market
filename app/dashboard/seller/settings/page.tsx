@@ -1,11 +1,11 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Save } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                   <Button type="submit" disabled={isProfileLoading}>
                     {isProfileLoading ? (
                       <>
-                        <BrandLoader className="mr-2 h-4 w-4" />
+                        <Spinner className="mr-2 h-4 w-4" />
                         Saving...
                       </>
                     ) : (
@@ -264,7 +264,7 @@ export default function SettingsPage() {
                   <Button type="submit" disabled={isNotificationsLoading}>
                     {isNotificationsLoading ? (
                       <>
-                        <BrandLoader className="mr-2 h-4 w-4" />
+                        <Spinner className="mr-2 h-4 w-4" />
                         Saving...
                       </>
                     ) : (

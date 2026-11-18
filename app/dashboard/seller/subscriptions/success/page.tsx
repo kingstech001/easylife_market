@@ -1,4 +1,5 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useState, Suspense, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -431,7 +432,7 @@ function SubscriptionSuccessContent() {
         </div>
         
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <BrandLoader className="w-4 h-4 text-[#0E5A43]" />
+          <Spinner className="w-4 h-4 text-[#0E5A43]" />
           <span>Redirecting to subscriptions...</span>
         </div>
       </div>

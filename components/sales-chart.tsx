@@ -1,9 +1,9 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect, useCallback } from "react"
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner"
 
 type SalesData = {
@@ -46,7 +46,7 @@ export function SalesChart() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[300px]">
-        <BrandLoader className="h-20 w-20 text-primary" />
+        <Spinner className="h-8 w-8 text-primary" />
         <span className="ml-3 text-muted-foreground">Loading sales data...</span>
       </div>
     )

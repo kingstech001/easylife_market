@@ -1,5 +1,5 @@
 "use client"
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
@@ -40,7 +40,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   return null
 }
 
-const LoadingSkeleton = () => <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
+const LoadingSkeleton = () => <div className="flex min-h-48 items-center justify-center p-6"><Spinner size={32} /></div>
 
 const ErrorState = ({ error }: { error: string }) => (
   <div className="flex flex-col items-center justify-center h-[320px] text-center space-y-3">
@@ -125,7 +125,7 @@ export function VisitorsChart() {
   }, [user, authLoading])
 
   if (isLoading) {
-    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
+    return <div className="flex min-h-48 items-center justify-center p-6"><Spinner size={32} /></div>
   }
 
   if (error) {

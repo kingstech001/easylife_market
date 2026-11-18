@@ -1,10 +1,10 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Check, Mail } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -188,7 +188,7 @@ export default function ForgotPasswordPage() {
                 >
                   {isLoading ? (
                     <>
-                      <BrandLoader className="mr-2 h-4 w-4" />
+                      <Spinner className="mr-2 h-4 w-4" />
                       Sending...
                     </>
                   ) : cooldown > 0 ? (
@@ -245,7 +245,7 @@ export default function ForgotPasswordPage() {
                 <button type="submit" disabled={isLoading} className={primaryBtn}>
                   {isLoading ? (
                     <>
-                      <BrandLoader className="mr-2 h-4 w-4" />
+                      <Spinner className="mr-2 h-4 w-4" />
                       Sending...
                     </>
                   ) : (

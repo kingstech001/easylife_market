@@ -1,11 +1,11 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useState, Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, Eye, EyeOff, Lock } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -218,7 +218,7 @@ function ResetPasswordForm() {
           className="flex flex-col items-center gap-3 py-10 text-center"
           aria-live="polite"
         >
-          <BrandLoader className="h-6 w-6 text-[#0E5A43] dark:text-emerald-400" />
+          <Spinner className="h-6 w-6 text-[#0E5A43] dark:text-emerald-400" />
           <p className="text-sm text-muted-foreground">Checking your reset link...</p>
         </div>
       </AuthShell>
@@ -406,7 +406,7 @@ function ResetPasswordForm() {
         <button type="submit" disabled={isLoading} className={primaryBtn}>
           {isLoading ? (
             <>
-              <BrandLoader className="mr-2 h-4 w-4" />
+              <Spinner className="mr-2 h-4 w-4" />
               Resetting password...
             </>
           ) : (
@@ -424,7 +424,7 @@ export default function ResetPasswordPage() {
       fallback={
         <AuthShell>
           <div className="flex justify-center py-10">
-            <BrandLoader className="h-6 w-6 text-[#0E5A43] dark:text-emerald-400" />
+            <Spinner className="h-6 w-6 text-[#0E5A43] dark:text-emerald-400" />
           </div>
         </AuthShell>
       }

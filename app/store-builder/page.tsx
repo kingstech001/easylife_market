@@ -1,4 +1,5 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -1067,7 +1068,7 @@ export default function StoreBuilderPage() {
           >
             {isPublishingStore ? (
               <>
-                <BrandLoader className="mr-2 h-4 w-4" /> Publishing...
+                <Spinner className="mr-2 h-4 w-4" /> Publishing...
               </>
             ) : (
               <>
@@ -2050,7 +2051,7 @@ export default function StoreBuilderPage() {
                           >
                             {isSavingProduct ? (
                               <>
-                                <BrandLoader className="h-5 w-5 mr-2" />
+                                <Spinner className="h-5 w-5 mr-2" />
                                 {editingProduct ? "Updating..." : "Saving..."}
                               </>
                             ) : (

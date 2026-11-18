@@ -1,10 +1,10 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Package, X, Store, ChevronRight, MapPin } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { ProductCard } from "@/components/product-card";
 import { CATEGORIES, buildCategorySearchUrl } from "@/components/CategoryGrid";
 
@@ -56,7 +56,7 @@ const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function SearchResultsSkeleton() {
-  return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>;
+  return <div className="flex min-h-48 items-center justify-center p-6"><Spinner size={32} /></div>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -356,7 +356,7 @@ export function SearchResultsClient({
       >
         {loadingMore ? (
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-            <BrandLoader className="h-4 w-4 text-[#0E5A43]" />
+            <Spinner className="h-4 w-4 text-[#0E5A43]" />
             Loading more
           </span>
         ) : !hasMore && products.length > 24 ? (

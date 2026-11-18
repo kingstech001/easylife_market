@@ -1,5 +1,5 @@
 "use client";
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -610,7 +610,7 @@ function SearchBox({
           <div className="max-h-[min(70vh,28rem)] overflow-y-auto overscroll-contain">
             {loading && !hasResults ? (
               <div className="flex items-center justify-center gap-3 p-8 text-sm text-muted-foreground">
-                <BrandLoader className="h-5 w-5" />
+                <Spinner className="h-5 w-5" />
                 Searching...
               </div>
             ) : !hasResults ? (

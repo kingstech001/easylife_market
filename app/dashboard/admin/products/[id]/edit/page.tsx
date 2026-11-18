@@ -1,4 +1,5 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -7,7 +8,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { ArrowLeft, Save } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -171,7 +171,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   if (loadingProduct) {
     return (
       <div className="flex items-center justify-center h-full">
-        <BrandLoader className="mr-2 h-6 w-6" />
+        <Spinner className="mr-2 h-6 w-6" />
         Loading product...
       </div>
     )
@@ -191,7 +191,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         <Button onClick={form.handleSubmit(onSubmit)} disabled={isLoading}>
           {isLoading ? (
             <>
-              <BrandLoader className="mr-2 h-4 w-4" />
+              <Spinner className="mr-2 h-4 w-4" />
               Saving...
             </>
           ) : (

@@ -1,9 +1,9 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import Image from "next/image"
 import { AvatarPlaceholder } from "@/components/ui/avatar-placeholder"
 import { useEffect, useState } from "react"
-import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface Store {
   _id: string
@@ -40,7 +40,7 @@ export function TopStores({ limit = 5 }: TopStoresProps) {
 
   if (loading) {
     return  <div className="flex items-center justify-center h-[200px]">
-        <BrandLoader className="h-20 w-20 text-primary" />
+        <Spinner className="h-8 w-8 text-primary" />
         <span className="ml-3 text-muted-foreground">
           Loading top products...
         </span>

@@ -1,5 +1,5 @@
 "use client"
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -476,7 +476,7 @@ export default function AdminOrdersPage() {
                 disabled={isLoading}
                 className="hover:bg-accent"
               >
-                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 sm:mr-2" />}
+                {isLoading ? <Spinner size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 sm:mr-2" />}
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button variant="outline" size="sm" className="hover:bg-accent">
@@ -566,7 +566,7 @@ export default function AdminOrdersPage() {
           animate="visible"
           transition={{ delay: 0.2 }}
         >
-          {isLoading ? <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div> : orders.length === 0 ? (
+          {isLoading ? <div className="flex min-h-48 items-center justify-center p-6"><Spinner size={32} /></div> : orders.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="p-12 sm:p-16 text-center">
                 <div className="flex flex-col items-center gap-4">

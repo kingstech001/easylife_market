@@ -1,6 +1,6 @@
+import { Spinner } from "@/components/ui/spinner";
 import { Suspense } from "react";
 import { discoveryDay, getDiscoveryBatch } from "@/lib/discovery-products";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { DiscoveryProducts } from "./DiscoveryProducts";
 
 async function DiscoveryContent() {
@@ -22,7 +22,7 @@ export default function DiscoverySection() {
         <h2 id="discovery-title" className="text-xl font-semibold tracking-tight sm:text-2xl">Discover something new</h2>
         <p className="mt-2 text-sm text-muted-foreground">Fresh picks from different stores. Find your next favourite.</p>
       </div>
-      <Suspense fallback={<div className="flex min-h-48 items-center justify-center"><BrandLoader size={80} /></div>}>
+      <Suspense fallback={<div className="flex min-h-48 items-center justify-center"><Spinner size={32} /></div>}>
         <DiscoveryContent />
       </Suspense>
     </section>

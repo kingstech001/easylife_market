@@ -1,5 +1,5 @@
 "use client";
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useState } from "react";
 import { getStoreStatus, type BusinessHours } from "@/lib/store-hours";
@@ -32,7 +32,7 @@ export function LiveStoreStatus({
 
   if (!status) {
     return (
-      <BrandLoader size={24} className={className} />
+      <Spinner size={24} className={className} />
     );
   }
 

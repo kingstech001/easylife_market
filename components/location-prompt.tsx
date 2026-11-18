@@ -1,5 +1,5 @@
 "use client";
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useEffect, useState } from "react";
 import { MapPin, X, Navigation, AlertCircle } from "lucide-react";
@@ -259,7 +259,7 @@ export function LocationPrompt() {
                     >
                       {isLoading ? (
                         <>
-                          <BrandLoader size={20} className="mr-2" />
+                          <Spinner size={20} className="mr-2" />
                           Getting Location...
                         </>
                       ) : (

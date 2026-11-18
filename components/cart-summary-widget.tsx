@@ -1,5 +1,5 @@
 "use client"
-import { BrandLoader } from "@/components/ui/brand-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ export function CartSummaryWidget() {
 
   // Don't render cart data until mounted (prevents hydration mismatch)
   if (!mounted) {
-    return <div className="flex min-h-48 items-center justify-center p-6"><BrandLoader size={80} /></div>
+    return <div className="flex min-h-48 items-center justify-center p-6"><Spinner size={32} /></div>
   }
 
   if (cartItems.length === 0) {

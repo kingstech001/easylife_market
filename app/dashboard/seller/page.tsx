@@ -27,7 +27,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { VisitorsChart } from "@/components/dashboard/visitors-chart";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { TopProducts } from "@/components/dashboard/top-products";
-import { LoadingSpinner } from "@/components/ui/loading";
+import { PageLoader } from "@/components/ui/loading";
 
 type DashboardStats = {
   totalSales: number;
@@ -188,7 +188,7 @@ export default function SellerDashboardPage() {
   if (isLoadingStats && !stats) {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-center">
-        <LoadingSpinner text="Loading your dashboard…" />
+        <PageLoader />
       </div>
     );
   }

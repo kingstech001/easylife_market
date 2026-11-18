@@ -1,4 +1,5 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 import { BrandLoader } from "@/components/ui/brand-loader";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -107,7 +108,7 @@ export default function BuyerDashboardPage() {
 
             <div className="grid w-full grid-cols-[auto_1fr] gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
               <Button variant="outline" size="sm" className="h-10 rounded-xl px-3" onClick={() => window.location.reload()} disabled={isLoading}>
-                {isLoading ? <BrandLoader size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 sm:mr-2" />}
+                {isLoading ? <Spinner size={20} className="mr-2" /> : <RefreshCw className="h-4 w-4 sm:mr-2" />}
                 <span className="sr-only sm:not-sr-only">Refresh</span>
               </Button>
               <Button asChild className="h-10 rounded-xl bg-[#0E5A43] text-white hover:bg-[#083B2D]">

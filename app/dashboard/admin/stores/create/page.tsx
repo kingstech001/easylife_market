@@ -1,4 +1,5 @@
 "use client"
+import { Spinner } from "@/components/ui/spinner";
 
 import type React from "react"
 import { useEffect, useState } from "react"
@@ -7,7 +8,6 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, StoreIcon, Building, ImageIcon, Upload, Check } from "lucide-react";
-import { BrandLoader } from "@/components/ui/brand-loader";
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -314,7 +314,7 @@ export default function CreateStorePage() {
                     <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                       {isSubmitting ? (
                         <>
-                          <BrandLoader className="mr-2 h-4 w-4" />
+                          <Spinner className="mr-2 h-4 w-4" />
                           Creating...
                         </>
                       ) : (
