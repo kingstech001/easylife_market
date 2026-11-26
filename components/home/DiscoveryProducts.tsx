@@ -109,11 +109,11 @@ export function DiscoveryProducts({
         className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-4 md:grid-cols-3 lg:grid-cols-4"
       >
         {products.map((product) => (
-          <div key={product.id} className="min-w-0">
+          <div key={product.id} className="">
             <ProductCard product={product} storeSlug={product.store_slug} />
             <Link
               href={`/stores/${product.store_slug}`}
-              className="mt-2 block truncate text-xs text-muted-foreground hover:text-[#0E5A43] hover:underline dark:hover:text-emerald-400"
+              className=" block truncate text-xs text-muted-foreground hover:text-[#0E5A43] hover:underline dark:hover:text-emerald-400"
             >
               {product.store_name}
             </Link>

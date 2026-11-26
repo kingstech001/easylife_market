@@ -117,7 +117,7 @@ export function ProductCard({ product, storeSlug }: ProductCardProps) {
   );
 
   return (
-    <article className="group flex h-full flex-col">
+    <article className="group flex  flex-col">
       {/* Image */}
       <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
         <Link
